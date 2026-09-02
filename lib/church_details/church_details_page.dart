@@ -5,6 +5,7 @@ import 'package:html_unescape/html_unescape.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/widgets/miserend_map.dart';
 import 'package:provider/provider.dart';
 
 import '../database/mass.dart';
@@ -246,17 +247,21 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               ),
               GestureDetector(
                 onTap: _showLocationOnMap,
-                child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                  Image.network(_getStaticMapUrl(800, 600)),
-                  Column(
-                    children: [
-                      Image.asset("assets/images/map_pin.png", width: 37, height: 57),
-                      SizedBox(width: 37, height: 57),
+                child: SizedBox(
+                  height: 200,
+                  child: MiserendMap(
+                    interactive: false,
+                    initialCenter: widget.church.location,
+                    initialZoom: 17,
+                    compactAttribution: true,
+                    markers: [
+                      MiserendMapMarker(
+                        id: widget.church.id,
+                        point: widget.church.location,
+                      ),
                     ],
-                  )
-                ]),
+                  ),
+                ),
               ),
               Visibility(
                 visible: widget.church.gettingThere != null,
@@ -318,9 +323,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-
-  String _getStaticMapUrl(int width, int height)
-    => "https://maps.googleapis.com/maps/api/staticmap?center=${widget.church.lat},${widget.church.lon}&zoom=17&size=${width}x$height&scale=2&key=AIzaSyD7gu93yYTqPpJ2G5K79AhBs1UoyGNIs_o";
 
   List<Mass> getMassesForDayFromNow(List<Mass> allMasses, int offsetInDays)
   {
