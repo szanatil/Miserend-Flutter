@@ -35,7 +35,7 @@ migrate_working_dir/
 /build/
 
 # Local configuration
-settings.local.json
+.env.local
 
 # Symbolication related
 app.*.symbols
