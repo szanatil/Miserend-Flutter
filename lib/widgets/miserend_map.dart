@@ -23,14 +23,15 @@ class MiserendMap extends StatelessWidget {
     this.initialZoom = defaultInitialZoom,
     this.markers = const [],
     this.compactAttribution = false,
+    this.apiKey,
   });
 
   static const defaultInitialCenter = LatLng(47.2537659, 19.752314);
   static const double defaultInitialZoom = 8;
 
-  static const _tileUrlTemplate =
+  static const _freeTileUrlTemplate =
       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  static const _tileSubdomains = ['a', 'b', 'c', 'd'];
+  static const _freeTileSubdomains = ['a', 'b', 'c', 'd'];
   static const _tileMaxZoom = 19.0;
   static const _fullAttribution = '© OpenStreetMap contributors © CARTO';
   static const _compactAttribution = '© OSM © CARTO';
@@ -41,6 +42,20 @@ class MiserendMap extends StatelessWidget {
   final double initialZoom;
   final List<MiserendMapMarker> markers;
   final bool compactAttribution;
+
+  /// CARTO API key for the authenticated, single-host tile endpoint. When
+  /// null or empty, falls back to the free, key-less, multi-subdomain
+  /// endpoint (the default used everywhere in the app).
+  final String? apiKey;
+
+  bool get _hasApiKey => apiKey != null && apiKey!.isNotEmpty;
+
+  String get _tileUrlTemplate => _hasApiKey
+      ? 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=$apiKey'
+      : _freeTileUrlTemplate;
+
+  List<String> get _tileSubdomains =>
+      _hasApiKey ? const [] : _freeTileSubdomains;
 
   @override
   Widget build(BuildContext context) {

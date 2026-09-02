@@ -35,6 +35,7 @@ class _MapPageState extends State<MapPage> {
           interactive: true,
           mapController: _controller,
           markers: _markers,
+          apiKey: const String.fromEnvironment('CARTO_API_KEY'),
         ),
         selectedChurch != null
             ? Column(

@@ -254,6 +254,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                     initialCenter: widget.church.location,
                     initialZoom: 17,
                     compactAttribution: true,
+                    apiKey: const String.fromEnvironment('CARTO_API_KEY'),
                     markers: [
                       MiserendMapMarker(
                         id: widget.church.id,
