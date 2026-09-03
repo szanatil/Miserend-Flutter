@@ -27,6 +27,43 @@ void main() {
       expect(tileLayer.subdomains, ['a', 'b', 'c', 'd']);
       expect(tileLayer.maxZoom, 19);
     });
+
+    testWidgets(
+      'switches to the single-host, key-authenticated tile URL when apiKey is set',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: MiserendMap(interactive: true, apiKey: 'TEST_KEY'),
+          ),
+        );
+
+        final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
+
+        expect(
+          tileLayer.urlTemplate,
+          'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=TEST_KEY',
+        );
+        expect(tileLayer.subdomains, isEmpty);
+        expect(tileLayer.maxZoom, 19);
+      },
+    );
+
+    testWidgets('falls back to the free subdomain URL when apiKey is empty', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MiserendMap(interactive: true, apiKey: ''),
+        ),
+      );
+
+      final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
+
+      expect(
+        tileLayer.urlTemplate,
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      );
+    });
   });
 
   group('MiserendMap attribution', () {
