@@ -342,8 +342,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   void _showLocationOnMap() async {
-    final availableMaps = await MapLauncher.installedMaps;
-    await availableMaps.first.showMarker(
+    final map = await _firstInstalledMap();
+    if (map == null) {
+      return;
+    }
+    await map.showMarker(
       coords: Coords(widget.church.lat!, widget.church.lon!),
       title: widget.church.name ?? "",
       description: widget.church.commonName ?? "",
@@ -351,10 +354,28 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   void _showDirectionsOnMap() async {
-    final availableMaps = await MapLauncher.installedMaps;
-    await availableMaps.first.showDirections(
+    final map = await _firstInstalledMap();
+    if (map == null) {
+      return;
+    }
+    await map.showDirections(
       destination: Coords(widget.church.lat!, widget.church.lon!),
       destinationTitle: widget.church.name ?? ""
     );
+  }
+
+  /// Null when the device has no map application at all, which is the case on
+  /// a phone shipped without Google Maps. Taking the first entry of an empty
+  /// list crashed the page instead.
+  Future<AvailableMap?> _firstInstalledMap() async {
+    final availableMaps = await MapLauncher.installedMaps;
+    if (availableMaps.isNotEmpty) {
+      return availableMaps.first;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Nincs telepítve térkép alkalmazás a készüléken.')));
+    }
+    return null;
   }
 }
