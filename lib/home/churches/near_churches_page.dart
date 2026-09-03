@@ -4,6 +4,7 @@ import 'package:miserend/database/church_with_masses.dart';
 import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/home/churches/church_list_item.dart';
+import 'package:miserend/widgets/list_status_view.dart';
 
 class NearChurchesPage extends StatefulWidget {
   const NearChurchesPage({super.key});
@@ -15,8 +16,9 @@ class NearChurchesPage extends StatefulWidget {
 class _NearChurchesPageState extends State<NearChurchesPage>  with
     AutomaticKeepAliveClientMixin<NearChurchesPage>{
 
-  late Position _currentPosition;
   List<ChurchWithMasses> churches = <ChurchWithMasses>[];
+  bool loading = true;
+  String? error;
 
   @override
   void initState() {
@@ -29,24 +31,52 @@ class _NearChurchesPageState extends State<NearChurchesPage>  with
     super.build(context);
     return Container(
       color: Colors.black12,
-      child: ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: churches.length,
-          itemBuilder: (BuildContext context, int index) {
-            return ChurchListItem(
-                churchWithMasses: churches[index]
-            );
-          },
-      ),
+      child: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (loading) {
+      return const LoadingView(message: 'Közeli templomok betöltése...');
+    }
+
+    if (error != null) {
+      return MessageView(message: error!);
+    }
+
+    if (churches.isEmpty) {
+      return const MessageView(message: 'Nem találhatóak közeli templomok.');
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: churches.length,
+      itemBuilder: (BuildContext context, int index) {
+        return ChurchListItem(churchWithMasses: churches[index]);
+      },
     );
   }
 
   Future<void> loadChurches() async {
-    MiserendDatabase db = await MiserendDatabase.create();
-    Position position = await LocationProvider.getPosition();
-    var list = await db.getCloseChurchesWithMasses(position.latitude, position.longitude);
+    List<ChurchWithMasses> list = <ChurchWithMasses>[];
+    String? failure;
+    try {
+      MiserendDatabase db = await MiserendDatabase.create();
+      Position position = await LocationProvider.getPosition();
+      list = await db.getCloseChurchesWithMasses(
+          position.latitude, position.longitude);
+    } catch (_) {
+      failure = 'Nem sikerült meghatározni a helyzetedet, '
+          'ezért a közeli templomok nem jeleníthetőek meg.';
+    }
+
+    if (!mounted) {
+      return;
+    }
     setState(() {
       churches = list;
+      error = failure;
+      loading = false;
     });
   }
 

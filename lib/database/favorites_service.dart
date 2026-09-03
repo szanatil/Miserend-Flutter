@@ -7,6 +7,9 @@ class FavoritesService extends ChangeNotifier {
 
   List<Favorite> favorites = <Favorite>[];
 
+  /// False until the favorites have been read from the local database.
+  bool loaded = false;
+
   FavoritesService() {
     _init();
   }
@@ -14,6 +17,7 @@ class FavoritesService extends ChangeNotifier {
   Future<void> _init() async {
     localDatabase = await LocalDatabase.create();
     favorites = await localDatabase.getFavorites();
+    loaded = true;
     notifyListeners();
   }
 

@@ -4,4 +4,16 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <application>
+        <!-- Impeller's GLES backend calls glInvalidateFramebuffer() with the
+             default-framebuffer attachment enums (GL_COLOR/GL_DEPTH/GL_STENCIL).
+             The Android emulator's host GLES translator (libgfxstream_backend)
+             writes the translated enums past the end of its output vector in that
+             case and hits a ud2 trap, which kills qemu-system-x86_64 and takes
+             Android Studio down with it. Falling back to Skia avoids that call.
+             Debug-only, so release builds still use Impeller on real devices. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+    </application>
 </manifest>
