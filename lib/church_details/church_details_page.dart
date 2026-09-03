@@ -6,6 +6,7 @@ import 'package:miserend/church_details/report_problem_popup.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
+import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
 import '../database/mass.dart';
@@ -25,6 +26,9 @@ class ChurchDetailsPage extends StatefulWidget {
 }
 
 class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
+  /// Collapsed-to-expanded height of the photo header.
+  static const double _headerHeight = 200;
+
 
   List<List<Mass>> masses = <List<Mass>>[];
 
@@ -50,7 +54,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return <Widget>[
             SliverAppBar(
-              expandedHeight: 200.0,
+              expandedHeight: _headerHeight,
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
@@ -61,9 +65,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                     fit: BoxFit.cover,
                     placeholder: 'assets/images/church_blurred.png',
                     imageErrorBuilder: _errorBuilder,
+                    imageCacheHeight: _decodeHeight(context),
+                    placeholderCacheHeight: _decodeHeight(context),
                   )
                       : Image.asset('assets/images/church_blurred.png',
-                      fit: BoxFit.cover),
+                      fit: BoxFit.cover, cacheHeight: _decodeHeight(context)),
               ),
             ),
           ];
@@ -288,8 +294,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   Widget _errorBuilder(
       BuildContext context, Object error, StackTrace? stackTrace) {
-    return Image.asset('assets/images/church_blurred.png', fit: BoxFit.cover);
+    return Image.asset('assets/images/church_blurred.png',
+        fit: BoxFit.cover, cacheHeight: _decodeHeight(context));
   }
+
+  int _decodeHeight(BuildContext context) =>
+      PhotoDecode.forSlot(context, _headerHeight);
 
   Future<void> _toggleFavorites() async {
     Provider.of<FavoritesService>(context, listen: false).toggle(widget.church.id);

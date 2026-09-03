@@ -86,7 +86,7 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _showChurchCard(Church church) async {
     ChurchWithMasses churchWithMasses = (await (await MiserendDatabase.create())
-            .getChurches(<int>[church.id]))
+            .getChurches(<int>[church.id], DateTime.now()))
         .first;
     setState(() {
       selectedChurch = churchWithMasses;

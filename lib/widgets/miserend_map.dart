@@ -14,7 +14,7 @@ class MiserendMapMarker {
 /// Shared CartoDB Voyager map, used by the Térkép tab and the church detail
 /// location card. This is the only place the tile URL and attribution text
 /// are defined.
-class MiserendMap extends StatelessWidget {
+class MiserendMap extends StatefulWidget {
   const MiserendMap({
     super.key,
     required this.interactive,
@@ -48,51 +48,72 @@ class MiserendMap extends StatelessWidget {
   /// endpoint (the default used everywhere in the app).
   final String? apiKey;
 
-  bool get _hasApiKey => apiKey != null && apiKey!.isNotEmpty;
+  @override
+  State<MiserendMap> createState() => _MiserendMapState();
+}
+
+class _MiserendMapState extends State<MiserendMap> {
+  /// The Térkép tab hands over a pin for all 5000 churches. Converting them to
+  /// map markers on every rebuild, such as when a church card opens, is enough
+  /// work to drop frames, and the pins themselves only change when the list
+  /// does.
+  late List<Marker> _mapMarkers = _buildMarkers();
+
+  @override
+  void didUpdateWidget(MiserendMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.markers, widget.markers)) {
+      _mapMarkers = _buildMarkers();
+    }
+  }
+
+  List<Marker> _buildMarkers() => widget.markers
+      .map((m) => Marker(
+            key: ValueKey(m.id),
+            point: m.point,
+            alignment: Alignment.topCenter,
+            child: GestureDetector(
+              onTap: m.onTap,
+              child: const Icon(
+                Icons.location_pin,
+                color: Colors.red,
+                size: 40,
+              ),
+            ),
+          ))
+      .toList();
+
+  bool get _hasApiKey => widget.apiKey != null && widget.apiKey!.isNotEmpty;
 
   String get _tileUrlTemplate => _hasApiKey
-      ? 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=$apiKey'
-      : _freeTileUrlTemplate;
+      ? 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${widget.apiKey}'
+      : MiserendMap._freeTileUrlTemplate;
 
   List<String> get _tileSubdomains =>
-      _hasApiKey ? const [] : _freeTileSubdomains;
+      _hasApiKey ? const [] : MiserendMap._freeTileSubdomains;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         FlutterMap(
-          mapController: mapController,
+          mapController: widget.mapController,
           options: MapOptions(
-            initialCenter: initialCenter,
-            initialZoom: initialZoom,
+            initialCenter: widget.initialCenter,
+            initialZoom: widget.initialZoom,
             interactionOptions: InteractionOptions(
-              flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
+              flags: widget.interactive
+                  ? InteractiveFlag.all
+                  : InteractiveFlag.none,
             ),
           ),
           children: [
             TileLayer(
               urlTemplate: _tileUrlTemplate,
               subdomains: _tileSubdomains,
-              maxZoom: _tileMaxZoom,
+              maxZoom: MiserendMap._tileMaxZoom,
             ),
-            MarkerLayer(
-              markers: markers
-                  .map((m) => Marker(
-                        key: ValueKey(m.id),
-                        point: m.point,
-                        alignment: Alignment.topCenter,
-                        child: GestureDetector(
-                          onTap: m.onTap,
-                          child: const Icon(
-                            Icons.location_pin,
-                            color: Colors.red,
-                            size: 40,
-                          ),
-                        ),
-                      ))
-                  .toList(),
-            ),
+            MarkerLayer(markers: _mapMarkers),
           ],
         ),
         Positioned(
@@ -102,7 +123,9 @@ class MiserendMap extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             color: const Color(0xB3FFFFFF),
             child: Text(
-              compactAttribution ? _compactAttribution : _fullAttribution,
+              widget.compactAttribution
+                  ? MiserendMap._compactAttribution
+                  : MiserendMap._fullAttribution,
               style: const TextStyle(fontSize: 10, color: Colors.black87),
             ),
           ),

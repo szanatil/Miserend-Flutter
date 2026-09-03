@@ -17,7 +17,6 @@ class NearMassesPage extends StatefulWidget {
 class _NearMassesPageState extends State<NearMassesPage>  with
     AutomaticKeepAliveClientMixin<NearMassesPage>{
 
-  late Position _currentPosition;
   List<MassWithChurch> masses = <MassWithChurch>[];
 
   @override
@@ -43,8 +42,10 @@ class _NearMassesPageState extends State<NearMassesPage>  with
   Future<void> loadMasses() async {
     MiserendDatabase db = await MiserendDatabase.create();
     Position position = await LocationProvider.getPosition();
-    var list = await db.getCloseMasses(position.latitude, position.longitude);
-    list = MassFilter.filterMassWithChurchListForDay(list, DateTime.now());
+    final DateTime today = DateTime.now();
+    var list =
+        await db.getCloseMasses(position.latitude, position.longitude, today);
+    list = MassFilter.filterMassWithChurchListForDay(list, today);
     setState(() {
       masses = list;
     });

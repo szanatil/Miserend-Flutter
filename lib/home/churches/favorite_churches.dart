@@ -90,7 +90,7 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
           favoritesService.favorites.map((e) => e.churchId).toList();
       if (ids.isNotEmpty) {
         MiserendDatabase db = await MiserendDatabase.create();
-        list = await db.getChurches(ids);
+        list = await db.getChurches(ids, DateTime.now());
       }
     } catch (_) {
       list = <ChurchWithMasses>[];

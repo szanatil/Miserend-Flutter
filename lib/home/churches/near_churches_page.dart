@@ -64,7 +64,7 @@ class _NearChurchesPageState extends State<NearChurchesPage>  with
       MiserendDatabase db = await MiserendDatabase.create();
       Position position = await LocationProvider.getPosition();
       list = await db.getCloseChurchesWithMasses(
-          position.latitude, position.longitude);
+          position.latitude, position.longitude, DateTime.now());
     } catch (_) {
       failure = 'Nem sikerült meghatározni a helyzetedet, '
           'ezért a közeli templomok nem jeleníthetőek meg.';
