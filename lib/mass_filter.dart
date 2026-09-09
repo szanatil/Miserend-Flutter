@@ -7,6 +7,22 @@ class MassFilter {
 
   static List<MassWithChurch> filterMassWithChurchListForDay(List<MassWithChurch> masses, DateTime day) => masses.where((m) => isMassOnDay(m.mass, day)).toList();
 
+  /// SQL predicate equivalent to [isMassOnDay], for the mass table aliased as
+  /// [alias]. The list pages only ever render one day, so pushing this into
+  /// the query keeps ~280k irrelevant mass rows out of the result set instead
+  /// of decoding them and dropping them here. Both filters must agree, which
+  /// is why they live side by side.
+  static String sqlForDay(DateTime day, {String alias = 'm'}) {
+    final int weekday = day.weekday;
+    final int date = day.month * 100 + day.day;
+    final String from = 'COALESCE($alias.datumtol, 0)';
+    final String to = 'COALESCE($alias.datumig, 0)';
+    return '($alias.nap = $weekday OR $alias.nap = 0) AND ('
+        '($from < $to AND $from <= $date AND $date <= $to) OR '
+        '($from > $to AND ($from <= $date OR $date <= $to)) OR '
+        '($from = $to AND $from = $date))';
+  }
+
   static bool isMassOnDay(Mass mass, DateTime day) {
     return isOnSameDayOfTheWeek(mass, day) && dateRangeCorrect(mass, day);
   }

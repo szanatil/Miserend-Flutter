@@ -5,6 +5,7 @@ import 'package:miserend/database/church_with_masses.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/database/mass.dart';
 import 'package:miserend/mass_filter.dart';
+import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +19,19 @@ class ChurchListItem extends StatefulWidget {
 }
 
 class _ChurchListItemState extends State<ChurchListItem> {
+  /// Height of the photo slot in logical pixels; the card is a fixed 176 tall.
+  static const double _imageHeight = 176;
+
+  List<Mass>? _masses;
+
+  @override
+  void didUpdateWidget(ChurchListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.churchWithMasses != widget.churchWithMasses) {
+      _masses = null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -29,7 +43,7 @@ class _ChurchListItemState extends State<ChurchListItem> {
             _openDetails(church, context);
           },
           child: SizedBox(
-              height: 176,
+              height: _imageHeight,
               child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -90,9 +104,12 @@ class _ChurchListItemState extends State<ChurchListItem> {
                               fit: BoxFit.cover,
                               placeholder: 'assets/images/church_blurred.png',
                               imageErrorBuilder: _errorBuilder,
+                              imageCacheHeight: _decodeHeight(context),
+                              placeholderCacheHeight: _decodeHeight(context),
                             )
                           : Image.asset('assets/images/church_blurred.png',
-                              fit: BoxFit.cover),
+                              fit: BoxFit.cover,
+                              cacheHeight: _decodeHeight(context)),
                     ),
                   ])),
         ),
@@ -114,11 +131,19 @@ class _ChurchListItemState extends State<ChurchListItem> {
 
   Widget _errorBuilder(
       BuildContext context, Object error, StackTrace? stackTrace) {
-    return Image.asset('assets/images/church_blurred.png', fit: BoxFit.cover);
+    return Image.asset('assets/images/church_blurred.png',
+        fit: BoxFit.cover, cacheHeight: _decodeHeight(context));
   }
+
+  /// The photo slot is a third of the card wide and the full card tall, so
+  /// height is the axis [BoxFit.cover] scales by and needs no headroom.
+  int _decodeHeight(BuildContext context) =>
+      PhotoDecode.forSlot(context, _imageHeight, tight: true);
 
   Church get church => widget.churchWithMasses.church;
 
-  List<Mass> get masses => MassFilter.filterMassListForDay(
+  /// Filtered once per card rather than on every rebuild, since this used to
+  /// run for every visible card on every scroll frame.
+  List<Mass> get masses => _masses ??= MassFilter.filterMassListForDay(
       widget.churchWithMasses.masses, DateTime.now());
 }

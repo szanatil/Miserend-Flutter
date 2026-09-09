@@ -71,12 +71,15 @@ class _SearchResultsPageState extends State<SearchResultsPage>  with
 
   Future<void> loadChurches() async {
     MiserendDatabase db = await MiserendDatabase.create();
+    final DateTime today = DateTime.now();
     List<ChurchWithMasses> list;
     if (widget.searchParams.city != null) {
-      list = await db.getChurchesWithMassesForCity(widget.searchParams.city!);
+      list = await db.getChurchesWithMassesForCity(
+          widget.searchParams.city!, today);
     }
     else {
-      list = await db.getChurchesWithMassesForSearchTerm(widget.searchParams.searchTerm!);
+      list = await db.getChurchesWithMassesForSearchTerm(
+          widget.searchParams.searchTerm!, today);
     }
     setState(() {
       churches = list;

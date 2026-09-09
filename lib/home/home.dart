@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:miserend/home/churches/churches_page.dart';
 import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/widgets/photo_decode.dart';
 
 import '../church_details/church_details_page.dart';
 import '../database/church.dart';
@@ -22,13 +25,17 @@ abstract class Suggestion {
 
 class ChurchSuggestion extends Suggestion
 {
+  static const double _thumbnailSize = 40;
+
   Church church;
 
   ChurchSuggestion(this.church);
 
   Widget _errorBuilder(
       BuildContext context, Object error, StackTrace? stackTrace) {
-    return Image.asset('assets/images/church_blurred.png', fit: BoxFit.cover);
+    return Image.asset('assets/images/church_blurred.png',
+        fit: BoxFit.cover,
+        cacheHeight: PhotoDecode.forSlot(context, _thumbnailSize));
   }
 
   @override
@@ -47,6 +54,9 @@ class ChurchSuggestion extends Suggestion
               placeholder: 'assets/images/church_blurred.png',
               image: church.imageUrl ?? "",
               imageErrorBuilder: _errorBuilder,
+              imageCacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
+              placeholderCacheHeight:
+                  PhotoDecode.forSlot(context, _thumbnailSize),
             ),
           ),
         ),
@@ -105,6 +115,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Suggestion> suggestions = <Suggestion>[];
 
+  Timer? _searchDebounce;
+
+  /// Bumped per search so a slow query cannot overwrite newer suggestions.
+  int _searchRequestId = 0;
+
+  /// Tabs that have been opened at least once. Switching tabs used to drop the
+  /// page out of the tree entirely, so coming back re-ran the all-churches
+  /// query and asked for the location again. They are kept alive once built,
+  /// and pages never opened are not built at all, so startup is unchanged.
+  final Set<int> _builtTabs = <int>{0};
+
   static const List<Widget> _widgetOptions = <Widget>[
     ChurchesPage(),
     NearMassesPage(),
@@ -113,8 +134,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      _builtTabs.add(index);
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -143,8 +172,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        sizing: StackFit.expand,
+        children: List<Widget>.generate(
+          _widgetOptions.length,
+          (int index) => _builtTabs.contains(index)
+              ? _widgetOptions[index]
+              : const SizedBox.shrink(),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -170,29 +206,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _onSearchChanged(String value) async {
+  /// Each keystroke used to run two wildcard scans over all 5000 churches.
+  /// Waiting for a pause in typing collapses a typed word into one search.
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchRequestId++;
     if (value.length > 2) {
-      MiserendDatabase db = await MiserendDatabase.create();
-      var churches = await db.getChurchesForSearchTerm(value);
-      var cities = await db.getCitiesForSearchTerm(value);
-      var combined = <Suggestion>[];
-      combined.addAll(churches.take(20).map((c) => ChurchSuggestion(c)));
-      combined.addAll(cities.map((c) => CitySuggestion(c)));
-      setState(() {
-        suggestions = combined;
-        var value = _searchController.text;
-        _searchController.text = "";
-        _searchController.text = value;
-      });
-    }
-    else{
+      _searchDebounce = Timer(
+          const Duration(milliseconds: 250), () => _runSearch(value));
+    } else {
       setState(() {
         suggestions.clear();
-        var value = _searchController.text;
-        _searchController.text = "";
-        _searchController.text = value;
+        _refreshSuggestionList();
       });
     }
+  }
+
+  Future<void> _runSearch(String value) async {
+    final int requestId = _searchRequestId;
+    MiserendDatabase db = await MiserendDatabase.create();
+    var churches = await db.getChurchesForSearchTerm(value);
+    var cities = await db.getCitiesForSearchTerm(value);
+    var combined = <Suggestion>[];
+    combined.addAll(churches.take(20).map((c) => ChurchSuggestion(c)));
+    combined.addAll(cities.map((c) => CitySuggestion(c)));
+    if (!mounted || requestId != _searchRequestId) {
+      return;
+    }
+    setState(() {
+      suggestions = combined;
+      _refreshSuggestionList();
+    });
+  }
+
+  /// Nudges the search controller so the open suggestion list rebuilds.
+  void _refreshSuggestionList() {
+    var value = _searchController.text;
+    _searchController.text = "";
+    _searchController.text = value;
   }
 
   void _onSearchSubmitted(String value) {
