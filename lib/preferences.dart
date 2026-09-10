@@ -29,4 +29,18 @@ class Preferences {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_databaseLastUpdated);
   }
+
+  static final String _cacheBootstrapped = "CACHE_BOOTSTRAPPED";
+
+  static Future<void> setCacheBootstrapped() async
+  {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(_cacheBootstrapped, true);
+  }
+
+  static Future<bool> isCacheBootstrapped() async
+  {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_cacheBootstrapped) ?? false;
+  }
 }

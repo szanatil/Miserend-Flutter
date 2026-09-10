@@ -1,0 +1,119 @@
+# API v4 elsődleges adatforrásként — 1. fázis: gyorsítótár-infrastruktúra és a templom-részletező oldal
+
+## Problem Statement
+
+Az app ma egyetlen adatforrásra épül: minden indításkor (vagy 7 naponta) letölti a `miserend_v4.sqlite3` fájlt (`lib/database/database_manager.dart`), és a `templomok`/`misek` táblákat közvetlenül olvassa (`lib/database/miserend_database.dart`). Ez a séma régi, rövid magyar oszlopnevekre épül, és nem bővült a miserend.hu webapp újabb funkcióival (szentségimádás, gyóntatás, fotók, leírás, egyházmegye/plébánia adatok) — ezek csak a v4 JSON API-n (`https://miserend.hu/api/v4/*`) érhetők el. Amíg az app a SQLite exportra épül, ezek a mezők soha nem jelennek meg a mobil kliensen, és minden jövőbeli miserend.hu-funkció külön, ad-hoc API-hívásként épülne be (ahogy ma is történik a `Report` popupnál), séma és gyorsítótár nélkül.
+
+## Solution
+
+Bevezetünk egy helyi gyorsítótár-réteget, amely a v4 API mezőalakját tükrözi, és amelybe minden API-válasz write-through módon íródik. Első indításkor a jelenlegihez hasonlóan letöltjük a `miserend_v4.sqlite3` fájlt, és egyszeri **kezdeti feltöltésként** átalakítjuk az új sémára (a régi `misek` visszatérési-szabályokból konkrét mise-időpontokat számolunk ki, ugyanazzal a logikával, amit a jelenlegi "19 napos miserend" nézet már ma is használ). Ezt követően a SQLite fájlt többé nem töltjük le újra — a gyorsítótár kizárólag API-hívásokból frissül.
+
+Ebben a fázisban egyetlen képernyő, a **templom-részletező oldal** áll át API-hívásra: megnyitáskor a `Church` végpont (`response_length=full`) és a kiterjesztett miserendhez a `NearbyMasses` végpont hívódik, az eredmény a gyorsítótárba íródik, és a UI a gyorsítótárból render. Minden más képernyő (Keresés, Térkép, Közeli templomok/misék) változatlanul a gyorsítótárból olvas, API-hívás nélkül — a kezdeti feltöltésből vagy egy korábbi részletező-látogatásból származó adatot mutatva, amíg a saját fázisuk (külön ticket) el nem éri őket.
+
+## User Stories
+
+1. Mint felhasználó, szeretném, hogy az app első indításkor (internetkapcsolattal) letöltse az alap templom- és miseadatokat, hogy utána offline is használható legyen.
+2. Mint felhasználó internetkapcsolat nélkül az első indításkor, szeretném, hogy az app ugyanúgy blokkoljon és kérje a letöltést, mint ma (nincs változás ebben a viselkedésben).
+3. Mint felhasználó, aki megnyit egy templom-részletező oldalt, és van internetkapcsolatom, szeretném azonnal látni a friss adatokat (beleértve az új mezőket: fotók, leírás, szentségimádás, gyóntatás, egyházmegye/plébánia), amint megérkeznek — addig is a korábban gyorsítótárazott adatot lássam, ne üres képernyőt.
+4. Mint felhasználó, aki megnyit egy templom-részletező oldalt internetkapcsolat nélkül, szeretném látni a legutóbb gyorsítótárazott (kezdeti feltöltésből vagy korábbi látogatásból származó) adatot, hibaüzenet vagy üres képernyő helyett.
+5. Mint felhasználó, szeretném továbbra is látni a "ma / a következő vasárnap / 19 nap" miserend-nézetet a templom-részletezőn, változatlan tartalommal — annak ellenére, hogy ez most API-hívásból (nem helyi visszatérési-szabály számításból) származik.
+6. Mint felhasználó, aki hibát jelent egy templomról, szeretném, hogy ez változatlanul működjön (ez már ma is a `Report` API-t hívja, nincs teendő).
+7. Mint felhasználó a Keresés/Térkép/Közeli képernyőkön, szeretném, hogy a viselkedés ebben a fázisban változatlan maradjon (ezek a kezdeti feltöltésből származó adatot mutatják, amíg saját migrációjuk el nem készül).
+8. Mint fejlesztő, szeretnék egy megosztott API-kliens réteget, amely a v4 JSON végpontokat hívja és a gyorsítótár-sémára képezi le a válaszokat, hogy a következő fázisokban (Keresés, Térkép, Közeli) ne kelljen újra megépíteni.
+9. Mint fejlesztő, szeretném, hogy a kezdeti feltöltés és az API-frissítés ugyanabba, API-alakú táblasémába írjon, hogy a UI-rétegnek ne kelljen két adatalakot ismernie.
+10. Mint fejlesztő, szeretném, hogy a régi `misek` visszatérési-szabály oszlopok (`nap`, `periodus`, `datumtol`, `datumig`) kizárólag a kezdeti feltöltés egyszeri lépésében kerüljenek felhasználásra, utána sehol — ez explicit elvárás, nem csak optimalizáció.
+11. Mint karbantartó, szeretném dokumentálva látni, hogy a "kiterjesztett miserend" miért `NearbyMasses`-hívásból, kis sugarú (0.1 km) helyszín-szűréssel és kliensoldali `church.id` szűréssel áll elő, ne kelljen ezt később rekonstruálni.
+12. Mint karbantartó, szeretném, hogy a `Church`/felekezet/aktív-státusz modellhiány (ld. `CONTEXT.md`) explicit módon nyitva maradjon dokumentálva, ne tűnjön úgy, hogy ez a migráció megoldotta.
+
+## Implementation Decisions
+
+### Gyorsítótár séma
+
+Két új tábla, az API mezőalakja szerint (nem a régi rövid magyar oszlopnevek szerint):
+
+- **`churches_cache`**: `id` (PK), `nev`, `ismertnev`, `names` (JSON tömb), `alternative_names` (JSON tömb), `orszag`, `egyhazmegye`, `megye`, `varos`, `cim`, `megkozelites`, `plebania`, `leiras`, `accessibility` (JSON tömb), `email`, `links` (JSON tömb), `nyelvek` (JSON tömb), `miserend_megjegyzes`, `adoraciok` (JSON tömb), `gyontatas` (bool), `kozossegek` (JSON tömb), `lat`, `lon`, `photos` (JSON tömb), `frissitve` (API-oldali utolsó módosítás), `local_synced_at` (mikor írta a helyi gyorsítótárat API-hívás — `null`, ha csak a kezdeti feltöltésből származik).
+- **`masses_cache`**: `id` (szintetikus `INTEGER PRIMARY KEY AUTOINCREMENT`), `api_mass_id` (az API `misek[].id` értéke, **nem egyedi**), `church_id` (FK), `idopont` (konkrét dátum-idő, `'ÉÉÉÉ-HH-NN ÓÓ:PP:MM'` szövegként, hogy a rendezés és a tartomány-szűrés közvetlenül a tárolt szövegen működjön), `informacio`. Index: `(church_id, idopont)`, **nem egyedi** — az írás mindig „az adott templom sorainak teljes cseréje", így duplikátum nem halmozódhat, egy egyedi index viszont eldobna egy jogos, azonos időpontban kezdődő második misét (pl. két nyelven).
+
+A két tábla **saját adatbázisfájlba** kerül (`miserend_cache.sqlite3`, `version: 1` + `onCreate`, a `local_database.dart` mintájára), és ebben a fázisban a mai `templomok`/`misek` **mellé** épül, nem azok helyére (explicit felhasználói döntés): a `MiserendDatabase` és a Keresés/Térkép/Közeli képernyők érintetlenek maradnak, így nincs regressziókockázat a még nem migrált képernyőkön, és mindegyik a saját ütemében migrálható. Ennek ára, hogy a két adatalak egy ideig egymás mellett él. A `gorog` (isGreek) oszlopnak nincs API-megfelelője — megmarad a kezdeti feltöltésből, de API-hívás soha nem írja felül (ld. nyitott modellhiány, `CONTEXT.md`).
+
+**Élő API-hívással ellenőrzött mezőalak-pontosítások** (`POST /api/v4/church {"id": 38, "response_length": "full"}`, ld. UI-terv szakasz):
+
+- **`plebania` nem strukturált.** Egyetlen HTML-entitásokkal (`&eacute;` stb.) és `\r\n`/`&nbsp;` sorképzéssel teli szabadszöveg-blokk, amely a plébános nevét, a plébániai iroda címét, telefonszámát, emailjét, nyitvatartását és az irodavezető nevét egybefolyva tartalmazza. **Nincs önálló `telefon` mező** — a szám csak ebből a szabadszövegből lenne kinyerhető (ld. Out of Scope: telefonszám-parsing).
+- **`gyontatas` csak bool.** Nem tartalmaz kísérő szöveget/megjegyzést; a miserend.hu webappon látható kiegészítő gyóntatás-szöveg más forrásból (feltehetően `plebania`/`leiras`) származik, nem külön API-mezőből.
+- **`email`, `links`, `adoraciok`, `accessibility`, `nyelvek` strukturáltak és megbízhatóan használhatók:** `email` sima string; `links` string-tömb (weboldal, közösségi média); `adoraciok` objektum-tömb (`kezdete`, `vege`, `fajta`, opcionális `info`); `accessibility` objektum (pl. `{"wheelchair": "no"}`); `nyelvek` a templom által általában támogatott nyelvek kódjai (pl. `["hu","en","ua"]`) — ez **templom-szintű**, nem mise-szintű adat.
+- **Az API `misek[].id` nem az előfordulás azonosítója.** Élő `NearbyMasses` válaszban ugyanaz az id (pl. `129807`) ismétlődik minden dátumon — ez a *mise* azonosítója. Ezért a `masses_cache` kulcsa szintetikus, ld. fent.
+- **Három dátumformátum él egymás mellett.** `Church.misek[].idopont` és `frissitve`: `"2026-09-10 17:00:00"`; `adoraciok[].kezdete`/`vege`: `"2026-09-10 00:00"` (másodperc nélkül); `NearbyMasses.misek[].start_date`: `"2026-09-10T17:00:00+02:00"` (ISO-8601, offsettel). A közös parser mindhármat kezeli, és **a fali órát olvassa ki, nem konvertál időzónát** — különben egy külföldön lévő telefonon a 17:00-s mise 15:00-ként jelenne meg.
+- **A `photos` elemei relatív útvonalak** (`/kepek/templomok/38/8266570111.jpg`), `https://miserend.hu` prefixet kell eléjük tenni. A régi `kep` oszlop ezzel szemben teljes URL-t tartalmazott.
+- **`kozossegek` objektumok listája, nem neveké** — `{"nev": …, "link": …}` elemekkel (élő példa: `id=2`). String-listaként kezelve az egész mező csendben elveszne.
+- **A `NearbyMasses` `limit` maximuma 100**, efölött a válasz `error: 1`. A `sum` mező jelzi az összes találatot; ha `sum > 100`, a csonkolást ebben a fázisban elfogadjuk.
+- **A `local_synced_at` csak API-válasz hatására íródik.** A kezdeti feltöltés sorai `null` értékkel maradnak, ahogy a mezőleírás előírja — a bulk import útvonala ezért szándékosan nem állítja.
+- **A mise-tételek (`Church.misek[].informacio`, `NearbyMasses.misek[].title`) nem tartalmaznak nyelv/típus mezőt.** A miserend.hu webappon látható per-mise nyelvzászlók (pl. ukrán zászló a "Szent Liturgia" mellett) a **legacy** SQLite/`Table`-végpont `misek` táblájának `nyelv`/`milyen` oszlopaiból származnak (`/apidocs`: "misék: „misek" — v4 és korábbi"), amelyeket az ADR-0002/ez a spec kifejezetten csak a kezdeti feltöltés egyszeri lépésében enged felhasználni, utána eldobandó — API-hívásból ez a mező sosem frissülne. Strukturált, API-hívásból frissülő nyelv/típus adat csak a v5-ben létezik (`nyelvek`, `ritus`, `tipusok` mezők), ami az ADR-0002-ben már hipotézisként, jövőbeli fázisra van halasztva. **Következmény:** ebben a fázisban a UI nem jelenít meg per-mise nyelv-zászlót/típus-badge-et, ld. UI-terv szakasz.
+
+### Kezdeti feltöltés (bootstrap import)
+
+1. Letöltés: változatlan mechanizmus (`DatabaseManager`, `miserend_v4.sqlite3`).
+2. A régi `templomok` sorokat oszloponként átalakítjuk az új `churches_cache` sémára (`tid`→`id`, `nev`→`nev`, `lng`/`lat`→`lon`/`lat`, `kep`→`photos: [kep]` ha nem üres, stb.); az API-only mezők (`egyhazmegye`, `plebania`, `leiras`, `accessibility`, `email`, `links`, `nyelvek`, `adoraciok`, `gyontatas`, `kozossegek`, `photos` a `kep`-en túl) `null`/üres értékkel indulnak.
+3. A régi `misek` visszatérési-szabályokat (`nap`, `periodus`, `datumtol`, `datumig`, `ido`) a jelenlegi `mass_filter.dart` logikájával konkrét dátum-idő előfordulásokká számoljuk, és ezeket írjuk a `masses_cache`-be `idopont`/`informacio` alakban. **Ez az egyetlen hely, ahol a régi visszatérési-szabály oszlopok felhasználásra kerülnek** — ezután eldobhatók/figyelmen kívül hagyhatók.
+4. **Az ablak 7 nap, nem 19** (explicit felhasználói döntés): ennyi fedi le a részletező „Ma" és „Most vasárnap" nézetét, ami a lap tetején látszik, és így az első indítás nem fizeti meg a teljes 19 napos kibontás árát. A 7 napon túli miserend a részletező megnyitásakor, `NearbyMasses`-hívásból érkezik.
+5. Az import kötegelve fut (250 templom / tranzakció), és kötegenként egy `tid IN (…)` kérdéssel olvassa a szabályokat — soronkénti írással a futásidőt a tranzakciók száma uralná. Szintetikus, valósághű terheléssel (4000 templom, 280k szabály → ~308k mise-sor) mérve ez in-memory SQLite-on ~1,9 s; telefonon, lemezre írva ennek többszöröse, egyszeri költségként, folyamatjelző mögött.
+6. Ez a lépés egyszeri; nincs újbóli SQLite-letöltés vagy -import az onboardingon túl. Egy `Preferences` flag (`CACHE_BOOTSTRAPPED`) őrzi, hogy lefutott-e.
+
+### Templom-részletező oldal API-hívásai
+
+- Megnyitáskor: `POST /api/v4/church {"id": <tid>, "response_length": "full"}` — a válasz minden mezője felülírja a `churches_cache` megfelelő sorát (a `gorog`/isGreek kivételével, ld. fent), `local_synced_at = most`.
+- Kiterjesztett miserendhez: `POST /api/v4/nearbymasses {"lat": <templom lat>, "lon": <templom lon>, "radius": 0.1, "from": <ma>, "until": <ma+19 nap>, "limit": 200}`, majd a válasz `misek[]` elemeit kliensoldalon `church.id == <tid>` szerint szűrjük (védelem arra az esetre, ha két templom nagyon közel van egymáshoz), és ez váltja fel a `masses_cache` adott templomhoz tartozó sorait.
+- Amíg a válasz nem érkezik meg (vagy hiba/offline van): a UI a `churches_cache`/`masses_cache` jelenlegi tartalmát mutatja (stale-while-revalidate) — nincs üres/loading-blokkoló képernyő a már látott templomoknál.
+- Hálózati hiba esetén: csendes fallback a gyorsítótárra, nincs felhasználó felé mutatott hibaüzenet (a `Report`-nál meglévő hibakezelési mintát *nem* kell itt megismételni, mert ez olvasás, nem írás).
+
+### Templom-részletező UI elrendezés
+
+A UX-egyeztetés (ld. `Further Notes`) alapján az új mezők megjelenítési sorrendje és interakciós szabályai fentről lefelé:
+
+1. **Kép(ek) fejléc** — `photos` tömb esetén `PageView`-alapú automatikus diavetítés (néhány másodpercenkénti váltás), kézi lapozás felülbírálja az automatikát, alul pöttyjelző; tap → teljes képernyős galéria. Egy vagy nulla fotónál a mai statikus fejléc-viselkedés marad.
+2. **Templom neve** — változatlan (`nev`/`ismertnev`).
+3. **Elérhetőség kártya** — a névsor alatt, a szentmise-kártya előtt: cím (tap → helyszín térképen, meglévő logika), email (tap → `mailto:`, `email` mezőből), weboldal/közösségi linkek (tap → böngésző, `links` mezőből), majd a `plebania` szabadszöveg-blokk (HTML-unescape + sortörés-megtartás, hasonlóan a mai `gettingThere` kezeléshez) olvasható, de **nem** tel:-linkelt formában (ld. Out of Scope).
+4. **"Frissítve" jelző** — apró, halvány metaadat-sor a `frissitve` mezőből, az elérhetőség kártya alján vagy a névsor mellett, nem önálló szekció.
+5. **Szentmisék** — a mai "Ma"/"Most vasárnap" kártya és napi kártyasáv marad; a `TimeChip`-re kattintva popup mutatja a mise teljes `informacio`/`title` szövegét (hasznos, ha a csempén csonkolva jelenik meg). **Nincs nyelv-zászló/típus-badge** a csempén (ld. mezőalak-pontosítás fent).
+6. **Szentségimádás** — önálló kártya a `adoraciok` tömbből (kezdete–vége, `fajta`, opcionális `info` kiírva).
+7. **Gyóntatás** — egyszerű igen/nem jelző csempe a `gyontatas` bool-ból, gazdag szöveg nélkül.
+8. **Térkép + elhelyezkedés** — a mai `_mapCard` térkép-előnézete változatlan.
+9. **Navigálás ide** — a mai "ÚTVONAL" gomb változatlan helyen.
+10. **Leírás és egyéb hosszú szöveges mezők** — újrahasznosítható, összecsukható csempe-komponens (`ExpandableInfoTile`: cím + 2-3 soros előnézet + "Tovább" kibontás) minden hosszabb szöveges mezőhöz külön csempeként: `leiras`, `miserend_megjegyzes` (ha nem üres), `kozossegek` (ha nem üres lista), `accessibility` (rövid, nem igényel accordion-t), `nyelvek` (templom-szintű, chipsor).
+
+### API-kliens réteg
+
+Nincs jelenleg strukturált JSON/HTTP réteg a projektben (csak egy `package:http` hívás a `Report`-nál). Ebben a fázisban egy minimális, kódgenerálás nélküli kliens készül (`package:http` + kézi `fromJson` map-elés az új cache-modellekhez), konzisztensen a projekt jelenlegi, könnyűsúlyú függőség-hozzáállásával (ld. ADR-0001 indoklása a `flutter_map` rasztercsempék mellett a vektoros alternatívával szemben). `dio`/`json_serializable` bevezetése külön döntés lenne, ha a következő fázisok indokolják.
+
+### Fájlok, amik érintettek
+
+- Új: gyorsítótár-séma és DAO (a mai `MiserendDatabase` helyébe/mellé), API-kliens (`Church`, `NearbyMasses` hívásokhoz), kezdeti feltöltés mapper.
+- Módosul: `lib/church_details/church_details_page.dart` (API-hívás indítása megnyitáskor, gyorsítótárból render), `lib/splash.dart` (a letöltés utáni lépés mostantól a kezdeti feltöltést is lefuttatja, nem csak fájlmásolást).
+- Változatlan: `lib/database/local_database.dart` (kedvencek, külön tábla), `lib/church_details/report_problem_popup.dart` (már API-t hív), Keresés/Térkép/Közeli képernyők kódja.
+
+## Testing Decisions
+
+- **Kezdeti feltöltés mapper**: unit tesztek a régi séma → új séma átalakításra, kiemelten a visszatérési-szabály → konkrét időpontok számításra (ugyanazok az edge case-ek, mint a mai `mass_filter.dart` mögött — évváltás, `datumtol`/`datumig` határok, `nap=0` minden nap eset).
+- **API-kliens**: unit tesztek rögzített (fixture) JSON válaszokkal a `Church` és `NearbyMasses` válasz → cache-modell leképezésre, beleértve a `NearbyMasses` válasz `church.id` szerinti kliensoldali szűrését.
+- **Templom-részletező oldal**: a betöltési logika a lapból kiemelve, önálló `ChurchScheduleLoader` osztályban él, és sima unit tesztek fedik (cache-ből olvasás napokra bontva, API-frissítés write-through-val, offline és üres válasz esetén a cache megtartása). **Ennek oka mérésből jött**: a `sqflite_common_ffi` külön izolátumban dolgozik, és `testWidgets` hamis-idő zónájában egy valódi adatbázis-művelet soha nem fejeződik be — a lapot közvetlenül, éles cache-sel pumpáló widget teszt végtelenségig függött. A lapra így csak könnyű widget teszt marad, hamis betöltővel: a gyorsítótár tartalma látszik-e, amíg az API-hívás fut, és lecserélődik-e, amikor megjön a válasz.
+- Ez lesz a projekt első tesztelt adatréteg-kódja (a mai `MiserendDatabase`/`DatabaseManager` egyáltalán nincs tesztelve) — a seam-eket úgy választjuk meg, hogy közvetlenül, hálózat nélkül tesztelhetők legyenek (fixture JSON-ök, nem élő API-hívás).
+
+## Out of Scope
+
+- **Keresés, Térkép, Közeli templomok/misék képernyők API-ra állítása.** Külön, következő ticketek — ezek a kezdeti feltöltésből (vagy alkalomszerű, más képernyőn történt frissítésből) származó adatot mutatják tovább ebben a fázisban.
+- **Autentikáció (Login/Signup/szerveroldali Favorites/Upload).** Hipotézisként rögzítve, ld. ADR-0002 — nincs tervezve ebben a fázisban.
+- **API v5 (RRULE-alapú miserend-modell).** Hipotézisként rögzítve, ld. ADR-0002 — a `misek`/`masses_cache` továbbra is materializált (konkrét) időpontokat tárol, nem visszatérési-szabályt.
+- **`Church` modell felekezet/aktív-státusz hiányossága.** Ez a migráció nem oldja meg (a v4 API sem adja vissza ezeket a mezőket) — nyitva marad, ld. `CONTEXT.md`.
+- **A kedvencek (Favorites) szerveroldali szinkronizálása.** A helyi kedvencek-tábla (`lib/database/local_database.dart`) változatlan marad; ez az autentikációs hipotézishez kötött, külön feladat.
+- **A `Table`/`Updated`/`Service_times` végpontok bármilyen felhasználása.** Nincs rájuk azonosított igény ebben a fázisban.
+- **Telefonszám kinyerése a `plebania` szabadszövegből és tel:-linkelése.** Explicit felhasználói döntés — a `plebania` mező parsing-ja (reguláris kifejezéssel vagy egyéb heurisztikával) törékeny lenne, és nincs rá strukturált API-mező; a blokk egyelőre csak olvasható szövegként jelenik meg.
+- **Szomszédos templomok lista a templom-részletező oldalon.** Explicit felhasználói döntés — ez a lista, ha később mégis bekerül, saját speckét/ADR-kiegészítést igényel (adatforrás: API-hívás vs. helyi gyorsítótár).
+- **Mise-soronkénti nyelv/típus jelzés (zászló, badge, info-popup extra tartalommal).** A v4 API nem ad erre strukturált mezőt (ld. mezőalak-pontosítás fent) — csak a v5-ben elérhető, ami már ma is hipotézisként halasztott az ADR-0002-ben.
+
+## Further Notes
+
+- Döntés-dokumentáció: [docs/adr/0002-api-v4-mint-elsodleges-adatforras.md](../adr/0002-api-v4-mint-elsodleges-adatforras.md)
+- Domain-modell megjegyzések (helyi gyorsítótár vs. API mint tekintélyelvű forrás; napi vs. kiterjesztett miserend): [CONTEXT.md](../../CONTEXT.md)
+- A hivatkozási referencia bármely jövőbeli funkció-specifikációhoz: [https://miserend.hu/apidocs](https://miserend.hu/apidocs) (élő, reflexióval generált API-dokumentáció) — ez elsőbbséget élvez a miserend.hu forráskód közvetlen olvasásával szemben.
+- Ehhez a munkához jelenleg nincs GitHub tracking issue; ha kell, külön hozható létre.
+- A `NearbyMasses` API-only megoldás mögötti konkrét mezőalakokat (pl. `church2721` mintapélda) élő API-hívásokkal ellenőriztük a grillezés során, nem csak a `/apidocs` dokumentáció alapján — a `/apidocs` néhol eltért az élő válasz alakjától (pl. a `Church` válasz ténylegesen minden `full` mezőt visszaad, amit a forráskód `toAPIArray`-je is jelez, még ha a dokumentáció összefoglalója ezt nem is sorolta fel teljesen).
+- A templom-részletező UI-elrendezés (ld. `Templom-részletező UI elrendezés` szakasz) tervezésekor a `plebania`/`gyontatas`/mise-mezők pontos alakját szintén élő `Church` (id=38, `response_length=full`) és `NearbyMasses` hívással, valamint a `/apidocs` "misék: „misek" — v4 és korábbi" szakaszával ellenőriztük, nem feltételezésből — ez indokolja, hogy a telefonszám-linkelés és a mise-soronkénti nyelvjelzés miért explicit Out of Scope ebben a fázisban.

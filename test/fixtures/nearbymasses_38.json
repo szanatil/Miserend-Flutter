@@ -1,0 +1,331 @@
+{
+  "error": 0,
+  "sum": 25,
+  "misek": [
+    {
+      "id": 129807,
+      "start_date": "2026-09-10T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-11T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-12T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129809,
+      "start_date": "2026-09-13T10:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129812,
+      "start_date": "2026-09-13T12:00:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129810,
+      "start_date": "2026-09-13T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-14T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-15T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-16T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-18T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-19T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129809,
+      "start_date": "2026-09-20T10:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129812,
+      "start_date": "2026-09-20T12:00:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129810,
+      "start_date": "2026-09-20T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-21T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-22T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-23T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-24T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-25T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-26T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129809,
+      "start_date": "2026-09-27T10:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129812,
+      "start_date": "2026-09-27T12:00:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129810,
+      "start_date": "2026-09-27T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-28T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    }
+  ]
+}

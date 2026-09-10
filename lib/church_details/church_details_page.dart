@@ -2,24 +2,30 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape.dart';
+import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
-import '../database/mass.dart';
-import '../database/miserend_database.dart';
-import '../mass_filter.dart';
 import '../widgets/time_chip.dart';
 import 'package:intl/intl.dart';
 import 'package:map_launcher/map_launcher.dart';
 
 class ChurchDetailsPage extends StatefulWidget {
-  const ChurchDetailsPage({super.key, required this.church});
+  const ChurchDetailsPage({
+    super.key,
+    required this.church,
+    this.loader,
+  });
 
   final Church church;
+
+  /// Injected by tests; the page builds its own otherwise.
+  final ChurchScheduleLoader? loader;
 
   @override
   State<ChurchDetailsPage> createState() => _ChurchDetailsPageState();
@@ -29,8 +35,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Collapsed-to-expanded height of the photo header.
   static const double _headerHeight = 200;
 
-
-  List<List<Mass>> masses = <List<Mass>>[];
+  List<List<CachedMass>> masses = <List<CachedMass>>[];
 
   List<String> nameOfDays = [
     "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap" 
@@ -193,7 +198,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             spacing: 4,
             children: List<Widget>.generate(masses[offset].length,
                     (index) {
-                  return TimeChip(time: masses[offset][index].time);
+                  return TimeChip(
+                      time: TimeOfDay.fromDateTime(masses[offset][index].time));
                 })),
       ),
     ) : Container();
@@ -225,7 +231,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                       runSpacing: 4,
                       children: List<Widget>.generate(masses[dayOffset].length,
                               (index) {
-                            return TimeChip(time: masses[dayOffset][index].time);
+                            return TimeChip(
+                                time: TimeOfDay.fromDateTime(
+                                    masses[dayOffset][index].time));
                           })),
                 ],
               ),
@@ -308,17 +316,27 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     });
   }
 
+  /// Renders whatever the cache holds, then again once the API has answered.
   Future<void> loadMasses() async {
-    MiserendDatabase db = await MiserendDatabase.create();
-    var allMasses = await db.getMassesForChurch(widget.church.id);
-    var massList = <List<Mass>>[];
-    for (int i = 0; i < 20; ++i)
-    {
-       massList.add(getMassesForDayFromNow(allMasses, i));
+    final loader = widget.loader ?? ChurchScheduleLoader();
+    final today = _today();
+
+    final cached = await loader.loadCached(widget.church.id, today);
+    if (!mounted) {
+      return;
     }
-    setState(() {
-      masses = massList;
-    });
+    setState(() => masses = cached);
+
+    final fresh = await loader.refresh(widget.church, today);
+    if (!mounted) {
+      return;
+    }
+    setState(() => masses = fresh);
+  }
+
+  DateTime _today() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
   }
 
   void _showReportPopup(){
@@ -334,12 +352,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-
-  List<Mass> getMassesForDayFromNow(List<Mass> allMasses, int offsetInDays)
-  {
-    return MassFilter.filterMassListForDay(
-        allMasses, DateTime.now().add(Duration(days: offsetInDays)));
-  }
 
   void _showLocationOnMap() async {
     final map = await _firstInstalledMap();

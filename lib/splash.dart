@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:miserend/database/cache/bootstrap_importer.dart';
+import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/database_manager.dart';
+import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/home/home.dart';
+import 'package:miserend/preferences.dart';
 
 class RouteSplash extends StatefulWidget {
   const RouteSplash({super.key});
@@ -12,6 +16,10 @@ class RouteSplash extends StatefulWidget {
 
 class _RouteSplashState extends State<RouteSplash> {
   bool shouldProceed = false;
+
+  /// Shown under the spinner while the one-time cache import runs, which takes
+  /// long enough to look like a hang without it.
+  String? _status;
 
   _checkDatabase() async {
     bool fileExists = await DatabaseManager.databaseExists;
@@ -64,11 +72,41 @@ class _RouteSplashState extends State<RouteSplash> {
     }
   }
 
-  _goToMainScreen() {
+  _goToMainScreen() async {
+    await _bootstrapCacheIfNeeded();
+    if (!mounted) {
+      return;
+    }
     Navigator.pushReplacement(
       this.context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
+  }
+
+  /// The API-backed cache starts out empty. It is filled once from the
+  /// downloaded database so that the church details page has something to show
+  /// before its first API call — and still has it when the phone is offline.
+  Future<void> _bootstrapCacheIfNeeded() async {
+    if (await Preferences.isCacheBootstrapped()) {
+      return;
+    }
+
+    setState(() => _status = 'Adatok előkészítése…');
+    try {
+      final legacy = await MiserendDatabase.create();
+      final cache = await CacheDatabase.create();
+      await BootstrapImporter.run(
+        legacy: legacy.db,
+        cache: cache,
+        from: DateTime.now(),
+      );
+      await Preferences.setCacheBootstrapped();
+    } catch (error) {
+      // Every screen still reads the downloaded database, so a failed import
+      // must not keep the user out of the app. The details page will fill the
+      // cache from the API instead, one church at a time.
+      debugPrint('Cache bootstrap failed: $error');
+    }
   }
 
   @override
@@ -79,10 +117,18 @@ class _RouteSplashState extends State<RouteSplash> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child:
-            CircularProgressIndicator(), //show splash screen here instead of progress indicator
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            if (_status != null) ...[
+              const SizedBox(height: 16),
+              Text(_status!),
+            ],
+          ],
+        ),
       ),
     );
   }

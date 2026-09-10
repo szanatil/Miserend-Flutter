@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "names": [
+    "Budai Ciszterci Szent Imre-templom"
+  ],
+  "nev": "Budai Ciszterci Szent Imre-templom",
+  "ismertnev": "",
+  "alternative_names": [],
+  "frissitve": "2022-08-30 00:00:00",
+  "orszag": "Magyarország",
+  "egyhazmegye": "Esztergom-Budapest",
+  "megye": "Budapest",
+  "varos": "Budapest XI. kerület",
+  "cim": "Villányi út 25",
+  "megkozelites": "",
+  "plebania": "Pl&eacute;b&aacute;nia:<br /> 1114 Budapest<br />Himfy u. 9.<br /> Telefon:&nbsp;+36 1 611 0107<br />Pl&eacute;b&aacute;nos:&nbsp;Szkaliczki &Ouml;rs O.Cist&nbsp;",
+  "leiras": "A Főv&aacute;rosban letelepedett ciszterci rend 1912-ben kezdi meg a tan&iacute;t&aacute;st a Szent Imre Gimn&aacute;ziumban. Az esztergomi főhat&oacute;s&aacute;g megb&iacute;zza a rendet a tab&aacute;ni pl&eacute;b&aacute;nia ter&uuml;let&eacute;ből kihas&iacute;tand&oacute; pl&eacute;b&aacute;nia megszervez&eacute;s&eacute;vel. Megalakul 1917-ben expositurak&eacute;nt a Kiseg&iacute;tő K&aacute;polna Egyes&uuml;let. Kelenf&ouml;ldi Nagyboldogasszony Pl&eacute;b&aacute;nia n&eacute;ven 1923-ban j&ouml;n l&eacute;tre a pl&eacute;b&aacute;nia. 1924-re elk&eacute;sz&uuml;l a Vill&aacute;nyi &uacute;t 3. sz. alatti telken a pl&eacute;b&aacute;niah&aacute;z &eacute;s az ideiglenes Nagyboldogasszony templom. Dr. W&auml;lder Gyula egyetemi tan&aacute;rt b&iacute;zz&aacute;k meg a v&eacute;gleges templom terv&eacute;nek elk&eacute;sz&iacute;t&eacute;s&eacute;vel &uacute;gy, hogy a templom bal oldal&aacute;n a gimn&aacute;zium, jobb oldal&aacute;n a rendh&aacute;z is helyet kapjon. A gimn&aacute;zium 1927&ndash;29-ben k&eacute;sz&uuml;l el. 1930-ban, a Szent Imre jubileumi &eacute;v alkalm&aacute;val a ker&uuml;letet Szentimrev&aacute;rosnak nevezik el, ami a pl&eacute;b&aacute;nia nev&eacute;be is beleker&uuml;l. Szent Imre tisztelet&eacute;re szenteli fel a barokk st&iacute;lus&uacute; templomot (921 m2) 1938-ban, Szent Imre napj&aacute;n Ser&eacute;di Jusztini&aacute;n hercegpr&iacute;m&aacute;s. A r&eacute;gi, kis templomot lebontj&aacute;k. A rendh&aacute;z fel&eacute;p&iacute;t&eacute;s&eacute;t a h&aacute;bor&uacute; meghi&uacute;s&iacute;tja. A nagy l&eacute;leksz&aacute;m&uacute; pl&eacute;b&aacute;nia lelkip&aacute;sztori munk&aacute;j&aacute;nak eredm&eacute;nyesebb v&eacute;gz&eacute;s&eacute;re 5 kiseg&iacute;t&ocirc; k&aacute;polnaigazgat&oacute;s&aacute;g alakult. 1950-t&ocirc;l az esztergomi főegyh&aacute;zmegye paps&aacute;ga l&aacute;tja el a pl&eacute;b&aacute;ni&aacute;t. A pl&eacute;b&aacute;nia&eacute;p&uuml;let a ciszterci rend tulajdona. A templomot 1972&ndash;75 k&ouml;z&ouml;tt belsőleg, 1976&ndash;79 k&ouml;z&ouml;tt k&uuml;lsőleg fel&uacute;j&iacute;tott&aacute;k. A pl&eacute;b&aacute;ni&aacute;t 1989-től ism&eacute;t a ciszterciek l&aacute;tj&aacute;k el. A templom 15 704. t&ouml;rzssz&aacute;m alatt a műeml&eacute;ki nyilv&aacute;ntart&aacute;sban szerepel.",
+  "accessibility": {
+    "wheelchair": "yes",
+    "wheelchair:description": "A templom bal oldali bejáratához vezet rámpa"
+  },
+  "email": "",
+  "links": [
+    "http://www.szentimre.hu"
+  ],
+  "misek": [
+    {
+      "idopont": "2026-09-10 18:00:00",
+      "informacio": "Római katolikus Szentmise"
+    }
+  ],
+  "nyelvek": [
+    "hu"
+  ],
+  "miserend_megjegyzes": "A templom akad&aacute;lymentes&iacute;tett, mozg&aacute;skorl&aacute;tozottak is egk&ouml;zel&iacute;thetik<br /> <br /> Szents&eacute;gim&aacute;d&aacute;s <br /> minden p&eacute;nteken 08:00-17:45 k&ouml;z&ouml;tt<br />minden cs&uuml;t&ouml;rt&ouml;k&ouml;n is van 18:30-19:00-ig",
+  "adoraciok": [
+    {
+      "kezdete": "2026-09-10 18:30",
+      "vege": "2026-09-10 18:50",
+      "fajta": "csendes"
+    },
+    {
+      "kezdete": "2026-09-11 08:00",
+      "vege": "2026-09-11 17:45",
+      "fajta": "csendes"
+    },
+    {
+      "kezdete": "2026-09-17 18:30",
+      "vege": "2026-09-17 18:50",
+      "fajta": "csendes"
+    },
+    {
+      "kezdete": "2026-09-18 08:00",
+      "vege": "2026-09-18 17:45",
+      "fajta": "csendes"
+    },
+    {
+      "kezdete": "2026-09-24 18:30",
+      "vege": "2026-09-24 18:50",
+      "fajta": "csendes"
+    }
+  ],
+  "gyontatas": false,
+  "kozossegek": [
+    {
+      "nev": "Szent Imre Antióchia Közösség",
+      "link": "https://kozossegek.hu/kozosseg/szent-imre-antiochia-kozosseg-140"
+    }
+  ],
+  "koordinatak": [
+    47.4788595,
+    19.0422691
+  ],
+  "lat": 47.4788595,
+  "lon": 19.0422691,
+  "tavolsag": 0,
+  "photos": [
+    "/kepek/templomok/2/m91.jpg",
+    "/kepek/templomok/2/5255551110.jpg",
+    "/kepek/templomok/2/25.jpg",
+    "/kepek/templomok/2/258961524.jpg",
+    "/kepek/templomok/2/5896505229.jpg",
+    "/kepek/templomok/2/2420316864.jpg",
+    "/kepek/templomok/2/9671870651.jpg"
+  ],
+  "error": 0
+}
