@@ -39,6 +39,9 @@ dependencies:
   intl: ^0.20.2
   html_unescape: ^2.0.0
   map_launcher: ^3.5.0
+  # Opens mailto: addresses and the church's own links from the details page.
+  # map_launcher only covers map applications.
+  url_launcher: ^6.3.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -47,6 +50,9 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
+  # Renders the liturgical-language flags, which ship as SVG. Flutter has no
+  # native SVG support and the set uses gradients, <use> and clipPath.
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +74,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/flags/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

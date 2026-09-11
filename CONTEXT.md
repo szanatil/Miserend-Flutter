@@ -31,3 +31,19 @@ _Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkoz
 **Kiterjesztett miserend (extended schedule)**:
 A templom-részletező oldal több napra (ma / következő vasárnap / 19 nap) kiterjedő miselistája egy adott templomhoz, szemben a napi miserenddel. Egyetlen v4 végpont sem adja ezt vissza közvetlenül, egy adott templomra szűkítve — előállítása a `NearbyMasses` végpont kombinálásával történik (ld. `docs/adr/0002-*`, `docs/spec/0003-*`).
 _Avoid_: "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
+
+**Gyóntatás (confession)**:
+Nem miserend-adat és nem nyitvatartás, hanem egy **pillanatnyi állapot**: a miserend.hu gyóntatószékekbe szerelt fizikai kapcsolókat üzemeltet, amelyek LoRaWAN-on jelentik, hogy éppen van-e gyónási lehetőség (`POST /api/v4/lorawan`, tokenhez kötött, a `/apidocs` szerint kísérleti). A v4 `Church` válasz `gyontatas` mezője ennek a kapcsolónak az **aktuális** állása. **Ellenőrizve**: a mező puszta bool, és nem különbözteti meg a *kikapcsolt kapcsolót* a *nem létező kapcsolótól* — mindkettő `false`, miközben a webapp harmadik állapotként külön kiírja, hogy "Ezen a misézőhelyen nincs gyóntatást jelző kapcsoló". Élő mintavétel (2026-09-11, id 1–400): 338 válaszból 338 `false`. Következmény: a kliens csak a `true` esetet jeleníti meg, és csak friss API-válaszból — gyorsítótárazott értékből soha (ld. `docs/adr/0002-*`).
+_Avoid_: "gyóntatási rend" / "gyóntatási időpontok" (azt sugallja, hogy menetrend, pedig egy kapcsoló állása); "van-e gyóntatás" (a `false` erre nem válasz).
+
+**Frissítve (`frissitve`) vs. helyi szinkron (`local_synced_at`)**:
+Két különböző tény, amelyeket könnyű összekeverni. A **frissítve** azt mondja meg, mikor szerkesztették utoljára az adatot **a miserend.hu oldalán** — ez a felhasználónak mutatott érték. A **helyi szinkron** azt, mikor beszélt **ez a készülék** utoljára az API-val az adott templomról (`null`, ha a sor csak a kezdeti feltöltésből származik) — ez belső, diagnosztikai mező, a UI nem mutatja.
+_Avoid_: "frissítve" önmagában, ha nem egyértelmű, melyik oldalról van szó.
+
+**Liturgikus nyelv jelölése (`nyelvek`)**:
+Annak a nyelvnek a jelölése, amelyen a templomban misézni szoktak — **templom-szintű** adat, nem mise-szintű (a v4 API az egyes misékhez nem ad nyelvet, ld. `docs/spec/0003-*`). A mező **saját, zárt szókincset** használ, amely **se nem ISO 639 nyelvkód, se nem ISO 3166 országkód**, hanem a miserend.hu zászlókészletének kódja: az értékkészlet pontosan az `assets/flags/` fájlnevekkel egyezik. Ahol a nyelvhez nincs ország, ott saját jelkép áll: **`va`** (Vatikán zászlaja) = **latin**, **`cu`** (zöld mezőben arany hármas kereszt) = **ószláv**, **`rue`** (ruszin zászló) = **ruszin**. Ahol van ország, ott is az országkód áll a nyelv helyett: **`ua`** = ukrán (nem `uk`), **`gr`** = görög (nem `el`), **`si`** = szlovén (nem `sl`), **`tl`** = tagalog. **Ellenőrizve**: 500 templomot lekérdezve 12 kód fordul elő (`hu, va, en, de, fr, es, it, pl, sk, hr, ua, tl`), és mindegyikhez létezik zászló. **Csapda**: ISO 639-ként olvasva a kódok némán elromlanak — az `la` ebben a készletben *Laosz*, nem a latin.
+_Avoid_: "nyelvkód" önmagában (azt sugallja, hogy ISO 639); "országkód" (a `va`/`cu`/`rue` nem ország).
+
+**Szentségimádás (adoration)**:
+Dátumozott időablakok listája (`kezdete`/`vege`/`fajta`/opcionális `info`), nem visszatérési szabály és nem mise. Ugyanarra a napra **átfedő** bejegyzések is érkezhetnek (pl. egy `00:00–23:59` és egy `09:00–18:00`); ezek nem hibák, és nem vonhatók össze, mert a teljes napos ablak jelenthet valódi örökimádást is.
+_Avoid_: "adoráció-rend" / "szentségimádás miserendje" (nem menetrendi adat, és nem a `misek` mezőből jön).

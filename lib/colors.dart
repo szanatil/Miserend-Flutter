@@ -16,4 +16,8 @@ class CustomColors {
       900: Color(0xFF5C27AE),
     },
   );
+
+  /// The accent behind mass times and the call-to-action links. It used to be
+  /// written out at each use site, which meant two copies drifting apart.
+  static const Color accent = Color.fromARGB(255, 255, 140, 0);
 }

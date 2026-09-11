@@ -1,18 +1,27 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:html_unescape/html_unescape.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
+import 'package:miserend/church_details/widgets/adoration_card.dart';
+import 'package:miserend/church_details/widgets/church_info_tiles.dart';
+import 'package:miserend/church_details/widgets/confession_tile.dart';
+import 'package:miserend/church_details/widgets/contact_card.dart';
+import 'package:miserend/church_details/widgets/day_label.dart';
+import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
+import 'package:miserend/church_details/widgets/mass_info.dart';
+import 'package:miserend/church_details/widgets/photo_header.dart';
+import 'package:miserend/church_details/widgets/section_card.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
+import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
-import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/miserend_text.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/time_chip.dart';
-import 'package:intl/intl.dart';
 import 'package:map_launcher/map_launcher.dart';
 
 class ChurchDetailsPage extends StatefulWidget {
@@ -22,6 +31,9 @@ class ChurchDetailsPage extends StatefulWidget {
     this.loader,
   });
 
+  /// The row the calling list already had. It seeds the name and the map while
+  /// the cache read is in flight; everything the page renders afterwards comes
+  /// from [ChurchDetails].
   final Church church;
 
   /// Injected by tests; the page builds its own otherwise.
@@ -35,13 +47,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Collapsed-to-expanded height of the photo header.
   static const double _headerHeight = 200;
 
-  List<List<CachedMass>> masses = <List<CachedMass>>[];
-
-  List<String> nameOfDays = [
-    "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap" 
-  ];
-  
-  var dateFormat = DateFormat('yyyy. MM. dd.');
+  ChurchPageData? _data;
+  late final DateTime _today = _midnightToday();
 
   var isFavorite = false;
 
@@ -49,12 +56,18 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   void initState() {
     super.initState();
     loadMasses();
-    isFavorite = Provider.of<FavoritesService>(context, listen: false).isFavorite(widget.church.id);
+    isFavorite =
+        Provider.of<FavoritesService>(context, listen: false).isFavorite(widget.church.id);
   }
+
+  ChurchDetails? get _details => _data?.church;
+
+  List<List<CachedMass>> get _masses => _data?.massesByDay ?? const [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF2F2F2),
       body: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return <Widget>[
@@ -63,83 +76,105 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  background: widget.church.imageUrl?.isNotEmpty ?? false
-                      ? FadeInImage.assetNetwork(
-                    image: widget.church.imageUrl ?? "",
-                    fit: BoxFit.cover,
-                    placeholder: 'assets/images/church_blurred.png',
-                    imageErrorBuilder: _errorBuilder,
-                    imageCacheHeight: _decodeHeight(context),
-                    placeholderCacheHeight: _decodeHeight(context),
-                  )
-                      : Image.asset('assets/images/church_blurred.png',
-                      fit: BoxFit.cover, cacheHeight: _decodeHeight(context)),
+                centerTitle: true,
+                background: ChurchPhotoHeader(
+                  photos: _photos(),
+                  height: _headerHeight,
+                  heroPrefix: 'church-${widget.church.id}-photo',
+                ),
               ),
             ),
           ];
         },
         body: ListView(
+          padding: const EdgeInsets.only(bottom: 24),
           children: [
             _churchName(),
-            Container(height: 1, color: Colors.black12,),
             _actionButtons(),
-            Container(
-              color: Colors.black12,
-              child: Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      _massCard()
-                    ],
-                  ))
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                color: Colors.black12,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                      children: List<Widget>.generate(max(masses.length - 1, 0),
-                              (index) {
-                            return _getMassListCardForDay(index + 1);
-                          })
-                  ),
-                ),
-              ),
-            ),
-            _mapCard()
+            _massCard(),
+            _dayStrip(),
+            ..._adorationSection(),
+            if (_data?.confessionLive ?? false) const ConfessionTile(),
+            _mapCard(),
+            ..._contactSection(),
+            ..._infoTiles(),
+            _updatedFooter(),
           ],
         ),
       ),
     );
   }
 
-  Widget _churchName()
-  {
+  /// The cached photo list, falling back to the single image the calling list
+  /// already had so the header is not blank on the very first frame.
+  List<String> _photos() {
+    final photos = _details?.photos ?? const <String>[];
+    if (photos.isNotEmpty) {
+      return photos;
+    }
+    final legacy = widget.church.imageUrl;
+    return (legacy != null && legacy.isNotEmpty) ? [legacy] : const [];
+  }
+
+  Widget _churchName() {
+    final name = _details?.name ?? widget.church.name ?? "";
+    final commonName = _details?.commonName ?? widget.church.commonName ?? "";
+    final address = _address();
+
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-              widget.church.name ?? "",
-              style: Theme.of(context).textTheme.titleLarge
-          ),
-          Text(
-              widget.church.commonName ?? "",
-              style: Theme.of(context).textTheme.bodyMedium?.apply(color: Colors.black45),
-          ),
+          Text(name, style: Theme.of(context).textTheme.titleLarge),
+          if (commonName.isNotEmpty)
+            Text(
+              commonName,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.apply(color: Colors.black45),
+            ),
+          if (address.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: InkWell(
+                onTap: _showLocationOnMap,
+                child: Row(
+                  children: [
+                    const Icon(Icons.place_outlined,
+                        size: 18, color: Colors.black54),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        address,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.apply(color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _actionButtons()
-  {
+  String _address() {
+    final city = _details?.city ?? widget.church.city ?? '';
+    final street = _details?.street ?? widget.church.street ?? '';
+    return [city, street]
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .join(', ');
+  }
+
+  Widget _actionButtons() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 24,
@@ -149,7 +184,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             child: Column(
               spacing: 8,
               children: [
-                Icon(isFavorite ? Icons.favorite : Icons.favorite_border, size: 32, color: Colors.black54),
+                Icon(isFavorite ? Icons.favorite : Icons.favorite_border,
+                    size: 32, color: Colors.black54),
                 Text("Kedvencekhez")
               ],
             ),
@@ -169,129 +205,135 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-  Widget _massCard()
-  {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 8,
-          children: [
-            Text("Ma", style: Theme.of(context).textTheme.titleLarge),
-            _massListWidgetForDay(0),
-            Text("Most vasárnap", style: Theme.of(context).textTheme.titleLarge),
-            _massListWidgetForDay(DateTime.sunday - DateTime.now().weekday),
+  Widget _massCard() {
+    final note = MiserendText.normalize(_details?.massScheduleNote);
+    final sundayOffset = DateTime.sunday - DateTime.now().weekday;
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text("Ma", style: Theme.of(context).textTheme.titleLarge),
+          _massListWidgetForDay(0),
+          // On a Sunday the two headings would name the same day, and the
+          // section would repeat itself.
+          if (sundayOffset != 0) ...[
+            const SizedBox(height: 8),
+            Text("Most vasárnap",
+                style: Theme.of(context).textTheme.titleLarge),
+            _massListWidgetForDay(sundayOffset),
           ],
-        ),
+          if (note.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ExpandableInfoTile(
+              title: 'Megjegyzés a miserendhez',
+              text: note,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.apply(color: Colors.black54),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _massListWidgetForDay(int offset)
-  {
-    var hasAny = masses.length > offset;
-    return hasAny ? Container(
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Wrap(
-            spacing: 4,
-            children: List<Widget>.generate(masses[offset].length,
-                    (index) {
-                  return TimeChip(
-                      time: TimeOfDay.fromDateTime(masses[offset][index].time));
-                })),
+  /// The chips for one day, or a sentence saying which kind of nothing this is.
+  ///
+  /// An empty day means "no mass" only once a response has actually arrived;
+  /// before that it means "not downloaded yet", and on a mass-times app the two
+  /// must not look alike.
+  Widget _massListWidgetForDay(int offset) {
+    final masses = offset >= 0 && offset < _masses.length
+        ? _masses[offset]
+        : const <CachedMass>[];
+
+    if (masses.isEmpty) {
+      final fresh = _data?.scheduleIsFresh ?? false;
+      final String text;
+      if (fresh) {
+        text = 'Ezen a napon nincs mise';
+      } else {
+        text = offset == 0
+            ? 'Nincs adat a mai miserendről'
+            : 'Nincs adat erről a napról';
+      }
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Text(
+          text,
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.apply(color: Colors.black45),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [for (final mass in masses) _timeChip(mass)],
       ),
-    ) : Container();
-  }
-  
-  Widget _getMassListCardForDay(int dayOffset)
-  {
-    var hasAny = masses.length > dayOffset;
-    if (!hasAny){
-      return Container();
-    }
-    else
-    {
-      var dateTime = DateTime.now().add(Duration(days: dayOffset));
-      var nameOfDay = dayOffset == 1 ? "Holnap" : nameOfDays[dateTime.weekday - 1];
-        return Card(
-          child: SizedBox(
-            width: 160,
-            height: 160,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(nameOfDay, style: Theme.of(context).textTheme.titleLarge),
-                  Text(dateFormat.format(dateTime)),
-                  Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: List<Widget>.generate(masses[dayOffset].length,
-                              (index) {
-                            return TimeChip(
-                                time: TimeOfDay.fromDateTime(
-                                    masses[dayOffset][index].time));
-                          })),
-                ],
-              ),
-            ),
-          ),
-        );
-    }
+    );
   }
 
-  Widget _mapCard()
-  {
-    return Container(
-      color: Colors.black12,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Card(
+  TimeChip _timeChip(CachedMass mass) {
+    final meaningful = MassInfo.isMeaningful(mass.info);
+    return TimeChip(
+      time: TimeOfDay.fromDateTime(mass.time),
+      hasInfo: meaningful,
+      onTap: meaningful ? () => MassInfo.show(context, mass) : null,
+    );
+  }
+
+  /// One card per day that actually has masses. Days we know nothing about get
+  /// no card at all, so the strip never shows an empty box that reads as "no
+  /// mass held" — the bootstrap import only fills seven days, while the strip
+  /// used to draw nineteen.
+  Widget _dayStrip() {
+    final days = <int>[
+      for (var offset = 1; offset < _masses.length; offset++)
+        if (_masses[offset].isNotEmpty) offset
+    ];
+    if (days.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Row(
+        children: [for (final offset in days) _getMassListCardForDay(offset)],
+      ),
+    );
+  }
+
+  Widget _getMassListCardForDay(int dayOffset) {
+    final dateTime = _today.add(Duration(days: dayOffset));
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: SizedBox(
+        width: 160,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child:
-                Text("Megközelítés",
-                    style: Theme.of(context).textTheme.titleLarge),
-              ),
-              GestureDetector(
-                onTap: _showLocationOnMap,
-                child: SizedBox(
-                  height: 200,
-                  child: MiserendMap(
-                    interactive: false,
-                    initialCenter: widget.church.location,
-                    initialZoom: 17,
-                    compactAttribution: true,
-                    apiKey: const String.fromEnvironment('CARTO_API_KEY'),
-                    markers: [
-                      MiserendMapMarker(
-                        id: widget.church.id,
-                        point: widget.church.location,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: widget.church.gettingThere != null,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(HtmlUnescape().convert(widget.church.gettingThere ?? "")),
-                ),
-              ),
-              Container(height: 1, color: Colors.black12,),
-              GestureDetector(
-                onTap: _showDirectionsOnMap,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text("ÚTVONAL", style: Theme.of(context).textTheme.titleMedium!.apply(color: Color.fromARGB(255, 255, 140, 0))),
-                ),
+              Text(DayLabel.forDate(dateTime, _today),
+                  style: Theme.of(context).textTheme.titleLarge),
+              Text(DayLabel.date.format(dateTime)),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (final mass in _masses[dayOffset]) _timeChip(mass)
+                ],
               ),
             ],
           ),
@@ -300,14 +342,133 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-  Widget _errorBuilder(
-      BuildContext context, Object error, StackTrace? stackTrace) {
-    return Image.asset('assets/images/church_blurred.png',
-        fit: BoxFit.cover, cacheHeight: _decodeHeight(context));
+  List<Widget> _adorationSection() {
+    final adorations = _details?.adorations ?? const [];
+    if (adorations.isEmpty) {
+      return const [];
+    }
+    return [AdorationCard(adorations: adorations, today: _today)];
   }
 
-  int _decodeHeight(BuildContext context) =>
-      PhotoDecode.forSlot(context, _headerHeight);
+  List<Widget> _contactSection() {
+    final details = _details;
+    if (details == null) {
+      return const [];
+    }
+    if (!ContactCard.hasContent(
+      email: details.email,
+      links: details.links,
+      parish: details.parish,
+    )) {
+      return const [];
+    }
+    return [
+      ContactCard(
+        email: details.email,
+        links: details.links,
+        parish: details.parish,
+      )
+    ];
+  }
+
+  List<Widget> _infoTiles() {
+    final details = _details;
+    if (details == null) {
+      return const [];
+    }
+    final description = MiserendText.normalize(details.description);
+    return [
+      if (description.isNotEmpty)
+        SectionCard(
+          title: 'Leírás',
+          child: ExpandableInfoTile(text: description),
+        ),
+      if (AccessibilityTile.hasContent(details.accessibility))
+        AccessibilityTile(accessibility: details.accessibility!),
+      if (LanguagesTile.hasContent(details.languages))
+        LanguagesTile(languages: details.languages),
+      if (CommunitiesTile.hasContent(details.communities))
+        CommunitiesTile(communities: details.communities),
+    ];
+  }
+
+  /// When miserend.hu last edited the record — not when this phone last spoke
+  /// to the API, which is `local_synced_at` and stays internal.
+  Widget _updatedFooter() {
+    final updatedAt = _details?.updatedAt;
+    if (updatedAt == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      child: Text(
+        'Frissítve: ${DayLabel.date.format(updatedAt)}',
+        style: Theme.of(context)
+            .textTheme
+            .bodySmall
+            ?.apply(color: Colors.black38),
+      ),
+    );
+  }
+
+  Widget _mapCard() {
+    final gettingThere =
+        MiserendText.normalize(_details?.gettingThere ?? widget.church.gettingThere);
+
+    return SectionCard(
+      title: "Megközelítés",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GestureDetector(
+            onTap: _showLocationOnMap,
+            child: SizedBox(
+              height: 200,
+              child: MiserendMap(
+                interactive: false,
+                initialCenter: _location(),
+                initialZoom: 17,
+                compactAttribution: true,
+                apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+                markers: [
+                  MiserendMapMarker(
+                    id: widget.church.id,
+                    point: _location(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (gettingThere.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ExpandableInfoTile(text: gettingThere),
+            ),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Divider(height: 1),
+          ),
+          GestureDetector(
+            onTap: _showDirectionsOnMap,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text("ÚTVONAL",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium!
+                      .apply(color: CustomColors.accent)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  LatLng _location() {
+    final lat = _details?.lat ?? widget.church.lat;
+    final lon = _details?.lon ?? widget.church.lon;
+    return (lat != null && lon != null) ? LatLng(lat, lon) : widget.church.location;
+  }
 
   Future<void> _toggleFavorites() async {
     Provider.of<FavoritesService>(context, listen: false).toggle(widget.church.id);
@@ -319,49 +480,48 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Renders whatever the cache holds, then again once the API has answered.
   Future<void> loadMasses() async {
     final loader = widget.loader ?? ChurchScheduleLoader();
-    final today = _today();
 
-    final cached = await loader.loadCached(widget.church.id, today);
+    final cached = await loader.loadCached(widget.church.id, _today);
     if (!mounted) {
       return;
     }
-    setState(() => masses = cached);
+    setState(() => _data = cached);
 
-    final fresh = await loader.refresh(widget.church, today);
+    final fresh = await loader.refresh(widget.church, _today);
     if (!mounted) {
       return;
     }
-    setState(() => masses = fresh);
+    setState(() => _data = fresh);
   }
 
-  DateTime _today() {
+  DateTime _midnightToday() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
   }
 
-  void _showReportPopup(){
+  void _showReportPopup() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
             content: StatefulBuilder(// You need this, notice the parameters below:
                 builder: (BuildContext context, StateSetter setState) {
-                  return ReportPopup(church: widget.church);
-                }));
+          return ReportPopup(church: widget.church);
+        }));
       },
     );
   }
-
 
   void _showLocationOnMap() async {
     final map = await _firstInstalledMap();
     if (map == null) {
       return;
     }
+    final location = _location();
     await map.showMarker(
-      coords: Coords(widget.church.lat!, widget.church.lon!),
-      title: widget.church.name ?? "",
-      description: widget.church.commonName ?? "",
+      coords: Coords(location.latitude, location.longitude),
+      title: _details?.name ?? widget.church.name ?? "",
+      description: _details?.commonName ?? widget.church.commonName ?? "",
     );
   }
 
@@ -370,10 +530,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     if (map == null) {
       return;
     }
+    final location = _location();
     await map.showDirections(
-      destination: Coords(widget.church.lat!, widget.church.lon!),
-      destinationTitle: widget.church.name ?? ""
-    );
+        destination: Coords(location.latitude, location.longitude),
+        destinationTitle: _details?.name ?? widget.church.name ?? "");
   }
 
   /// Null when the device has no map application at all, which is the case on
