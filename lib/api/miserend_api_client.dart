@@ -2,14 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/community.dart';
 
 /// Reads the miserend.hu v4 JSON API. Every failure — offline, HTTP error,
-/// error flag in the payload — is reported as a null/empty result, because the
-/// callers fall back on the cache and show no error of their own.
+/// error flag in the payload — is reported as a null/empty result, because
+/// most callers fall back on the cache and show no error of their own.
+/// [fetchNearbyMasses] is the exception: see there.
 class MiserendApiClient {
   static const String baseUrl = 'https://miserend.hu';
 
@@ -21,6 +23,10 @@ class MiserendApiClient {
   /// The v4 API has no endpoint for one church's schedule over several days,
   /// so it is derived from the nearby-masses search instead.
   static const double _selfRadiusKm = 0.1;
+
+  /// The widest radius the API accepts. The response comes back nearest
+  /// first, so the limit, not the radius, is what bounds it in practice.
+  static const int _nearbyRadiusKm = 200;
 
   final http.Client _client;
 
@@ -71,6 +77,53 @@ class MiserendApiClient {
     return occurrences;
   }
 
+  /// Everything the API holds within [_nearbyRadiusKm] of the position,
+  /// starting between [from] and [until], nearest first — masses and other
+  /// liturgical events alike.
+  ///
+  /// Unlike the other calls, a failure is null rather than an empty list: the
+  /// nearest masses have no cache to fall back on, and "no mass nearby" and
+  /// "could not ask" need different messages.
+  Future<List<NearbyMassesItem>?> fetchNearbyMasses({
+    required double lat,
+    required double lon,
+    required DateTime from,
+    required DateTime until,
+  }) async {
+    final body = await _post('nearbymasses', {
+      'lat': lat,
+      'lon': lon,
+      'radius': _nearbyRadiusKm,
+      'from': _formatDateTime(from),
+      'until': _formatDateTime(until),
+      'limit': _massLimit,
+    });
+    if (body == null) return null;
+
+    final items = body['misek'];
+    if (items is! List) return null;
+
+    final parsed = <NearbyMassesItem>[];
+    for (final item in items.whereType<Map>()) {
+      final church = item['church'];
+      if (church is! Map || church['id'] is! int) continue;
+      final start = parseApiDateTime(_text(item['start_date']));
+      final distance = _number(item['distance_km']);
+      if (start == null || distance == null) continue;
+      parsed.add(NearbyMassesItem(
+        churchId: church['id'] as int,
+        churchName: _text(church['name']),
+        city: _text(church['city']),
+        lat: _number(church['lat']),
+        lon: _number(church['lon']),
+        distanceKm: distance,
+        start: start,
+        title: _text(item['title']),
+      ));
+    }
+    return parsed;
+  }
+
   int? _churchIdOf(Map item) {
     final church = item['church'];
     return church is Map ? church['id'] as int? : null;
@@ -80,6 +133,12 @@ class MiserendApiClient {
       '${date.year.toString().padLeft(4, '0')}-'
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
+
+  /// The API accepts a time of day in `from` and `until` and filters on it.
+  String _formatDateTime(DateTime time) =>
+      '${_formatDate(time)} '
+      '${time.hour.toString().padLeft(2, '0')}:'
+      '${time.minute.toString().padLeft(2, '0')}';
 
   Future<Map<String, dynamic>?> _post(
       String endpoint, Map<String, dynamic> payload) async {

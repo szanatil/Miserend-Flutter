@@ -1,11 +1,8 @@
 import 'package:miserend/database/mass.dart';
-import 'package:miserend/database/mass_with_church.dart';
 
 class MassFilter {
 
   static List<Mass> filterMassListForDay(List<Mass> masses, DateTime day) => masses.where((m) => isMassOnDay(m, day)).toList();
-
-  static List<MassWithChurch> filterMassWithChurchListForDay(List<MassWithChurch> masses, DateTime day) => masses.where((m) => isMassOnDay(m.mass, day)).toList();
 
   /// SQL predicate equivalent to [isMassOnDay], for the mass table aliased as
   /// [alias]. The list pages only ever render one day, so pushing this into

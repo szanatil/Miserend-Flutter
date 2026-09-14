@@ -57,9 +57,10 @@ No incremental sync — a "database update" is always a full-file replacement.
 
 **File:** `lib/home/masses/near_masses_page.dart`
 
-- Requests device location, then queries the **500 closest individual Mass records** to the user (`getCloseMasses`, again squared-distance ordering, hard `LIMIT 500`).
-- Filters that list down to masses actually happening **today** (`MassFilter.filterMassWithChurchListForDay`).
-- Renders each as a `MassListItem`: church thumbnail, church name, Mass time (24h format) — no favorite toggle, no Mass detail drill-down (tapping does nothing; there's no `onTap`).
+- Shows the **nearest masses** (see `CONTEXT.md`, spec 0004): live from API v4 `nearbymasses` around the user's position (a last known position older than 5 minutes is replaced by a fresh fix with a timeout), no cache or legacy-export fallback.
+- `selectNearestMasses` (`nearest_masses.dart`) picks at most 10 nearest churches, one row each with its earliest mass still reachable (started ≤ 10 minutes ago, up to tomorrow 00:00), masses only, in time order.
+- Refetches on tab switch, app resume, pull-to-refresh and after midnight; re-selects from the last raw response every minute while visible.
+- Loading, location-error, API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
 
 ## Map tab
 

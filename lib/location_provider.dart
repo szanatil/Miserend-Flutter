@@ -1,7 +1,20 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 
 class LocationProvider {
-  static Future<Position> getPosition() async {
+  /// The device position. By default the last known position is taken at any
+  /// age, and a fresh fix is only asked for when there is none.
+  ///
+  /// A caller that must not work from an old position — one taken in another
+  /// town, say — passes [maxLastKnownAge]: an older last known position is
+  /// then ignored, and the fresh fix gives up after [freshFixTimeout] with a
+  /// [TimeoutException]. The other callers keep the old behaviour, because a
+  /// fresh fix can take long enough to make the map or the church list slower.
+  static Future<Position> getPosition({
+    Duration? maxLastKnownAge,
+    Duration? freshFixTimeout,
+  }) async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -34,8 +47,25 @@ class LocationProvider {
     }
 
     var lastKnown = await Geolocator.getLastKnownPosition(forceAndroidLocationManager: true);
+    if (lastKnown != null &&
+        (maxLastKnownAge == null ||
+            isRecentEnough(lastKnown, DateTime.now(), maxLastKnownAge))) {
+      return lastKnown;
+    }
     // When we reach here, permissions are granted and we can
     // continue accessing the position of the device.
-    return lastKnown ?? await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best, forceAndroidLocationManager: true);
+    final fresh = Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+        forceAndroidLocationManager: true);
+    return freshFixTimeout == null
+        ? await fresh
+        : await fresh.timeout(freshFixTimeout);
+  }
+
+  /// Whether [lastKnown] is no older than [maxAge] at [now].
+  static bool isRecentEnough(
+      Position? lastKnown, DateTime now, Duration maxAge) {
+    if (lastKnown == null) return false;
+    return now.difference(lastKnown.timestamp) <= maxAge;
   }
 }

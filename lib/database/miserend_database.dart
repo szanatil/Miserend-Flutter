@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/mass.dart';
-import 'package:miserend/database/mass_with_church.dart';
 import 'package:miserend/database/church_with_masses.dart';
 import 'package:miserend/mass_filter.dart';
 import 'package:path/path.dart';
@@ -106,19 +105,6 @@ class MiserendDatabase {
         'SELECT *,((lng-($longitude))*(lng-($longitude)) + (lat-($latitude))*(lat-($latitude))) AS len FROM templomok WHERE lng != 0 AND lat != 0 ORDER BY len ASC';
     final List<Map<String, dynamic>> maps = await db.rawQuery(query);
     return _mapToChurchList(maps);
-  }
-
-  /// The 500 nearest masses held on [day]. The day filter has to run before
-  /// the limit, otherwise the limit is spent on masses that are not held
-  /// today and the page ends up nearly empty.
-  Future<List<MassWithChurch>> getCloseMasses(
-      double latitude, double longitude, DateTime day) async {
-    String query =
-        'select *,((templomok.lng-($longitude))*(templomok.lng-($longitude)) + (templomok.lat-($latitude))*(templomok.lat-($latitude))) AS len from misek inner join templomok on misek.tid = templomok.tid WHERE templomok.lng != 0 AND templomok.lat != 0 AND ${MassFilter.sqlForDay(day, alias: "misek")} ORDER BY len ASC LIMIT 500';
-    final List<Map<String, dynamic>> maps = await db.rawQuery(query);
-    return List.generate(maps.length, (i) {
-      return MassWithChurch(_mapToChurch(maps[i]), _mapToMass(maps[i]));
-    });
   }
 
   Future<List<Mass>> getMassesForChurch(

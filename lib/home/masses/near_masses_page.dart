@@ -1,56 +1,275 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:miserend/database/miserend_database.dart';
-import 'package:miserend/location_provider.dart';
-import 'package:miserend/database/mass_with_church.dart';
+import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/church_details/church_details_page.dart';
+import 'package:miserend/church_details/church_schedule_loader.dart';
+import 'package:miserend/database/church.dart';
 import 'package:miserend/home/masses/mass_list_item.dart';
-import 'package:miserend/mass_filter.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
+import 'package:miserend/home/masses/nearest_masses_loader.dart';
+import 'package:miserend/widgets/list_status_view.dart';
 
-
+/// The Misék tab: the nearest masses, live from the API.
+///
+/// The list follows the clock and the user's position rather than being loaded
+/// once: it fetches again when it is shown again (tab switch, app back in the
+/// foreground), on pull-to-refresh, and after midnight; in between, it is
+/// re-selected from the last response every minute, so a mass that stops being
+/// reachable drops off by itself.
 class NearMassesPage extends StatefulWidget {
-  const NearMassesPage({super.key});
+  const NearMassesPage({
+    super.key,
+    this.isActive = true,
+    this.loader,
+    this.clock = DateTime.now,
+    this.detailsLoader,
+  });
+
+  /// Whether the tab is the one on screen. The home screen keeps every opened
+  /// tab alive in an IndexedStack, so the page cannot tell by itself.
+  final bool isActive;
+
+  /// Injected by tests; the page builds its own otherwise.
+  final NearestMassesLoader? loader;
+
+  /// Injected by tests, which need to move the time forward.
+  final DateTime Function() clock;
+
+  /// Handed to the details page a row opens; injected by tests.
+  final ChurchScheduleLoader? detailsLoader;
 
   @override
   State<NearMassesPage> createState() => _NearMassesPageState();
 }
 
-class _NearMassesPageState extends State<NearMassesPage>  with
-    AutomaticKeepAliveClientMixin<NearMassesPage>{
+enum _Failure { location, api }
 
-  List<MassWithChurch> masses = <MassWithChurch>[];
+class _NearMassesPageState extends State<NearMassesPage>
+    with WidgetsBindingObserver {
+  static const Duration _reselectEvery = Duration(minutes: 1);
+
+  late final NearestMassesLoader _loader =
+      widget.loader ?? NearestMassesLoader();
+
+  /// The whole last response, not the ten rows drawn from it: when a mass
+  /// expires, its place goes to the church's next mass or to the next nearest
+  /// church, and both are only in the full response.
+  List<NearbyMassesItem> _items = const [];
+  _Failure? _failure;
+  bool _loaded = false;
+
+  /// When the latest fetch started. Its upper bound is the following
+  /// midnight, so once the day changes the response is out of date.
+  DateTime? _fetchedAt;
+
+  /// Bumped per fetch so that a slow answer cannot overwrite a newer one.
+  int _requestId = 0;
+
+  Timer? _ticker;
+  bool _inForeground = true;
+
+  /// Set when the app actually left the screen, so that the brief
+  /// inactive/resumed flicker of a system dialog — the location permission
+  /// prompt among them — does not count as coming back.
+  bool _wasInBackground = false;
 
   @override
   void initState() {
     super.initState();
-    loadMasses();
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.isActive) {
+      _fetch();
+      _startTicker();
+    }
+  }
+
+  @override
+  void didUpdateWidget(NearMassesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _fetch();
+      _startTicker();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _stopTicker();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _inForeground = true;
+        if (_wasInBackground && widget.isActive) {
+          _fetch();
+          _startTicker();
+        }
+        _wasInBackground = false;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _inForeground = false;
+        _wasInBackground = true;
+        _stopTicker();
+      case AppLifecycleState.inactive:
+        break;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTicker();
+    super.dispose();
+  }
+
+  void _startTicker() {
+    if (!_inForeground) return;
+    _ticker?.cancel();
+    _ticker = Timer.periodic(_reselectEvery, (_) => _onTick());
+  }
+
+  void _stopTicker() {
+    _ticker?.cancel();
+    _ticker = null;
+  }
+
+  void _onTick() {
+    // Another page pushed over the tab (a search result, say) hides the list
+    // just as well as a tab switch does.
+    if (ModalRoute.of(context)?.isCurrent == false) return;
+    final fetchedAt = _fetchedAt;
+    if (fetchedAt != null && !_isSameDay(fetchedAt, widget.clock())) {
+      _fetch();
+    } else {
+      // No network: the rule runs again over the same response in build.
+      setState(() {});
+    }
+  }
+
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  Future<void> _fetch() async {
+    final requestId = ++_requestId;
+    final now = widget.clock();
+    _fetchedAt = now;
+
+    List<NearbyMassesItem> items = const [];
+    _Failure? failure;
+    try {
+      items = await _loader.fetch(now);
+    } on LocationUnavailable {
+      failure = _Failure.location;
+    } catch (_) {
+      failure = _Failure.api;
+    }
+
+    if (!mounted || requestId != _requestId) return;
+    setState(() {
+      // A failure drops the previous list: it promised masses one can still
+      // reach, and there is no telling any more whether it still does.
+      _items = items;
+      _failure = failure;
+      _loaded = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    if (!_loaded) {
+      return const LoadingView(message: 'Legközelebbi misék betöltése…');
+    }
+    return RefreshIndicator(onRefresh: _fetch, child: _content());
+  }
+
+  Widget _content() {
+    switch (_failure) {
+      case _Failure.location:
+        return const _PullableMessage(
+            'Nem sikerült meghatározni a helyzetedet, ezért a '
+            'legközelebbi misék nem jeleníthetőek meg.');
+      case _Failure.api:
+        return const _PullableMessage('Nem sikerült betölteni a miséket. '
+            'Ellenőrizd az internetkapcsolatot.');
+      case null:
+        break;
+    }
+
+    final now = widget.clock();
+    final masses = selectNearestMasses(_items, now);
+    if (masses.isEmpty) {
+      return const _PullableMessage('A közelben ma már nincs elérhető mise.');
+    }
+
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8),
       itemCount: masses.length,
       itemBuilder: (BuildContext context, int index) {
+        final mass = masses[index];
         return MassListItem(
-            massWithChurch: masses[index]
+          mass: mass,
+          ongoing: isOngoing(mass, now),
+          thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
+          onTap: () => _openChurch(mass),
         );
       },
     );
   }
 
-  Future<void> loadMasses() async {
-    MiserendDatabase db = await MiserendDatabase.create();
-    Position position = await LocationProvider.getPosition();
-    final DateTime today = DateTime.now();
-    var list =
-        await db.getCloseMasses(position.latitude, position.longitude, today);
-    list = MassFilter.filterMassWithChurchListForDay(list, today);
-    setState(() {
-      masses = list;
-    });
+  /// The details page loads everything by id; the item only has to seed the
+  /// name and the map until then.
+  Future<void> _openChurch(NearbyMassesItem mass) async {
+    final church = Church(
+      id: mass.churchId,
+      name: mass.churchName,
+      commonName: null,
+      isGreek: null,
+      lat: mass.lat,
+      lon: mass.lon,
+      address: null,
+      city: mass.city,
+      country: null,
+      county: null,
+      street: null,
+      gettingThere: null,
+      imageUrl: null,
+    );
+    _stopTicker();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ChurchDetailsPage(church: church, loader: widget.detailsLoader),
+      ),
+    );
+    if (!mounted || !widget.isActive || !_inForeground) return;
+    // Catch up on the minutes spent on the details page before ticking on.
+    _onTick();
+    _startTicker();
   }
+}
+
+/// A full-page message that can still be pulled down to try again, which a
+/// [RefreshIndicator] only offers over something scrollable.
+class _PullableMessage extends StatelessWidget {
+  const _PullableMessage(this.message);
+
+  final String message;
 
   @override
-  bool get wantKeepAlive => true;
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: constraints.maxHeight,
+            child: MessageView(message: message),
+          ),
+        ],
+      ),
+    );
+  }
 }

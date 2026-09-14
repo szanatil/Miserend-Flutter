@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 
 http.Response _fixtureResponse(String name) => http.Response.bytes(
@@ -276,6 +277,129 @@ void main() {
             until: DateTime(2026, 9, 29),
           ),
           isEmpty);
+    });
+  });
+
+  group('fetchNearbyMasses', () {
+    // Recorded live for a position in central Budapest, 2026-09-14 15:45.
+    const fixture = 'nearbymasses_budapest_2026-09-14_1545.json';
+
+    Future<List<NearbyMassesItem>?> fetchWith(http.Response response) {
+      final client = MiserendApiClient(client: MockClient((_) async => response));
+      return client.fetchNearbyMasses(
+        lat: 47.4979,
+        lon: 19.0402,
+        from: DateTime(2026, 9, 14, 15, 45),
+        until: DateTime(2026, 9, 15),
+      );
+    }
+
+    test('maps every item of the response, church fields included', () async {
+      final masses = (await fetchWith(_fixtureResponse(fixture)))!;
+
+      expect(masses, hasLength(100));
+      final first = masses.first;
+      expect(first.churchId, 1515);
+      expect(first.churchName, 'Budavári Nagyboldogasszony-templom');
+      expect(first.city, 'Budapest I. kerület');
+      expect(first.lat, 47.5020112);
+      expect(first.lon, 19.0342625);
+      expect(first.distanceKm, 0.64);
+      expect(first.title, 'Szentmise');
+    });
+
+    test('reads the start as the wall-clock time at the church', () async {
+      final masses = (await fetchWith(_fixtureResponse(fixture)))!;
+
+      // The fixture says 2026-09-14T18:00:00+02:00.
+      expect(masses.first.start, DateTime(2026, 9, 14, 18, 0));
+    });
+
+    test('keeps the items that are not masses, for the caller to filter',
+        () async {
+      final masses = (await fetchWith(_fixtureResponse(fixture)))!;
+
+      expect(masses.map((m) => m.title), contains('Gyóntatás'));
+    });
+
+    test('asks for the wide radius, the time-of-day window and the limit',
+        () async {
+      Map<String, dynamic>? sent;
+      Uri? url;
+      final client = MiserendApiClient(client: MockClient((request) async {
+        url = request.url;
+        sent = jsonDecode(request.body) as Map<String, dynamic>;
+        return _fixtureResponse(fixture);
+      }));
+
+      await client.fetchNearbyMasses(
+        lat: 47.4979,
+        lon: 19.0402,
+        from: DateTime(2026, 9, 14, 15, 45),
+        until: DateTime(2026, 9, 15),
+      );
+
+      expect(url.toString(), 'https://miserend.hu/api/v4/nearbymasses');
+      expect(sent, {
+        'lat': 47.4979,
+        'lon': 19.0402,
+        'radius': 200,
+        'from': '2026-09-14 15:45',
+        'until': '2026-09-15 00:00',
+        'limit': 100,
+      });
+    });
+
+    test('an empty response is an empty list', () async {
+      final masses = await fetchWith(
+          http.Response('{"error":0,"sum":0,"misek":[]}', 200));
+
+      expect(masses, isNotNull);
+      expect(masses, isEmpty);
+    });
+
+    test('a failed call is null, not an empty list', () async {
+      expect(await fetchWith(http.Response('', 500)), isNull);
+      expect(
+          await fetchWith(http.Response(
+              '{"error":"1","text":"Field \'radius\' should be at most 200."}',
+              200)),
+          isNull);
+      expect(await fetchWith(http.Response('{"error":0,"sum":0}', 200)),
+          isNull);
+
+      final offline = MiserendApiClient(
+        client: MockClient((_) async => throw const SocketException('offline')),
+      );
+      expect(
+          await offline.fetchNearbyMasses(
+            lat: 47.4979,
+            lon: 19.0402,
+            from: DateTime(2026, 9, 14, 15, 45),
+            until: DateTime(2026, 9, 15),
+          ),
+          isNull);
+    });
+
+    test('skips an item with no usable church or start', () async {
+      final body = jsonEncode({
+        'error': 0,
+        'sum': 3,
+        'misek': [
+          {'id': 1, 'start_date': null, 'title': 'Szentmise',
+            'distance_km': 1, 'church': {'id': 38}},
+          {'id': 2, 'start_date': '2026-09-14T18:00:00+02:00',
+            'title': 'Szentmise', 'distance_km': 1},
+          {'id': 3, 'start_date': '2026-09-14T18:00:00+02:00',
+            'title': 'Szentmise', 'distance_km': 1, 'church': {'id': 38}},
+        ],
+      });
+
+      final masses =
+          (await fetchWith(http.Response.bytes(utf8.encode(body), 200)))!;
+
+      expect(masses, hasLength(1));
+      expect(masses.single.churchId, 38);
     });
   });
 }

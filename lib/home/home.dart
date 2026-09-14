@@ -126,11 +126,22 @@ class _HomeScreenState extends State<HomeScreen> {
   /// and pages never opened are not built at all, so startup is unchanged.
   final Set<int> _builtTabs = <int>{0};
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    ChurchesPage(),
-    NearMassesPage(),
-    MapPage(),
-  ];
+  static const int _tabCount = 3;
+  static const int _massesTab = 1;
+
+  /// The Misék tab is told whether it is the one on screen, because the
+  /// IndexedStack keeps it alive underneath the others and it refreshes when
+  /// it comes back into view.
+  Widget _tab(int index) {
+    switch (index) {
+      case 0:
+        return const ChurchesPage();
+      case _massesTab:
+        return NearMassesPage(isActive: _selectedIndex == _massesTab);
+      default:
+        return const MapPage();
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -176,9 +187,9 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _selectedIndex,
         sizing: StackFit.expand,
         children: List<Widget>.generate(
-          _widgetOptions.length,
+          _tabCount,
           (int index) => _builtTabs.contains(index)
-              ? _widgetOptions[index]
+              ? _tab(index)
               : const SizedBox.shrink(),
         ),
       ),
