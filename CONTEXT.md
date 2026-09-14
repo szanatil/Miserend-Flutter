@@ -32,6 +32,22 @@ _Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkoz
 A templom-részletező oldal több napra (ma / következő vasárnap / 19 nap) kiterjedő miselistája egy adott templomhoz, szemben a napi miserenddel. Egyetlen v4 végpont sem adja ezt vissza közvetlenül, egy adott templomra szűkítve — előállítása a `NearbyMasses` végpont kombinálásával történik (ld. `docs/adr/0002-*`, `docs/spec/0003-*`).
 _Avoid_: "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
 
+**Mise vs. egyéb liturgikus esemény**:
+A v4 API `NearbyMasses` végpontja nevével ellentétben nem csak miséket ad vissza, hanem minden, a miserendben rögzített eseményt, amelyeket csak a `title` szövege különböztet meg. **Mise**: *Szentmise*, *Szent Liturgia* (a görögkatolikus szentmise — a neve nem árulja el, de mise), *Régi rítusú szentmise*. **Nem mise**: *Vecsernye*, *Utrenye* (görögkatolikus imaórák), *Igeliturgia* (pap és áldozás nélküli szertartás), *Gyóntatás*, *Szentségimádás*, *Rózsafüzér*, *Litánia*. Ismeretlen cím nem számít misének, amíg valaki fel nem veszi. **Ellenőrizve**: nyolc helyszín két napján (2026-09-19/20, 50 km) ezek voltak az előforduló címek.
+_Avoid_: a `NearbyMasses` válasz elemeit válogatás nélkül "misének" nevezni.
+
+**Legközelebbi misék (nearest masses)**:
+A Misék fül listája: a felhasználó pozíciójához **térben** legközelebbi (legfeljebb 10) templom, **templomonként egyetlen** — a legkorábbi **elérhető** — miséjével. Nem egy templomhoz tartozik (szemben a napi miserenddel), hanem a felhasználó helyzetéhez. A "legközelebbi" **a templomok kiválasztására** vonatkozik (térbeli közelség); a lista viszont **időrendben** áll, azonos kezdésnél a közelebbi templom elöl. Csak **misét** tartalmaz, más liturgikus eseményt nem, és csak a mai nap miséit. A "mai nap" két szélén van egy-egy kivétel: egy tegnap késő este kezdődött, még elérhető mise is benne van, és a **holnap pontban 00:00-kor** kezdődő mise is — az éjféli mise (karácsony, újév) a felhasználó fejében az előző estéhez tartozik. Egy templom további mai miséi a templom-részletezőn látszanak, itt nem.
+_Avoid_: "közeli miserend" (a "miserend" egy templom miséit jelenti); "következő misék" (azt sugallja, hogy a kiválasztás is időbeli).
+
+**Elérhető mise (reachable mass)**:
+Olyan mise, amelyre a felhasználó még érvényesen odaérhet: a kezdése óta legfeljebb **10 perc** telt el. A határ liturgikus eredetű — aki a mise elejéről 10–15 percnél többet késik, már nem áldozhat —, és a biztonságos alsó értéket használjuk. Nem számol menetidővel: az app nem tudja, gyalog vagy autóval érkezik-e a felhasználó, és útvonaltervezője sincs; az elérhetőség tehát csak az órán múlik, a távolságon nem.
+_Avoid_: "még nem kezdődött el" (a néhány perce kezdődött mise is elérhető); "odaérhető" (menetidő-számítást sugall, ami nincs).
+
+**Épp most tartó mise (ongoing mass)**:
+Olyan elérhető mise, amely már elkezdődött (legfeljebb 10 perce) — a listán ezzel jelölve jelenik meg. Nem azt jelenti, hogy a mise bármikor a befejezéséig "tart" a lista szempontjából: 10 perc után kikerül, mert onnantól nem elérhető.
+_Avoid_: "folyamatban lévő mise" általánosságban — a mise még tarthat, csak már nem elérhető.
+
 **Gyóntatás (confession)**:
 Nem miserend-adat és nem nyitvatartás, hanem egy **pillanatnyi állapot**: a miserend.hu gyóntatószékekbe szerelt fizikai kapcsolókat üzemeltet, amelyek LoRaWAN-on jelentik, hogy éppen van-e gyónási lehetőség (`POST /api/v4/lorawan`, tokenhez kötött, a `/apidocs` szerint kísérleti). A v4 `Church` válasz `gyontatas` mezője ennek a kapcsolónak az **aktuális** állása. **Ellenőrizve**: a mező puszta bool, és nem különbözteti meg a *kikapcsolt kapcsolót* a *nem létező kapcsolótól* — mindkettő `false`, miközben a webapp harmadik állapotként külön kiírja, hogy "Ezen a misézőhelyen nincs gyóntatást jelző kapcsoló". Élő mintavétel (2026-09-11, id 1–400): 338 válaszból 338 `false`. Következmény: a kliens csak a `true` esetet jeleníti meg, és csak friss API-válaszból — gyorsítótárazott értékből soha (ld. `docs/adr/0002-*`).
 _Avoid_: "gyóntatási rend" / "gyóntatási időpontok" (azt sugallja, hogy menetrend, pedig egy kapcsoló állása); "van-e gyóntatás" (a `false` erre nem válasz).
