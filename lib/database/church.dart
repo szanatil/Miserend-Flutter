@@ -31,7 +31,6 @@ class Church {
     required this.imageUrl,
   });
 
-  @override
   LatLng get location =>
       (lat != null && lon != null) ? LatLng(lat!, lon!) : const LatLng(0, 0);
 }

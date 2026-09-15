@@ -58,7 +58,7 @@ class MassListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      mass.churchName ?? "?",
+                      mass.churchName ?? '?',
                       style: textTheme.titleMedium,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
@@ -52,7 +54,7 @@ class RouteSplash extends StatefulWidget {
   static Widget _home(BuildContext context) => const HomeScreen();
 
   @override
-  _RouteSplashState createState() => _RouteSplashState();
+  State<RouteSplash> createState() => _RouteSplashState();
 }
 
 class _RouteSplashState extends State<RouteSplash> {
@@ -71,21 +73,25 @@ class _RouteSplashState extends State<RouteSplash> {
   bool _bootstrapFailed = false;
 
   _checkDatabase() async {
-    bool fileExists = await widget.startup.exportExists();
+    final bool fileExists = await widget.startup.exportExists();
     if (!fileExists) {
-      _showDialog(
-        "Adatabázis nem taláható",
-        "Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?",
+      unawaited(
+        _showDialog(
+          'Adatabázis nem taláható',
+          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
+        ),
       );
       return;
     }
 
-    bool databaseVersionCompatible =
+    final bool databaseVersionCompatible =
         await widget.startup.exportVersionCompatible();
     if (!databaseVersionCompatible) {
-      _showDialog(
-        "Adatbázis nem megfelelő",
-        "Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?",
+      unawaited(
+        _showDialog(
+          'Adatbázis nem megfelelő',
+          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
+        ),
       );
       return;
     }
@@ -98,7 +104,7 @@ class _RouteSplashState extends State<RouteSplash> {
       _downloadFailed = false;
       _status = 'Adatbázis letöltése…';
     });
-    bool success = await widget.startup.downloadExport();
+    final bool success = await widget.startup.downloadExport();
     if (success) {
       if (mounted) {
         const snackBar = SnackBar(content: Text('Adatbázis letöltése sikeres'));

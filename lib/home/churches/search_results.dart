@@ -10,13 +10,13 @@ class SearchParams {
   String? searchTerm;
 
   static SearchParams fromCity(String city) {
-    var param = SearchParams();
+    final param = SearchParams();
     param.city = city;
     return param;
   }
 
   static SearchParams fromSearchTerm(String searchTerm) {
-    var param = SearchParams();
+    final param = SearchParams();
     param.searchTerm = searchTerm;
     return param;
   }

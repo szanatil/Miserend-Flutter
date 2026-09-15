@@ -3,14 +3,14 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class LocalDatabase {
-  static const String databaseName = "localdatabase.sqlite3";
+  static const String databaseName = 'localdatabase.sqlite3';
 
-  static const String favoritesTable = "favorites";
+  static const String favoritesTable = 'favorites';
 
   late Database db;
 
   static Future<LocalDatabase> create() async {
-    LocalDatabase instance = LocalDatabase();
+    final LocalDatabase instance = LocalDatabase();
     await instance.openDb();
     return instance;
   }
@@ -35,7 +35,7 @@ class LocalDatabase {
   }
 
   Future<bool> isFavorite(int churchId) async {
-    int count =
+    final int count =
         Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM $favoritesTable WHERE tid=$churchId',

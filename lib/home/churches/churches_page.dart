@@ -15,7 +15,7 @@ class ChurchesPage extends StatelessWidget {
       // closest DefaultTabController.
       child: Builder(
         builder: (BuildContext context) {
-          final TabController tabController = DefaultTabController.of(context)!;
+          final TabController tabController = DefaultTabController.of(context);
           tabController.addListener(() {
             if (!tabController.indexIsChanging) {
               // Your code goes here.

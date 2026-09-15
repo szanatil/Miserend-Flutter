@@ -11,9 +11,9 @@ class MassFilter {
       mass.day == day.weekday || mass.day == 0;
 
   static bool dateRangeCorrect(Mass mass, DateTime day) {
-    int startDate = mass.startDate ?? 0;
-    int endDate = mass.endDate ?? 0;
-    int dayInDatabaseFormat = (day.month) * 100 + day.day;
+    final int startDate = mass.startDate ?? 0;
+    final int endDate = mass.endDate ?? 0;
+    final int dayInDatabaseFormat = (day.month) * 100 + day.day;
     if (startDate < endDate) {
       return startDate <= dayInDatabaseFormat && dayInDatabaseFormat <= endDate;
     } else if (startDate > endDate) {

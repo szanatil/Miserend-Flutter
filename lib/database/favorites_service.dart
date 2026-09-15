@@ -23,9 +23,9 @@ class FavoritesService extends ChangeNotifier {
 
   Future<void> toggle(int churchId) async {
     if (isFavorite(churchId)) {
-      localDatabase.removeFavorite(churchId);
+      await localDatabase.removeFavorite(churchId);
     } else {
-      localDatabase.addFavorite(churchId);
+      await localDatabase.addFavorite(churchId);
     }
     favorites = await localDatabase.getFavorites();
     notifyListeners();

@@ -14,17 +14,17 @@ import 'package:sqflite/sqflite.dart';
 /// (ADR-0003). It is a separate file from the downloaded `miserend.sqlite3`,
 /// which only the one-time bootstrap import reads.
 class CacheDatabase {
-  static const String databaseName = "miserend_cache.sqlite3";
+  static const String databaseName = 'miserend_cache.sqlite3';
 
-  static const String churchesTable = "churches_cache";
-  static const String massesTable = "masses_cache";
-  static const String syncTable = "sync_state";
+  static const String churchesTable = 'churches_cache';
+  static const String massesTable = 'masses_cache';
+  static const String syncTable = 'sync_state';
 
   late Database db;
 
   /// [path] exists for tests, which open an in-memory database.
   static Future<CacheDatabase> create({String? path}) async {
-    CacheDatabase instance = CacheDatabase();
+    final CacheDatabase instance = CacheDatabase();
     await instance.openDb(path ?? join(await getDatabasesPath(), databaseName));
     return instance;
   }
@@ -86,11 +86,11 @@ class CacheDatabase {
           // Only the details page wrote API rows before, and only those carry
           // an API mass id.
           await db.execute(
-            "ALTER TABLE $massesTable ADD COLUMN forras TEXT NOT NULL "
+            'ALTER TABLE $massesTable ADD COLUMN forras TEXT NOT NULL '
             "DEFAULT '${MassSource.bootstrap.name}'",
           );
           await db.execute(
-            "UPDATE $massesTable SET forras = "
+            'UPDATE $massesTable SET forras = '
             "'${MassSource.nearbyMasses.name}' WHERE api_mass_id IS NOT NULL",
           );
         }
@@ -166,8 +166,9 @@ class CacheDatabase {
     bool minimal = false,
   }) async {
     final row = _toRow(church);
-    if (minimal)
+    if (minimal) {
       row.removeWhere((column, _) => !_minimalColumns.contains(column));
+    }
     final values = {...row, 'local_synced_at': _formatDateTime(DateTime.now())};
     final updated = await db.update(
       churchesTable,

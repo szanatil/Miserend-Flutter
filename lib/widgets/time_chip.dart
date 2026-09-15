@@ -23,7 +23,7 @@ class TimeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = Text(
-      time?.to24hours() ?? "?",
+      time?.to24hours() ?? '?',
       style: Theme.of(context).textTheme.bodyMedium?.apply(color: Colors.white),
     );
 

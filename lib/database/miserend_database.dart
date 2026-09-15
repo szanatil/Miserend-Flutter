@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 /// The downloaded SQLite export. Since spec 0005 its only reader is the
 /// one-time bootstrap import; every screen reads the cache instead.
 class MiserendDatabase {
-  static const String databaseName = "miserend.sqlite3";
+  static const String databaseName = 'miserend.sqlite3';
 
   /// How many days past its download the export still puts masses on the
   /// right day. Its dates carry no year (`HHNN`) and span a 182-day window, so

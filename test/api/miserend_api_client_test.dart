@@ -339,7 +339,7 @@ void main() {
       final api = MiserendApiClient(client: MockClient((_) => never.future));
 
       ApiResult<ChurchesResponse>? result;
-      api.fetchChurches([38]).then((value) => result = value);
+      unawaited(api.fetchChurches([38]).then((value) => result = value));
 
       await tester.pump(const Duration(seconds: 14));
       expect(result, isNull);

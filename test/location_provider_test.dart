@@ -143,7 +143,9 @@ void main() {
       final device = _FakeGeolocator(fresh: null);
 
       PositionResult? result;
-      providerFor(device).currentPosition().then((value) => result = value);
+      unawaited(
+        providerFor(device).currentPosition().then((value) => result = value),
+      );
       await tester.pump(
         LocationProvider.fixTimeout - const Duration(seconds: 1),
       );

@@ -1,18 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:miserend/home/churches/churches_page.dart';
-import 'package:miserend/home/churches/search_results.dart';
-import 'package:miserend/home/masses/near_masses_page.dart';
-import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/favorites_prefetch.dart';
+import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/home/churches/churches_page.dart';
+import 'package:miserend/home/churches/search_results.dart';
+import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/home/masses/near_masses_page.dart';
+import 'package:miserend/home/search_suggestions.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
-
-import 'package:miserend/database/cache/church_list_entry.dart';
-import 'package:miserend/home/churches/church_card.dart';
-import 'package:miserend/home/search_suggestions.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,7 +55,7 @@ class ChurchSuggestion extends Suggestion {
           child: FadeInImage.assetNetwork(
             fit: BoxFit.cover,
             placeholder: 'assets/images/church_blurred.png',
-            image: church.photo ?? "",
+            image: church.photo ?? '',
             imageErrorBuilder: _errorBuilder,
             imageCacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
             placeholderCacheHeight: PhotoDecode.forSlot(
@@ -66,13 +65,13 @@ class ChurchSuggestion extends Suggestion {
           ),
         ),
       ),
-      title: Text(church.name ?? ""),
+      title: Text(church.name ?? ''),
     );
   }
 }
 
 class CitySuggestion extends Suggestion {
-  String cityName = "";
+  String cityName = '';
 
   CitySuggestion(this.cityName);
 
@@ -270,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _runSearch(String value) async {
     final int requestId = _searchRequestId;
     final found = await _suggestions.suggest(value);
-    var combined = <Suggestion>[];
+    final combined = <Suggestion>[];
     combined.addAll(found.churches.map((c) => ChurchSuggestion(c)));
     combined.addAll(found.cities.map((c) => CitySuggestion(c)));
     if (!mounted || requestId != _searchRequestId) {
@@ -284,8 +283,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Nudges the search controller so the open suggestion list rebuilds.
   void _refreshSuggestionList() {
-    var value = _searchController.text;
-    _searchController.text = "";
+    final value = _searchController.text;
+    _searchController.text = '';
     _searchController.text = value;
   }
 

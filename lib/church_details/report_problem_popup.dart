@@ -1,10 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../database/church.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:miserend/database/church.dart';
 
 class ReportPopup extends StatefulWidget {
   const ReportPopup({super.key, required this.church});
@@ -17,10 +16,10 @@ class ReportPopup extends StatefulWidget {
 
 class _ReportPopupState extends State<ReportPopup> {
   int? _selectedProblemType = 0;
-  final _problemLabels = ["Rossz pozíció", "Rossz miseidőpont", "Egyéb"];
+  final _problemLabels = ['Rossz pozíció', 'Rossz miseidőpont', 'Egyéb'];
 
-  var _descriptionController = TextEditingController();
-  var _emailController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +27,7 @@ class _ReportPopupState extends State<ReportPopup> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Hibajelentés", style: Theme.of(context).textTheme.titleLarge),
+        Text('Hibajelentés', style: Theme.of(context).textTheme.titleLarge),
         SizedBox(height: 30),
         DropdownButton(
           value: _selectedProblemType,
@@ -93,7 +92,7 @@ class _ReportPopupState extends State<ReportPopup> {
       }),
     );
 
-    if (context.mounted) {
+    if (mounted) {
       if (response.statusCode == HttpStatus.ok) {
         const snackBar = SnackBar(content: Text('Hibajelentés elküldve'));
         ScaffoldMessenger.of(context).showSnackBar(snackBar);

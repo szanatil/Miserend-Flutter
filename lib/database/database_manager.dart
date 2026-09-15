@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:miserend/preferences.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
-import '../preferences.dart';
 
 class DatabaseManager {
   static final String _databaseFileName = 'miserend.sqlite3';
@@ -29,7 +28,7 @@ class DatabaseManager {
   }
 
   static Future<bool> checkDatabaseVersion() async {
-    var savedVersion = await Preferences.getDatabaseVersion();
+    final savedVersion = await Preferences.getDatabaseVersion();
     return savedVersion == _databaseVersion;
   }
 
@@ -49,21 +48,21 @@ class DatabaseManager {
     String fileName,
     String dir,
   ) async {
-    HttpClient httpClient = HttpClient()..connectionTimeout = _timeout;
+    final HttpClient httpClient = HttpClient()..connectionTimeout = _timeout;
     File file;
     try {
       // GET requests follow the endpoint's redirect by default.
-      var request = await httpClient.getUrl(Uri.parse(url));
-      var response = await request.close().timeout(_timeout);
+      final request = await httpClient.getUrl(Uri.parse(url));
+      final response = await request.close().timeout(_timeout);
       if (response.statusCode == 200) {
-        var bytes = await response
+        final bytes = await response
             .timeout(_timeout)
             .fold(
               BytesBuilder(copy: false),
               (builder, chunk) => builder..add(chunk),
             )
             .then((builder) => builder.takeBytes());
-        var filePath = '$dir/$fileName';
+        final filePath = '$dir/$fileName';
         file = File(filePath);
         await file.writeAsBytes(bytes);
         await Preferences.setDatabaseVersion(_databaseVersion);

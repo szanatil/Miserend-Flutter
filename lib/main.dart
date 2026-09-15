@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
             context,
           ).textTheme.titleLarge!.apply(color: Colors.white),
           iconTheme: IconThemeData(color: Colors.white),
-          color: CustomColors.purple,
+          backgroundColor: CustomColors.purple,
         ),
       ),
       home: const RouteSplash(),

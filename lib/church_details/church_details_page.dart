@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:map_launcher/map_launcher.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
@@ -20,10 +23,8 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/offline_notice.dart';
+import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
-
-import '../widgets/time_chip.dart';
-import 'package:map_launcher/map_launcher.dart';
 
 class ChurchDetailsPage extends StatefulWidget {
   const ChurchDetailsPage({super.key, required this.church, this.loader});
@@ -133,8 +134,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   Widget _churchName() {
-    final name = _details?.name ?? widget.church.name ?? "";
-    final commonName = _details?.commonName ?? widget.church.commonName ?? "";
+    final name = _details?.name ?? widget.church.name ?? '';
+    final commonName = _details?.commonName ?? widget.church.commonName ?? '';
     final address = _address();
 
     return Padding(
@@ -206,7 +207,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                   size: 32,
                   color: Colors.black54,
                 ),
-                Text("Kedvencekhez"),
+                Text('Kedvencekhez'),
               ],
             ),
           ),
@@ -216,7 +217,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               spacing: 8,
               children: [
                 Icon(Icons.error, size: 32, color: Colors.black54),
-                Text("Hibajelentés"),
+                Text('Hibajelentés'),
               ],
             ),
           ),
@@ -242,14 +243,14 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text("Ma", style: Theme.of(context).textTheme.titleLarge),
+          Text('Ma', style: Theme.of(context).textTheme.titleLarge),
           _massListWidgetForDay(0),
           // On a Sunday the two headings would name the same day, and the
           // section would repeat itself.
           if (sundayOffset != 0) ...[
             const SizedBox(height: 8),
             Text(
-              "Most vasárnap",
+              'Most vasárnap',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             _massListWidgetForDay(sundayOffset),
@@ -450,7 +451,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
 
     return SectionCard(
-      title: "Megközelítés",
+      title: 'Megközelítés',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -484,7 +485,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                "ÚTVONAL",
+                'ÚTVONAL',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium!.apply(color: CustomColors.accent),
@@ -505,10 +506,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   Future<void> _toggleFavorites() async {
-    Provider.of<FavoritesService>(
-      context,
-      listen: false,
-    ).toggle(widget.church.id);
+    unawaited(
+      Provider.of<FavoritesService>(
+        context,
+        listen: false,
+      ).toggle(widget.church.id),
+    );
     setState(() {
       isFavorite = !isFavorite;
     });
@@ -566,8 +569,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final location = _location();
     await map.showMarker(
       coords: Coords(location.latitude, location.longitude),
-      title: _details?.name ?? widget.church.name ?? "",
-      description: _details?.commonName ?? widget.church.commonName ?? "",
+      title: _details?.name ?? widget.church.name ?? '',
+      description: _details?.commonName ?? widget.church.commonName ?? '',
     );
   }
 
@@ -579,7 +582,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final location = _location();
     await map.showDirections(
       destination: Coords(location.latitude, location.longitude),
-      destinationTitle: _details?.name ?? widget.church.name ?? "",
+      destinationTitle: _details?.name ?? widget.church.name ?? '',
     );
   }
 

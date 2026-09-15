@@ -73,7 +73,7 @@ class ChurchCard extends StatelessWidget {
                                 4.0,
                               ),
                               child: Text(
-                                entry.name ?? "",
+                                entry.name ?? '',
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                             ),
@@ -95,7 +95,7 @@ class ChurchCard extends StatelessWidget {
                             8.0,
                           ),
                           child: Text(
-                            entry.commonName ?? "",
+                            entry.commonName ?? '',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
