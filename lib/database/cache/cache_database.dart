@@ -10,9 +10,9 @@ import 'package:miserend/database/cache/community.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// The write-through cache behind the v4 API. It is a separate file from the
-/// downloaded `miserend.sqlite3`, which stays read-only and keeps serving the
-/// screens that have not moved to the API yet.
+/// The write-through cache behind the v4 API, and every screen's data source
+/// (ADR-0003). It is a separate file from the downloaded `miserend.sqlite3`,
+/// which only the one-time bootstrap import reads.
 class CacheDatabase {
   static const String databaseName = "miserend_cache.sqlite3";
 

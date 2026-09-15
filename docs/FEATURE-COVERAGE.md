@@ -4,7 +4,7 @@ Reverse-engineered from the current codebase (branch `V0.1`, commit `91ad952`). 
 
 ## What the app is
 
-Miserend ("Mass Finder") is a Hungarian-language mobile app for finding Catholic churches and their Mass times, built with Flutter. All content (church list, addresses, Mass schedules) is sourced from a single downloaded SQLite dataset published by `miserend.hu` — the app itself has no backend of its own beyond that download and a problem-report endpoint.
+Miserend ("Mass Finder") is a Hungarian-language mobile app for finding Catholic churches and their Mass times, built with Flutter. Content comes from the `miserend.hu` API v4. Every screen draws from an on-device **local cache** (`lib/database/cache/cache_database.dart`), which a one-time import of the downloaded SQLite export fills and API responses keep updating row by row (ADR-0002, ADR-0003). The app has no backend of its own.
 
 ## Startup / data lifecycle
 
@@ -16,11 +16,13 @@ Miserend ("Mass Finder") is a Hungarian-language mobile app for finding Catholic
 | Version compatibility check | Compares the locally saved database version (in `SharedPreferences`) against the app's expected version (`_databaseVersion = 4`, `lib/database/database_manager.dart`). Mismatch triggers the same forced download dialog. |
 | Database download | Fetches the SQLite export from the documented `https://miserend.hu/api/v4/sqlite` endpoint (following its redirect to the file) via `HttpClient` with a 30 s connection timeout, writes it to the app's database directory, and records the new version + download timestamp in `Preferences`. |
 | Download failure | If an earlier export is on the device, shows an error snackbar and continues to the home screen with it. On a fresh install (no export) the splash shows an error message and an "Újrapróbálás" (retry) button instead of spinning forever. |
-| Cache bootstrap | Once, after the first download, imports every church and the next **30 days** of masses from the export into the local cache (`BootstrapImporter`). |
+| Cache bootstrap | Once, after the first download, imports every church and the next **30 days** of masses from the export into the local cache (`BootstrapImporter`, behind the `AppStartup` seam). An export older than 182 days gives churches only, since its year-less `HHNN` dates would put masses on the wrong day. |
+| Bootstrap failure | Until the first import succeeds the splash shows an error and an "Újrapróbálás" button instead of opening empty lists. |
+| Favorites prefetch | After the splash, without holding up the home screen, at most once every 24 hours: one `Church {"ids"}` call for all favorites, then each favorite's 20-day schedule. Failures are silent and retried on the next start (`lib/favorites_prefetch.dart`). |
 
 The export is only downloaded when it is missing or of the wrong version — there is no periodic re-download (ADR-0003).
 
-**Export expiry:** the screens that still read the export (Search, Nearby, Favorites, Map card) hide its masses once the export was downloaded more than 182 days ago (`MiserendDatabase.massesValidForDays`), because its year-less `HHNN` dates would otherwise put masses on the wrong day. Churches still show; the list card says "A miserend elavult, a templom oldalán nézd meg." in place of the mass times.
+**Cache-first lists:** Search results, Nearby, Favorites and the Map card draw from the cache at once, start one API call in the background, write its answer through to the cache and read it again (`ChurchListLoader`). Calls time out after 15 s (10 s to connect). A failed call keeps what is shown and marks it: **no connection** with an (i), **server error** with a tinted background and an (i); the (i) explains how old the data is and what to do. A church the `Church` endpoint reports in `hianyzo` is deleted from the cache and the favorites.
 
 ## Home shell
 
@@ -30,7 +32,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 |---|---|
 | Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing. |
 | Search bar | A `SearchAnchor.bar` in the app bar. Live-updates suggestions as the user types, but only once the query is **longer than 2 characters** (`_onSearchChanged`). |
-| Search suggestions | Combines up to 20 matching **churches** (by name or common name, `LIKE` match) and any matching **cities** (distinct `varos` values) into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). |
+| Search suggestions | Combines up to 20 matching **churches** (by name or common name, `LIKE` match) and any matching **cities** (distinct `varos` values) from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
 
@@ -39,21 +41,23 @@ The export is only downloaded when it is missing or of the wrong version — the
 **File:** `lib/home/churches/churches_page.dart` — a `TabBar` with two sub-tabs, both kept alive across tab switches (`AutomaticKeepAliveClientMixin`).
 
 ### Nearby (`near_churches_page.dart`)
-- Requests device location (`LocationProvider`, permission flow via `geolocator`).
-- Loads **all** churches with their masses, sorted by squared-distance from the current position (`getCloseChurchesWithMasses` — no true great-circle distance, a flat Euclidean approximation on lat/lng).
-- Renders each as a `ChurchListItem` card (image, name, common name, today's Mass times as chips, favorite toggle).
+- Needs the user's **position**: a last known position at most 5 minutes old, otherwise a fresh fix with a timeout (`LocationProvider`). Without one it shows the reason and a way out: allow the permission, open the app or location settings, or pull to retry (`PositionUnavailableView`).
+- Lists **every** church of the cache, nearest first (squared distance with longitude scaled by latitude), each with today's masses.
+- Background call: `NearBy`, 100 churches, `minimal` — new and corrected churches and today's masses are written through.
 
 ### Favorites (`favorite_churches.dart`)
-- Reads favorite church IDs from `FavoritesService` (backed by the on-device `LocalDatabase`).
-- Loads full church+Mass records for just those IDs and re-loads automatically whenever `FavoritesService` notifies a change (e.g. a favorite toggled elsewhere in the app).
+- Reads favorite church IDs from `FavoritesService` (backed by the on-device `LocalDatabase`) and the churches from the cache, by name.
+- Background call: `Church {"ids"}` in batches of 100, `minimal`. A favorite removed from miserend.hu silently disappears. A favorite toggled elsewhere re-reads the cache only.
 
 ### Search results (`search_results.dart`)
 - Pushed from Home's search bar or a city suggestion.
-- Two query modes: churches whose name/common name matches a free-text term, or churches located in an exact city — never both at once (`SearchParams` is either-or).
-- Same `ChurchListItem` rendering as Nearby/Favorites.
+- Two query modes: churches whose name/common name contains a free-text term, or churches located in an exact city — never both at once (`SearchParams` is either-or).
+- Background call: `Church {"ids"}` for the first 100 results; with no result in the cache, the API's `Search` instead, whose finds are written to the cache and read back by the local rule.
+- States: loading, "Nincs találat", list.
 
-### Shared list item (`church_list_item.dart`)
-- Card showing church photo (network image with a blurred placeholder/error fallback asset), name, common name, **today's** Mass times (filtered client-side via `MassFilter`), and a favorite toggle button wired to `FavoritesService`.
+### Shared list (`church_list_view.dart`, `church_card.dart`)
+- Offline banner above the list after a failed refresh, and pull-to-refresh, which restarts the background call.
+- Card showing the first cached photo (blurred placeholder otherwise), name, common name, **today's masses** as time chips — only masses: confession, adoration and other events are left out (`mass_kind.dart`) — and a favorite toggle wired to `FavoritesService`.
 - Tapping the card opens `ChurchDetailsPage`.
 
 ## Masses tab
@@ -63,16 +67,16 @@ The export is only downloaded when it is missing or of the wrong version — the
 - Shows the **nearest masses** (see `CONTEXT.md`, spec 0004): live from API v4 `nearbymasses` around the user's position (a last known position older than 5 minutes is replaced by a fresh fix with a timeout), no cache or legacy-export fallback.
 - `selectNearestMasses` (`nearest_masses.dart`) picks at most 10 nearest churches, one row each with its earliest mass still reachable (started ≤ 10 minutes ago, up to tomorrow 00:00), masses only, in time order.
 - Refetches on tab switch, app resume, pull-to-refresh and after midnight; re-selects from the last raw response every minute while visible.
-- Loading, location-error, API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
+- Loading, position-unavailable (by reason, with a button), API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
 
 ## Map tab
 
 **File:** `lib/home/map/map_page.dart`
 
-- Google Map (`google_maps_flutter`), default camera centered on Hungary, re-centered on the user's location once available.
-- Loads **every** church in the dataset and drops a marker for each (no clustering, no viewport-based lazy loading).
-- Tapping a marker fetches that church's full Mass schedule and shows a `ChurchListItem` card docked to the bottom of the screen (`selectedChurch`) — tapping the card opens full `ChurchDetailsPage`.
-- Includes an unused/dead `_getMarkerBitmap` helper (draws a custom circular pin with optional text) — not currently wired to any marker.
+- CARTO Voyager tiles (`MiserendMap`, ADR-0001), default camera centered on Hungary, moved to the user's position when one is available at opening.
+- A marker for **every** church of the cache (no clustering, no viewport-based lazy loading).
+- Tapping a marker shows that church's card from the cache at once and refreshes it with `Church {"ids": [tid]}` in full (photos and description too), marking the card after a failed call. A church removed from miserend.hu closes the card, loses its marker and is announced in a SnackBar.
+- The my-position button explains a missing position in a SnackBar, with the matching action.
 
 ## Church details
 
@@ -83,9 +87,9 @@ The export is only downloaded when it is missing or of the wrong version — the
 | Header | Collapsing `SliverAppBar` with the church photo (or blurred placeholder), name, and common name. |
 | Favorite toggle | Heart icon button, delegates to `FavoritesService.toggle`. |
 | Report a problem | Opens `ReportPopup` (see below). |
-| "Today" / "This Sunday" Mass chips | Two labeled rows of time chips inside a card, computed via `MassFilter` for offset 0 (today) and the offset to the coming Sunday. |
-| Next 19 days schedule | A horizontally-scrolling row of day cards ("Holnap" for tomorrow, otherwise the Hungarian weekday name + date), each listing that day's Mass times — computed by re-running `MassFilter` for every day offset from 1–19 (not paginated or lazy; all computed upfront in `loadMasses`). |
-| Location card | A static Google Maps image (Static Maps API, hardcoded API key in source) centered on the church, with a pin overlay; tapping it opens the location in the device's installed map app (`map_launcher`, always the **first** installed app — no chooser). |
+| "Today" / "This Sunday" Mass chips | Two labeled rows of time chips inside a card, from the cached 20-day schedule. The page draws from the cache at once, then asks the API for the church (`Church {"ids": [tid]}`, full) and its 20-day schedule (`NearbyMasses`) and writes both through (`ChurchScheduleLoader`, spec 0003). A failed call marks the card: (i) for no connection, a tinted card and (i) for a server error. A church reported removed shows "Ez a templom már nem szerepel a miserend.hu-n." in place of the schedule. |
+| Next 19 days schedule | A horizontally-scrolling row of day cards ("Holnap" for tomorrow, otherwise the Hungarian weekday name + date), one per day that has masses. |
+| Location card | A non-interactive CARTO Voyager map (`MiserendMap`) centered on the church, with a pin; tapping it opens the location in the device's installed map app (`map_launcher`, always the **first** installed app — no chooser). |
 | Getting-there text | Optional free-text directions field from the dataset (`gettingThere`), HTML-unescaped before display; hidden entirely if absent. |
 | Directions button | "ÚTVONAL" — opens turn-by-turn directions in the same default map app. |
 

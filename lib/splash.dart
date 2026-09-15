@@ -7,8 +7,49 @@ import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/preferences.dart';
 
+/// What the splash screen does to get the app ready, behind one seam so that
+/// the screen can be pumped without files, preferences or a network.
+class AppStartup {
+  const AppStartup();
+
+  Future<bool> exportExists() => DatabaseManager.databaseExists;
+
+  Future<bool> exportVersionCompatible() =>
+      DatabaseManager.checkDatabaseVersion();
+
+  Future<bool> downloadExport() => DatabaseManager.downloadDatabase();
+
+  Future<bool> isCacheBootstrapped() => Preferences.isCacheBootstrapped();
+
+  /// The one-time import of the export into the cache. Throws when it fails.
+  Future<void> bootstrapCache() async {
+    final legacy = await MiserendDatabase.create();
+    final cache = await CacheDatabase.create();
+    final now = DateTime.now();
+    await BootstrapImporter.run(
+      legacy: legacy.db,
+      cache: cache,
+      from: now,
+      // An old export only gets here after a failed download or import. Its
+      // masses would land on the wrong days, so take the churches alone.
+      days: legacy.massesExpiredOn(now) ? 0 : BootstrapImporter.defaultDays,
+    );
+    await Preferences.setCacheBootstrapped();
+  }
+}
+
 class RouteSplash extends StatefulWidget {
-  const RouteSplash({super.key});
+  const RouteSplash({
+    super.key,
+    this.startup = const AppStartup(),
+    this.homeBuilder = _home,
+  });
+
+  /// Injected by tests.
+  final AppStartup startup;
+  final WidgetBuilder homeBuilder;
+
+  static Widget _home(BuildContext context) => const HomeScreen();
 
   @override
   _RouteSplashState createState() => _RouteSplashState();
@@ -25,8 +66,12 @@ class _RouteSplashState extends State<RouteSplash> {
   /// to fall back on, so the app has nothing to show until a retry succeeds.
   bool _downloadFailed = false;
 
+  /// Set when the first import into the cache failed. Every screen reads the
+  /// cache, so going on would show nothing but empty lists.
+  bool _bootstrapFailed = false;
+
   _checkDatabase() async {
-    bool fileExists = await DatabaseManager.databaseExists;
+    bool fileExists = await widget.startup.exportExists();
     if (!fileExists) {
       _showDialog(
         "Adatabázis nem taláható",
@@ -36,7 +81,7 @@ class _RouteSplashState extends State<RouteSplash> {
     }
 
     bool databaseVersionCompatible =
-        await DatabaseManager.checkDatabaseVersion();
+        await widget.startup.exportVersionCompatible();
     if (!databaseVersionCompatible) {
       _showDialog(
         "Adatbázis nem megfelelő",
@@ -53,7 +98,7 @@ class _RouteSplashState extends State<RouteSplash> {
       _downloadFailed = false;
       _status = 'Adatbázis letöltése…';
     });
-    bool success = await DatabaseManager.downloadDatabase();
+    bool success = await widget.startup.downloadExport();
     if (success) {
       if (mounted) {
         const snackBar = SnackBar(content: Text('Adatbázis letöltése sikeres'));
@@ -64,8 +109,8 @@ class _RouteSplashState extends State<RouteSplash> {
     }
 
     // An earlier export, even of the wrong version, beats keeping the user
-    // out of the app; the screens moved to the API do not need it anyway.
-    if (await DatabaseManager.databaseExists) {
+    // out of the app; once the cache has been filled no screen reads it.
+    if (await widget.startup.exportExists()) {
       if (mounted) {
         const snackBar = SnackBar(
             content: Text('Az adatbázis letöltése nem sikerült, '
@@ -86,43 +131,43 @@ class _RouteSplashState extends State<RouteSplash> {
   }
 
   _goToMainScreen() async {
-    await _bootstrapCacheIfNeeded();
+    if (!await _bootstrapCacheIfNeeded()) {
+      return;
+    }
     if (!mounted) {
       return;
     }
     Navigator.pushReplacement(
-      this.context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      context,
+      MaterialPageRoute(builder: widget.homeBuilder),
     );
   }
 
-  /// The API-backed cache starts out empty. It is filled once from the
-  /// downloaded database so that the church details page has something to show
-  /// before its first API call — and still has it when the phone is offline.
-  Future<void> _bootstrapCacheIfNeeded() async {
-    if (await Preferences.isCacheBootstrapped()) {
-      return;
+  /// The cache starts out empty and every screen reads it, so it is filled
+  /// once from the downloaded export before the home screen opens. False
+  /// when that failed: the splash then offers a retry, and the import runs
+  /// again on the next start as well.
+  Future<bool> _bootstrapCacheIfNeeded() async {
+    if (await widget.startup.isCacheBootstrapped()) {
+      return true;
     }
 
-    setState(() => _status = 'Adatok előkészítése…');
+    setState(() {
+      _bootstrapFailed = false;
+      _status = 'Adatok előkészítése…';
+    });
     try {
-      final legacy = await MiserendDatabase.create();
-      final cache = await CacheDatabase.create();
-      final now = DateTime.now();
-      await BootstrapImporter.run(
-        legacy: legacy.db,
-        cache: cache,
-        from: now,
-        // An old export only gets here after a failed download or import. Its
-        // masses would land on the wrong days, so take the churches alone.
-        days: legacy.massesExpiredOn(now) ? 0 : BootstrapImporter.defaultDays,
-      );
-      await Preferences.setCacheBootstrapped();
+      await widget.startup.bootstrapCache();
+      return true;
     } catch (error) {
-      // Every screen still reads the downloaded database, so a failed import
-      // must not keep the user out of the app. The details page will fill the
-      // cache from the API instead, one church at a time.
       debugPrint('Cache bootstrap failed: $error');
+      if (mounted) {
+        setState(() {
+          _status = null;
+          _bootstrapFailed = true;
+        });
+      }
+      return false;
     }
   }
 
@@ -135,27 +180,16 @@ class _RouteSplashState extends State<RouteSplash> {
   @override
   Widget build(BuildContext context) {
     if (_downloadFailed) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Az adatbázis letöltése nem sikerült. Ellenőrizd az '
-                  'internetkapcsolatot, és próbáld újra.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _downloadDatabase,
-                  child: const Text('Újrapróbálás'),
-                ),
-              ],
-            ),
-          ),
-        ),
+      return _retryScreen(
+        'Az adatbázis letöltése nem sikerült. Ellenőrizd az '
+        'internetkapcsolatot, és próbáld újra.',
+        _downloadDatabase,
+      );
+    }
+    if (_bootstrapFailed) {
+      return _retryScreen(
+        'Az adatok előkészítése nem sikerült. Próbáld újra.',
+        _goToMainScreen,
       );
     }
 
@@ -170,6 +204,27 @@ class _RouteSplashState extends State<RouteSplash> {
               Text(_status!),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _retryScreen(String message, VoidCallback onRetry) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(message, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: onRetry,
+                child: const Text('Újrapróbálás'),
+              ),
+            ],
+          ),
         ),
       ),
     );
