@@ -13,6 +13,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_list_item.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
+import 'package:miserend/location_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -76,6 +77,18 @@ class _FakeLoader extends NearestMassesLoader {
   }
 }
 
+/// Records which settings page the user was sent to.
+class _FakeLocation extends LocationProvider {
+  int appSettingsOpened = 0;
+  int locationSettingsOpened = 0;
+
+  @override
+  Future<void> openAppSettings() async => appSettingsOpened++;
+
+  @override
+  Future<void> openLocationSettings() async => locationSettingsOpened++;
+}
+
 /// Lets the details page open without a database or a network call.
 class _EmptyDetailsLoader extends ChurchScheduleLoader {
   ChurchPageData get _empty => ChurchPageData(
@@ -113,11 +126,14 @@ void main() {
   });
 
   Future<void> pumpPage(WidgetTester tester, NearestMassesLoader loader,
-      {bool isActive = true}) async {
+      {bool isActive = true, LocationProvider? location}) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NearMassesPage(
-            loader: loader, clock: () => now, isActive: isActive),
+            loader: loader,
+            clock: () => now,
+            isActive: isActive,
+            location: location ?? _FakeLocation()),
       ),
     ));
     await tester.pump();
@@ -170,14 +186,17 @@ void main() {
       expect(find.text('Legközelebbi misék betöltése…'), findsOneWidget);
     });
 
-    testWidgets('says so when the position cannot be determined',
+    testWidgets('says so when the position cannot be determined in time',
         (tester) async {
-      await pumpPage(tester, _FakeLoader([const LocationUnavailable()]));
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            const LocationUnavailable(PositionUnavailableReason.noFreshFix)
+          ]));
 
-      expect(
-          find.text('Nem sikerült meghatározni a helyzetedet, ezért a '
-              'legközelebbi misék nem jeleníthetőek meg.'),
+      expect(find.text('Nem sikerült meghatározni a helyzetedet.'),
           findsOneWidget);
+      expect(find.byType(FilledButton), findsNothing);
     });
 
     testWidgets('says so when the masses cannot be loaded', (tester) async {
@@ -210,6 +229,88 @@ void main() {
 
       expect(find.text('Szent István-bazilika'), findsOneWidget);
       expect(find.text('18:30'), findsOneWidget);
+    });
+  });
+
+  group('position unavailable', () {
+    testWidgets('permission denied asks for it with a button that loads the '
+        'masses once granted', (tester) async {
+      final loader = _FakeLoader([
+        const LocationUnavailable(PositionUnavailableReason.permissionDenied),
+        [_mass(name: 'Friss', start: _at(18, 0))],
+      ]);
+      await pumpPage(tester, loader);
+
+      expect(find.text('A legközelebbi misékhez engedélyezd a helyadatot.'),
+          findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Engedélyezés'));
+      await tester.pump();
+
+      // Fetching again asks for the position, and with it the permission.
+      expect(loader.fetchCount, 2);
+      expect(find.text('Friss'), findsOneWidget);
+    });
+
+    testWidgets('permission denied for good opens the app settings',
+        (tester) async {
+      final location = _FakeLocation();
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            const LocationUnavailable(
+                PositionUnavailableReason.permissionDeniedForever)
+          ]),
+          location: location);
+
+      expect(
+          find.text('A legközelebbi misékhez engedélyezd a helyadatot a '
+              'telefon beállításaiban.'),
+          findsOneWidget);
+
+      await tester
+          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await tester.pump();
+
+      expect(location.appSettingsOpened, 1);
+      expect(location.locationSettingsOpened, 0);
+    });
+
+    testWidgets('location services off opens the location settings',
+        (tester) async {
+      final location = _FakeLocation();
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            const LocationUnavailable(PositionUnavailableReason.serviceDisabled)
+          ]),
+          location: location);
+
+      expect(find.text('A legközelebbi misékhez kapcsold be a helymeghatározást.'),
+          findsOneWidget);
+
+      await tester
+          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await tester.pump();
+
+      expect(location.locationSettingsOpened, 1);
+      expect(location.appSettingsOpened, 0);
+    });
+
+    testWidgets('coming back from the settings tries the position again',
+        (tester) async {
+      final loader = _FakeLoader([
+        const LocationUnavailable(PositionUnavailableReason.serviceDisabled),
+        [_mass(name: 'Friss', start: _at(18, 0))],
+      ]);
+      await pumpPage(tester, loader);
+
+      await tester
+          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await goToBackgroundAndBack(tester);
+
+      expect(loader.fetchCount, 2);
+      expect(find.text('Friss'), findsOneWidget);
     });
   });
 
@@ -332,6 +433,20 @@ void main() {
     testWidgets('pulling down fetches again from the list', (tester) async {
       final loader = _FakeLoader([
         [_mass(name: 'Régi', start: _at(18, 0))],
+        [_mass(name: 'Friss', start: _at(18, 0))],
+      ]);
+      await pumpPage(tester, loader);
+
+      await pullToRefresh(tester);
+
+      expect(loader.fetchCount, 2);
+      expect(find.text('Friss'), findsOneWidget);
+    });
+
+    testWidgets('pulling down fetches again when there was no position in time',
+        (tester) async {
+      final loader = _FakeLoader([
+        const LocationUnavailable(PositionUnavailableReason.noFreshFix),
         [_mass(name: 'Friss', start: _at(18, 0))],
       ]);
       await pumpPage(tester, loader);

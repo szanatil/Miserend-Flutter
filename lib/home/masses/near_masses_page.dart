@@ -8,7 +8,9 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/home/masses/mass_list_item.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
+import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/list_status_view.dart';
+import 'package:miserend/widgets/position_unavailable_view.dart';
 
 /// The Misék tab: the nearest masses, live from the API.
 ///
@@ -24,6 +26,7 @@ class NearMassesPage extends StatefulWidget {
     this.loader,
     this.clock = DateTime.now,
     this.detailsLoader,
+    this.location,
   });
 
   /// Whether the tab is the one on screen. The home screen keeps every opened
@@ -39,24 +42,27 @@ class NearMassesPage extends StatefulWidget {
   /// Handed to the details page a row opens; injected by tests.
   final ChurchScheduleLoader? detailsLoader;
 
+  /// Opens the settings pages when there is no position; injected by tests.
+  final LocationProvider? location;
+
   @override
   State<NearMassesPage> createState() => _NearMassesPageState();
 }
-
-enum _Failure { location, api }
 
 class _NearMassesPageState extends State<NearMassesPage>
     with WidgetsBindingObserver {
   static const Duration _reselectEvery = Duration(minutes: 1);
 
+  late final LocationProvider _location = widget.location ?? LocationProvider();
   late final NearestMassesLoader _loader =
-      widget.loader ?? NearestMassesLoader();
+      widget.loader ?? NearestMassesLoader(location: _location);
 
   /// The whole last response, not the ten rows drawn from it: when a mass
   /// expires, its place goes to the church's next mass or to the next nearest
   /// church, and both are only in the full response.
   List<NearbyMassesItem> _items = const [];
-  _Failure? _failure;
+  PositionUnavailableReason? _noPosition;
+  bool _apiFailed = false;
   bool _loaded = false;
 
   /// When the latest fetch started. Its upper bound is the following
@@ -156,13 +162,14 @@ class _NearMassesPageState extends State<NearMassesPage>
     _fetchedAt = now;
 
     List<NearbyMassesItem> items = const [];
-    _Failure? failure;
+    PositionUnavailableReason? noPosition;
+    var apiFailed = false;
     try {
       items = await _loader.fetch(now);
-    } on LocationUnavailable {
-      failure = _Failure.location;
+    } on LocationUnavailable catch (error) {
+      noPosition = error.reason;
     } catch (_) {
-      failure = _Failure.api;
+      apiFailed = true;
     }
 
     if (!mounted || requestId != _requestId) return;
@@ -170,7 +177,8 @@ class _NearMassesPageState extends State<NearMassesPage>
       // A failure drops the previous list: it promised masses one can still
       // reach, and there is no telling any more whether it still does.
       _items = items;
-      _failure = failure;
+      _noPosition = noPosition;
+      _apiFailed = apiFailed;
       _loaded = true;
     });
   }
@@ -184,22 +192,30 @@ class _NearMassesPageState extends State<NearMassesPage>
   }
 
   Widget _content() {
-    switch (_failure) {
-      case _Failure.location:
-        return const _PullableMessage(
-            'Nem sikerült meghatározni a helyzetedet, ezért a '
-            'legközelebbi misék nem jeleníthetőek meg.');
-      case _Failure.api:
-        return const _PullableMessage('Nem sikerült betölteni a miséket. '
-            'Ellenőrizd az internetkapcsolatot.');
-      case null:
-        break;
+    final noPosition = _noPosition;
+    if (noPosition != null) {
+      return PullableFill(
+        child: PositionUnavailableView(
+          reason: noPosition,
+          purpose: 'A legközelebbi misékhez',
+          location: _location,
+          onRetry: _fetch,
+        ),
+      );
+    }
+    if (_apiFailed) {
+      return const PullableFill(
+          child: MessageView(
+              message: 'Nem sikerült betölteni a miséket. '
+                  'Ellenőrizd az internetkapcsolatot.'));
     }
 
     final now = widget.clock();
     final masses = selectNearestMasses(_items, now);
     if (masses.isEmpty) {
-      return const _PullableMessage('A közelben ma már nincs elérhető mise.');
+      return const PullableFill(
+          child: MessageView(
+              message: 'A közelben ma már nincs elérhető mise.'));
     }
 
     return ListView.builder(
@@ -248,28 +264,5 @@ class _NearMassesPageState extends State<NearMassesPage>
     // Catch up on the minutes spent on the details page before ticking on.
     _onTick();
     _startTicker();
-  }
-}
-
-/// A full-page message that can still be pulled down to try again, which a
-/// [RefreshIndicator] only offers over something scrollable.
-class _PullableMessage extends StatelessWidget {
-  const _PullableMessage(this.message);
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: constraints.maxHeight,
-            child: MessageView(message: message),
-          ),
-        ],
-      ),
-    );
   }
 }

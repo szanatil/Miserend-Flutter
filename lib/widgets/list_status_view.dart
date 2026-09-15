@@ -39,3 +39,23 @@ class MessageView extends StatelessWidget {
     );
   }
 }
+
+/// Stretches [child] over the whole page while keeping it scrollable, so a
+/// [RefreshIndicator] around it still lets the user pull down to try again.
+class PullableFill extends StatelessWidget {
+  const PullableFill({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: constraints.maxHeight, child: child),
+        ],
+      ),
+    );
+  }
+}

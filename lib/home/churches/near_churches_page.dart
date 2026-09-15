@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:miserend/database/church_with_masses.dart';
 import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/location_provider.dart';
@@ -62,9 +61,10 @@ class _NearChurchesPageState extends State<NearChurchesPage>  with
     String? failure;
     try {
       MiserendDatabase db = await MiserendDatabase.create();
-      Position position = await LocationProvider.getPosition();
-      list = await db.getCloseChurchesWithMasses(
-          position.latitude, position.longitude, DateTime.now());
+      final result = await LocationProvider().currentPosition();
+      if (result is! PositionFound) throw result;
+      list = await db.getCloseChurchesWithMasses(result.position.latitude,
+          result.position.longitude, DateTime.now());
     } catch (_) {
       failure = 'Nem sikerült meghatározni a helyzetedet, '
           'ezért a közeli templomok nem jeleníthetőek meg.';

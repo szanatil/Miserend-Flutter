@@ -6,10 +6,11 @@ import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/location_provider.dart';
 
-/// The position could not be determined: no permission, location services
-/// off, or no fresh fix in time.
+/// The position could not be determined, for [reason].
 class LocationUnavailable implements Exception {
-  const LocationUnavailable();
+  const LocationUnavailable(this.reason);
+
+  final PositionUnavailableReason reason;
 }
 
 /// The API could not be asked: offline, an HTTP error, or an error flag in the
@@ -22,17 +23,14 @@ class MassesUnavailable implements Exception {
 /// position, and each church's thumbnail from the cache. It lives outside the
 /// page so that the page can be pumped against a fake.
 class NearestMassesLoader {
-  /// A last known position older than this may come from another town.
-  static const Duration maxPositionAge = Duration(minutes: 5);
-
-  /// How long to wait for a fresh fix before giving up.
-  static const Duration positionTimeout = Duration(seconds: 15);
-
-  NearestMassesLoader({MiserendApiClient? api, CacheDatabase? cache})
+  NearestMassesLoader(
+      {MiserendApiClient? api, CacheDatabase? cache, LocationProvider? location})
       : _api = api ?? MiserendApiClient(),
-        _cache = cache;
+        _cache = cache,
+        _location = location ?? LocationProvider();
 
   final MiserendApiClient _api;
+  final LocationProvider _location;
   CacheDatabase? _cache;
   final Map<int, Future<String?>> _thumbnails = {};
 
@@ -43,13 +41,11 @@ class NearestMassesLoader {
   /// to, and a stale one is worse than saying it could not be loaded.
   Future<List<NearbyMassesItem>> fetch(DateTime now) async {
     final Position position;
-    try {
-      position = await LocationProvider.getPosition(
-        maxLastKnownAge: maxPositionAge,
-        freshFixTimeout: positionTimeout,
-      );
-    } catch (_) {
-      throw const LocationUnavailable();
+    switch (await _location.currentPosition()) {
+      case PositionFound(position: final found):
+        position = found;
+      case PositionUnavailable(:final reason):
+        throw LocationUnavailable(reason);
     }
 
     final result = await _api.fetchNearbyMasses(

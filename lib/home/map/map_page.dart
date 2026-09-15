@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/church_with_masses.dart';
@@ -76,8 +75,10 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> _goToMyPosition() async {
-    Position position = await LocationProvider.getPosition();
-    _controller.move(LatLng(position.latitude, position.longitude), 14);
+    final result = await LocationProvider().currentPosition();
+    if (result is! PositionFound) return;
+    _controller.move(
+        LatLng(result.position.latitude, result.position.longitude), 14);
   }
 
   _onTapped(Church church) {
