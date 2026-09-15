@@ -16,13 +16,25 @@ _Avoid_: nyitva/zárva (ez nem erről szól, a templom fizikailag létezik, csak
 A térkép alaprétegét szolgáltató csempe-CDN. A miserend.hu webapp és a Flutter app is a CARTO Voyager raszter-csempéit használja (`{s}.basemaps.cartocdn.com/rastertiles/voyager/...`), nem a nyers OpenStreetMap csempeszervert — az OSM Tile Usage Policy ugyanis production forgalomra tiltja a közvetlen `tile.openstreetmap.org` használatát.
 _Avoid_: "OSM térkép" önmagában (a csempe-forrás CARTO, az adat OSM — a kettő nem ugyanaz)
 
+**SQLite export**:
+A miserend.hu naponta generált, teljes adatbázis-pillanatképe (templomok, misék, képek), amely az API v4 `Sqlite` végpontján érhető el. A **kezdeti feltöltés** forrása, és ebből olvasnak a még API-ra át nem állított képernyők. A v3 export már nem támogatott.
+_Avoid_: "az adatbázis" önmagában; "v3 export" (megszűnt); a letöltött fájl neve (a végpont mögött, átirányítással változhat).
+
 **Helyi gyorsítótár (local cache)**:
-Az eszközön tárolt SQLite tábla(k), amelyek a v4 API válaszait tükrözik. Első indításkor a régi `miserend_v4.sqlite3` exportból töltődnek fel egyszeri **kezdeti feltöltéssel**, utána kizárólag API-hívások írják felül soronként. Nem önálló, tekintélyelvű adatforrás — az API v4 az (ld. `docs/adr/0002-*`).
-_Avoid_: "az adatbázis" önmagában — korábban ez a teljes, letöltött SQLite fájlt jelentette; most már csak az API részleges, esetlegesen elavult tükrözése.
+Az eszközön tárolt templom- és mise-adatok, amelyek a v4 API válaszait tükrözik, és az app **egyetlen offline adatforrásai**. Első indításkor a **SQLite exportból** töltődnek fel egyszeri **kezdeti feltöltéssel**, utána kizárólag API-hívások írják felül soronként — a SQLite exportot többé nem töltjük le. Online az API v4 a tekintélyelvű forrás, a gyorsítótár csak tükör; adatkapcsolat nélkül (akár mert a felhasználó nem engedélyezi, akár mert nincs lefedettség) a képernyők a gyorsítótárból dolgoznak. Ha a felhasználó soha többé nem kapcsolódik, a kezdeti feltöltés állapota marad meg. Kivétel: a **legközelebbi misék** és a **gyóntatás** jelzése soha nem jön a gyorsítótárból (ld. `docs/adr/0002-*`).
+_Avoid_: "az adatbázis" önmagában — korábban ez a teljes, letöltött SQLite fájlt jelentette; most az API részleges, esetlegesen elavult tükrözése.
 
 **Kezdeti feltöltés (bootstrap import)**:
-Az első indításkor lezajló egyszeri művelet: a `miserend_v4.sqlite3` letöltése és a régi séma szerinti sorok átalakítása (mappelése) az API-alakú helyi sémára — beleértve a régi visszatérési-szabály oszlopok (`nap`, `periodus`, `datumtol`, `datumig`) egyszeri kiszámítását konkrét mise-időpontokra. Ezután többé nem fut le; nem tévesztendő össze a folyamatos, API-alapú frissítéssel.
+Az első indításkor lezajló egyszeri művelet: a **SQLite export** letöltése és a régi séma szerinti sorok átalakítása (mappelése) az API-alakú helyi sémára — beleértve a régi visszatérési-szabály oszlopok (`nap`, `periodus`, `datumtol`, `datumig`) egyszeri kiszámítását konkrét mise-időpontokra. Minden templomot átvesz, miséket a telepítés napjától **30 napra** — ennyi ideig mutat teljes miserendet egy soha többé nem kapcsolódó készülék is. Ezután többé nem fut le; nem tévesztendő össze a folyamatos, API-alapú frissítéssel.
 _Avoid_: "adatbázis-frissítés" / "sync" erre a lépésre — az a folyamatos, API-alapú frissítést jelenti, nem az egyszeri importot.
+
+**Nincs kapcsolat (no connection)**:
+Az API-kérés el sem jutott a szerverig: a felhasználó nem engedélyezte az appnak az adatkapcsolatot, nincs lefedettség, repülőgép-üzemmód van, vagy a kérés időtúllépéssel leállt. Ezeket az app nem különbözteti meg egymástól (Androidon nem is tudná megbízhatóan). A képernyő a **helyi gyorsítótárból** dolgozik, a misék mellett (i) jelzés áll, amely koppintásra elmondja, mikori az adat, és mit tehet a felhasználó.
+_Avoid_: "offline mód" (nem a felhasználó kapcsolja be); "nincs internet" (a tiltás nem a hálózat hiánya).
+
+**Szerverhiba (server error)**:
+A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótárból** töltődik újra, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel.
+_Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
 
 **Napi miserend (daily masses)**:
 Egy adott templom aznapi miséinek listája — ezt adja vissza közvetlenül a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként).
