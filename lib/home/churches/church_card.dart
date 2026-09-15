@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -45,7 +46,7 @@ class ChurchCard extends StatelessWidget {
       child: Card(
         color:
             failure == ApiFailure.serverError
-                ? OfflineNotice.serverErrorTint
+                ? CustomColors.serverErrorTint
                 : null,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -113,13 +114,19 @@ class ChurchCard extends StatelessWidget {
                       Container(color: Colors.grey, height: 1),
                       Consumer<FavoritesService>(
                         builder: (context, favoritesService, child) {
+                          final favorite = favoritesService.isFavorite(
+                            entry.id,
+                          );
                           return IconButton(
                             icon:
-                                favoritesService.isFavorite(entry.id)
+                                favorite
                                     ? const Icon(Icons.favorite)
                                     : const Icon(Icons.favorite_border),
                             color: Colors.grey,
-                            tooltip: 'Toggle favorite',
+                            tooltip:
+                                favorite
+                                    ? 'Törlés a kedvencek közül'
+                                    : 'Kedvencekhez',
                             onPressed: () => favoritesService.toggle(entry.id),
                           );
                         },

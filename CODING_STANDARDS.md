@@ -57,7 +57,7 @@ Ami nem ide tartozik, annak megvan a saját forrása:
 
 **T3 — A hamis függőség kézzel írt alosztály.** `class _FakeLocation extends LocationProvider`, privátként a tesztfájlban. Ha több tesztfájl használja, saját fájlba kerül a tesztek mellé (minta: [fake_church_list_loader.dart](test/home/churches/fake_church_list_loader.dart)).
 
-**T4 — HTTP: `MockClient` és rögzített válasz.** A `package:http/testing` `MockClient`-je élő API-ból rögzített JSON-t ad vissza a [test/fixtures/](test/fixtures/)-ből; a fájlnév a végpontot, a tárgyat és a rögzítés dátumát mondja (`nearby_budapest_2026-09-15.json`).
+**T4 — HTTP: `MockClient` és rögzített válasz.** A `package:http/testing` `MockClient`-je élő API-ból rögzített JSON-t ad vissza a [test/fixtures/](test/fixtures/)-ből; a fájlnév a végpontot, a tárgyat és a rögzítés dátumát mondja (`nearby_budapest_2026-09-15.json`). Ez a [MiserendApiClient](lib/api/miserend_api_client.dart) leképezésének tesztjére vonatkozik. A loader- és a gyorsítótár-tesztek, amelyek pontosan beállított adatot várnak (azonosítók, mai misék, `hianyzo`), a `MockClient`-ből célzott, kézzel épített JSON-t is adhatnak; a mezők leképezését ott már nem ellenőrzik újra.
 
 **T5 — Adatbázis: in-memory SQLite.** `sqfliteFfiInit()`, `databaseFactory = databaseFactoryFfi`, `CacheDatabase.create(path: inMemoryDatabasePath)`.
 

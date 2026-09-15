@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,6 +11,8 @@ import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/favorites_prefetch.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'database/fake_favorites_service.dart';
 
 http.Response _json(Object body) =>
     http.Response.bytes(utf8.encode(jsonEncode(body)), 200);
@@ -189,4 +192,63 @@ void main() {
 
     expect(api.paths, isEmpty);
   });
+  group('startWhenLoaded', () {
+    /// Lets the run get as far as its first API call.
+    Future<void> settle() =>
+        Future<void>.delayed(const Duration(milliseconds: 50));
+
+    test('waits for the favorites to be read, starts once, and nothing '
+        'waits on its answer', () async {
+      final api = _HeldApi();
+      final favorites = FakeFavoritesService(const [1, 2], loaded: false);
+
+      FavoritesPrefetch(
+        cache: cache,
+        api: api.client,
+        clock: () => now,
+      ).startWhenLoaded(favorites);
+      await settle();
+      expect(api.paths, isEmpty);
+
+      favorites.finishLoading();
+      await settle();
+      // Back here with the Church call still unanswered.
+      expect(api.paths, ['/api/v4/church']);
+
+      favorites.finishLoading();
+      await settle();
+      expect(api.paths, hasLength(1));
+      api.release();
+    });
+
+    test('favorites already read start the run at once', () async {
+      final api = _HeldApi();
+
+      FavoritesPrefetch(
+        cache: cache,
+        api: api.client,
+        clock: () => now,
+      ).startWhenLoaded(FakeFavoritesService(const [1]));
+      await settle();
+
+      expect(api.paths, ['/api/v4/church']);
+      api.release();
+    });
+  });
+}
+
+/// Holds every call until [release], then answers as if offline.
+class _HeldApi {
+  final Completer<void> _answer = Completer();
+  final List<String> paths = [];
+
+  void release() => _answer.complete();
+
+  MiserendApiClient get client => MiserendApiClient(
+    client: MockClient((request) async {
+      paths.add(request.url.path);
+      await _answer.future;
+      throw const SocketException('offline');
+    }),
+  );
 }

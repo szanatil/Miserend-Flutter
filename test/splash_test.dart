@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/splash.dart';
@@ -31,6 +33,16 @@ class _FakeStartup extends AppStartup {
     if (!succeeds) throw StateError('import failed');
     bootstrapped = true;
   }
+}
+
+/// Answers whether the cache is filled only when the test says so.
+class _SlowStartup extends _FakeStartup {
+  _SlowStartup() : super(bootstrapped: false, importSucceeds: [true]);
+
+  final Completer<bool> answer = Completer();
+
+  @override
+  Future<bool> isCacheBootstrapped() => answer.future;
 }
 
 void main() {
@@ -88,5 +100,27 @@ void main() {
 
     expect(startup.imports, 2);
     expect(find.text('Főképernyő'), findsOneWidget);
+  });
+
+  testWidgets('a splash gone before the cache check answers starts no import', (
+    tester,
+  ) async {
+    final startup = _SlowStartup();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RouteSplash(
+          startup: startup,
+          homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    startup.answer.complete(false);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(startup.imports, 0);
   });
 }

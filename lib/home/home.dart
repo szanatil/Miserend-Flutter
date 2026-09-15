@@ -147,29 +147,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _prefetchFavorites();
   }
 
-  /// Refreshes the favorites' data and schedules in the background, once
-  /// their ids are known; the screen does not wait for it.
+  /// Refreshes the favorites' data and schedules in the background; the
+  /// screen does not wait for it.
   void _prefetchFavorites() {
     final favorites = Provider.of<FavoritesService>(context, listen: false);
-    void run() {
-      unawaited(
-        FavoritesPrefetch(
-          onChurchesGone: favorites.removeAll,
-        ).runIfDue(favorites.favorites.map((f) => f.churchId).toList()),
-      );
-    }
-
-    if (favorites.loaded) {
-      run();
-      return;
-    }
-    void onLoaded() {
-      if (!favorites.loaded) return;
-      favorites.removeListener(onLoaded);
-      run();
-    }
-
-    favorites.addListener(onLoaded);
+    FavoritesPrefetch(
+      onChurchesGone: favorites.removeAll,
+    ).startWhenLoaded(favorites);
   }
 
   void _onItemTapped(int index) {

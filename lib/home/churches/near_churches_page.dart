@@ -14,6 +14,8 @@ class NearChurchesPage extends StatefulWidget {
 
   /// Injected by tests; the page builds its own otherwise.
   final ChurchListLoader? loader;
+
+  /// Injected by tests; the page builds its own otherwise.
   final LocationProvider? location;
 
   @override
@@ -134,13 +136,9 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     final cached = await _loader.load(query);
     if (!current()) return;
     setState(() {
-      // A banner already up stays until a refresh succeeds; the first load
-      // has none, since nothing has failed yet.
-      _list = ChurchList(
-        churches: cached.churches,
-        failure: _list.failure,
-        dataAsOf: cached.dataAsOf,
-      );
+      // No banner while the refresh runs: it marks a failed attempt only
+      // (spec 0005, „Offline-jelölés").
+      _list = cached;
       _noPosition = null;
       _loaded = true;
     });

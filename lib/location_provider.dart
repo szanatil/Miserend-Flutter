@@ -103,9 +103,10 @@ class LocationProvider {
       return const PositionUnavailable(
         PositionUnavailableReason.permissionDenied,
       );
-    } catch (_) {
+    } catch (error) {
       // A timeout, or anything else that kept the fix from arriving, is
       // something a retry may get past.
+      debugPrint('No fresh position: $error');
       return const PositionUnavailable(PositionUnavailableReason.noFreshFix);
     }
   }

@@ -153,6 +153,31 @@ void main() {
     expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
   });
 
+  testWidgets('no banner while a pulled refresh runs; a failure puts it back', (
+    tester,
+  ) async {
+    final retry = Completer<ChurchList>();
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1155, 'Havas Boldogasszony templom')],
+      ],
+      refreshed: [listOf(const [], failure: ApiFailure.serverError), retry],
+    );
+    await pumpPage(tester, loader);
+    expect(find.byType(OfflineBanner), findsOneWidget);
+
+    await pullToRefresh(tester);
+    expect(find.byType(OfflineBanner), findsNothing);
+
+    retry.complete(
+      listOf([
+        _entry(1155, 'Havas Boldogasszony templom'),
+      ], failure: ApiFailure.serverError),
+    );
+    await tester.pump();
+    expect(find.byType(OfflineBanner), findsOneWidget);
+  });
+
   testWidgets('pulling down refreshes again', (tester) async {
     final loader = FakeChurchListLoader(
       [

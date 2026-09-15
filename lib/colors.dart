@@ -17,4 +17,13 @@ class CustomColors {
   /// The accent behind mass times and the call-to-action links. It used to be
   /// written out at each use site, which meant two copies drifting apart.
   static const Color accent = Color.fromARGB(255, 255, 140, 0);
+
+  /// Behind what a server error leaves on screen (CONTEXT.md, „Szerverhiba"):
+  /// the lists' banner, the map's church card and the details page. A user
+  /// with signal does not expect stale data, so it has to stand out more than
+  /// no connection does.
+  static const Color serverErrorTint = Color(0xFFFFE0B2);
+
+  /// The server error's icons, readable on [serverErrorTint].
+  static const Color serverErrorAccent = Color(0xFFB45309);
 }

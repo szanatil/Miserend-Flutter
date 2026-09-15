@@ -160,6 +160,9 @@ class _RouteSplashState extends State<RouteSplash> {
     if (await widget.startup.isCacheBootstrapped()) {
       return true;
     }
+    if (!mounted) {
+      return false;
+    }
 
     setState(() {
       _bootstrapFailed = false;

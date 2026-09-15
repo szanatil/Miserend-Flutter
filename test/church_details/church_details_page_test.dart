@@ -7,6 +7,7 @@ import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -457,7 +458,7 @@ void main() {
 
       expect(find.byType(OfflineBanner), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      expect(bannerColor(tester), isNot(OfflineNotice.serverErrorTint));
+      expect(bannerColor(tester), isNot(CustomColors.serverErrorTint));
       expect(
         tester.getTopLeft(find.byType(OfflineBanner)).dy,
         lessThan(tester.getTopLeft(find.text('Ma')).dy),
@@ -472,7 +473,7 @@ void main() {
         _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.serverError),
       );
 
-      expect(bannerColor(tester), OfflineNotice.serverErrorTint);
+      expect(bannerColor(tester), CustomColors.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
       final massCard = tester.widget<Card>(
         find.ancestor(of: find.text('Ma'), matching: find.byType(Card)).first,

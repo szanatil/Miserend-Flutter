@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -19,6 +19,7 @@ import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../fake_location_provider.dart';
 import '../churches/fake_church_list_loader.dart';
 
 /// Near the default centre, so the markers are on screen.
@@ -56,30 +57,14 @@ class _MapLoader extends FakeChurchListLoader {
 
   List<ChurchLocation> locations = _locations;
 
+  /// Bumped by a test in place of an answer written to the cache.
+  final ValueNotifier<int> written = ValueNotifier(0);
+
   @override
   Future<List<ChurchLocation>> churchLocations() async => locations;
-}
-
-/// Each call takes the next answer; the last one repeats.
-class _FakeLocation extends LocationProvider {
-  _FakeLocation(List<PositionResult> answers) : _answers = Queue.of(answers);
-
-  final Queue<PositionResult> _answers;
-  int calls = 0;
-  int appSettingsOpened = 0;
-  int locationSettingsOpened = 0;
 
   @override
-  Future<PositionResult> currentPosition() async {
-    calls++;
-    return _answers.length > 1 ? _answers.removeFirst() : _answers.first;
-  }
-
-  @override
-  Future<void> openAppSettings() async => appSettingsOpened++;
-
-  @override
-  Future<void> openLocationSettings() async => locationSettingsOpened++;
+  Listenable get churchesWritten => written;
 }
 
 void main() {
@@ -111,7 +96,7 @@ void main() {
           home: Scaffold(
             body: MapPage(
               loader: loader,
-              location: location ?? _FakeLocation([noFix]),
+              location: location ?? FakeLocationProvider([noFix]),
               mapController: controller,
             ),
           ),
@@ -152,6 +137,55 @@ void main() {
       await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
 
       expect(markerIds(tester), [1, 2]);
+    });
+
+    testWidgets('follow the churches any answer writes into the cache', (
+      tester,
+    ) async {
+      final loader = _MapLoader([<ChurchListEntry>[]]);
+      await pumpPage(tester, loader);
+
+      loader.locations = [
+        ..._locations,
+        const ChurchLocation(id: 3, lat: 47.2650, lon: 19.7650),
+      ];
+      loader.written.value++;
+      await tester.pump();
+      await tester.pump();
+
+      expect(markerIds(tester), [1, 2, 3]);
+    });
+
+    testWidgets('a church found removed after its card was closed loses its '
+        'marker', (tester) async {
+      final refresh = Completer<ChurchList>();
+      final loader = _MapLoader(
+        [
+          [_entry(1, 'Megszűnt templom')],
+        ],
+        refreshed: [refresh],
+      );
+      await pumpPage(tester, loader);
+      await tapMarker(tester, 1);
+      await tester.tapAt(const Offset(40, 40));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // The card's refresh deletes the church and says the cache changed.
+      loader.locations = [_locations[1]];
+      loader.written.value++;
+      refresh.complete(
+        const ChurchList(
+          churches: [],
+          failure: null,
+          dataAsOf: null,
+          removed: [1],
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(markerIds(tester), [2]);
+      expect(find.byType(ChurchCard), findsNothing);
     });
   });
 
@@ -222,7 +256,7 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, isNot(OfflineNotice.serverErrorTint));
+      expect(card.color, isNot(CustomColors.serverErrorTint));
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
@@ -249,7 +283,7 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, OfflineNotice.serverErrorTint);
+      expect(card.color, CustomColors.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
 
@@ -323,7 +357,7 @@ void main() {
       final controller = await pumpPage(
         tester,
         _MapLoader([<ChurchListEntry>[]]),
-        location: _FakeLocation([PositionFound(_position(47.5, 19.04))]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
       );
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
@@ -355,7 +389,7 @@ void main() {
         await pumpPage(
           tester,
           _MapLoader([<ChurchListEntry>[]]),
-          location: _FakeLocation([PositionUnavailable(reason)]),
+          location: FakeLocationProvider([PositionUnavailable(reason)]),
         );
 
         await tester.tap(find.byIcon(Icons.my_location));
@@ -375,7 +409,7 @@ void main() {
     testWidgets('allowing the permission from the SnackBar moves the map', (
       tester,
     ) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         noFix,
         const PositionUnavailable(PositionUnavailableReason.permissionDenied),
         PositionFound(_position(47.5, 19.04)),
@@ -397,7 +431,7 @@ void main() {
 
     testWidgets('the settings action opens the location settings, and coming '
         'back tries again', (tester) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         noFix,
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
         PositionFound(_position(47.5, 19.04)),

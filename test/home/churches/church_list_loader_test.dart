@@ -450,4 +450,73 @@ void main() {
       expect(gone, [1]);
     });
   });
+
+  group('churches written', () {
+    Future<int> timesTold(
+      ChurchListLoader loader,
+      Future<void> Function() act,
+    ) async {
+      var told = 0;
+      void listener() => told++;
+      loader.churchesWritten.addListener(listener);
+      try {
+        await act();
+      } finally {
+        loader.churchesWritten.removeListener(listener);
+      }
+      return told;
+    }
+
+    test('an answer with churches tells the map', () async {
+      final loader = loaderWith(
+        _Api(
+          (_) async => _json({
+            'templomok': [_listed(2, 'Új templom', lat: 47.60)],
+            'error': 0,
+          }),
+        ),
+      );
+
+      final told = await timesTold(
+        loader,
+        () => loader.refresh(near, const []),
+      );
+
+      expect(told, 1);
+      expect((await loader.churchLocations()).map((c) => c.id), [1, 2]);
+    });
+
+    test('a church reported removed tells the map', () async {
+      final loader = loaderWith(
+        _Api(
+          (_) async => _json({
+            'templomok': [],
+            'hianyzo': [1],
+            'error': 0,
+          }),
+        ),
+      );
+
+      final told = await timesTold(
+        loader,
+        () => loader.refresh(const ChurchCardQuery(1), const []),
+      );
+
+      expect(told, 1);
+      expect(await loader.churchLocations(), isEmpty);
+    });
+
+    test('an empty or failed answer does not', () async {
+      final empty = loaderWith(
+        _Api((_) async => _json({'templomok': [], 'error': 0})),
+      );
+      final failing = loaderWith(_Api((_) async => http.Response('', 500)));
+
+      expect(await timesTold(empty, () => empty.refresh(near, const [])), 0);
+      expect(
+        await timesTold(failing, () => failing.refresh(near, const [])),
+        0,
+      );
+    });
+  });
 }

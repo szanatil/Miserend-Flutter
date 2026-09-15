@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 
@@ -13,6 +14,13 @@ class CacheWriteThrough {
 
   final CacheDatabase cache;
   final ChurchesGone? onChurchesGone;
+
+  /// Told once an answer has changed the cached churches, whichever screen
+  /// asked for it, so that the map can draw its markers again: a new church
+  /// goes on the map as soon as any answer has written it (spec 0005,
+  /// „Térkép").
+  static Listenable get churchesWritten => _churchesWritten;
+  static final ValueNotifier<int> _churchesWritten = ValueNotifier(0);
 
   /// [minimal] says the answer leaves fields out, which must not overwrite
   /// the cached ones.
@@ -34,6 +42,9 @@ class CacheWriteThrough {
     if (response.missing.isNotEmpty) {
       await cache.deleteChurches(response.missing);
       await onChurchesGone?.call(response.missing);
+    }
+    if (response.churches.isNotEmpty || response.missing.isNotEmpty) {
+      _churchesWritten.value++;
     }
   }
 }

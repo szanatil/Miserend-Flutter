@@ -352,6 +352,14 @@ void main() {
       expect(MiserendApiClient.callTimeout, const Duration(seconds: 15));
       expect(MiserendApiClient.connectTimeout, const Duration(seconds: 10));
     });
+
+    test('the connection the calls go through gives up connecting after '
+        '10 seconds', () {
+      final client = MiserendApiClient.newHttpClient();
+      addTearDown(client.close);
+
+      expect(client.connectionTimeout, const Duration(seconds: 10));
+    });
   });
 
   group('searchChurches', () {

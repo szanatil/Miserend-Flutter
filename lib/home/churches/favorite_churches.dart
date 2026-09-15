@@ -92,12 +92,17 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
     final cached = await _loader.load(query);
     if (!current()) return;
     setState(() {
-      // A banner already up stays until a refresh succeeds.
-      _list = ChurchList(
-        churches: cached.churches,
-        failure: _list.failure,
-        dataAsOf: cached.dataAsOf,
-      );
+      // No banner while a refresh runs: it marks a failed attempt only (spec
+      // 0005, „Offline-jelölés"). A change to the favorites makes no attempt,
+      // so a banner already up stays.
+      _list =
+          refresh
+              ? cached
+              : ChurchList(
+                churches: cached.churches,
+                failure: _list.failure,
+                dataAsOf: cached.dataAsOf,
+              );
       loading = false;
     });
 

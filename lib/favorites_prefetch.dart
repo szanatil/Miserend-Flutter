@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cache_database.dart';
+import 'package:miserend/database/favorites_service.dart';
 
 /// Keeps the favorite churches' data and 20-day schedule in the cache, so that
 /// they are there weeks later without signal (spec 0005, „Kedvencek
@@ -29,6 +32,27 @@ class FavoritesPrefetch {
 
   /// Told when a favorite has been removed from miserend.hu.
   final ChurchesGone? onChurchesGone;
+
+  /// Starts [runIfDue] for the [favorites] once they have been read from the
+  /// local database. Nothing waits on it: the home screen opens at once
+  /// (spec 0005, „Kedvencek előfrissítése").
+  void startWhenLoaded(FavoritesService favorites) {
+    void run() => unawaited(
+      runIfDue(favorites.favorites.map((f) => f.churchId).toList()),
+    );
+
+    if (favorites.loaded) {
+      run();
+      return;
+    }
+    void onLoaded() {
+      if (!favorites.loaded) return;
+      favorites.removeListener(onLoaded);
+      run();
+    }
+
+    favorites.addListener(onLoaded);
+  }
 
   /// Refreshes [favoriteIds] unless a run succeeded within [interval]. Any
   /// failure ends the run quietly without counting it, so the next start

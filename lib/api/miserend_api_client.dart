@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:miserend/api/api_result.dart';
@@ -71,8 +72,13 @@ class MiserendApiClient {
   final http.Client _client;
 
   MiserendApiClient({http.Client? client})
-    : _client =
-          client ?? IOClient(HttpClient()..connectionTimeout = connectTimeout);
+    : _client = client ?? IOClient(newHttpClient());
+
+  /// The connection every call goes through unless a test hands in its own
+  /// client.
+  @visibleForTesting
+  static HttpClient newHttpClient() =>
+      HttpClient()..connectionTimeout = connectTimeout;
 
   /// The churches with these ids. Always the `ids` form, even for one church:
   /// asked for by a single `id`, a church that no longer exists is an error

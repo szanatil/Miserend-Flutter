@@ -18,6 +18,8 @@ import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../fake_location_provider.dart';
+
 NearbyMassesItem _mass({
   int church = 1,
   String name = 'Szent István-bazilika',
@@ -79,18 +81,6 @@ class _FakeLoader extends NearestMassesLoader {
   }
 }
 
-/// Records which settings page the user was sent to.
-class _FakeLocation extends LocationProvider {
-  int appSettingsOpened = 0;
-  int locationSettingsOpened = 0;
-
-  @override
-  Future<void> openAppSettings() async => appSettingsOpened++;
-
-  @override
-  Future<void> openLocationSettings() async => locationSettingsOpened++;
-}
-
 /// Lets the details page open without a database or a network call.
 class _EmptyDetailsLoader extends ChurchScheduleLoader {
   ChurchPageData get _empty => ChurchPageData(
@@ -142,7 +132,7 @@ void main() {
             loader: loader,
             clock: () => now,
             isActive: isActive,
-            location: location ?? _FakeLocation(),
+            location: location ?? FakeLocationProvider(),
           ),
         ),
       ),
@@ -313,7 +303,7 @@ void main() {
     testWidgets('permission denied for good opens the app settings', (
       tester,
     ) async {
-      final location = _FakeLocation();
+      final location = FakeLocationProvider();
       await pumpPage(
         tester,
         _FakeLoader([
@@ -344,7 +334,7 @@ void main() {
     testWidgets('location services off opens the location settings', (
       tester,
     ) async {
-      final location = _FakeLocation();
+      final location = FakeLocationProvider();
       await pumpPage(
         tester,
         _FakeLoader([

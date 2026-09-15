@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/colors.dart';
 
 /// What the user can do to get live data again, which depends on the screen:
 /// a list is pulled down, a single church is opened again.
@@ -10,13 +11,6 @@ enum RetryHint { pullList, reopenChurch }
 /// (CONTEXT.md, „Nincs kapcsolat", „Szerverhiba"): the lists' banner, the map's
 /// church card and the details page.
 class OfflineNotice {
-  /// Behind what a server error leaves on screen. A user with signal does not
-  /// expect stale data, so it has to stand out more than no connection does.
-  static const Color serverErrorTint = Color(0xFFFFE0B2);
-
-  /// The (i) icon's colour for a server error, readable on [serverErrorTint].
-  static const Color serverErrorAccent = Color(0xFFB45309);
-
   static final DateFormat _date = DateFormat('yyyy. MM. dd');
 
   /// The explanation the (i) opens. [asOf] is how old the data is; null only
@@ -87,7 +81,7 @@ class OfflineInfoButton extends StatelessWidget {
       icon: const Icon(Icons.info_outline),
       color:
           failure == ApiFailure.serverError
-              ? OfflineNotice.serverErrorAccent
+              ? CustomColors.serverErrorAccent
               : Colors.black54,
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,
@@ -116,7 +110,7 @@ class OfflineBanner extends StatelessWidget {
     final serverError = failure == ApiFailure.serverError;
     return Material(
       color:
-          serverError ? OfflineNotice.serverErrorTint : const Color(0xFFEEEEEE),
+          serverError ? CustomColors.serverErrorTint : const Color(0xFFEEEEEE),
       child: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: Row(
@@ -125,9 +119,7 @@ class OfflineBanner extends StatelessWidget {
               serverError ? Icons.cloud_off : Icons.signal_wifi_off,
               size: 18,
               color:
-                  serverError
-                      ? OfflineNotice.serverErrorAccent
-                      : Colors.black54,
+                  serverError ? CustomColors.serverErrorAccent : Colors.black54,
             ),
             const SizedBox(width: 8),
             Expanded(

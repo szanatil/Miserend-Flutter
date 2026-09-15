@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -16,6 +16,7 @@ import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../fake_location_provider.dart';
 import 'fake_church_list_loader.dart';
 
 Position _position() => Position(
@@ -51,28 +52,6 @@ ChurchListEntry _entry(String name, {List<CachedMass> masses = const []}) =>
       photo: null,
       masses: masses,
     );
-
-/// Each call takes the next answer; the last one repeats.
-class _FakeLocation extends LocationProvider {
-  _FakeLocation(List<PositionResult> answers) : _answers = Queue.of(answers);
-
-  final Queue<PositionResult> _answers;
-  int calls = 0;
-  int appSettingsOpened = 0;
-  int locationSettingsOpened = 0;
-
-  @override
-  Future<PositionResult> currentPosition() async {
-    calls++;
-    return _answers.length > 1 ? _answers.removeFirst() : _answers.first;
-  }
-
-  @override
-  Future<void> openAppSettings() async => appSettingsOpened++;
-
-  @override
-  Future<void> openLocationSettings() async => locationSettingsOpened++;
-}
 
 void main() {
   // The rows read favorites, which live in a local database. Built once, in
@@ -127,7 +106,7 @@ void main() {
       await pumpPage(
         tester,
         FakeChurchListLoader([Completer<List<ChurchListEntry>>()]),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Közeli templomok betöltése...'), findsOneWidget);
@@ -137,7 +116,7 @@ void main() {
       await pumpPage(
         tester,
         FakeChurchListLoader([<ChurchListEntry>[]]),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Nem találhatóak közeli templomok.'), findsOneWidget);
@@ -151,7 +130,7 @@ void main() {
         FakeChurchListLoader([
           [_entry('Közelebbi'), _entry('Távolabbi')],
         ]),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Közelebbi'), findsOneWidget);
@@ -179,7 +158,7 @@ void main() {
             ),
           ],
         ]),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.byType(TimeChip), findsNWidgets(2));
@@ -216,7 +195,7 @@ void main() {
         await pumpPage(
           tester,
           loader,
-          _FakeLocation([PositionUnavailable(reason)]),
+          FakeLocationProvider([PositionUnavailable(reason)]),
         );
 
         expect(find.text(text), findsOneWidget);
@@ -230,7 +209,7 @@ void main() {
     }
 
     testWidgets('allowing the permission lists the churches', (tester) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         const PositionUnavailable(PositionUnavailableReason.permissionDenied),
         found,
       ]);
@@ -251,7 +230,7 @@ void main() {
     });
 
     testWidgets('denied for good opens the app settings', (tester) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         const PositionUnavailable(
           PositionUnavailableReason.permissionDeniedForever,
         ),
@@ -273,7 +252,7 @@ void main() {
     testWidgets('location services off opens the location settings', (
       tester,
     ) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
       ]);
       await pumpPage(
@@ -293,7 +272,7 @@ void main() {
     testWidgets('coming back from the settings tries the position again', (
       tester,
     ) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
         found,
       ]);
@@ -324,7 +303,7 @@ void main() {
     testWidgets('asks for the position again and reads the cache again', (
       tester,
     ) async {
-      final location = _FakeLocation([found]);
+      final location = FakeLocationProvider([found]);
       final loader = FakeChurchListLoader([
         [_entry('Régi')],
         [_entry('Új')],
@@ -339,7 +318,7 @@ void main() {
     });
 
     testWidgets('works from the position message too', (tester) async {
-      final location = _FakeLocation([
+      final location = FakeLocationProvider([
         const PositionUnavailable(PositionUnavailableReason.noFreshFix),
         found,
       ]);
@@ -364,7 +343,7 @@ void main() {
       final loader = FakeChurchListLoader([
         [_entry('Templom')],
       ]);
-      await pumpPage(tester, loader, _FakeLocation([found]));
+      await pumpPage(tester, loader, FakeLocationProvider([found]));
 
       final query = loader.queries.single as NearChurchesQuery;
       expect((query.lat, query.lon), (47.4979, 19.0402));
@@ -382,7 +361,7 @@ void main() {
           ],
           refreshed: [Completer<ChurchList>()],
         ),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Tárolt'), findsOneWidget);
@@ -402,7 +381,7 @@ void main() {
             listOf([_entry('Tárolt'), _entry('Új templom')]),
           ],
         ),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Új templom'), findsOneWidget);
@@ -420,7 +399,7 @@ void main() {
           ],
           refreshed: [listOf(const [], failure: ApiFailure.noConnection)],
         ),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(find.text('Tárolt'), findsOneWidget);
@@ -441,7 +420,7 @@ void main() {
                   .first,
             )
             .color,
-        isNot(OfflineNotice.serverErrorTint),
+        isNot(CustomColors.serverErrorTint),
       );
     });
 
@@ -454,7 +433,7 @@ void main() {
           ],
           refreshed: [listOf(const [], failure: ApiFailure.serverError)],
         ),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       expect(
@@ -468,7 +447,7 @@ void main() {
                   .first,
             )
             .color,
-        OfflineNotice.serverErrorTint,
+        CustomColors.serverErrorTint,
       );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
@@ -490,7 +469,7 @@ void main() {
             ),
           ],
         ),
-        _FakeLocation([found]),
+        FakeLocationProvider([found]),
       );
 
       await tester.tap(find.byType(OfflineInfoButton));
@@ -518,7 +497,7 @@ void main() {
           listOf([_entry('Friss')]),
         ],
       );
-      await pumpPage(tester, loader, _FakeLocation([found]));
+      await pumpPage(tester, loader, FakeLocationProvider([found]));
       expect(find.byType(OfflineBanner), findsOneWidget);
 
       await pullToRefresh(tester);
@@ -526,6 +505,29 @@ void main() {
       expect(loader.refreshes, 2);
       expect(find.byType(OfflineBanner), findsNothing);
       expect(find.text('Friss'), findsOneWidget);
+    });
+
+    testWidgets('no banner while a pulled refresh runs; a failure puts it '
+        'back', (tester) async {
+      final retry = Completer<ChurchList>();
+      final loader = FakeChurchListLoader(
+        [
+          [_entry('Tárolt')],
+        ],
+        refreshed: [listOf(const [], failure: ApiFailure.noConnection), retry],
+      );
+      await pumpPage(tester, loader, FakeLocationProvider([found]));
+      expect(find.byType(OfflineBanner), findsOneWidget);
+
+      await pullToRefresh(tester);
+      expect(find.byType(OfflineBanner), findsNothing);
+      expect(find.text('Tárolt'), findsOneWidget);
+
+      retry.complete(
+        listOf([_entry('Tárolt')], failure: ApiFailure.noConnection),
+      );
+      await tester.pump();
+      expect(find.byType(OfflineBanner), findsOneWidget);
     });
 
     testWidgets('no position, no call and no banner', (tester) async {
@@ -536,7 +538,7 @@ void main() {
       await pumpPage(
         tester,
         loader,
-        _FakeLocation([
+        FakeLocationProvider([
           const PositionUnavailable(PositionUnavailableReason.noFreshFix),
         ]),
       );

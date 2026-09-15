@@ -17,7 +17,11 @@ class MapPage extends StatefulWidget {
 
   /// Injected by tests; the page builds its own otherwise.
   final ChurchListLoader? loader;
+
+  /// Injected by tests; the page builds its own otherwise.
   final LocationProvider? location;
+
+  /// Injected by tests; the page builds its own otherwise.
   final MapController? mapController;
 
   @override
@@ -39,6 +43,10 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   List<MiserendMapMarker> _markers = [];
 
+  /// Bumped per marker load, so that a slow read cannot draw older markers
+  /// over newer ones.
+  int _markersLoadId = 0;
+
   /// The card on screen, and the church it is for.
   ChurchList? _card;
   int? _cardChurchId;
@@ -52,6 +60,9 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // The tab stays alive underneath the others, so the markers follow every
+    // answer written to the cache, not only the ones this page asked for.
+    _loader.churchesWritten.addListener(_loadMarkers);
     _loadMarkers();
     // Quietly: a SnackBar the moment the tab opens would answer a question
     // nobody asked. Without a position the map stays on the country.
@@ -60,6 +71,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _loader.churchesWritten.removeListener(_loadMarkers);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -123,8 +135,9 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   }
 
   Future<void> _loadMarkers() async {
+    final loadId = ++_markersLoadId;
     final locations = await _loader.churchLocations();
-    if (!mounted) return;
+    if (!mounted || loadId != _markersLoadId) return;
     setState(() {
       _markers =
           locations
@@ -185,7 +198,9 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   }
 
   /// A tap on the map away from the markers puts the card away. Its refresh,
-  /// if still running, is let go: [_cardChurchId] no longer matches.
+  /// if still running, is let go: [_cardChurchId] no longer matches. A church
+  /// that refresh finds removed still loses its marker, through
+  /// [ChurchListLoader.churchesWritten].
   void _closeCard() {
     if (_cardChurchId == null && _card == null) return;
     setState(() {

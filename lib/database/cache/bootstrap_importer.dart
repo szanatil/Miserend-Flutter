@@ -28,6 +28,7 @@ class BootstrapImporter {
     required CacheDatabase cache,
     required DateTime from,
     int days = defaultDays,
+    DateTime Function() clock = DateTime.now,
   }) async {
     final churches = await legacy.query('templomok');
 
@@ -64,7 +65,8 @@ class BootstrapImporter {
         masses,
       );
     }
-    await cache.setBootstrappedAt(DateTime.now());
+    // When it finished, not [from]: the lists date their data to it.
+    await cache.setBootstrappedAt(clock());
   }
 
   static ChurchDetails churchFromLegacyRow(Map<String, Object?> row) {

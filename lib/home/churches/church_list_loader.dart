@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
@@ -236,6 +237,10 @@ class ChurchListLoader {
   /// Every church with a position, for the map's markers.
   Future<List<ChurchLocation>> churchLocations() async =>
       (await _db()).churchLocations();
+
+  /// Fires when any answer has changed the cached churches, so that the
+  /// [churchLocations] are worth reading again.
+  Listenable get churchesWritten => CacheWriteThrough.churchesWritten;
 
   Future<DateTime?> _dataAsOf(
     CacheDatabase cache,

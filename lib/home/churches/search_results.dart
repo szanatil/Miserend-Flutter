@@ -95,14 +95,9 @@ class _SearchResultsPageState extends State<SearchResultsPage>
 
     final cached = await _loader.load(_query);
     if (!current()) return;
-    setState(() {
-      // A banner already up stays until a refresh succeeds.
-      _list = ChurchList(
-        churches: cached.churches,
-        failure: _list?.failure,
-        dataAsOf: cached.dataAsOf,
-      );
-    });
+    // No banner while the refresh runs: it marks a failed attempt only
+    // (spec 0005, „Offline-jelölés").
+    setState(() => _list = cached);
 
     final refreshed = await _loader.refresh(_query, cached.churches);
     if (!current()) return;

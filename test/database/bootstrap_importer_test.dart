@@ -319,15 +319,15 @@ void main() {
 
     test('records when it filled the cache', () async {
       await insertChurch(38, 'Belvárosi');
-      final before = DateTime.now().subtract(const Duration(seconds: 1));
 
       await BootstrapImporter.run(
         legacy: legacy,
         cache: cache,
         from: DateTime(2026, 9, 7),
+        clock: () => DateTime(2026, 9, 7, 9, 30),
       );
 
-      expect((await cache.bootstrappedAt())!.isBefore(before), isFalse);
+      expect(await cache.bootstrappedAt(), DateTime(2026, 9, 7, 9, 30));
     });
 
     test('marks the rows as never synced from the API', () async {
