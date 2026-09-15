@@ -279,6 +279,7 @@ void main() {
         legacy: legacy,
         cache: cache,
         from: DateTime(2026, 9, 7),
+        days: 7,
       );
 
       expect((await cache.getChurch(38))!.name, 'Belvárosi');
@@ -299,19 +300,20 @@ void main() {
           reason: 'only an API response may stamp local_synced_at');
     });
 
-    test('imports only the first seven days', () async {
+    test('imports the thirty days starting on the install day', () async {
       await insertChurch(38, 'Belvárosi');
       await insertRule(1, 38, 0, '17:00:00');
 
       await BootstrapImporter.run(
         legacy: legacy,
         cache: cache,
-        from: DateTime(2026, 9, 7),
+        from: DateTime(2026, 9, 7, 14, 30),
       );
 
       final masses = await cache.getMassesForChurch(38);
-      expect(masses, hasLength(7));
-      expect(masses.last.time, DateTime(2026, 9, 13, 17, 0));
+      expect(masses, hasLength(30));
+      expect(masses.first.time, DateTime(2026, 9, 7, 17, 0));
+      expect(masses.last.time, DateTime(2026, 10, 6, 17, 0));
     });
 
     test('leaves the same result behind when it runs twice', () async {
@@ -319,9 +321,9 @@ void main() {
       await insertRule(1, 38, DateTime.wednesday, '17:00:00');
 
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7));
+          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7), days: 7);
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7));
+          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7), days: 7);
 
       expect(await cache.db.query('churches_cache'), hasLength(1));
       expect(await cache.getMassesForChurch(38), hasLength(1));

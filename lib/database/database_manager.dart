@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -8,9 +8,18 @@ import '../preferences.dart';
 
 class DatabaseManager
 {
-  static final int _databaseCheckPeriodInMillis = 1000 * 60 * 60 * 24 * 7;
   static final String _databaseFileName = 'miserend.sqlite3';
   static final int _databaseVersion = 4;
+
+  /// The documented export endpoint. It redirects to the file itself, whose
+  /// name is not part of the API and may change.
+  static final String _exportUrl = 'https://miserend.hu/api/v4/sqlite';
+
+  /// How long connecting, and then each wait for the next chunk of the file,
+  /// may take. Without it a connection that stops answering would keep the
+  /// splash screen spinning instead of reporting the failure. It bounds the
+  /// silence, not the whole download, so a slow network still gets through.
+  static const Duration _timeout = Duration(seconds: 30);
 
    static Future<String> get databaseFilePath async {
     return join(await getDatabasesPath(), _databaseFileName);
@@ -27,30 +36,27 @@ class DatabaseManager
     return savedVersion == _databaseVersion;
   }
 
-  static Future<bool> isDatabaseUpToDate() async
-  {
-    var lastUpdate = await Preferences.getDatabaseLastUpdated();
-    if (lastUpdate == null) {
-      return false;
-    }
-    return DateTime.now().millisecondsSinceEpoch - lastUpdate < _databaseCheckPeriodInMillis;
-  }
-
+  /// Downloads the export, which only feeds the one-time cache import and the
+  /// screens not yet moved to the API. It is fetched when missing or of the
+  /// wrong version, never to refresh it (ADR-0003).
   static Future<bool> downloadDatabase() async
   {
     return _downloadFile(
-        "https://miserend.hu/fajlok/sqlite/miserend_v4.sqlite3",
-        _databaseFileName, await getDatabasesPath());
+        _exportUrl, _databaseFileName, await getDatabasesPath());
   }
 
    static Future<bool> _downloadFile(String url, String fileName, String dir) async {
-     HttpClient httpClient = HttpClient();
+     HttpClient httpClient = HttpClient()..connectionTimeout = _timeout;
      File file;
      try {
+       // GET requests follow the endpoint's redirect by default.
        var request = await httpClient.getUrl(Uri.parse(url));
-       var response = await request.close();
+       var response = await request.close().timeout(_timeout);
        if(response.statusCode == 200) {
-         var bytes = await consolidateHttpClientResponseBytes(response);
+         var bytes = await response
+             .timeout(_timeout)
+             .fold(BytesBuilder(copy: false), (builder, chunk) => builder..add(chunk))
+             .then((builder) => builder.takeBytes());
          var filePath = '$dir/$fileName';
          file = File(filePath);
          await file.writeAsBytes(bytes);
@@ -64,6 +70,9 @@ class DatabaseManager
      }
      catch(ex){
        return false;
+     }
+     finally {
+       httpClient.close();
      }
    }
 }

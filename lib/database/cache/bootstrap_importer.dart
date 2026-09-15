@@ -11,10 +11,11 @@ import 'package:sqflite/sqflite.dart';
 /// legacy recurrence columns are read; from here on the cache is fed by the
 /// API alone.
 class BootstrapImporter {
-  /// Enough to cover today and the coming Sunday, which is what the church
-  /// details page shows above the fold. The rest of its schedule arrives from
-  /// the API when the page is opened.
-  static const int defaultDays = 7;
+  /// The export is never downloaded again (ADR-0003), so this is how long a
+  /// phone that never goes online keeps a full schedule. It covers the church
+  /// details page's 20-day schedule with room to spare, for about a sixth of
+  /// the cost of importing the export's whole 182-day window.
+  static const int defaultDays = 30;
 
   /// Churches per transaction. The import covers every church the app knows
   /// about, so it runs in chunks: one transaction per church would dominate

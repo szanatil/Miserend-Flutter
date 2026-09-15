@@ -14,10 +14,13 @@ Miserend ("Mass Finder") is a Hungarian-language mobile app for finding Catholic
 |---|---|
 | First-run bootstrap | On launch, checks whether the church/Mass database file exists on device. If not, blocks with a forced dialog ("Adatbázis nem található") — user must download to proceed; declining exits the app. |
 | Version compatibility check | Compares the locally saved database version (in `SharedPreferences`) against the app's expected version (`_databaseVersion = 4`, `lib/database/database_manager.dart`). Mismatch triggers the same forced download dialog. |
-| Staleness check | If the dataset hasn't been refreshed in 7 days (`_databaseCheckPeriodInMillis`), shows a *non-forced* "Frissítés elérhető" dialog — user may decline and continue with the existing data. |
-| Database download | Fetches `https://miserend.hu/fajlok/sqlite/miserend_v4.sqlite3` via `HttpClient`, writes it to the app's database directory, and records the new version + timestamp in `Preferences`. Shows a success/failure snackbar. |
+| Database download | Fetches the SQLite export from the documented `https://miserend.hu/api/v4/sqlite` endpoint (following its redirect to the file) via `HttpClient` with a 30 s connection timeout, writes it to the app's database directory, and records the new version + download timestamp in `Preferences`. |
+| Download failure | If an earlier export is on the device, shows an error snackbar and continues to the home screen with it. On a fresh install (no export) the splash shows an error message and an "Újrapróbálás" (retry) button instead of spinning forever. |
+| Cache bootstrap | Once, after the first download, imports every church and the next **30 days** of masses from the export into the local cache (`BootstrapImporter`). |
 
-No incremental sync — a "database update" is always a full-file replacement.
+The export is only downloaded when it is missing or of the wrong version — there is no periodic re-download (ADR-0003).
+
+**Export expiry:** the screens that still read the export (Search, Nearby, Favorites, Map card) hide its masses once the export was downloaded more than 182 days ago (`MiserendDatabase.massesValidForDays`), because its year-less `HHNN` dates would otherwise put masses on the wrong day. Churches still show; the list card says "A miserend elavult, a templom oldalán nézd meg." in place of the mass times.
 
 ## Home shell
 

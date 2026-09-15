@@ -21,13 +21,16 @@ class _RouteSplashState extends State<RouteSplash> {
   /// long enough to look like a hang without it.
   String? _status;
 
+  /// Set when the export could not be downloaded and there is no earlier copy
+  /// to fall back on, so the app has nothing to show until a retry succeeds.
+  bool _downloadFailed = false;
+
   _checkDatabase() async {
     bool fileExists = await DatabaseManager.databaseExists;
     if (!fileExists) {
       _showDialog(
         "Adatabázis nem taláható",
         "Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?",
-        true,
       );
       return;
     }
@@ -38,17 +41,6 @@ class _RouteSplashState extends State<RouteSplash> {
       _showDialog(
         "Adatbázis nem megfelelő",
         "Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?",
-        true,
-      );
-      return;
-    }
-
-    bool isDatabaseUpToDate = await DatabaseManager.isDatabaseUpToDate();
-    if (!isDatabaseUpToDate) {
-      _showDialog(
-        "Frissítés elérhető",
-        "Elérhető frisebb adatbázis. Letölti most?",
-        false,
       );
       return;
     }
@@ -57,19 +49,40 @@ class _RouteSplashState extends State<RouteSplash> {
   }
 
   _downloadDatabase() async {
+    setState(() {
+      _downloadFailed = false;
+      _status = 'Adatbázis letöltése…';
+    });
     bool success = await DatabaseManager.downloadDatabase();
     if (success) {
-      if (context.mounted) {
-        const snackBar = SnackBar(content: Text('Adatbázis frissítés sikeres'));
+      if (mounted) {
+        const snackBar = SnackBar(content: Text('Adatbázis letöltése sikeres'));
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
       _goToMainScreen();
-    } else {
-      if (context.mounted) {
-        const snackBar = SnackBar(content: Text('Adatbázis frissítése sikertelen'));
+      return;
+    }
+
+    // An earlier export, even of the wrong version, beats keeping the user
+    // out of the app; the screens moved to the API do not need it anyway.
+    if (await DatabaseManager.databaseExists) {
+      if (mounted) {
+        const snackBar = SnackBar(
+            content: Text('Az adatbázis letöltése nem sikerült, '
+                'a korábban letöltött adatokkal folytatjuk.'));
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
+      _goToMainScreen();
+      return;
     }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _status = null;
+      _downloadFailed = true;
+    });
   }
 
   _goToMainScreen() async {
@@ -95,10 +108,14 @@ class _RouteSplashState extends State<RouteSplash> {
     try {
       final legacy = await MiserendDatabase.create();
       final cache = await CacheDatabase.create();
+      final now = DateTime.now();
       await BootstrapImporter.run(
         legacy: legacy.db,
         cache: cache,
-        from: DateTime.now(),
+        from: now,
+        // An old export only gets here after a failed download or import. Its
+        // masses would land on the wrong days, so take the churches alone.
+        days: legacy.massesExpiredOn(now) ? 0 : BootstrapImporter.defaultDays,
       );
       await Preferences.setCacheBootstrapped();
     } catch (error) {
@@ -117,6 +134,31 @@ class _RouteSplashState extends State<RouteSplash> {
 
   @override
   Widget build(BuildContext context) {
+    if (_downloadFailed) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Az adatbázis letöltése nem sikerült. Ellenőrizd az '
+                  'internetkapcsolatot, és próbáld újra.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _downloadDatabase,
+                  child: const Text('Újrapróbálás'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -133,11 +175,7 @@ class _RouteSplashState extends State<RouteSplash> {
     );
   }
 
-  Future<void> _showDialog(
-    String title,
-    String description,
-    bool forced,
-  ) async {
+  Future<void> _showDialog(String title, String description) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -149,12 +187,7 @@ class _RouteSplashState extends State<RouteSplash> {
             TextButton(
               child: const Text('Nem'),
               onPressed: () {
-                if (forced) {
-                  SystemNavigator.pop();
-                } else {
-                  Navigator.of(context).pop();
-                  _goToMainScreen();
-                }
+                SystemNavigator.pop();
               },
             ),
             TextButton(

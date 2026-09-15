@@ -71,12 +71,15 @@ class _ChurchListItemState extends State<ChurchListItem> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(4.0),
-                                child: Wrap(
-                                    spacing: 4,
-                                    children: List<Widget>.generate(masses.length,
-                                        (index) {
-                                      return TimeChip(time: masses[index].time);
-                                    })),
+                                child: widget.churchWithMasses.massesExpired
+                                    ? const _ExpiredMassesNotice()
+                                    : Wrap(
+                                        spacing: 4,
+                                        children: List<Widget>.generate(
+                                            masses.length, (index) {
+                                          return TimeChip(
+                                              time: masses[index].time);
+                                        })),
                               ),
                               Container(color: Colors.grey, height: 1),
                               Consumer<FavoritesService>(
@@ -146,4 +149,29 @@ class _ChurchListItemState extends State<ChurchListItem> {
   /// run for every visible card on every scroll frame.
   List<Mass> get masses => _masses ??= MassFilter.filterMassListForDay(
       widget.churchWithMasses.masses, DateTime.now());
+}
+
+/// Takes the place of the mass times when the downloaded export is too old to
+/// put them on the right day. The details page reads the API, so it still has
+/// a current schedule.
+class _ExpiredMassesNotice extends StatelessWidget {
+  const _ExpiredMassesNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.update_disabled, size: 16, color: Colors.grey),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            'A miserend elavult, a templom oldalán nézd meg.',
+            style: Theme.of(context).textTheme.bodySmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
 }

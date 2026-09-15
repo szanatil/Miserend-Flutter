@@ -5,6 +5,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/mass.dart';
 import 'package:miserend/database/church_with_masses.dart';
 import 'package:miserend/mass_filter.dart';
+import 'package:miserend/preferences.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -19,7 +20,18 @@ class MiserendDatabase {
       '"periodus":"\' || m.periodus || \'"'
       '}\', \',\') || \']\' AS misek';
 
-  late Database db;
+  /// How many days past its download the export still puts masses on the
+  /// right day. Its dates carry no year (`HHNN`) and span a 182-day window, so
+  /// beyond that a mass would silently land on the wrong day. Only needed
+  /// while screens still read the export; remove with them (spec 0005).
+  static const int massesValidForDays = 182;
+
+  MiserendDatabase(this.db, {required this.downloadedAt});
+
+  final Database db;
+
+  /// When the export was last downloaded, or null if that was never recorded.
+  final DateTime? downloadedAt;
 
   /// The open connection, shared by every page. The file is written by
   /// [DatabaseManager] on the splash screen before anything queries it, so a
@@ -35,22 +47,35 @@ class MiserendDatabase {
   }
 
   static Future<MiserendDatabase> _open() async {
-    MiserendDatabase instance = MiserendDatabase();
-    await instance.openDb();
-    return instance;
-  }
-
-  Future<void> openDb() async {
-    db = await openDatabase(join(await getDatabasesPath(), databaseName));
-    await _createIndexes();
+    final db = await openDatabase(join(await getDatabasesPath(), databaseName));
+    await _createIndexes(db);
+    final downloaded = await Preferences.getDatabaseLastUpdated();
+    return MiserendDatabase(db,
+        downloadedAt: downloaded == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(downloaded));
   }
 
   /// The downloaded file ships without any index, so every join against the
   /// ~280k row mass table made SQLite build a throwaway index first. Creating
   /// them once costs well under a second and is a no-op on later runs; a
   /// re-downloaded database loses them and gets them back here.
-  Future<void> _createIndexes() async {
+  static Future<void> _createIndexes(Database db) async {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_misek_tid ON misek(tid)');
+  }
+
+  /// Whether the export is too old to show masses for [day]. Counted in
+  /// calendar days, so a daylight saving change cannot move the cut-off. An
+  /// unknown download date is treated as too old: a wrong mass time is worse
+  /// than none.
+  bool massesExpiredOn(DateTime day) {
+    final downloaded = downloadedAt;
+    if (downloaded == null) return true;
+    final age = DateTime.utc(day.year, day.month, day.day)
+        .difference(
+            DateTime.utc(downloaded.year, downloaded.month, downloaded.day))
+        .inDays;
+    return age > massesValidForDays;
   }
 
   Future<List<Church>> getAllChurches() async {
@@ -78,7 +103,7 @@ class MiserendDatabase {
     String query = 'select t.*, ${massesInnerQuery} from templomok as t left join misek as m on ${_massesOn(day)} WHERE t.nev like \'%${searchTerm}%\' '
         'or t.ismertnev like \'%${searchTerm}%\' GROUP BY t.tid';
     final List<Map<String, dynamic>> maps = await db.rawQuery(query);
-    return _mapToChurchWithMasses(maps);
+    return _mapToChurchWithMasses(maps, day);
   }
 
   Future<List<ChurchWithMasses>> getChurchesWithMassesForCity(
@@ -86,7 +111,7 @@ class MiserendDatabase {
     String query = 'select t.*, ${massesInnerQuery} from templomok as t left join misek as m on ${_massesOn(day)} WHERE t.varos = \'${city}\' '
         'GROUP BY t.tid';
     final List<Map<String, dynamic>> maps = await db.rawQuery(query);
-    return _mapToChurchWithMasses(maps);
+    return _mapToChurchWithMasses(maps, day);
   }
 
   Future<List<ChurchWithMasses>> getChurches(
@@ -95,7 +120,7 @@ class MiserendDatabase {
     String query =
         'select t.*, ${massesInnerQuery} from templomok as t left join misek as m on ${_massesOn(day)} WHERE t.tid IN (${churchIds.join(",")}) GROUP BY t.tid ';
     final List<Map<String, dynamic>> maps = await db.rawQuery(query);
-    return _mapToChurchWithMasses(maps);
+    return _mapToChurchWithMasses(maps, day);
 
   }
 
@@ -126,7 +151,7 @@ class MiserendDatabase {
         'ORDER BY len';
     final List<Map<String, dynamic>> maps = await db.rawQuery(query);
 
-    return _mapToChurchWithMasses(maps);
+    return _mapToChurchWithMasses(maps, day);
   }
 
   /// Join condition pairing a church with only the masses it holds on [day].
@@ -143,10 +168,16 @@ class MiserendDatabase {
     return t.map((item) => _mapToMass(item)).toList();
   }
 
-  List<ChurchWithMasses> _mapToChurchWithMasses(List<Map<String, dynamic>> maps) {
+  List<ChurchWithMasses> _mapToChurchWithMasses(
+      List<Map<String, dynamic>> maps, DateTime day) {
+    final expired = massesExpiredOn(day);
     return List.generate(maps.length, (i) {
       return ChurchWithMasses(
-          _mapToChurch(maps[i]), _massesFromJson(maps[i]['misek'] as String?));
+          _mapToChurch(maps[i]),
+          expired
+              ? <Mass>[]
+              : _massesFromJson(maps[i]['misek'] as String?),
+          massesExpired: expired);
     });
   }
 
