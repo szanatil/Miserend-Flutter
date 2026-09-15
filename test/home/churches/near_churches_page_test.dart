@@ -4,12 +4,14 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/near_churches_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -70,20 +72,53 @@ class _FakeLocation extends LocationProvider {
   Future<void> openLocationSettings() async => locationSettingsOpened++;
 }
 
+/// Answers [load] with the cache's rows and each [refresh] with the next
+/// refresh answer: a [ChurchList], or a completer to wait on. With no refresh
+/// answers, a refresh succeeds and changes nothing.
 class _FakeLoader extends ChurchListLoader {
-  _FakeLoader(List<Object> answers) : _answers = Queue.of(answers);
+  _FakeLoader(List<Object> cached, {List<Object> refreshed = const []})
+      : _cached = Queue.of(cached),
+        _refreshed = Queue.of(refreshed);
 
-  final Queue<Object> _answers;
+  final Queue<Object> _cached;
+  final Queue<Object> _refreshed;
   int reads = 0;
+  int refreshes = 0;
+  final List<ChurchListQuery> queries = [];
+
+  static Object _next(Queue<Object> answers) =>
+      answers.length > 1 ? answers.removeFirst() : answers.first;
 
   @override
-  Future<List<ChurchListEntry>> nearChurches(double lat, double lon) async {
+  Future<ChurchList> load(ChurchListQuery query) async {
     reads++;
-    final answer = _answers.length > 1 ? _answers.removeFirst() : _answers.first;
-    if (answer is Completer<List<ChurchListEntry>>) return answer.future;
-    return answer as List<ChurchListEntry>;
+    queries.add(query);
+    final answer = _next(_cached);
+    if (answer is Completer<List<ChurchListEntry>>) {
+      return _listOf(await answer.future);
+    }
+    return _listOf(answer as List<ChurchListEntry>);
+  }
+
+  @override
+  Future<ChurchList> refresh(
+      ChurchListQuery query, List<ChurchListEntry> shown) async {
+    refreshes++;
+    if (_refreshed.isEmpty) return _listOf(shown);
+    final answer = _next(_refreshed);
+    if (answer is Completer<ChurchList>) return answer.future;
+    final list = answer as ChurchList;
+    // A failed refresh keeps what is shown, as the real loader does.
+    return list.failure == null
+        ? list
+        : ChurchList(
+            churches: shown, failure: list.failure, dataAsOf: list.dataAsOf);
   }
 }
+
+ChurchList _listOf(List<ChurchListEntry> churches,
+        {ApiFailure? failure, DateTime? dataAsOf}) =>
+    ChurchList(churches: churches, failure: failure, dataAsOf: dataAsOf);
 
 void main() {
   // The rows read favorites, which live in a local database. Built once, in
@@ -313,6 +348,155 @@ void main() {
       await pullToRefresh(tester);
 
       expect(find.text('Templom'), findsOneWidget);
+    });
+  });
+
+  group('background refresh', () {
+    testWidgets('asks around the position the list was read for',
+        (tester) async {
+      final loader = _FakeLoader([
+        [_entry('Templom')]
+      ]);
+      await pumpPage(tester, loader, _FakeLocation([found]));
+
+      final query = loader.queries.single as NearChurchesQuery;
+      expect((query.lat, query.lon), (47.4979, 19.0402));
+      expect(loader.refreshes, 1);
+    });
+
+    testWidgets('shows the cached list and no mark while the call runs',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            [_entry('Tárolt')]
+          ], refreshed: [
+            Completer<ChurchList>()
+          ]),
+          _FakeLocation([found]));
+
+      expect(find.text('Tárolt'), findsOneWidget);
+      expect(find.byType(OfflineBanner), findsNothing);
+    });
+
+    testWidgets('a new church from the answer appears in the list',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            [_entry('Tárolt')]
+          ], refreshed: [
+            _listOf([_entry('Tárolt'), _entry('Új templom')])
+          ]),
+          _FakeLocation([found]));
+
+      expect(find.text('Új templom'), findsOneWidget);
+      expect(find.byType(OfflineBanner), findsNothing);
+    });
+
+    testWidgets('no connection puts the banner above the list, untinted',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            [_entry('Tárolt')]
+          ], refreshed: [
+            _listOf(const [], failure: ApiFailure.noConnection)
+          ]),
+          _FakeLocation([found]));
+
+      expect(find.text('Tárolt'), findsOneWidget);
+      expect(find.byType(OfflineBanner), findsOneWidget);
+      expect(find.byType(OfflineInfoButton), findsOneWidget);
+      expect(tester.getTopLeft(find.byType(OfflineBanner)).dy,
+          lessThan(tester.getTopLeft(find.text('Tárolt')).dy));
+      expect(
+          tester
+              .widget<Material>(find
+                  .descendant(
+                      of: find.byType(OfflineBanner),
+                      matching: find.byType(Material))
+                  .first)
+              .color,
+          isNot(OfflineNotice.serverErrorTint));
+    });
+
+    testWidgets('a server error tints the banner', (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            [_entry('Tárolt')]
+          ], refreshed: [
+            _listOf(const [], failure: ApiFailure.serverError)
+          ]),
+          _FakeLocation([found]));
+
+      expect(
+          tester
+              .widget<Material>(find
+                  .descendant(
+                      of: find.byType(OfflineBanner),
+                      matching: find.byType(Material))
+                  .first)
+              .color,
+          OfflineNotice.serverErrorTint);
+      expect(find.byType(OfflineInfoButton), findsOneWidget);
+    });
+
+    testWidgets('the (i) tells how old the list is and to pull it down',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            [_entry('Tárolt')]
+          ], refreshed: [
+            _listOf(const [],
+                failure: ApiFailure.noConnection,
+                dataAsOf: DateTime(2026, 9, 10, 8, 0))
+          ]),
+          _FakeLocation([found]));
+
+      await tester.tap(find.byType(OfflineInfoButton));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('Az adatok a telefonon tárolt, 2026. 09. 10-i állapotot '
+              'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
+              'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
+              'beállításaiban, majd húzd le a listát.'),
+          findsOneWidget);
+    });
+
+    testWidgets('pulling down calls the API again, and success clears the '
+        'banner', (tester) async {
+      final loader = _FakeLoader([
+        [_entry('Tárolt')]
+      ], refreshed: [
+        _listOf(const [], failure: ApiFailure.noConnection),
+        _listOf([_entry('Friss')]),
+      ]);
+      await pumpPage(tester, loader, _FakeLocation([found]));
+      expect(find.byType(OfflineBanner), findsOneWidget);
+
+      await pullToRefresh(tester);
+
+      expect(loader.refreshes, 2);
+      expect(find.byType(OfflineBanner), findsNothing);
+      expect(find.text('Friss'), findsOneWidget);
+    });
+
+    testWidgets('no position, no call and no banner', (tester) async {
+      final loader = _FakeLoader([<ChurchListEntry>[]],
+          refreshed: [_listOf(const [], failure: ApiFailure.noConnection)]);
+      await pumpPage(
+          tester,
+          loader,
+          _FakeLocation([
+            const PositionUnavailable(PositionUnavailableReason.noFreshFix)
+          ]));
+
+      expect(loader.refreshes, 0);
+      expect(find.byType(OfflineBanner), findsNothing);
     });
   });
 }

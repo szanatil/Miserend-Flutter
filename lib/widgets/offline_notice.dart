@@ -86,3 +86,44 @@ class OfflineInfoButton extends StatelessWidget {
     );
   }
 }
+
+/// The strip above a list that shows it is not live, once, rather than on
+/// every row. There is no closing it: someone who never goes online sees it
+/// for good, as information rather than as an error.
+class OfflineBanner extends StatelessWidget {
+  const OfflineBanner({super.key, required this.failure, required this.asOf});
+
+  final ApiFailure failure;
+  final DateTime? asOf;
+
+  @override
+  Widget build(BuildContext context) {
+    final serverError = failure == ApiFailure.serverError;
+    return Material(
+      color: serverError ? OfflineNotice.serverErrorTint : const Color(0xFFEEEEEE),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: Row(
+          children: [
+            Icon(
+              serverError ? Icons.cloud_off : Icons.signal_wifi_off,
+              size: 18,
+              color: serverError ? OfflineNotice.serverErrorAccent : Colors.black54,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                serverError
+                    ? 'A miserend.hu nem elérhető, tárolt adatok'
+                    : 'Nincs kapcsolat, tárolt adatok',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            OfflineInfoButton(
+                failure: failure, asOf: asOf, hint: RetryHint.pullList),
+          ],
+        ),
+      ),
+    );
+  }
+}

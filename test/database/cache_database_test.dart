@@ -324,4 +324,128 @@ void main() {
       expect(entry.photo, 'https://miserend.hu/kepek/templomok/7/a.jpg');
     });
   });
+
+  group('a minimal answer', () {
+    /// What a `minimal` response maps to: none of the fields it leaves out.
+    ChurchDetails minimal(int id, {String name = 'API név', double lat = 47.6}) =>
+        ChurchDetails(
+          id: id,
+          name: name,
+          commonName: 'API ismert név',
+          names: const [],
+          alternativeNames: const [],
+          country: 'Magyarország',
+          diocese: null,
+          county: null,
+          city: 'API város',
+          street: null,
+          gettingThere: null,
+          parish: null,
+          description: null,
+          accessibility: null,
+          email: null,
+          links: const ['http://api.example.com'],
+          languages: const [],
+          massScheduleNote: null,
+          adorations: const [],
+          hasConfession: true,
+          communities: const [],
+          lat: lat,
+          lon: 19.1,
+          photos: const [],
+          updatedAt: DateTime(2026, 9, 1),
+          localSyncedAt: null,
+          isGreek: null,
+        );
+
+    test('overwrites what it carries, corrected coordinates included',
+        () async {
+      await cache.upsertChurch(_church(38, isGreek: true));
+
+      await cache.upsertChurch(minimal(38, lat: 47.7), minimal: true);
+
+      final stored = (await cache.getChurch(38))!;
+      expect(stored.name, 'API név');
+      expect(stored.commonName, 'API ismert név');
+      expect(stored.city, 'API város');
+      expect(stored.lat, 47.7);
+      expect(stored.lon, 19.1);
+      expect(stored.links, ['http://api.example.com']);
+      expect(stored.hasConfession, isTrue);
+      expect(stored.updatedAt, DateTime(2026, 9, 1));
+      expect(stored.localSyncedAt, isNotNull);
+    });
+
+    test('keeps the fields it leaves out, and the greek-rite flag', () async {
+      await cache.upsertChurch(_church(38, isGreek: true));
+
+      await cache.upsertChurch(minimal(38), minimal: true);
+
+      final stored = (await cache.getChurch(38))!;
+      expect(stored.photos, ['https://miserend.hu/kepek/templomok/38/a.jpg']);
+      expect(stored.description, 'Leírás');
+      expect(stored.names, ['Templom', 'Church']);
+      expect(stored.alternativeNames, ['Alt']);
+      expect(stored.email, 'iroda@example.com');
+      expect(stored.street, 'Március 15. tér');
+      expect(stored.languages, ['hu', 'en']);
+      expect(stored.isGreek, isTrue);
+    });
+
+    test('adds a church the cache has never seen', () async {
+      await cache.upsertChurch(minimal(4242, name: 'Új templom'), minimal: true);
+
+      final stored = (await cache.getChurch(4242))!;
+      expect(stored.name, 'Új templom');
+      expect(stored.photos, isEmpty);
+    });
+  });
+
+  group('daily masses', () {
+    final today = DateTime(2026, 9, 15);
+
+    CachedMass listed(int hour) => _mass(38, DateTime(2026, 9, 15, hour, 0),
+        info: 'Római katolikus Szentmise', source: MassSource.dailyList);
+
+    test("replace the day's rows, leaving the other days alone", () async {
+      await cache.importChurches([_at(38, 47.49, 19.05)], [
+        _mass(38, DateTime(2026, 9, 14, 8, 0), source: MassSource.bootstrap),
+        _mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+        _mass(38, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
+      ]);
+
+      await cache.replaceDailyMasses(38, today, [listed(7), listed(18)]);
+
+      final stored = await cache.getMassesForChurch(38);
+      expect(stored.map((m) => (m.time, m.source)), [
+        (DateTime(2026, 9, 14, 8, 0), MassSource.bootstrap),
+        (DateTime(2026, 9, 15, 7, 0), MassSource.dailyList),
+        (DateTime(2026, 9, 15, 18, 0), MassSource.dailyList),
+        (DateTime(2026, 9, 16, 8, 0), MassSource.bootstrap),
+      ]);
+    });
+
+    test('an empty day empties the day', () async {
+      await cache.importChurches([_at(38, 47.49, 19.05)], [
+        _mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+      ]);
+
+      await cache.replaceDailyMasses(38, today, const []);
+
+      expect(await cache.getMassesForChurch(38), isEmpty);
+    });
+
+    test('leave a day the details schedule has filled untouched', () async {
+      await cache.replaceMassesForChurch(38, [
+        _mass(38, DateTime(2026, 9, 15, 9, 0),
+            info: 'Szentmise', source: MassSource.nearbyMasses),
+      ]);
+
+      await cache.replaceDailyMasses(38, today, [listed(7)]);
+
+      final stored = await cache.getMassesForChurch(38);
+      expect(stored.map((m) => (m.time, m.source)),
+          [(DateTime(2026, 9, 15, 9, 0), MassSource.nearbyMasses)]);
+    });
+  });
 }

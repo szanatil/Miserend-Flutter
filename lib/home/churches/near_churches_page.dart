@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/database/cache/church_list_entry.dart';
-import 'package:miserend/home/churches/church_card.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
+import 'package:miserend/home/churches/church_list_view.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 
-/// Every church, nearest to the user's position first, read from the cache.
+/// Every church, nearest to the user's position first. Drawn from the cache
+/// at once, then again once the NearBy answer has been written through to it
+/// (ADR-0003).
 class NearChurchesPage extends StatefulWidget {
   const NearChurchesPage({super.key, this.loader, this.location});
 
@@ -26,7 +28,8 @@ class _NearChurchesPageState extends State<NearChurchesPage>
   late final LocationProvider _location =
       widget.location ?? LocationProvider();
 
-  List<ChurchListEntry> _churches = const [];
+  ChurchList _list =
+      const ChurchList(churches: [], failure: null, dataAsOf: null);
   PositionUnavailableReason? _noPosition;
   bool _loaded = false;
 
@@ -74,7 +77,7 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     return Container(
       color: Colors.black12,
       child: _loaded
-          ? RefreshIndicator(onRefresh: _load, child: _content())
+          ? _content()
           : const LoadingView(message: 'Közeli templomok betöltése...'),
     );
   }
@@ -82,50 +85,64 @@ class _NearChurchesPageState extends State<NearChurchesPage>
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return PullableFill(
-        child: PositionUnavailableView(
-          reason: noPosition,
-          purpose: 'A közeli templomokhoz',
-          location: _location,
-          onRetry: _load,
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: PullableFill(
+          child: PositionUnavailableView(
+            reason: noPosition,
+            purpose: 'A közeli templomokhoz',
+            location: _location,
+            onRetry: _load,
+          ),
         ),
       );
     }
 
-    if (_churches.isEmpty) {
-      return const PullableFill(
-          child: MessageView(message: 'Nem találhatóak közeli templomok.'));
-    }
-
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(8),
-      itemCount: _churches.length,
-      itemBuilder: (BuildContext context, int index) {
-        return ChurchCard(entry: _churches[index]);
-      },
+    return ChurchListView(
+      list: _list,
+      emptyMessage: 'Nem találhatóak közeli templomok.',
+      onRefresh: _load,
     );
   }
 
+  /// Asks for the position, draws the cached list, then refreshes it in the
+  /// background. Pull-to-refresh waits for the whole of it.
   Future<void> _load() async {
     final loadId = ++_loadId;
+    bool current() => mounted && loadId == _loadId;
 
-    var churches = const <ChurchListEntry>[];
-    PositionUnavailableReason? noPosition;
+    final Position position;
     switch (await _location.currentPosition()) {
-      case PositionFound(:final position):
-        churches =
-            await _loader.nearChurches(position.latitude, position.longitude);
+      case PositionFound(position: final found):
+        position = found;
       case PositionUnavailable(:final reason):
-        noPosition = reason;
+        if (!current()) return;
+        setState(() {
+          _noPosition = reason;
+          _loaded = true;
+        });
+        return;
     }
 
-    if (!mounted || loadId != _loadId) return;
+    final query = NearChurchesQuery(
+        lat: position.latitude, lon: position.longitude);
+    final cached = await _loader.load(query);
+    if (!current()) return;
     setState(() {
-      _churches = churches;
-      _noPosition = noPosition;
+      // A banner already up stays until a refresh succeeds; the first load
+      // has none, since nothing has failed yet.
+      _list = ChurchList(
+        churches: cached.churches,
+        failure: _list.failure,
+        dataAsOf: cached.dataAsOf,
+      );
+      _noPosition = null;
       _loaded = true;
     });
+
+    final refreshed = await _loader.refresh(query, cached.churches);
+    if (!current()) return;
+    setState(() => _list = refreshed);
   }
 
   @override

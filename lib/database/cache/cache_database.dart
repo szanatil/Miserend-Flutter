@@ -124,11 +124,31 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
+  /// The columns a `minimal` API response carries. The others — photos,
+  /// description, names, address and the rest — are absent from it, not
+  /// empty, so they must not overwrite what the cache already holds.
+  static const Set<String> _minimalColumns = {
+    'nev',
+    'ismertnev',
+    'orszag',
+    'varos',
+    'lat',
+    'lon',
+    'links',
+    'adoraciok',
+    'gyontatas',
+    'frissitve',
+  };
+
   /// Writes an API response over the cached row. A column the API does not
-  /// carry — `gorog` — keeps whatever the bootstrap import put there.
-  Future<void> upsertChurch(ChurchDetails church) async {
+  /// carry — `gorog` — keeps whatever the bootstrap import put there, and so
+  /// do the columns a [minimal] response leaves out.
+  Future<void> upsertChurch(ChurchDetails church,
+      {bool minimal = false}) async {
+    final row = _toRow(church);
+    if (minimal) row.removeWhere((column, _) => !_minimalColumns.contains(column));
     final values = {
-      ..._toRow(church),
+      ...row,
       'local_synced_at': _formatDateTime(DateTime.now()),
     };
     final updated = await db.update(churchesTable, values,
@@ -167,6 +187,42 @@ class CacheDatabase {
       batch.insert(massesTable, _massRow(mass));
     }
     await batch.commit(noResult: true);
+  }
+
+  /// Puts a list answer's rows for [day] in place of the day's cached rows —
+  /// unless the details page's schedule already covers the day, which is the
+  /// more precise source and is left as it is.
+  Future<void> replaceDailyMasses(
+      int churchId, DateTime day, List<CachedMass> masses) async {
+    final (from, until) = _dayBounds(day);
+    await db.transaction((txn) async {
+      final detailed = await txn.query(
+        massesTable,
+        columns: ['id'],
+        where: 'church_id = ? AND idopont >= ? AND idopont < ? AND forras = ?',
+        whereArgs: [churchId, from, until, MassSource.nearbyMasses.name],
+        limit: 1,
+      );
+      if (detailed.isNotEmpty) return;
+
+      final batch = txn.batch();
+      batch.delete(massesTable,
+          where: 'church_id = ? AND idopont >= ? AND idopont < ?',
+          whereArgs: [churchId, from, until]);
+      for (final mass in masses) {
+        batch.insert(massesTable, _massRow(mass));
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// The stored text of [day]'s midnight and of the next one.
+  (String, String) _dayBounds(DateTime day) {
+    final start = DateTime(day.year, day.month, day.day);
+    return (
+      _formatDateTime(start)!,
+      _formatDateTime(DateTime(start.year, start.month, start.day + 1))!,
+    );
   }
 
   Map<String, Object?> _massRow(CachedMass mass) => {
@@ -236,14 +292,11 @@ class CacheDatabase {
   /// Every cached row of [day], by church. One query for the whole list
   /// rather than one per church.
   Future<Map<int, List<CachedMass>>> _massesOn(DateTime day) async {
-    final start = DateTime(day.year, day.month, day.day);
+    final (from, until) = _dayBounds(day);
     final rows = await db.query(
       massesTable,
       where: 'idopont >= ? AND idopont < ?',
-      whereArgs: [
-        _formatDateTime(start),
-        _formatDateTime(DateTime(start.year, start.month, start.day + 1)),
-      ],
+      whereArgs: [from, until],
       orderBy: 'idopont',
     );
     final byChurch = <int, List<CachedMass>>{};

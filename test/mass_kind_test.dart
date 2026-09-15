@@ -36,4 +36,44 @@ void main() {
       expect(isMass(_row(MassSource.nearbyMasses, null)), isFalse);
     });
   });
+
+  group('a list answer row', () {
+    // Every kind seen in the live NearBy answer for central Budapest and the
+    // Budapest search, 2026-09-15.
+    const masses = [
+      'Római katolikus Szentmise',
+      'Római katolikus Szentmise, Csendes',
+      'Római katolikus Szentmise, Csendes (Mária-kápolnában)',
+      'Római katolikus Szentmise latin nyelven',
+      'Római katolikus Szentmise (adventben 6:00)',
+      'Görögkatolikus Szent Liturgia',
+    ];
+    const others = [
+      'Római katolikus Gyóntatás',
+      'Római katolikus Gyóntatás ukrán nyelven',
+      'Római katolikus Szentségimádás',
+      'Római katolikus Szentségimádás, Csendes',
+      'Görögkatolikus Szentségimádás',
+      'Római katolikus Igeliturgia',
+      'Római katolikus Litánia (Szent Antal litánia)',
+      'Római katolikus Zsolozsma (Laudes)',
+      'Római katolikus Ismeretlen esemény',
+    ];
+
+    for (final info in masses) {
+      test('"$info" is a mass', () {
+        expect(isMass(_row(MassSource.dailyList, info)), isTrue);
+      });
+    }
+
+    for (final info in others) {
+      test('"$info" is not a mass', () {
+        expect(isMass(_row(MassSource.dailyList, info)), isFalse);
+      });
+    }
+
+    test('a row with no text is not a mass', () {
+      expect(isMass(_row(MassSource.dailyList, null)), isFalse);
+    });
+  });
 }

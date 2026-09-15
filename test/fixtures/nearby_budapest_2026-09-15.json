@@ -1,0 +1,3322 @@
+{
+  "templomok": [
+    {
+      "id": 2721,
+      "nev": "Árpád-házi Szent Erzsébet-templom",
+      "frissitve": "2025-09-26 00:00:00",
+      "ismertnev": "alsóvízivárosi plébániatemplom;budai kapucinus templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5021615,
+        19.0385385
+      ],
+      "lat": 47.5021615,
+      "lon": 19.0385385,
+      "links": [
+        "http://alsovizivaros.plebania.hu"
+      ],
+      "tavolsag": 484
+    },
+    {
+      "id": 1514,
+      "nev": "Alexandriai Szent Katalin-templom",
+      "frissitve": "2026-06-05 00:00:00",
+      "ismertnev": "tabáni plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 06:00:00",
+          "informacio": "Római katolikus Szentségimádás"
+        },
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4922435,
+        19.0438842
+      ],
+      "lat": 47.4922435,
+      "lon": 19.0438842,
+      "links": [
+        "https://tabani.plebania.hu"
+      ],
+      "tavolsag": 722
+    },
+    {
+      "id": 1515,
+      "nev": "Budavári Nagyboldogasszony-templom",
+      "frissitve": "2026-08-12 00:00:00",
+      "ismertnev": "Mátyás-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 08:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 08:00",
+          "vege": "2026-09-25 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-02 08:00",
+          "vege": "2026-10-02 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-09 08:00",
+          "vege": "2026-10-09 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-16 08:00",
+          "vege": "2026-10-16 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5020112,
+        19.0342625
+      ],
+      "lat": 47.5020112,
+      "lon": 19.0342625,
+      "links": [
+        "https://plebania.matyas-templom.hu/",
+        "http://www.matyas-templom.hu"
+      ],
+      "tavolsag": 789
+    },
+    {
+      "id": 1450,
+      "nev": "Szent Anna-templom",
+      "frissitve": "2026-04-12 00:00:00",
+      "ismertnev": "felsővízivárosi plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 06:30:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        },
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5055806,
+        19.0383772
+      ],
+      "lat": 47.5055806,
+      "lon": 19.0383772,
+      "links": [
+        "http://www.szentannazene.hu/",
+        "http://felsovizivaros.plebania.hu/"
+      ],
+      "tavolsag": 832
+    },
+    {
+      "id": 1652,
+      "nev": "Havas Boldogasszony-templom",
+      "frissitve": "2026-07-28 00:00:00",
+      "ismertnev": "krisztinavárosi plébániatemplom, Alsó-Krisztina",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 08:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-16 16:00",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-23 16:00",
+          "vege": "2026-09-23 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-30 16:00",
+          "vege": "2026-09-30 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-07 16:00",
+          "vege": "2026-10-07 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-14 16:00",
+          "vege": "2026-10-14 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.496827,
+        19.031369
+      ],
+      "lat": 47.496827,
+      "lon": 19.031369,
+      "links": [
+        "http://krisztinatemplom.hu/ "
+      ],
+      "tavolsag": 988
+    },
+    {
+      "id": 1453,
+      "nev": "Szent Ferenc sebei-templom",
+      "frissitve": "2026-04-14 00:00:00",
+      "ismertnev": "Erzsébet apácák temploma",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5073757,
+        19.0385242
+      ],
+      "lat": 47.5073757,
+      "lon": 19.0385242,
+      "links": [
+        "http://felsovizivaros.plebania.hu"
+      ],
+      "tavolsag": 1013
+    },
+    {
+      "id": 42,
+      "nev": "Kalazanci Szent József-kápolna",
+      "frissitve": "2012-04-17 00:00:00",
+      "ismertnev": "Duna-parti Piarista kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4929339,
+        19.0520091
+      ],
+      "lat": 47.4929339,
+      "lon": 19.0520091,
+      "links": [],
+      "tavolsag": 1413
+    },
+    {
+      "id": 3732,
+      "nev": "Szent Flórián-templom",
+      "frissitve": "2025-07-20 00:00:00",
+      "ismertnev": "Budai görögkatolikus templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:30:00",
+          "informacio": "Görögkatolikus Szent Liturgia"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5112622,
+        19.0379806
+      ],
+      "lat": 47.5112622,
+      "lon": 19.0379806,
+      "links": [
+        "http://www.gorogkatbuda.hu"
+      ],
+      "tavolsag": 1426
+    },
+    {
+      "id": 38,
+      "nev": "Belvárosi Nagyboldogasszony-templom",
+      "frissitve": "2026-07-27 00:00:00",
+      "ismertnev": "Belvárosi Nagyboldogasszony Főplébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 00:00",
+          "vege": "2026-09-15 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-15 09:00",
+          "vege": "2026-09-15 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 00:00",
+          "vege": "2026-09-16 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 09:00",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 00:00",
+          "vege": "2026-09-17 23:59",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.492233,
+        19.0522943
+      ],
+      "lat": 47.492233,
+      "lon": 19.0522943,
+      "links": [
+        "http://belvarosiplebania.hu",
+        "http://www.facebook.com/belvarosiplebaniatemplom"
+      ],
+      "tavolsag": 1470
+    },
+    {
+      "id": 39,
+      "nev": "Szent Anna-templom",
+      "frissitve": "2022-09-27 00:00:00",
+      "ismertnev": "pesti szervita templom, belvárosi Szent Anna-plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 12:15:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        },
+        {
+          "idopont": "2026-09-15 17:15:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4952607,
+        19.0536322
+      ],
+      "lat": 47.4952607,
+      "lon": 19.0536322,
+      "links": [
+        "http://www.szentanna5.hu "
+      ],
+      "tavolsag": 1519
+    },
+    {
+      "id": 37,
+      "nev": "Szent István-bazilika",
+      "frissitve": "2025-09-13 00:00:00",
+      "ismertnev": "église paroissiale de Lipótváros",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes (Mária-kápolnában)"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 09:00",
+          "vege": "2026-09-15 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 09:00",
+          "vege": "2026-09-16 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 09:00",
+          "vege": "2026-09-17 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 20:00",
+          "vege": "2026-09-17 23:59",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-18 00:00",
+          "vege": "2026-09-18 05:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5007789,
+        19.0539695
+      ],
+      "lat": 47.5007789,
+      "lon": 19.0539695,
+      "links": [
+        "https://bazilikabudapest.hu/"
+      ],
+      "tavolsag": 1560
+    },
+    {
+      "id": 5400,
+      "nev": "Teológus Szent Gergely-kápolna",
+      "frissitve": "2025-01-19 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4907387,
+        19.0529404
+      ],
+      "lat": 47.4907387,
+      "lon": 19.0529404,
+      "links": [
+        "https://teologus-szent-gergely-kapolna.webnode.hu/"
+      ],
+      "tavolsag": 1604
+    },
+    {
+      "id": 2197,
+      "nev": "Szent Kereszt-templom",
+      "frissitve": "2025-09-18 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4905269,
+        19.0272457
+      ],
+      "lat": 47.4905269,
+      "lon": 19.0272457,
+      "links": [
+        "http://www.szentkereszt.plebania.hu"
+      ],
+      "tavolsag": 1635
+    },
+    {
+      "id": 2725,
+      "nev": "Budapest Országúti Szent István első vértanú templom",
+      "frissitve": "2026-05-30 00:00:00",
+      "ismertnev": "Országúti ferences templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:20:00",
+          "informacio": "Római katolikus Gyóntatás"
+        },
+        {
+          "idopont": "2026-09-15 07:30:00",
+          "informacio": "Római katolikus Szentmise, Orgonás"
+        },
+        {
+          "idopont": "2026-09-15 17:30:00",
+          "informacio": "Római katolikus Gyóntatás"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise, Orgonás"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 18:30",
+          "vege": "2026-09-15 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 18:30",
+          "vege": "2026-09-16 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 18:30",
+          "vege": "2026-09-17 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 08:00",
+          "vege": "2026-09-18 17:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 18:30",
+          "vege": "2026-09-18 19:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5126174,
+        19.0343109
+      ],
+      "lat": 47.5126174,
+      "lon": 19.0343109,
+      "links": [
+        "http://orszagutiferencesek.hu"
+      ],
+      "tavolsag": 1679
+    },
+    {
+      "id": 41,
+      "nev": "Belvárosi Szent Mihály-templom",
+      "frissitve": "2026-01-15 00:00:00",
+      "ismertnev": "Angolkisasszonyok temploma",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 16:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4904239,
+        19.0544863
+      ],
+      "lat": 47.4904239,
+      "lon": 19.0544863,
+      "links": [
+        "http://www.szentmihalytemplom.hu"
+      ],
+      "tavolsag": 1772
+    },
+    {
+      "id": 36,
+      "nev": "Belvárosi Ferences templom",
+      "frissitve": "2026-05-22 00:00:00",
+      "ismertnev": "Alkantarai Szent Péter-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 06:00:00",
+          "informacio": "Római katolikus Gyóntatás"
+        },
+        {
+          "idopont": "2026-09-15 06:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 08:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 08:45:00",
+          "informacio": "Római katolikus Litánia (Szent Antal litánia)"
+        },
+        {
+          "idopont": "2026-09-15 09:00:00",
+          "informacio": "Római katolikus Szentmise latin nyelven"
+        },
+        {
+          "idopont": "2026-09-15 10:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 11:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 16:00:00",
+          "informacio": "Római katolikus Gyóntatás ukrán nyelven"
+        },
+        {
+          "idopont": "2026-09-15 16:00:00",
+          "informacio": "Római katolikus Gyóntatás"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 20:00",
+          "vege": "2026-09-15 21:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-16 20:00",
+          "vege": "2026-09-16 21:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-17 20:00",
+          "vege": "2026-09-17 21:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-18 15:00",
+          "vege": "2026-09-18 16:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-18 20:00",
+          "vege": "2026-09-18 21:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4931962,
+        19.0564677
+      ],
+      "lat": 47.4931962,
+      "lon": 19.0564677,
+      "links": [
+        "http://pestiferences.ferences.eu/ "
+      ],
+      "tavolsag": 1875
+    },
+    {
+      "id": 5179,
+      "nev": "Misézőhely",
+      "frissitve": "2015-07-26 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4929364,
+        19.0564993
+      ],
+      "lat": 47.4929364,
+      "lon": 19.0564993,
+      "links": [],
+      "tavolsag": 1885
+    },
+    {
+      "id": 2740,
+      "nev": "Magyarok Nagyasszonya Sziklatemplom",
+      "frissitve": "2023-04-25 00:00:00",
+      "ismertnev": "Gellérthegyi-barlang",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 08:30:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 20:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 07:00",
+          "vege": "2026-09-17 08:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-17 21:00",
+          "vege": "2026-09-17 23:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 07:00",
+          "vege": "2026-09-24 08:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-24 21:00",
+          "vege": "2026-09-24 23:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-01 07:00",
+          "vege": "2026-10-01 08:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4849249,
+        19.0521678
+      ],
+      "lat": 47.4849249,
+      "lon": 19.0521678,
+      "links": [
+        "http://www.palosrend.hu/bemutatkozas/palos-helyek/budapest-sziklatemplom",
+        "https://sziklatemplom.hu/",
+        "https://www.facebook.com/pages/Sziklatemplom/1928623317442578/"
+      ],
+      "tavolsag": 1905
+    },
+    {
+      "id": 4996,
+      "nev": "Imaterem",
+      "frissitve": "2026-06-27 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5159707,
+        19.0373042
+      ],
+      "lat": 47.5159707,
+      "lon": 19.0373042,
+      "links": [],
+      "tavolsag": 1926
+    },
+    {
+      "id": 4943,
+      "nev": "Szent Gellért-kápolna",
+      "frissitve": "2025-09-19 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4795746,
+        19.0443945
+      ],
+      "lat": 47.4795746,
+      "lon": 19.0443945,
+      "links": [],
+      "tavolsag": 1981
+    },
+    {
+      "id": 2,
+      "nev": "Budai Ciszterci Szent Imre-templom",
+      "frissitve": "2022-08-30 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 18:30",
+          "vege": "2026-09-17 18:50",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 08:00",
+          "vege": "2026-09-18 17:45",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 18:30",
+          "vege": "2026-09-24 18:50",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 08:00",
+          "vege": "2026-09-25 17:45",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-01 18:30",
+          "vege": "2026-10-01 18:50",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4788595,
+        19.0422691
+      ],
+      "lat": 47.4788595,
+      "lon": 19.0422691,
+      "links": [
+        "http://www.szentimre.hu"
+      ],
+      "tavolsag": 2014
+    },
+    {
+      "id": 2582,
+      "nev": "Fogolykiváltó Boldogasszony és Világosító Szent Gergely-templom",
+      "frissitve": "2025-12-22 00:00:00",
+      "ismertnev": "örmény katolikus templom, budapesti örmény templom, Orlay utcai kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.482048,
+        19.0507759
+      ],
+      "lat": 47.482048,
+      "lon": 19.0507759,
+      "links": [],
+      "tavolsag": 2039
+    },
+    {
+      "id": 4964,
+      "nev": "Szent Lukács kórházkápolna",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5175211,
+        19.0368957
+      ],
+      "lat": 47.5175211,
+      "lon": 19.0368957,
+      "links": [
+        "https://www.facebook.com/korlelk"
+      ],
+      "tavolsag": 2094
+    },
+    {
+      "id": 40,
+      "nev": "Egyetemi Kisboldogasszony-templom",
+      "frissitve": "2026-05-01 00:00:00",
+      "ismertnev": "egyetemi templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4907252,
+        19.0580426
+      ],
+      "lat": 47.4907252,
+      "lon": 19.0580426,
+      "links": [
+        "https://egyetemitemplom.com"
+      ],
+      "tavolsag": 2122
+    },
+    {
+      "id": 3670,
+      "nev": "Szent Ágoston-kápolna",
+      "frissitve": "2025-09-15 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5158855,
+        19.0492624
+      ],
+      "lat": 47.5158855,
+      "lon": 19.0492624,
+      "links": [],
+      "tavolsag": 2142
+    },
+    {
+      "id": 2389,
+      "nev": "Szent Imre-kápolna",
+      "frissitve": "2024-12-19 00:00:00",
+      "ismertnev": "Bartók Béla úti Szent Imre-kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 16:00",
+          "vege": "2026-09-17 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-01 16:30",
+          "vege": "2026-10-01 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-15 16:00",
+          "vege": "2026-10-15 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-11-19 16:00",
+          "vege": "2026-11-19 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-12-17 16:00",
+          "vege": "2026-12-17 18:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4810597,
+        19.0518777
+      ],
+      "lat": 47.4810597,
+      "lon": 19.0518777,
+      "links": [],
+      "tavolsag": 2195
+    },
+    {
+      "id": 17,
+      "nev": "Császárfürdői Szent István király kápolna",
+      "frissitve": "2026-06-27 00:00:00",
+      "ismertnev": "Császárfürdői Szent István király kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 18:00",
+          "vege": "2026-09-18 18:30",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-25 18:00",
+          "vege": "2026-09-25 18:30",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-02 18:00",
+          "vege": "2026-10-02 18:30",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-09 18:00",
+          "vege": "2026-10-09 18:30",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-16 18:00",
+          "vege": "2026-10-16 18:30",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5191779,
+        19.0361395
+      ],
+      "lat": 47.5191779,
+      "lon": 19.0361395,
+      "links": [],
+      "tavolsag": 2281
+    },
+    {
+      "id": 16,
+      "nev": "Városmajori Jézus Szíve-templom",
+      "frissitve": "2026-06-16 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 08:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 07:30",
+          "vege": "2026-09-15 08:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 07:30",
+          "vege": "2026-09-16 08:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 07:30",
+          "vege": "2026-09-17 08:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 17:15",
+          "vege": "2026-09-17 18:00",
+          "fajta": "",
+          "info": "engesztelő imaóra"
+        },
+        {
+          "kezdete": "2026-09-18 07:30",
+          "vege": "2026-09-18 08:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5060512,
+        19.0211521
+      ],
+      "lat": 47.5060512,
+      "lon": 19.0211521,
+      "links": [
+        "http://www.varosmajoriplebania.hu/"
+      ],
+      "tavolsag": 2284
+    },
+    {
+      "id": 2061,
+      "nev": "Irgalmas Jézus-kápolna",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "Budapest Katolikus Kórházlelkészség",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-16 16:00",
+          "vege": "2026-09-16 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-23 16:00",
+          "vege": "2026-09-23 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-30 16:00",
+          "vege": "2026-09-30 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-07 16:00",
+          "vege": "2026-10-07 19:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-14 16:00",
+          "vege": "2026-10-14 19:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5012931,
+        19.0196586
+      ],
+      "lat": 47.5012931,
+      "lon": 19.0196586,
+      "links": [
+        "https://www.facebook.com/korlelk/"
+      ],
+      "tavolsag": 2311
+    },
+    {
+      "id": 2386,
+      "nev": "Gyümölcsoltó Boldogasszony-kápolna",
+      "frissitve": "2022-08-23 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4777357,
+        19.0316439
+      ],
+      "lat": 47.4777357,
+      "lon": 19.0316439,
+      "links": [],
+      "tavolsag": 2323
+    },
+    {
+      "id": 2729,
+      "nev": "Krisztus király templom",
+      "frissitve": "2026-05-04 00:00:00",
+      "ismertnev": "rózsadombi Krisztus király templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5129903,
+        19.0247925
+      ],
+      "lat": 47.5129903,
+      "lon": 19.0247925,
+      "links": [
+        "http://orszagutiferencesek.hu/elerhetoseg-kapcsolat/filiak/krisztus-kiraly-filia/"
+      ],
+      "tavolsag": 2334
+    },
+    {
+      "id": 2579,
+      "nev": "Szentlélek kápolnaigazgatóság",
+      "frissitve": "2021-09-19 00:00:00",
+      "ismertnev": "Ulászló utcai Szentlélek kápolnaigazgatóság",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4738734,
+        19.0427725
+      ],
+      "lat": 47.4738734,
+      "lon": 19.0427725,
+      "links": [
+        "http://szentimre.hu/"
+      ],
+      "tavolsag": 2541
+    },
+    {
+      "id": 2432,
+      "nev": "Avilai Nagy Szent Teréz-templom",
+      "frissitve": "2023-02-03 00:00:00",
+      "ismertnev": "Terézvárosi Szent Teréz-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VI. kerület",
+      "misek": [],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-16 19:00",
+          "vege": "2026-09-16 20:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-21 19:00",
+          "vege": "2026-09-21 20:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-23 19:00",
+          "vege": "2026-09-23 20:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-28 19:00",
+          "vege": "2026-09-28 20:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-30 19:00",
+          "vege": "2026-09-30 20:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5022349,
+        19.0627121
+      ],
+      "lat": 47.5022349,
+      "lon": 19.0627121,
+      "links": [
+        "https://avilaiterezplebania.hu/",
+        "https://www.facebook.com/terezplebania/"
+      ],
+      "tavolsag": 2544
+    },
+    {
+      "id": 2190,
+      "nev": "Szent Tádé-kápolna",
+      "frissitve": "2022-07-24 00:00:00",
+      "ismertnev": "Felsőlágymányosi Szent Tádé plébánia kápolnája",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4780246,
+        19.0539357
+      ],
+      "lat": 47.4780246,
+      "lon": 19.0539357,
+      "links": [
+        "http://www.magyarszentektemploma.hu/"
+      ],
+      "tavolsag": 2587
+    },
+    {
+      "id": 2434,
+      "nev": "Oltáriszentség-templom",
+      "frissitve": "2018-12-11 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5083606,
+        19.0643629
+      ],
+      "lat": 47.5083606,
+      "lon": 19.0643629,
+      "links": [],
+      "tavolsag": 2903
+    },
+    {
+      "id": 2413,
+      "nev": "Szent Margit-templom",
+      "frissitve": "2023-09-25 00:00:00",
+      "ismertnev": "Szent Margit-templom (Lehel téri templom)",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 07:30:00",
+          "informacio": "Görögkatolikus Szentségimádás"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5168433,
+        19.0606108
+      ],
+      "lat": 47.5168433,
+      "lon": 19.0606108,
+      "links": [
+        "http://margitos.hu",
+        "http://facebook.com/sztmargit"
+      ],
+      "tavolsag": 3019
+    },
+    {
+      "id": 2430,
+      "nev": "Szent Rókus-kápolna",
+      "frissitve": "2019-04-14 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 17:45",
+          "vege": "2026-09-18 18:45",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-09-25 17:45",
+          "vege": "2026-09-25 18:45",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-10-02 17:45",
+          "vege": "2026-10-02 18:45",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-10-09 17:45",
+          "vege": "2026-10-09 18:45",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-10-16 17:45",
+          "vege": "2026-10-16 18:45",
+          "fajta": ""
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4960437,
+        19.0673425
+      ],
+      "lat": 47.4960437,
+      "lon": 19.0673425,
+      "links": [
+        "https://bpszentrokus.hu/"
+      ],
+      "tavolsag": 3024
+    },
+    {
+      "id": 3668,
+      "nev": "Krisztus Király Plébánia kápolnája",
+      "frissitve": "2026-01-06 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4895489,
+        19.0662432
+      ],
+      "lat": 47.4895489,
+      "lon": 19.0662432,
+      "links": [
+        "https://www.krisztuskiralyplebania.hu/"
+      ],
+      "tavolsag": 3025
+    },
+    {
+      "id": 4005,
+      "nev": "Szent Kozma és Damján kórházkápolna",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4693814,
+        19.0344094
+      ],
+      "lat": 47.4693814,
+      "lon": 19.0344094,
+      "links": [
+        "https://www.facebook.com/korlelk"
+      ],
+      "tavolsag": 3066
+    },
+    {
+      "id": 2028,
+      "nev": "Sarlós Boldogasszony-templom",
+      "frissitve": "2026-01-06 00:00:00",
+      "ismertnev": "újlaki plébániatemplom, felhévízi plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 06:30:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 18:30",
+          "vege": "2026-09-17 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 18:30",
+          "vege": "2026-09-24 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-01 18:30",
+          "vege": "2026-10-01 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-03 18:30",
+          "vege": "2026-10-03 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-08 18:30",
+          "vege": "2026-10-08 19:30",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.527435,
+        19.0370926
+      ],
+      "lat": 47.527435,
+      "lon": 19.0370926,
+      "links": [
+        "http://www.ujlakitemplom.hu/"
+      ],
+      "tavolsag": 3123
+    },
+    {
+      "id": 2727,
+      "nev": "Kapisztrán Szent János-templom",
+      "frissitve": "2026-09-02 00:00:00",
+      "ismertnev": "Tövis utcai ferences templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5203857,
+        19.021135
+      ],
+      "lat": 47.5203857,
+      "lon": 19.021135,
+      "links": [
+        "http://www.kapisztrantemplom.hu"
+      ],
+      "tavolsag": 3175
+    },
+    {
+      "id": 2188,
+      "nev": "Magyar Szentek Temploma",
+      "frissitve": "2020-03-01 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4750406,
+        19.0592188
+      ],
+      "lat": 47.4750406,
+      "lon": 19.0592188,
+      "links": [
+        "http://www.magyarszentektemploma.hu/"
+      ],
+      "tavolsag": 3200
+    },
+    {
+      "id": 1599,
+      "nev": "Keresztelő Szent János-templom",
+      "frissitve": "2023-09-17 00:00:00",
+      "ismertnev": "Felsőkrisztinavárosi templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 18:30",
+          "vege": "2026-09-17 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 18:30",
+          "vege": "2026-09-24 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-01 18:30",
+          "vege": "2026-10-01 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-08 18:30",
+          "vege": "2026-10-08 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-15 18:30",
+          "vege": "2026-10-15 19:30",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.490652,
+        19.0122163
+      ],
+      "lat": 47.490652,
+      "lon": 19.0122163,
+      "links": [
+        "http://www.felsokrisztina.net/"
+      ],
+      "tavolsag": 3203
+    },
+    {
+      "id": 3669,
+      "nev": "Jézus Szíve templom",
+      "frissitve": "2026-06-22 00:00:00",
+      "ismertnev": "jezsuita templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 12:00:00",
+          "informacio": "Római katolikus Szentségimádás"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4905306,
+        19.0685174
+      ],
+      "lat": 47.4905306,
+      "lon": 19.0685174,
+      "links": [
+        "http://jezusszive.jezsuita.hu/",
+        "https://www.facebook.com/jezusszive.jezsuita.templom",
+        "https://www.youtube.com/channel/UCxJ8LOFy9o9DjKFqhNhInDA"
+      ],
+      "tavolsag": 3242
+    },
+    {
+      "id": 4844,
+      "nev": "Miasszonyunkról nevezett kápolna",
+      "frissitve": "2020-07-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4910622,
+        19.0689609
+      ],
+      "lat": 47.4910622,
+      "lon": 19.0689609,
+      "links": [],
+      "tavolsag": 3277
+    },
+    {
+      "id": 3667,
+      "nev": "Assisi Szent Ferenc-templom",
+      "frissitve": "2024-09-18 00:00:00",
+      "ismertnev": "Bakáts téri templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest IX. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 17:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-21 17:00",
+          "vege": "2026-09-21 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 17:00",
+          "vege": "2026-09-25 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-28 17:00",
+          "vege": "2026-09-28 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-02 17:00",
+          "vege": "2026-10-02 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4833716,
+        19.0671232
+      ],
+      "lat": 47.4833716,
+      "lon": 19.0671232,
+      "links": [
+        "http://www.szentferencplebania.hu"
+      ],
+      "tavolsag": 3360
+    },
+    {
+      "id": 5023,
+      "nev": "Görögkatolikus misézőhely",
+      "frissitve": "2018-01-05 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4851263,
+        19.0116142
+      ],
+      "lat": 47.4851263,
+      "lon": 19.0116142,
+      "links": [
+        "http://szinaxis.hu"
+      ],
+      "tavolsag": 3450
+    },
+    {
+      "id": 4920,
+      "nev": "Szent Család-kápolna",
+      "frissitve": "2026-09-13 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5137866,
+        19.0678506
+      ],
+      "lat": 47.5137866,
+      "lon": 19.0678506,
+      "links": [],
+      "tavolsag": 3498
+    },
+    {
+      "id": 2442,
+      "nev": "Szent Család-templom",
+      "frissitve": "2026-09-14 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 18:45:00",
+          "informacio": "Római katolikus Gyóntatás"
+        },
+        {
+          "idopont": "2026-09-15 18:45:00",
+          "informacio": "Római katolikus Szentségimádás, Csendes"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 18:30",
+          "vege": "2026-09-15 19:15",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 18:30",
+          "vege": "2026-09-17 19:15",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-18 07:30",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-22 18:30",
+          "vege": "2026-09-22 19:15",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 18:30",
+          "vege": "2026-09-24 19:15",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5129567,
+        19.0691989
+      ],
+      "lat": 47.5129567,
+      "lon": 19.0691989,
+      "links": [
+        "http://www.szent-csalad.hu/"
+      ],
+      "tavolsag": 3591
+    },
+    {
+      "id": 1654,
+      "nev": "Szent Gellért-templom",
+      "frissitve": "2026-09-04 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise (adventben 6:00)"
+        },
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 07:35",
+          "vege": "2026-09-15 08:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-15 08:00",
+          "vege": "2026-09-15 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 07:35",
+          "vege": "2026-09-16 08:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 08:00",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 07:35",
+          "vege": "2026-09-17 08:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4687024,
+        19.0228716
+      ],
+      "lat": 47.4687024,
+      "lon": 19.0228716,
+      "links": [
+        "https://szgp.hu/"
+      ],
+      "tavolsag": 3623
+    },
+    {
+      "id": 5247,
+      "nev": "Boldog Meszlényi Zoltán Plébániatemplom",
+      "frissitve": "2025-07-24 00:00:00",
+      "ismertnev": "Lágymányosi Szent Adalbert-plébánia",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4630434,
+        19.0408271
+      ],
+      "lat": 47.4630434,
+      "lon": 19.0408271,
+      "links": [
+        "https://www.etele3.hu/"
+      ],
+      "tavolsag": 3664
+    },
+    {
+      "id": 2591,
+      "nev": "Szent Mihály-kápolna",
+      "frissitve": "2021-03-27 00:00:00",
+      "ismertnev": "margitszigeti kápolna;premontrei kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5308291,
+        19.0515774
+      ],
+      "lat": 47.5308291,
+      "lon": 19.0515774,
+      "links": [],
+      "tavolsag": 3685
+    },
+    {
+      "id": 2058,
+      "nev": "Kórházkápolna - Szent János Kórház",
+      "frissitve": "2019-03-27 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 14:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.509179,
+        19.006904
+      ],
+      "lat": 47.509179,
+      "lon": 19.006904,
+      "links": [],
+      "tavolsag": 3887
+    },
+    {
+      "id": 2021,
+      "nev": "Szent Vér kápolna",
+      "frissitve": "2022-03-28 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5345413,
+        19.031919
+      ],
+      "lat": 47.5345413,
+      "lon": 19.031919,
+      "links": [
+        "http://www.obuda-szent3sag.hu"
+      ],
+      "tavolsag": 3960
+    },
+    {
+      "id": 1603,
+      "nev": "Árpád-házi Szent Erzsébet-templom",
+      "frissitve": "2020-12-25 00:00:00",
+      "ismertnev": "Rózsák terei templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5011417,
+        19.0762367
+      ],
+      "lat": 47.5011417,
+      "lon": 19.0762367,
+      "links": [
+        "http://rozsaktere.uw.hu/",
+        "https://www.facebook.com/rozsaktere.plebania/"
+      ],
+      "tavolsag": 4021
+    },
+    {
+      "id": 2253,
+      "nev": "Szent József-templom",
+      "frissitve": "2023-09-24 00:00:00",
+      "ismertnev": "Józsefvárosi Szent József-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-10-11 17:00",
+          "vege": "2026-10-11 18:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-11-08 17:00",
+          "vege": "2026-11-08 18:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-12-13 17:00",
+          "vege": "2026-12-13 18:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2027-01-10 17:00",
+          "vege": "2027-01-10 18:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2027-02-14 17:00",
+          "vege": "2027-02-14 18:00",
+          "fajta": ""
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.489823,
+        19.0756056
+      ],
+      "lat": 47.489823,
+      "lon": 19.0756056,
+      "links": [
+        "http://www.jozsefvaros.plebania.hu"
+      ],
+      "tavolsag": 4027
+    },
+    {
+      "id": 2185,
+      "nev": "Mindszentek-templom",
+      "frissitve": "2026-01-06 00:00:00",
+      "ismertnev": "Farkasréti templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4839526,
+        19.0062543
+      ],
+      "lat": 47.4839526,
+      "lon": 19.0062543,
+      "links": [
+        "http://farkasretiplebania.hu",
+        "https://www.facebook.com/FarkasretiMindenszentekPlebania/"
+      ],
+      "tavolsag": 4049
+    },
+    {
+      "id": 3736,
+      "nev": "Istenszülő oltalma templom",
+      "frissitve": "2026-08-20 00:00:00",
+      "ismertnev": "Rózsák terei görögkatolikus templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:30:00",
+          "informacio": "Görögkatolikus Szent Liturgia"
+        },
+        {
+          "idopont": "2026-09-15 17:30:00",
+          "informacio": "Görögkatolikus Szent Liturgia"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5017934,
+        19.0764793
+      ],
+      "lat": 47.5017934,
+      "lon": 19.0764793,
+      "links": [
+        "http://www.gorkatpest.hu/"
+      ],
+      "tavolsag": 4054
+    },
+    {
+      "id": 3671,
+      "nev": "Kármelhegyi Boldogasszony-templom",
+      "frissitve": "2019-10-27 00:00:00",
+      "ismertnev": "Kármelita templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5249827,
+        19.0673002
+      ],
+      "lat": 47.5249827,
+      "lon": 19.0673002,
+      "links": [],
+      "tavolsag": 4145
+    },
+    {
+      "id": 1456,
+      "nev": "Óbudai Jó Pásztor templom",
+      "frissitve": "2025-01-12 00:00:00",
+      "ismertnev": "Jó Pásztor Nővérek óbudai temploma",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.538157,
+        19.0378363
+      ],
+      "lat": 47.538157,
+      "lon": 19.0378363,
+      "links": [],
+      "tavolsag": 4239
+    },
+    {
+      "id": 2403,
+      "nev": "Örökimádás-templom",
+      "frissitve": "2026-07-05 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest IX. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 08:00",
+          "vege": "2026-09-15 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 08:00",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 08:00",
+          "vege": "2026-09-17 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 08:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-19 08:00",
+          "vege": "2026-09-19 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.483167,
+        19.0763113
+      ],
+      "lat": 47.483167,
+      "lon": 19.0763113,
+      "links": [
+        "http://www.orokimadas.hu"
+      ],
+      "tavolsag": 4303
+    },
+    {
+      "id": 18,
+      "nev": "Szent Péter és Pál-templom",
+      "frissitve": "2021-05-31 00:00:00",
+      "ismertnev": "Óbuda főplébánia",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5386462,
+        19.0445444
+      ],
+      "lat": 47.5386462,
+      "lon": 19.0445444,
+      "links": [
+        "http://www.peterpalplebania.hu/"
+      ],
+      "tavolsag": 4309
+    },
+    {
+      "id": 3508,
+      "nev": "Kórházkápolna",
+      "frissitve": "2013-05-26 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5389753,
+        19.0311754
+      ],
+      "lat": 47.5389753,
+      "lon": 19.0311754,
+      "links": [],
+      "tavolsag": 4432
+    },
+    {
+      "id": 2046,
+      "nev": "Segítő Szűz Mária-kápolna",
+      "frissitve": "2026-06-28 00:00:00",
+      "ismertnev": "óbudai szalézi kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5391988,
+        19.0317201
+      ],
+      "lat": 47.5391988,
+      "lon": 19.0317201,
+      "links": [
+        "http://www.obudaiszaleziak.hu/",
+        "https://www.facebook.com/ObudaiSzaleziak/"
+      ],
+      "tavolsag": 4442
+    },
+    {
+      "id": 4148,
+      "nev": "Kaniziusz Szent Péter-templom",
+      "frissitve": "2024-04-22 00:00:00",
+      "ismertnev": "Középsőferencváros-Kaniziusz Szent Péter templomigazgatóság",
+      "orszag": "Magyarország",
+      "varos": "Budapest IX. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4788027,
+        19.0760885
+      ],
+      "lat": 47.4788027,
+      "lon": 19.0760885,
+      "links": [
+        "http://www.szentvince.hu/"
+      ],
+      "tavolsag": 4466
+    },
+    {
+      "id": 2401,
+      "nev": "Szent Rita-templom",
+      "frissitve": "2026-07-05 00:00:00",
+      "ismertnev": "Szent Rita plébánia",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.495029,
+        19.0805342
+      ],
+      "lat": 47.495029,
+      "lon": 19.0805342,
+      "links": [
+        "https://www.szentritatemplom.hu/"
+      ],
+      "tavolsag": 4495
+    },
+    {
+      "id": 5374,
+      "nev": "Misézőhely",
+      "frissitve": "2024-06-10 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.460363,
+        19.0178813
+      ],
+      "lat": 47.460363,
+      "lon": 19.0178813,
+      "links": [
+        "http://www.szentgellertplebania.hu"
+      ],
+      "tavolsag": 4661
+    },
+    {
+      "id": 4847,
+      "nev": "Magyarok Nagyasszonya-kápolna",
+      "frissitve": "2015-12-02 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5090399,
+        19.0809483
+      ],
+      "lat": 47.5090399,
+      "lon": 19.0809483,
+      "links": [
+        "http://rozsafuzerkiralyneja.hu"
+      ],
+      "tavolsag": 4679
+    },
+    {
+      "id": 2029,
+      "nev": "Szent József-templomigazgatóság",
+      "frissitve": "2021-09-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5432574,
+        19.039556
+      ],
+      "lat": 47.5432574,
+      "lon": 19.039556,
+      "links": [
+        "http://kkfi.hu/kapolna/ "
+      ],
+      "tavolsag": 4768
+    },
+    {
+      "id": 2397,
+      "nev": "Páli Szent Vince plébániatemplom",
+      "frissitve": "2026-07-16 00:00:00",
+      "ismertnev": "Budapest-Középsőferencváros - Páli Szent Vince-plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest IX. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4756929,
+        19.0785243
+      ],
+      "lat": 47.4756929,
+      "lon": 19.0785243,
+      "links": [
+        "http://www.szentvince.hu/"
+      ],
+      "tavolsag": 4858
+    },
+    {
+      "id": 2395,
+      "nev": "Béke királynéja kápolna",
+      "frissitve": "2021-08-24 00:00:00",
+      "ismertnev": "Tömő utcai béke királynője plébánia",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4850145,
+        19.082641
+      ],
+      "lat": 47.4850145,
+      "lon": 19.082641,
+      "links": [
+        "http://tomoutca.hu/",
+        "http://www.jozsefvaros.plebania.hu"
+      ],
+      "tavolsag": 4909
+    },
+    {
+      "id": 5369,
+      "nev": "Szent Kamill kórházkápolna",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 16:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4829761,
+        19.0822798
+      ],
+      "lat": 47.4829761,
+      "lon": 19.0822798,
+      "links": [
+        "https://www.facebook.com/korlelk"
+      ],
+      "tavolsag": 4934
+    },
+    {
+      "id": 4724,
+      "nev": "Urunk mennybemenetele kápolna",
+      "frissitve": "2008-03-09 00:00:00",
+      "ismertnev": "Kerepesi temető kápolnája",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4957746,
+        19.0847308
+      ],
+      "lat": 47.4957746,
+      "lon": 19.0847308,
+      "links": [],
+      "tavolsag": 4956
+    },
+    {
+      "id": 2399,
+      "nev": "Jó Pásztor-kápolna",
+      "frissitve": "2019-12-21 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4893362,
+        19.0848169
+      ],
+      "lat": 47.4893362,
+      "lon": 19.0848169,
+      "links": [],
+      "tavolsag": 5042
+    },
+    {
+      "id": 4208,
+      "nev": "Jáki kápolna",
+      "frissitve": "2026-01-15 00:00:00",
+      "ismertnev": "Szent László-kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.515654,
+        19.0827345
+      ],
+      "lat": 47.515654,
+      "lon": 19.0827345,
+      "links": [],
+      "tavolsag": 5084
+    },
+    {
+      "id": 2011,
+      "nev": "Szentháromság-templom",
+      "frissitve": "2026-04-07 00:00:00",
+      "ismertnev": "Óbuda Vörösvári úti templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Igeliturgia"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5460157,
+        19.0324158
+      ],
+      "lat": 47.5460157,
+      "lon": 19.0324158,
+      "links": [
+        "http://www.obuda-szent3sag.hu/"
+      ],
+      "tavolsag": 5131
+    },
+    {
+      "id": 1442,
+      "nev": "Szent Mihály-templom",
+      "frissitve": "2025-04-20 00:00:00",
+      "ismertnev": "Albertfalvi templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 07:30",
+          "vege": "2026-09-15 20:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 07:30",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 07:30",
+          "vege": "2026-09-17 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 07:30",
+          "vege": "2026-09-18 20:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-21 07:30",
+          "vege": "2026-09-21 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4479008,
+        19.0353813
+      ],
+      "lat": 47.4479008,
+      "lon": 19.0353813,
+      "links": [
+        "http://www.albertfalviplebania.hu"
+      ],
+      "tavolsag": 5282
+    },
+    {
+      "id": 2248,
+      "nev": "Tours-i Szent Márton-templom",
+      "frissitve": "2026-04-26 00:00:00",
+      "ismertnev": "Vizafogó - Tours-i Szent Márton (és Flüe-i Szent Miklós) plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5376455,
+        19.0694083
+      ],
+      "lat": 47.5376455,
+      "lon": 19.0694083,
+      "links": [
+        "http://www.vizafogoplebania.hu"
+      ],
+      "tavolsag": 5291
+    },
+    {
+      "id": 2722,
+      "nev": "Szent László-templom",
+      "frissitve": "2026-08-25 00:00:00",
+      "ismertnev": "Istenhegyi (Sváb hegy) Szent László plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5001189,
+        18.992063
+      ],
+      "lat": 47.5001189,
+      "lon": 18.992063,
+      "links": [
+        "http://szlp.hu"
+      ],
+      "tavolsag": 5357
+    },
+    {
+      "id": 2767,
+      "nev": "Szentháromság-templom",
+      "frissitve": "2026-05-25 00:00:00",
+      "ismertnev": "kelenvölgyi templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4481156,
+        19.0205707
+      ],
+      "lat": 47.4481156,
+      "lon": 19.0205707,
+      "links": [
+        "http://www.kelenvolgyitemplom.net"
+      ],
+      "tavolsag": 5670
+    },
+    {
+      "id": 3711,
+      "nev": "Rózsafüzér királynéja templom",
+      "frissitve": "2022-01-07 00:00:00",
+      "ismertnev": "Domonkos templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-10-11 11:00",
+          "vege": "2026-10-11 12:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-11-08 11:00",
+          "vege": "2026-11-08 12:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-12-13 11:00",
+          "vege": "2026-12-13 12:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2027-01-10 11:00",
+          "vege": "2027-01-10 12:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2027-02-14 11:00",
+          "vege": "2027-02-14 12:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5059846,
+        19.0908933
+      ],
+      "lat": 47.5059846,
+      "lon": 19.0908933,
+      "links": [
+        "http://www.rozsafuzerkiralyneja.hu"
+      ],
+      "tavolsag": 5700
+    },
+    {
+      "id": 24,
+      "nev": "Szent László-templom",
+      "frissitve": "2025-03-15 00:00:00",
+      "ismertnev": "Béke téri templom (magdolnavárosi templom)",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 17:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 17:00",
+          "vege": "2026-09-25 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-02 17:00",
+          "vege": "2026-10-02 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-09 17:00",
+          "vege": "2026-10-09 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-16 17:00",
+          "vege": "2026-10-16 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5308763,
+        19.0819001
+      ],
+      "lat": 47.5308763,
+      "lon": 19.0819001,
+      "links": [
+        "http://szentlaszlotemplom.hu"
+      ],
+      "tavolsag": 5788
+    },
+    {
+      "id": 2193,
+      "nev": "Szent Angyalok temploma",
+      "frissitve": "2024-01-10 00:00:00",
+      "ismertnev": "Gazdagréti templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 08:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 00:00",
+          "vege": "2026-09-15 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 00:00",
+          "vege": "2026-09-16 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 00:00",
+          "vege": "2026-09-17 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-18 00:00",
+          "vege": "2026-09-18 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-19 00:00",
+          "vege": "2026-09-19 23:59",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4687976,
+        18.9957012
+      ],
+      "lat": 47.4687976,
+      "lon": 18.9957012,
+      "links": [
+        "http://gazdagretiplebania.hu",
+        "http://www.szentangyalok.hu"
+      ],
+      "tavolsag": 5817
+    },
+    {
+      "id": 2724,
+      "nev": "Szűz Mária-kápolna",
+      "frissitve": "2026-08-04 00:00:00",
+      "ismertnev": "Kútvölgyi Boldogasszony-kápolna;Kútvölgyi kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5071442,
+        18.9879816
+      ],
+      "lat": 47.5071442,
+      "lon": 18.9879816,
+      "links": [
+        "http://www.krisztusugye-fso.org/kutvoelgyi-engesztelo-kapolna"
+      ],
+      "tavolsag": 5887
+    },
+    {
+      "id": 2730,
+      "nev": "Pasaréti Páduai Szent Antal templom és plébánia",
+      "frissitve": "2019-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest II. kerület",
+      "misek": [],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 07:30",
+          "vege": "2026-09-15 17:55",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-15 19:00",
+          "vege": "2026-09-15 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 07:30",
+          "vege": "2026-09-16 17:55",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 19:00",
+          "vege": "2026-09-16 19:30",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 07:30",
+          "vege": "2026-09-17 17:55",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.524327,
+        18.9930925
+      ],
+      "lat": 47.524327,
+      "lon": 18.9930925,
+      "links": [
+        "http://pasaret.ofm.hu"
+      ],
+      "tavolsag": 5929
+    },
+    {
+      "id": 4329,
+      "nev": "Hermina-kápolna",
+      "frissitve": "2025-06-22 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5142278,
+        19.0926265
+      ],
+      "lat": 47.5142278,
+      "lon": 19.0926265,
+      "links": [],
+      "tavolsag": 6076
+    },
+    {
+      "id": 2194,
+      "nev": "Szent Szabina-templom",
+      "frissitve": "2026-09-04 00:00:00",
+      "ismertnev": "Szent Benedek Tanulmányi Ház - Bencés Tanulmányi Ház",
+      "orszag": "Magyarország",
+      "varos": "Budapest XI. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 06:00:00",
+          "informacio": "Római katolikus Zsolozsma (Laudes)"
+        },
+        {
+          "idopont": "2026-09-15 18:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.446894,
+        19.0137753
+      ],
+      "lat": 47.446894,
+      "lon": 19.0137753,
+      "links": [
+        "http://www.szentszabina.hu"
+      ],
+      "tavolsag": 6114
+    },
+    {
+      "id": 14,
+      "nev": "Kövi Szűz Mária-templom",
+      "frissitve": "2026-02-25 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 08:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-16 19:30",
+          "vege": "2026-09-16 20:30",
+          "fajta": "ifjúsági (gitáros)"
+        },
+        {
+          "kezdete": "2026-09-23 19:30",
+          "vege": "2026-09-23 20:30",
+          "fajta": "ifjúsági (gitáros)"
+        },
+        {
+          "kezdete": "2026-09-30 19:30",
+          "vege": "2026-09-30 20:30",
+          "fajta": "ifjúsági (gitáros)"
+        },
+        {
+          "kezdete": "2026-10-07 19:30",
+          "vege": "2026-10-07 20:30",
+          "fajta": "ifjúsági (gitáros)"
+        },
+        {
+          "kezdete": "2026-10-14 19:30",
+          "vege": "2026-10-14 20:30",
+          "fajta": "ifjúsági (gitáros)"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5562445,
+        19.0453272
+      ],
+      "lat": 47.5562445,
+      "lon": 19.0453272,
+      "links": [
+        "http://www.kovi-maria.hu"
+      ],
+      "tavolsag": 6159
+    },
+    {
+      "id": 5052,
+      "nev": "Szeplőtelen Fogantatás templom",
+      "frissitve": "2025-06-22 00:00:00",
+      "ismertnev": "Ferences Mária Misszionárius Nővérek temploma",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5136548,
+        19.0936228
+      ],
+      "lat": 47.5136548,
+      "lon": 19.0936228,
+      "links": [],
+      "tavolsag": 6166
+    },
+    {
+      "id": 4605,
+      "nev": "Szent Borbála-kápolna",
+      "frissitve": "2018-09-06 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest IX. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4619091,
+        19.0847762
+      ],
+      "lat": 47.4619091,
+      "lon": 19.0847762,
+      "links": [
+        "http://www.szentvince.hu"
+      ],
+      "tavolsag": 6235
+    },
+    {
+      "id": 2015,
+      "nev": "Szent Donát-kápolna",
+      "frissitve": "2017-08-10 00:00:00",
+      "ismertnev": "Farkastoroki Szent Donát-kápolna",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5543253,
+        19.0203646
+      ],
+      "lat": 47.5543253,
+      "lon": 19.0203646,
+      "links": [],
+      "tavolsag": 6328
+    },
+    {
+      "id": 2733,
+      "nev": "Zugligeti Szent Család-templom",
+      "frissitve": "2024-11-13 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 17:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 17:00",
+          "vege": "2026-09-25 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-02 17:00",
+          "vege": "2026-10-02 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-09 17:00",
+          "vege": "2026-10-09 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-16 17:00",
+          "vege": "2026-10-16 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5166394,
+        18.9853159
+      ],
+      "lat": 47.5166394,
+      "lon": 18.9853159,
+      "links": [
+        "http://www.zugligetiszentcsalad.hu/"
+      ],
+      "tavolsag": 6412
+    },
+    {
+      "id": 2402,
+      "nev": "Magyarok Nagyasszonya-templom",
+      "frissitve": "2026-02-16 00:00:00",
+      "ismertnev": "Budapest-Tisztviselőtelep Rezső téri templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-10-04 10:00",
+          "vege": "2026-10-04 11:30",
+          "fajta": "",
+          "info": "Áprilistól októberig a templomban. Novembertől-márciusig a télikápolnában."
+        },
+        {
+          "kezdete": "2026-11-01 10:00",
+          "vege": "2026-11-01 11:30",
+          "fajta": "",
+          "info": "Áprilistól októberig a templomban. Novembertől-márciusig a télikápolnában."
+        },
+        {
+          "kezdete": "2026-12-06 10:00",
+          "vege": "2026-12-06 11:30",
+          "fajta": "",
+          "info": "Áprilistól októberig a templomban. Novembertől-márciusig a télikápolnában."
+        },
+        {
+          "kezdete": "2027-01-03 10:00",
+          "vege": "2027-01-03 11:30",
+          "fajta": "",
+          "info": "Áprilistól októberig a templomban. Novembertől-márciusig a télikápolnában."
+        },
+        {
+          "kezdete": "2027-02-07 10:00",
+          "vege": "2027-02-07 11:30",
+          "fajta": "",
+          "info": "Áprilistól októberig a templomban. Novembertől-márciusig a télikápolnában."
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4790852,
+        19.0960263
+      ],
+      "lat": 47.4790852,
+      "lon": 19.0960263,
+      "links": [
+        "http://www.tisztviselotelep.plebania.hu/",
+        "https://www.facebook.com/tisztviseloteleptemplom/?locale=hu_HU"
+      ],
+      "tavolsag": 6514
+    },
+    {
+      "id": 2440,
+      "nev": "Szent Mihály-templom",
+      "frissitve": "2025-10-09 00:00:00",
+      "ismertnev": "Külső Váci úti - Angyalföldi Szent Mihály plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes (Sekrestyében, Előtte 6-tól Szentségimádás)"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-20 17:00",
+          "vege": "2026-09-20 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-27 17:00",
+          "vege": "2026-09-27 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-01 18:00",
+          "vege": "2026-10-01 19:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-04 17:00",
+          "vege": "2026-10-04 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-11 17:00",
+          "vege": "2026-10-11 18:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5472244,
+        19.0770387
+      ],
+      "lat": 47.5472244,
+      "lon": 19.0770387,
+      "links": [
+        "http://www.szentmihaly.hu/"
+      ],
+      "tavolsag": 6607
+    },
+    {
+      "id": 4197,
+      "nev": "Szent Kereszt Kórházkápolna",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5185433,
+        19.0980382
+      ],
+      "lat": 47.5185433,
+      "lon": 19.0980382,
+      "links": [
+        "https://www.facebook.com/korlelk"
+      ],
+      "tavolsag": 6787
+    },
+    {
+      "id": 23,
+      "nev": "Szentlélek-templom",
+      "frissitve": "2026-01-15 00:00:00",
+      "ismertnev": "Herminamezői - Kassai téri templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIV. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:30:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5234471,
+        19.0967139
+      ],
+      "lat": 47.5234471,
+      "lon": 19.0967139,
+      "links": [
+        "http://kassaiter.hu/"
+      ],
+      "tavolsag": 6833
+    },
+    {
+      "id": 2409,
+      "nev": "Lisieux-i Szent Teréz-templom",
+      "frissitve": "2025-10-01 00:00:00",
+      "ismertnev": "Törökőri plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest VIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-19 17:00",
+          "vege": "2026-09-19 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-26 17:00",
+          "vege": "2026-09-26 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-03 17:00",
+          "vege": "2026-10-03 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-10 17:00",
+          "vege": "2026-10-10 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-17 17:00",
+          "vege": "2026-10-17 18:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4995088,
+        19.1053418
+      ],
+      "lat": 47.4995088,
+      "lon": 19.1053418,
+      "links": [],
+      "tavolsag": 7245
+    },
+    {
+      "id": 2023,
+      "nev": "Szent Anna-kápolna",
+      "frissitve": "2017-08-10 00:00:00",
+      "ismertnev": "Szűz Mária Társaság kápolnája",
+      "orszag": "Magyarország",
+      "varos": "Budapest III. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5600519,
+        19.0119545
+      ],
+      "lat": 47.5600519,
+      "lon": 19.0119545,
+      "links": [],
+      "tavolsag": 7249
+    },
+    {
+      "id": 1483,
+      "nev": "Szent Lipót-templom",
+      "frissitve": "2019-09-06 00:00:00",
+      "ismertnev": "Budafok-Belvárosi Szent Lipót-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XXII. kerület",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        47.4290395,
+        19.0361994
+      ],
+      "lat": 47.4290395,
+      "lon": 19.0361994,
+      "links": [
+        "http://www.szentlipot.hu"
+      ],
+      "tavolsag": 7251
+    },
+    {
+      "id": 2443,
+      "nev": "Mária Keresztények Segítsége-templom",
+      "frissitve": "2026-09-11 00:00:00",
+      "ismertnev": "Külsőangyalföld - Mária Keresztények Segítsége plébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest XIII. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-17 06:00",
+          "vege": "2026-09-17 07:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-24 06:00",
+          "vege": "2026-09-24 07:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-01 06:00",
+          "vege": "2026-10-01 07:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-08 06:00",
+          "vege": "2026-10-08 07:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-15 06:00",
+          "vege": "2026-10-15 07:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5421324,
+        19.0906882
+      ],
+      "lat": 47.5421324,
+      "lon": 19.0906882,
+      "links": [
+        "http://rokolyautca.plebania.hu"
+      ],
+      "tavolsag": 7288
+    }
+  ],
+  "error": 0
+}

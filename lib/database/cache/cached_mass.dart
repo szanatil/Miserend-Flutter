@@ -6,6 +6,10 @@ enum MassSource {
 
   /// The details page's 20-day schedule; `info` is the event's title.
   nearbyMasses,
+
+  /// A list endpoint's `misek`, today only; `info` names the event with the
+  /// denomination in front and its details after a comma.
+  dailyList,
 }
 
 /// One concrete mass occurrence. The legacy [Mass] holds a recurrence rule

@@ -92,6 +92,7 @@ void main() {
       expect(response.churches.map((c) => c.id), [1515, 38]);
       expect(response.churches.first.commonName, 'Mátyás-templom');
       expect(response.missing, [999999]);
+      expect(response.massesOf(38).single.time, DateTime(2026, 9, 15, 17, 0));
     });
 
     test('maps the list and object fields', () async {
@@ -167,6 +168,8 @@ void main() {
             from: DateTime(2026, 9, 10),
             until: DateTime(2026, 9, 29),
           ),
+      'nearby churches': (api) =>
+          api.fetchNearbyChurches(lat: 47.4979, lon: 19.0402),
       'nearby masses': (api) => api.fetchNearbyMasses(
             lat: 47.4979,
             lon: 19.0402,
@@ -245,6 +248,61 @@ void main() {
     test('the limits are the ones the spec sets', () {
       expect(MiserendApiClient.callTimeout, const Duration(seconds: 15));
       expect(MiserendApiClient.connectTimeout, const Duration(seconds: 10));
+    });
+  });
+
+  group('fetchNearbyChurches', () {
+    // Recorded live for a position in central Budapest, 2026-09-15.
+    const fixture = 'nearby_budapest_2026-09-15.json';
+
+    Future<ChurchesResponse> fetchWith(http.Response response) async {
+      final client = MiserendApiClient(client: MockClient((_) async => response));
+      final result = await client.fetchNearbyChurches(lat: 47.4979, lon: 19.0402);
+      return (result as ApiSuccess<ChurchesResponse>).value;
+    }
+
+    test('maps the churches, nearest first', () async {
+      final response = await fetchWith(_fixtureResponse(fixture));
+
+      expect(response.churches, hasLength(100));
+      expect(response.churches.take(3).map((c) => c.id), [2721, 1514, 1515]);
+      final first = response.churches.first;
+      expect(first.name, 'Árpád-házi Szent Erzsébet-templom');
+      expect(first.city, 'Budapest I. kerület');
+      expect(first.lat, 47.5021615);
+      expect(first.lon, 19.0385385);
+      expect(response.missing, isEmpty);
+    });
+
+    test("maps each church's masses of the day, marked as a list answer",
+        () async {
+      final response = await fetchWith(_fixtureResponse(fixture));
+
+      final masses = response.massesOf(1515);
+      expect(masses.map((m) => m.time),
+          [DateTime(2026, 9, 15, 7, 0), DateTime(2026, 9, 15, 18, 0)]);
+      expect(masses.first.info, 'Római katolikus Szentmise, Csendes');
+      expect(masses.first.churchId, 1515);
+      expect(masses.map((m) => m.source).toSet(), {MassSource.dailyList});
+      expect(response.massesOf(2721), isEmpty);
+    });
+
+    test('asks for a hundred churches around the position, minimal', () async {
+      late http.Request sent;
+      final client = MiserendApiClient(client: MockClient((request) async {
+        sent = request;
+        return _fixtureResponse(fixture);
+      }));
+
+      await client.fetchNearbyChurches(lat: 47.4979, lon: 19.0402);
+
+      expect(sent.url.toString(), 'https://miserend.hu/api/v4/nearby');
+      expect(jsonDecode(sent.body), {
+        'lat': 47.4979,
+        'lon': 19.0402,
+        'limit': 100,
+        'response_length': 'minimal',
+      });
     });
   });
 

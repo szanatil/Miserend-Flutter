@@ -18,5 +18,30 @@ bool isMass(CachedMass row) {
       return true;
     case MassSource.nearbyMasses:
       return massTitles.contains(row.info);
+    case MassSource.dailyList:
+      return _isMassDescription(row.info);
   }
+}
+
+/// The denominations a list answer puts in front of the event's kind.
+const List<String> _denominations = ['Római katolikus ', 'Görögkatolikus '];
+
+/// Whether a list answer's `informacio` — "Római katolikus Szentmise,
+/// Csendes" — describes a mass. The kind sits after the denomination and
+/// before the details, which follow a comma or, as live answers show, a
+/// space or a parenthesis: "Szentmise latin nyelven", "Szentmise (adventben
+/// 6:00)".
+bool _isMassDescription(String? info) {
+  if (info == null) return false;
+  var kind = info.split(',').first.trim();
+  for (final denomination in _denominations) {
+    if (kind.startsWith(denomination)) {
+      kind = kind.substring(denomination.length);
+      break;
+    }
+  }
+  return massTitles.any((title) =>
+      kind == title ||
+      kind.startsWith('$title ') ||
+      kind.startsWith('$title('));
 }

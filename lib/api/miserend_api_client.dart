@@ -16,15 +16,27 @@ import 'package:miserend/database/cache/community.dart';
 /// partial write.
 enum ResponseLength { minimal, full }
 
-/// The answer of the `Church` endpoint in its `ids` form.
+/// A list of churches as the `Church`, `Search` and `NearBy` endpoints answer
+/// with it.
 class ChurchesResponse {
-  const ChurchesResponse({required this.churches, required this.missing});
+  const ChurchesResponse({
+    required this.churches,
+    required this.missing,
+    required Map<int, List<CachedMass>> masses,
+  }) : _masses = masses;
 
   final List<ChurchDetails> churches;
 
   /// Ids the API no longer knows: the church has been removed from
-  /// miserend.hu.
+  /// miserend.hu. Only the `Church` endpoint reports these.
   final List<int> missing;
+
+  final Map<int, List<CachedMass>> _masses;
+
+  /// The church's `misek` — today's rows, masses or not. Empty for a church
+  /// that holds nothing today.
+  List<CachedMass> massesOf(int churchId) =>
+      _masses[churchId] ?? const <CachedMass>[];
 }
 
 /// Reads the miserend.hu v4 JSON API. Every call tells a successful answer —
@@ -39,6 +51,9 @@ class MiserendApiClient {
 
   /// The longest connecting may take, within [callTimeout].
   static const Duration connectTimeout = Duration(seconds: 10);
+
+  /// The most churches the list endpoints return in one call.
+  static const int _churchLimit = 100;
 
   /// The API refuses a larger limit. A church busy enough to hold more than
   /// this many masses in the requested range loses the tail of its schedule.
@@ -70,17 +85,61 @@ class MiserendApiClient {
       'ids': ids,
       'response_length': length.name,
     });
-    return _map(result, (body) {
-      final churches = body['templomok'];
-      if (churches is! List) return null;
-      final missing = body['hianyzo'];
-      return ChurchesResponse(
-        churches: _churches(churches),
-        missing: missing is List
-            ? missing.whereType<int>().toList()
-            : const <int>[],
-      );
+    return _map(result, _churchesResponse);
+  }
+
+  /// The hundred churches nearest to the position, nearest first.
+  Future<ApiResult<ChurchesResponse>> fetchNearbyChurches({
+    required double lat,
+    required double lon,
+  }) async {
+    final result = await _post('nearby', {
+      'lat': lat,
+      'lon': lon,
+      'limit': _churchLimit,
+      'response_length': ResponseLength.minimal.name,
     });
+    return _map(result, _churchesResponse);
+  }
+
+  ChurchesResponse? _churchesResponse(Map<String, dynamic> body) {
+    final items = body['templomok'];
+    if (items is! List) return null;
+    final missing = body['hianyzo'];
+
+    final churches = <ChurchDetails>[];
+    final masses = <int, List<CachedMass>>{};
+    for (final item in items.whereType<Map<String, dynamic>>()) {
+      if (item['id'] is! int) continue;
+      final church = _churchFromJson(item);
+      churches.add(church);
+      masses[church.id] = _dailyMasses(church.id, item['misek']);
+    }
+    return ChurchesResponse(
+      churches: churches,
+      missing:
+          missing is List ? missing.whereType<int>().toList() : const <int>[],
+      masses: masses,
+    );
+  }
+
+  /// A church's `misek`: `idopont`/`informacio` pairs with no id of their own.
+  List<CachedMass> _dailyMasses(int churchId, dynamic value) {
+    if (value is! List) return const <CachedMass>[];
+    final masses = <CachedMass>[];
+    for (final item in value.whereType<Map>()) {
+      final time = parseApiDateTime(_text(item['idopont']));
+      if (time == null) continue;
+      masses.add(CachedMass(
+        id: null,
+        apiMassId: null,
+        churchId: churchId,
+        time: time,
+        info: _text(item['informacio']),
+        source: MassSource.dailyList,
+      ));
+    }
+    return masses;
   }
 
   /// The masses [churchId] holds between [from] and [until]. The response can
@@ -165,12 +224,6 @@ class MiserendApiClient {
       return parsed;
     });
   }
-
-  List<ChurchDetails> _churches(List<dynamic> items) => items
-      .whereType<Map<String, dynamic>>()
-      .where((item) => item['id'] is int)
-      .map(_churchFromJson)
-      .toList();
 
   /// Reads a successful body with [read]; a body [read] cannot make sense of
   /// (it returns null) is a server error like any other malformed answer.
