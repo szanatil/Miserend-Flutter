@@ -1,4 +1,5 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -51,14 +52,16 @@ class NearestMassesLoader {
       throw const LocationUnavailable();
     }
 
-    final items = await _api.fetchNearbyMasses(
+    final result = await _api.fetchNearbyMasses(
       lat: position.latitude,
       lon: position.longitude,
       from: reachableFrom(now),
       until: nearestMassesUntil(now),
     );
-    if (items == null) throw const MassesUnavailable();
-    return items;
+    return switch (result) {
+      ApiSuccess(:final value) => value,
+      ApiFailed() => throw const MassesUnavailable(),
+    };
   }
 
   /// The church's first cached photo, or null. The API item carries no image.

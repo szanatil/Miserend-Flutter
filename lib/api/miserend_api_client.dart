@@ -1,19 +1,44 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/community.dart';
 
-/// Reads the miserend.hu v4 JSON API. Every failure — offline, HTTP error,
-/// error flag in the payload — is reported as a null/empty result, because
-/// most callers fall back on the cache and show no error of their own.
-/// [fetchNearbyMasses] is the exception: see there.
+/// How much of a church the API sends back. `minimal` leaves out, among
+/// others, the photos, the description and the names; see [CacheDatabase]'s
+/// partial write.
+enum ResponseLength { minimal, full }
+
+/// The answer of the `Church` endpoint in its `ids` form.
+class ChurchesResponse {
+  const ChurchesResponse({required this.churches, required this.missing});
+
+  final List<ChurchDetails> churches;
+
+  /// Ids the API no longer knows: the church has been removed from
+  /// miserend.hu.
+  final List<int> missing;
+}
+
+/// Reads the miserend.hu v4 JSON API. Every call tells a successful answer —
+/// an empty one included — apart from the two ways of getting none (see
+/// [ApiFailure]), because the screens word those differently.
 class MiserendApiClient {
   static const String baseUrl = 'https://miserend.hu';
+
+  /// The longest a call may take, answer included. Past it the call counts as
+  /// no connection: a phone on a weak signal must not spin forever.
+  static const Duration callTimeout = Duration(seconds: 15);
+
+  /// The longest connecting may take, within [callTimeout].
+  static const Duration connectTimeout = Duration(seconds: 10);
 
   /// The API refuses a larger limit. A church busy enough to hold more than
   /// this many masses in the requested range loses the tail of its schedule.
@@ -30,25 +55,45 @@ class MiserendApiClient {
 
   final http.Client _client;
 
-  MiserendApiClient({http.Client? client}) : _client = client ?? http.Client();
+  MiserendApiClient({http.Client? client})
+      : _client = client ??
+            IOClient(HttpClient()..connectionTimeout = connectTimeout);
 
-  Future<ChurchDetails?> fetchChurch(int id) async {
-    final body = await _post('church', {'id': id, 'response_length': 'full'});
-    if (body == null) return null;
-    return _churchFromJson(body);
+  /// The churches with these ids. Always the `ids` form, even for one church:
+  /// asked for by a single `id`, a church that no longer exists is an error
+  /// response, which would read as a server error rather than as [missing].
+  Future<ApiResult<ChurchesResponse>> fetchChurches(
+    List<int> ids, {
+    ResponseLength length = ResponseLength.minimal,
+  }) async {
+    final result = await _post('church', {
+      'ids': ids,
+      'response_length': length.name,
+    });
+    return _map(result, (body) {
+      final churches = body['templomok'];
+      if (churches is! List) return null;
+      final missing = body['hianyzo'];
+      return ChurchesResponse(
+        churches: _churches(churches),
+        missing: missing is List
+            ? missing.whereType<int>().toList()
+            : const <int>[],
+      );
+    });
   }
 
   /// The masses [churchId] holds between [from] and [until]. The response can
   /// carry a second church that shares the coordinates, so it is filtered by
   /// church id here as well.
-  Future<List<CachedMass>> fetchMassesForChurch({
+  Future<ApiResult<List<CachedMass>>> fetchMassesForChurch({
     required int churchId,
     required double lat,
     required double lon,
     required DateTime from,
     required DateTime until,
   }) async {
-    final body = await _post('nearbymasses', {
+    final result = await _post('nearbymasses', {
       'lat': lat,
       'lon': lon,
       'radius': _selfRadiusKm,
@@ -56,41 +101,37 @@ class MiserendApiClient {
       'until': _formatDate(until),
       'limit': _massLimit,
     });
-    if (body == null) return const <CachedMass>[];
+    return _map(result, (body) {
+      final masses = body['misek'];
+      if (masses is! List) return null;
 
-    final masses = body['misek'];
-    if (masses is! List) return const <CachedMass>[];
-
-    final occurrences = <CachedMass>[];
-    for (final item in masses.whereType<Map>()) {
-      if (_churchIdOf(item) != churchId) continue;
-      final time = parseApiDateTime(_text(item['start_date']));
-      if (time == null) continue;
-      occurrences.add(CachedMass(
-        id: null,
-        apiMassId: item['id'] as int?,
-        churchId: churchId,
-        time: time,
-        info: _text(item['title']),
-      ));
-    }
-    return occurrences;
+      final occurrences = <CachedMass>[];
+      for (final item in masses.whereType<Map>()) {
+        if (_churchIdOf(item) != churchId) continue;
+        final time = parseApiDateTime(_text(item['start_date']));
+        if (time == null) continue;
+        occurrences.add(CachedMass(
+          id: null,
+          apiMassId: item['id'] as int?,
+          churchId: churchId,
+          time: time,
+          info: _text(item['title']),
+        ));
+      }
+      return occurrences;
+    });
   }
 
   /// Everything the API holds within [_nearbyRadiusKm] of the position,
   /// starting between [from] and [until], nearest first — masses and other
   /// liturgical events alike.
-  ///
-  /// Unlike the other calls, a failure is null rather than an empty list: the
-  /// nearest masses have no cache to fall back on, and "no mass nearby" and
-  /// "could not ask" need different messages.
-  Future<List<NearbyMassesItem>?> fetchNearbyMasses({
+  Future<ApiResult<List<NearbyMassesItem>>> fetchNearbyMasses({
     required double lat,
     required double lon,
     required DateTime from,
     required DateTime until,
   }) async {
-    final body = await _post('nearbymasses', {
+    final result = await _post('nearbymasses', {
       'lat': lat,
       'lon': lon,
       'radius': _nearbyRadiusKm,
@@ -98,30 +139,51 @@ class MiserendApiClient {
       'until': _formatDateTime(until),
       'limit': _massLimit,
     });
-    if (body == null) return null;
+    return _map(result, (body) {
+      final items = body['misek'];
+      if (items is! List) return null;
 
-    final items = body['misek'];
-    if (items is! List) return null;
+      final parsed = <NearbyMassesItem>[];
+      for (final item in items.whereType<Map>()) {
+        final church = item['church'];
+        if (church is! Map || church['id'] is! int) continue;
+        final start = parseApiDateTime(_text(item['start_date']));
+        final distance = _number(item['distance_km']);
+        if (start == null || distance == null) continue;
+        parsed.add(NearbyMassesItem(
+          churchId: church['id'] as int,
+          churchName: _text(church['name']),
+          city: _text(church['city']),
+          lat: _number(church['lat']),
+          lon: _number(church['lon']),
+          distanceKm: distance,
+          start: start,
+          title: _text(item['title']),
+        ));
+      }
+      return parsed;
+    });
+  }
 
-    final parsed = <NearbyMassesItem>[];
-    for (final item in items.whereType<Map>()) {
-      final church = item['church'];
-      if (church is! Map || church['id'] is! int) continue;
-      final start = parseApiDateTime(_text(item['start_date']));
-      final distance = _number(item['distance_km']);
-      if (start == null || distance == null) continue;
-      parsed.add(NearbyMassesItem(
-        churchId: church['id'] as int,
-        churchName: _text(church['name']),
-        city: _text(church['city']),
-        lat: _number(church['lat']),
-        lon: _number(church['lon']),
-        distanceKm: distance,
-        start: start,
-        title: _text(item['title']),
-      ));
+  List<ChurchDetails> _churches(List<dynamic> items) => items
+      .whereType<Map<String, dynamic>>()
+      .where((item) => item['id'] is int)
+      .map(_churchFromJson)
+      .toList();
+
+  /// Reads a successful body with [read]; a body [read] cannot make sense of
+  /// (it returns null) is a server error like any other malformed answer.
+  ApiResult<T> _map<T>(ApiResult<Map<String, dynamic>> result,
+      T? Function(Map<String, dynamic> body) read) {
+    switch (result) {
+      case ApiFailed(:final failure):
+        return ApiFailed(failure);
+      case ApiSuccess(:final value):
+        final mapped = read(value);
+        return mapped == null
+            ? const ApiFailed(ApiFailure.serverError)
+            : ApiSuccess(mapped);
     }
-    return parsed;
   }
 
   int? _churchIdOf(Map item) {
@@ -140,20 +202,35 @@ class MiserendApiClient {
       '${time.hour.toString().padLeft(2, '0')}:'
       '${time.minute.toString().padLeft(2, '0')}';
 
-  Future<Map<String, dynamic>?> _post(
+  /// Anything thrown before a response arrives means the request did not get
+  /// through — socket, DNS, TLS, the connect timeout, [callTimeout]. Anything
+  /// wrong with the response itself is the server's.
+  Future<ApiResult<Map<String, dynamic>>> _post(
       String endpoint, Map<String, dynamic> payload) async {
+    final http.Response response;
     try {
-      final response = await _client.post(
-        Uri.parse('$baseUrl/api/v4/$endpoint'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode(payload),
-      );
-      if (response.statusCode != HttpStatus.ok) return null;
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-      if (decoded is! Map<String, dynamic> || _failed(decoded)) return null;
-      return decoded;
+      response = await _client
+          .post(
+            Uri.parse('$baseUrl/api/v4/$endpoint'),
+            headers: {'Content-Type': 'application/json; charset=UTF-8'},
+            body: jsonEncode(payload),
+          )
+          .timeout(callTimeout);
     } on Exception {
-      return null;
+      return const ApiFailed(ApiFailure.noConnection);
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      return const ApiFailed(ApiFailure.serverError);
+    }
+    try {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic> || _failed(decoded)) {
+        return const ApiFailed(ApiFailure.serverError);
+      }
+      return ApiSuccess(decoded);
+    } on FormatException {
+      return const ApiFailed(ApiFailure.serverError);
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -26,38 +27,49 @@ class ChurchScheduleLoader {
   /// see [ChurchPageData.confessionLive].
   Future<ChurchPageData> loadCached(int churchId, DateTime today) async {
     return _read(churchId, today,
-        scheduleIsFresh: false, confessionLive: false);
+        scheduleIsFresh: false, confessionLive: false, failure: null);
   }
 
   /// Asks the API, writes what it gets through to the cache, and reads it back.
-  /// Failures are silent: this is a read, and a stale page beats an error
-  /// message on a page that already shows something.
+  /// A failed call leaves the cache as it is; the page data says which way it
+  /// failed, so the page can mark what it shows as not live.
   Future<ChurchPageData> refresh(Church church, DateTime today) async {
     final cache = await _db();
 
-    final ChurchDetails? details = await _api.fetchChurch(church.id);
-    if (details != null) {
-      await cache.upsertChurch(details);
+    final churchResult =
+        await _api.fetchChurches([church.id], length: ResponseLength.full);
+    ChurchDetails? details;
+    ApiFailure? churchFailure;
+    switch (churchResult) {
+      case ApiSuccess(:final value):
+        for (final fresh in value.churches) {
+          await cache.upsertChurch(fresh);
+          if (fresh.id == church.id) details = fresh;
+        }
+      case ApiFailed(:final failure):
+        churchFailure = failure;
     }
 
     var scheduleIsFresh = false;
+    ApiFailure? scheduleFailure;
     final lat = church.lat;
     final lon = church.lon;
     if (lat != null && lon != null) {
-      final fresh = await _api.fetchMassesForChurch(
+      final masses = await _api.fetchMassesForChurch(
         churchId: church.id,
         lat: lat,
         lon: lon,
         from: today,
         until: today.add(const Duration(days: scheduleDays)),
       );
-      // An empty answer means either that the church holds no masses or that
-      // the call failed, and the two are indistinguishable here — so whatever
-      // is already cached is kept rather than wiped, and the schedule is not
-      // claimed to be fresh.
-      if (fresh.isNotEmpty) {
-        await cache.replaceMassesForChurch(church.id, fresh);
-        scheduleIsFresh = true;
+      switch (masses) {
+        case ApiSuccess(:final value):
+          // An empty answer is an answer: the church holds no mass in the
+          // window, and the stored schedule has to stop saying otherwise.
+          await cache.replaceMassesForChurch(church.id, value);
+          scheduleIsFresh = true;
+        case ApiFailed(:final failure):
+          scheduleFailure = failure;
       }
     }
 
@@ -67,6 +79,7 @@ class ChurchScheduleLoader {
       scheduleIsFresh: scheduleIsFresh,
       // Only a response from this call may light the confession tile.
       confessionLive: details?.hasConfession ?? false,
+      failure: scheduleFailure ?? churchFailure,
     );
   }
 
@@ -75,6 +88,7 @@ class ChurchScheduleLoader {
     DateTime today, {
     required bool scheduleIsFresh,
     required bool confessionLive,
+    required ApiFailure? failure,
   }) async {
     final cache = await _db();
     final church = await cache.getChurch(churchId);
@@ -88,6 +102,8 @@ class ChurchScheduleLoader {
       massesByDay: _groupByDay(cached, today),
       scheduleIsFresh: scheduleIsFresh,
       confessionLive: confessionLive,
+      failure: failure,
+      dataAsOf: church?.localSyncedAt ?? await cache.bootstrappedAt(),
     );
   }
 

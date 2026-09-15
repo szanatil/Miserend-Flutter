@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
@@ -19,6 +20,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
+import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/time_chip.dart';
@@ -209,11 +211,31 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final note = MiserendText.normalize(_details?.massScheduleNote);
     final sundayOffset = DateTime.sunday - DateTime.now().weekday;
 
+    final failure = _data?.failure;
+
     return SectionCard(
+      color: failure == ApiFailure.serverError
+          ? OfflineNotice.serverErrorTint
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text("Ma", style: Theme.of(context).textTheme.titleLarge),
+          Row(
+            children: [
+              Expanded(
+                child:
+                    Text("Ma", style: Theme.of(context).textTheme.titleLarge),
+              ),
+              // Marks the schedule as not live only once the API has failed;
+              // while the call is running the page claims nothing either way.
+              if (failure != null)
+                OfflineInfoButton(
+                  failure: failure,
+                  asOf: _data?.dataAsOf,
+                  hint: RetryHint.reopenChurch,
+                ),
+            ],
+          ),
           _massListWidgetForDay(0),
           // On a Sunday the two headings would name the same day, and the
           // section would repeat itself.
@@ -393,7 +415,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   /// When miserend.hu last edited the record — not when this phone last spoke
-  /// to the API, which is `local_synced_at` and stays internal.
+  /// to the API, which is `local_synced_at` and only surfaces in the (i)
+  /// explanation once a refresh has failed.
   Widget _updatedFooter() {
     final updatedAt = _details?.updatedAt;
     if (updatedAt == null) {

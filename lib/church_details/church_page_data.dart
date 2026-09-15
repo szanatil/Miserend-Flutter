@@ -1,3 +1,4 @@
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 
@@ -14,11 +15,20 @@ class ChurchPageData {
   /// One bucket per day, so the day a mass belongs to is its list index.
   final List<List<CachedMass>> massesByDay;
 
-  /// True once a NearbyMasses response has landed. Until then an empty day
-  /// means "we have not been told", not "no mass is held" — and the page has
-  /// to word it differently, because confusing the two on a mass-times app is
-  /// the one mistake worth guarding against.
+  /// True once a NearbyMasses response has landed, an empty one included.
+  /// Until then an empty day means "we have not been told", not "no mass is
+  /// held" — and the page has to word it differently, because confusing the
+  /// two on a mass-times app is the one mistake worth guarding against.
   final bool scheduleIsFresh;
+
+  /// Why the last attempt to refresh from the API got no answer; null while
+  /// it is still running and after it succeeded. The page marks what it shows
+  /// as not live only when this is set.
+  final ApiFailure? failure;
+
+  /// How old the shown data is: when this phone last synced the church, or,
+  /// for a church no API response has touched, when the bootstrap import ran.
+  final DateTime? dataAsOf;
 
   /// Whether confession is being heard *right now*.
   ///
@@ -34,5 +44,7 @@ class ChurchPageData {
     required this.massesByDay,
     required this.scheduleIsFresh,
     required this.confessionLive,
+    this.failure,
+    this.dataAsOf,
   });
 }

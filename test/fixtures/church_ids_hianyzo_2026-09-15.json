@@ -1,0 +1,118 @@
+{
+  "templomok": [
+    {
+      "id": 1515,
+      "nev": "Budavári Nagyboldogasszony-templom",
+      "frissitve": "2026-08-12 00:00:00",
+      "ismertnev": "Mátyás-templom",
+      "orszag": "Magyarország",
+      "varos": "Budapest I. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-18 08:00",
+          "vege": "2026-09-18 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-25 08:00",
+          "vege": "2026-09-25 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-02 08:00",
+          "vege": "2026-10-02 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-09 08:00",
+          "vege": "2026-10-09 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-10-16 08:00",
+          "vege": "2026-10-16 18:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.5020112,
+        19.0342625
+      ],
+      "lat": 47.5020112,
+      "lon": 19.0342625,
+      "links": [
+        "https://plebania.matyas-templom.hu/",
+        "http://www.matyas-templom.hu"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 38,
+      "nev": "Belvárosi Nagyboldogasszony-templom",
+      "frissitve": "2026-07-27 00:00:00",
+      "ismertnev": "Belvárosi Nagyboldogasszony Főplébániatemplom",
+      "orszag": "Magyarország",
+      "varos": "Budapest V. kerület",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 00:00",
+          "vege": "2026-09-15 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-15 09:00",
+          "vege": "2026-09-15 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 00:00",
+          "vege": "2026-09-16 23:59",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-16 09:00",
+          "vege": "2026-09-16 18:00",
+          "fajta": "csendes"
+        },
+        {
+          "kezdete": "2026-09-17 00:00",
+          "vege": "2026-09-17 23:59",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        47.492233,
+        19.0522943
+      ],
+      "lat": 47.492233,
+      "lon": 19.0522943,
+      "links": [
+        "http://belvarosiplebania.hu",
+        "http://www.facebook.com/belvarosiplebaniatemplom"
+      ],
+      "tavolsag": 0
+    }
+  ],
+  "hianyzo": [
+    999999
+  ],
+  "error": 0
+}

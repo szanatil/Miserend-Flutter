@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
@@ -11,6 +12,7 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -95,12 +97,16 @@ ChurchPageData _page(
   ChurchDetails? church,
   bool scheduleIsFresh = false,
   bool confessionLive = false,
+  ApiFailure? failure,
+  DateTime? dataAsOf,
 }) {
   return ChurchPageData(
     church: church,
     massesByDay: masses,
     scheduleIsFresh: scheduleIsFresh,
     confessionLive: confessionLive,
+    failure: failure,
+    dataAsOf: dataAsOf,
   );
 }
 
@@ -356,5 +362,103 @@ void main() {
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     expect(find.text('Kerekesszékkel nem megközelíthető'), findsOneWidget);
+  });
+
+  group('marking data that is not live', () {
+    Future<void> refreshWith(WidgetTester tester, ChurchPageData refreshed) async {
+      final loader = _FakeLoader(
+        cached: _page(_scheduleWith(_todayAt(9, 0))),
+        refreshed: refreshed,
+      );
+      await pumpPage(tester, loader);
+      loader.answerApi();
+      await tester.pump();
+      await tester.pump();
+    }
+
+    Color? massCardColor(WidgetTester tester) => tester
+        .widget<Card>(find
+            .ancestor(of: find.text('Ma'), matching: find.byType(Card))
+            .first)
+        .color;
+
+    testWidgets('nothing is marked while the API call is outstanding',
+        (tester) async {
+      final loader = _FakeLoader(
+        cached: _page(_scheduleWith(_todayAt(9, 0))),
+        refreshed: _page(_scheduleWith(_todayAt(9, 0)),
+            failure: ApiFailure.noConnection),
+      );
+
+      await pumpPage(tester, loader);
+
+      expect(find.byType(OfflineInfoButton), findsNothing);
+    });
+
+    testWidgets('nothing is marked after a successful refresh', (tester) async {
+      await refreshWith(
+          tester, _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true));
+
+      expect(find.byType(OfflineInfoButton), findsNothing);
+    });
+
+    testWidgets('no connection puts an (i) at the masses, in the usual colour',
+        (tester) async {
+      await refreshWith(
+          tester,
+          _page(_scheduleWith(_todayAt(9, 0)),
+              failure: ApiFailure.noConnection));
+      final usual = Theme.of(tester.element(find.text('Ma'))).cardTheme.color;
+
+      expect(find.byType(OfflineInfoButton), findsOneWidget);
+      expect(massCardColor(tester), usual);
+    });
+
+    testWidgets('a server error puts an (i) at the masses and tints the card',
+        (tester) async {
+      await refreshWith(
+          tester,
+          _page(_scheduleWith(_todayAt(9, 0)),
+              failure: ApiFailure.serverError));
+
+      expect(find.byType(OfflineInfoButton), findsOneWidget);
+      expect(massCardColor(tester), OfflineNotice.serverErrorTint);
+    });
+
+    testWidgets('the (i) tells how old the data is and what to do',
+        (tester) async {
+      await refreshWith(
+          tester,
+          _page(_scheduleWith(_todayAt(9, 0)),
+              failure: ApiFailure.noConnection,
+              dataAsOf: DateTime(2026, 8, 1, 10, 0)));
+
+      await tester.tap(find.byType(OfflineInfoButton));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot '
+              'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
+              'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
+              'beállításaiban, majd nyisd meg újra a templomot.'),
+          findsOneWidget);
+    });
+
+    testWidgets('the (i) of a server error says miserend.hu is unavailable',
+        (tester) async {
+      await refreshWith(
+          tester,
+          _page(_scheduleWith(_todayAt(9, 0)),
+              failure: ApiFailure.serverError,
+              dataAsOf: DateTime(2026, 8, 1, 10, 0)));
+
+      await tester.tap(find.byType(OfflineInfoButton));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('A miserend.hu jelenleg nem elérhető, az adatok '
+              '2026. 08. 01-i állapotot mutatnak.'),
+          findsOneWidget);
+    });
   });
 }

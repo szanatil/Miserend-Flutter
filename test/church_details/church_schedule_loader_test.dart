@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
+import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/church.dart';
@@ -55,28 +57,45 @@ String _nearbyMassesAt(List<DateTime> times) {
   });
 }
 
+/// The recorded church, in the shape the `ids` form of the call answers with.
+http.Response _churchResponse({bool? confession}) {
+  final church = jsonDecode(
+      File('test/fixtures/church_38.json').readAsStringSync()) as Map<String, dynamic>
+    ..remove('error');
+  // The recording has the switch off, which every live church does; flipping
+  // it here is the only way to exercise the rare case.
+  if (confession != null) {
+    church['gyontatas'] = confession;
+  }
+  return http.Response.bytes(
+      utf8.encode(jsonEncode({
+        'templomok': [church],
+        'hianyzo': [],
+        'error': 0,
+      })),
+      200);
+}
+
 /// Answers the church call from the recorded response and the masses call from
-/// [massTimes]; [failing] makes every call look like there is no network.
+/// [massTimes]; [failure] makes every call fail that way.
 MiserendApiClient _api({
   List<DateTime> massTimes = const [],
-  bool failing = false,
+  ApiFailure? failure,
   bool? confession,
 }) {
   return MiserendApiClient(client: MockClient((request) async {
-    if (failing) {
-      throw const SocketException('offline');
+    switch (failure) {
+      case ApiFailure.noConnection:
+        throw const SocketException('offline');
+      case ApiFailure.serverError:
+        return http.Response('', 500);
+      case null:
+        break;
     }
     if (request.url.path.endsWith('nearbymasses')) {
       return http.Response.bytes(utf8.encode(_nearbyMassesAt(massTimes)), 200);
     }
-    final church = jsonDecode(
-        File('test/fixtures/church_38.json').readAsStringSync()) as Map<String, dynamic>;
-    // The recording has the switch off, which every live church does; flipping
-    // it here is the only way to exercise the rare case.
-    if (confession != null) {
-      church['gyontatas'] = confession;
-    }
-    return http.Response.bytes(utf8.encode(jsonEncode(church)), 200);
+    return _churchResponse(confession: confession);
   }));
 }
 
@@ -170,23 +189,62 @@ void main() {
         _mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise'),
       ]);
 
-      final loader =
-          ChurchScheduleLoader(cache: cache, api: _api(failing: true));
-      final days = (await loader.refresh(_church, _today)).massesByDay;
+      final loader = ChurchScheduleLoader(
+          cache: cache, api: _api(failure: ApiFailure.noConnection));
+      final page = await loader.refresh(_church, _today);
 
-      expect(days[0].map((m) => m.info), ['Bootstrap mise']);
+      expect(page.massesByDay[0].map((m) => m.info), ['Bootstrap mise']);
+      expect(page.scheduleIsFresh, isFalse);
+      expect(page.failure, ApiFailure.noConnection);
     });
 
-    test('keeps the cached masses when the API answers with none', () async {
+    test('keeps the cached masses when the server answers with an error',
+        () async {
+      await cache.replaceMassesForChurch(38, [
+        _mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise'),
+      ]);
+
+      final loader = ChurchScheduleLoader(
+          cache: cache, api: _api(failure: ApiFailure.serverError));
+      final page = await loader.refresh(_church, _today);
+
+      expect(page.massesByDay[0].map((m) => m.info), ['Bootstrap mise']);
+      expect(page.scheduleIsFresh, isFalse);
+      expect(page.failure, ApiFailure.serverError);
+    });
+
+    test('empties the stored schedule when the API answers with none',
+        () async {
       await cache.replaceMassesForChurch(38, [
         _mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise'),
       ]);
 
       final loader = ChurchScheduleLoader(cache: cache, api: _api());
-      final days = (await loader.refresh(_church, _today)).massesByDay;
+      final page = await loader.refresh(_church, _today);
 
-      // An empty answer is indistinguishable from a failed one.
-      expect(days[0].map((m) => m.info), ['Bootstrap mise']);
+      // A successful empty answer says the church holds no mass in the window.
+      expect(page.massesByDay.expand((day) => day), isEmpty);
+      expect(page.scheduleIsFresh, isTrue);
+      expect(page.failure, isNull);
+    });
+
+    test('asks for the church in the ids form, with the full response',
+        () async {
+      final bodies = <String, Object?>{};
+      final api = MiserendApiClient(client: MockClient((request) async {
+        bodies[request.url.path] = jsonDecode(request.body);
+        if (request.url.path.endsWith('nearbymasses')) {
+          return http.Response.bytes(utf8.encode(_nearbyMassesAt(const [])), 200);
+        }
+        return _churchResponse();
+      }));
+
+      await ChurchScheduleLoader(cache: cache, api: api).refresh(_church, _today);
+
+      expect(bodies['/api/v4/church'], {
+        'ids': [38],
+        'response_length': 'full',
+      });
     });
 
     test('skips the masses call for a church with no coordinates', () async {
@@ -195,8 +253,7 @@ void main() {
         if (request.url.path.endsWith('nearbymasses')) {
           askedForMasses = true;
         }
-        return http.Response.bytes(
-            File('test/fixtures/church_38.json').readAsBytesSync(), 200);
+        return _churchResponse();
       }));
 
       final noCoordinates = Church(
@@ -222,16 +279,16 @@ void main() {
       expect(await cache.getChurch(38), isNotNull);
     });
 
-    test('marks the schedule fresh only when masses actually came back',
-        () async {
-      final answered = ChurchScheduleLoader(
+    test('a successful refresh carries no failure', () async {
+      final loader = ChurchScheduleLoader(
         cache: cache,
         api: _api(massTimes: [DateTime(2026, 9, 10, 18, 30)]),
       );
-      expect((await answered.refresh(_church, _today)).scheduleIsFresh, isTrue);
 
-      final silent = ChurchScheduleLoader(cache: cache, api: _api());
-      expect((await silent.refresh(_church, _today)).scheduleIsFresh, isFalse);
+      final page = await loader.refresh(_church, _today);
+
+      expect(page.scheduleIsFresh, isTrue);
+      expect(page.failure, isNull);
     });
 
     test('reports confession from the API answer', () async {
@@ -260,6 +317,32 @@ void main() {
 
       expect(cached.church, isNotNull);
       expect(cached.confessionLive, isFalse);
+    });
+  });
+
+  group('how old the data is', () {
+    test('is when this phone last synced the church', () async {
+      await ChurchScheduleLoader(cache: cache, api: _api())
+          .refresh(_church, _today);
+      final synced = (await cache.getChurch(38))!.localSyncedAt!;
+
+      final page = await ChurchScheduleLoader(
+              cache: cache, api: _api(failure: ApiFailure.noConnection))
+          .refresh(_church, _today);
+
+      expect(page.dataAsOf, synced);
+    });
+
+    test('is the bootstrap import for a church never synced', () async {
+      await cache.importChurches(
+          [BootstrapImporter.churchFromLegacyRow({'tid': 38, 'nev': 'Templom'})],
+          const []);
+      await cache.setBootstrappedAt(DateTime(2026, 8, 1, 10, 0));
+
+      final page = await ChurchScheduleLoader(cache: cache, api: _api())
+          .loadCached(38, _today);
+
+      expect(page.dataAsOf, DateTime(2026, 8, 1, 10, 0));
     });
   });
 }

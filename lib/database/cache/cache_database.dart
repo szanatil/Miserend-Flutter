@@ -15,6 +15,7 @@ class CacheDatabase {
 
   static const String churchesTable = "churches_cache";
   static const String massesTable = "masses_cache";
+  static const String syncTable = "sync_state";
 
   late Database db;
 
@@ -65,8 +66,43 @@ class CacheDatabase {
             'informacio TEXT)');
         await db.execute('CREATE INDEX idx_masses_cache_church_time '
             'ON $massesTable(church_id, idopont)');
+        await _createSyncTable(db);
       },
-      version: 1,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _createSyncTable(db);
+        }
+      },
+      version: 2,
+    );
+  }
+
+  /// When things happened to the cache as a whole, as opposed to one church:
+  /// the bootstrap import, a list's last successful refresh.
+  static Future<void> _createSyncTable(Database db) => db.execute(
+      'CREATE TABLE $syncTable(kulcs TEXT PRIMARY KEY, idopont TEXT NOT NULL)');
+
+  static const String _bootstrapKey = 'bootstrap';
+
+  /// When the bootstrap import filled the cache, or null if that was never
+  /// recorded. It is how old the data is on a row no API response has touched.
+  Future<DateTime?> bootstrappedAt() => syncTime(_bootstrapKey);
+
+  Future<void> setBootstrappedAt(DateTime time) =>
+      setSyncTime(_bootstrapKey, time);
+
+  Future<DateTime?> syncTime(String key) async {
+    final rows = await db.query(syncTable,
+        where: 'kulcs = ?', whereArgs: [key], limit: 1);
+    if (rows.isEmpty) return null;
+    return _parseDateTime(rows.first['idopont'] as String?);
+  }
+
+  Future<void> setSyncTime(String key, DateTime time) async {
+    await db.insert(
+      syncTable,
+      {'kulcs': key, 'idopont': _formatDateTime(time)},
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 

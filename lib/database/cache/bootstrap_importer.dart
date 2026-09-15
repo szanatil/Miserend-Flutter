@@ -54,6 +54,7 @@ class BootstrapImporter {
       await cache.importChurches(
           chunk.map(churchFromLegacyRow).toList(), masses);
     }
+    await cache.setBootstrappedAt(DateTime.now());
   }
 
   static ChurchDetails churchFromLegacyRow(Map<String, Object?> row) {

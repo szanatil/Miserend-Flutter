@@ -11,6 +11,7 @@ class SectionCard extends StatelessWidget {
     this.title,
     required this.child,
     this.trailing,
+    this.color,
   });
 
   final String? title;
@@ -19,10 +20,14 @@ class SectionCard extends StatelessWidget {
   /// Sits on the title's row, for a section that carries an action.
   final Widget? trailing;
 
+  /// Overrides the card's background, for a section that has to stand out.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     final title = this.title;
     return Card(
+      color: color,
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
