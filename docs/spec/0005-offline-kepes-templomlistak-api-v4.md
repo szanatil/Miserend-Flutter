@@ -59,6 +59,7 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
 - Minden API-válasz felülírja a templom sorát (koordináta-javítás is így érkezik), a hiányzó mezők kivételével (ld. Gyorsítótár-írás).
 - A megszűnést **csak** a `Church {"ids"}` `hianyzo` listája jelzi; a `Search`/`NearBy` a megszűnt templomot egyszerűen kihagyja, ebből nem törlünk. Egy megszűnt templom tehát csak akkor tűnik el a készülékről, ha az app a `Church` végponton lekérdezte (találati lista első 100 eleme, kedvenc, térképi kártya, részletező). Minden más megszűnt templom a gyorsítótárban és a Térképen marad (ADR-0003, Consequences).
 - **Megszűnt kedvenc**: a kedvencek közül is csendben törlődik (a helyi adatbázis kedvenc-rekordja is), nincs „megszűnt" sor.
+- **Megnyitott megszűnt templom**: ha a részletező vagy a térképi kártya `Church` hívásának `hianyzo` listájában épp a megnyitott templom van, a templom törlődik a gyorsítótárból és a kedvencek közül. A részletezőn a miserend helyén „Ez a templom már nem szerepel a miserend.hu-n." áll, az oldal nem lép vissza magától. A térképi kártya bezárul, a marker eltűnik, és ugyanez a szöveg SnackBarban jelenik meg.
 
 **Offline-jelölés**
 
@@ -71,6 +72,7 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
   - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok {dátum}-i állapotot mutatnak."
   - A térképi kártyán a „húzd le a listát" helyett „nyisd meg újra a templomot".
 - Az "utoljára frissítve" dátum **nem** jelenik meg alapból a képernyőn (UX-döntés), csak az (i) tájékoztatóban.
+- **A {dátum} jelentése** (CONTEXT.md, „helyi szinkron"): listaképernyőn az adott lista utolsó sikeres háttérfrissítésének ideje, képernyőnként tárolva; a részletezőn és a térképi kártyán a templom helyi szinkronja (`local_synced_at`). Ha még nem volt ilyen, a kezdeti feltöltés dátuma.
 - Betöltés és háttérhívás közben nincs jelölés; csak a sikertelen API-kísérlet után. Sikeres újrapróbálás után a sáv eltűnik.
 - Aki soha nem kapcsolódik, annál a sáv **mindig** megjelenik — tájékoztatás, nem hibaüzenet; nincs bezárás és nincs munkamenetenkénti elrejtés.
 - Helyzet nélkül nincs `NearBy` hívás, így a Közeli templomokon ilyenkor offline-sáv sincs; a **Helyzet nem elérhető** állapot áll helyette.

@@ -73,7 +73,7 @@ Nem miserend-adat és nem nyitvatartás, hanem egy **pillanatnyi állapot**: a m
 _Avoid_: "gyóntatási rend" / "gyóntatási időpontok" (azt sugallja, hogy menetrend, pedig egy kapcsoló állása); "van-e gyóntatás" (a `false` erre nem válasz).
 
 **Frissítve (`frissitve`) vs. helyi szinkron (`local_synced_at`)**:
-Két különböző tény, amelyeket könnyű összekeverni. A **frissítve** azt mondja meg, mikor szerkesztették utoljára az adatot **a miserend.hu oldalán** — ez a felhasználónak mutatott érték. A **helyi szinkron** azt, mikor beszélt **ez a készülék** utoljára az API-val az adott templomról (`null`, ha a sor csak a kezdeti feltöltésből származik) — ez belső, diagnosztikai mező, a UI nem mutatja.
+Két különböző tény, amelyeket könnyű összekeverni. A **frissítve** azt mondja meg, mikor szerkesztették utoljára az adatot **a miserend.hu oldalán** — ez a felhasználónak mutatott érték. A **helyi szinkron** azt, mikor beszélt **ez a készülék** utoljára az API-val az adott templomról (`null`, ha a sor csak a kezdeti feltöltésből származik). Alapból nem látszik; csak akkor jelenik meg, amikor a képernyő nem online adatot mutat, és a felhasználó az (i) tájékoztatót megnyitja — ott ez a „mikori az adat". Egy templomot mutató képernyőn (részletező, térképi kártya) a templom helyi szinkronja; egy listán a lista utolsó sikeres frissítése, mert a sorok eltérő korúak lehetnek. Ha még nem volt ilyen, a kezdeti feltöltés dátuma.
 _Avoid_: "frissítve" önmagában, ha nem egyértelmű, melyik oldalról van szó.
 
 **Liturgikus nyelv jelölése (`nyelvek`)**:
