@@ -121,6 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// and pages never opened are not built at all, so startup is unchanged.
   final Set<int> _builtTabs = <int>{0};
 
+  static const double _searchBarHeight = 48;
+  static const double _searchViewMaxHeight = 360;
+
   static const int _tabCount = 3;
   static const int _massesTab = 1;
 
@@ -191,9 +194,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: ExcludeFocus(
           child: SizedBox(
-            height: 48,
+            height: _searchBarHeight,
             child: SearchAnchor.bar(
               isFullScreen: false,
+              // Opened, the view used to take the default 360 × 240 at least
+              // and a taller header than the bar it opens from. It now keeps
+              // the bar's width and height and grows with the suggestions,
+              // up to a cap that leaves room for the keyboard.
+              viewHeaderHeight: _searchBarHeight,
+              viewConstraints:
+                  const BoxConstraints(maxHeight: _searchViewMaxHeight),
+              shrinkWrap: true,
               onChanged: _onSearchChanged,
               onSubmitted: _onSearchSubmitted,
               searchController: _searchController,

@@ -66,7 +66,7 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
 - Két állapot, ahhoz kötve, amit az app lát:
   - **Nincs kapcsolat** (a kérés nem jutott el a szerverig — tiltott adatkapcsolat, nincs lefedettség, repülőgép-üzemmód, időtúllépés): (i) jelzés.
   - **Szerverhiba** (HTTP-hiba, `error: 1`, értelmezhetetlen válasz): eltérő szín **és** (i) jelzés.
-- Listaképernyőn a jelölés **egyszer, a lista fölötti sávban** jelenik meg, nem soronként. A **térképi templomkártyán** a kártyán, ha a kártya hívása elbukik. A részletező oldalon (spec 0003) a misék csempéjénél.
+- Listaképernyőn a jelölés **egyszer, a lista fölötti sávban** jelenik meg, nem soronként. A **térképi templomkártyán** a kártyán, ha a kártya hívása elbukik. A részletező oldalon (spec 0003) a listákéval azonos sáv, a fejléc alatt rögzítve; a „húzd le a listát" helyett „nyisd meg újra a templomot" (kézi teszt, 2026-09-15: a misék csempéjén álló (i) nem volt észrevehető).
 - Az (i) koppintásra részletes tájékoztatót ad: mikori az adat, és mit tehet a felhasználó.
   - Nincs kapcsolat: „Az adatok a telefonon tárolt, {dátum}-i állapotot mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon beállításaiban, majd húzd le a listát."
   - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok {dátum}-i állapotot mutatnak."

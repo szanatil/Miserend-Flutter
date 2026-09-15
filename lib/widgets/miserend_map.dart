@@ -24,6 +24,7 @@ class MiserendMap extends StatefulWidget {
     this.markers = const [],
     this.compactAttribution = false,
     this.apiKey,
+    this.onTap,
   });
 
   static const defaultInitialCenter = LatLng(47.2537659, 19.752314);
@@ -47,6 +48,9 @@ class MiserendMap extends StatefulWidget {
   /// null or empty, falls back to the free, key-less, multi-subdomain
   /// endpoint (the default used everywhere in the app).
   final String? apiKey;
+
+  /// Called for a tap on the map itself, not on a marker.
+  final VoidCallback? onTap;
 
   @override
   State<MiserendMap> createState() => _MiserendMapState();
@@ -101,6 +105,7 @@ class _MiserendMapState extends State<MiserendMap> {
           options: MapOptions(
             initialCenter: widget.initialCenter,
             initialZoom: widget.initialZoom,
+            onTap: widget.onTap == null ? null : (_, __) => widget.onTap!(),
             interactionOptions: InteractionOptions(
               flags: widget.interactive
                   ? InteractiveFlag.all

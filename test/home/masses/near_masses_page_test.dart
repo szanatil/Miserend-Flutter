@@ -14,6 +14,7 @@ import 'package:miserend/home/masses/mass_list_item.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -233,6 +234,22 @@ void main() {
   });
 
   group('position unavailable', () {
+    testWidgets('sits on the same grey ground as on the Templomok tab',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _FakeLoader([
+            const LocationUnavailable(PositionUnavailableReason.serviceDisabled)
+          ]));
+
+      expect(
+          find.ancestor(
+              of: find.byType(PositionUnavailableView),
+              matching: find.byWidgetPredicate(
+                  (w) => w is Container && w.color == Colors.black12)),
+          findsOneWidget);
+    });
+
     testWidgets('permission denied asks for it with a button that loads the '
         'masses once granted', (tester) async {
       final loader = _FakeLoader([

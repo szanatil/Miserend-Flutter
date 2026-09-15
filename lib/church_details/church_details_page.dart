@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_popup.dart';
@@ -88,22 +87,39 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             ),
           ];
         },
-        body: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
+        body: Column(
           children: [
-            _churchName(),
-            _actionButtons(),
-            _massCard(),
-            _dayStrip(),
-            ..._adorationSection(),
-            if (_data?.confessionLive ?? false) const ConfessionTile(),
-            _mapCard(),
-            ..._contactSection(),
-            ..._infoTiles(),
-            _updatedFooter(),
+            // Like the lists' banner: fixed under the header, shown only once
+            // a refresh has failed.
+            if (_data?.failure case final failure?)
+              OfflineBanner(
+                failure: failure,
+                asOf: _data?.dataAsOf,
+                hint: RetryHint.reopenChurch,
+              ),
+            Expanded(child: _sections()),
           ],
         ),
       ),
+    );
+  }
+
+  /// Every section of the page, in reading order.
+  Widget _sections() {
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        _churchName(),
+        _actionButtons(),
+        _massCard(),
+        _dayStrip(),
+        ..._adorationSection(),
+        if (_data?.confessionLive ?? false) const ConfessionTile(),
+        _mapCard(),
+        ..._contactSection(),
+        ..._infoTiles(),
+        _updatedFooter(),
+      ],
     );
   }
 
@@ -220,31 +236,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final note = MiserendText.normalize(_details?.massScheduleNote);
     final sundayOffset = DateTime.sunday - DateTime.now().weekday;
 
-    final failure = _data?.failure;
-
     return SectionCard(
-      color: failure == ApiFailure.serverError
-          ? OfflineNotice.serverErrorTint
-          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child:
-                    Text("Ma", style: Theme.of(context).textTheme.titleLarge),
-              ),
-              // Marks the schedule as not live only once the API has failed;
-              // while the call is running the page claims nothing either way.
-              if (failure != null)
-                OfflineInfoButton(
-                  failure: failure,
-                  asOf: _data?.dataAsOf,
-                  hint: RetryHint.reopenChurch,
-                ),
-            ],
-          ),
+          Text("Ma", style: Theme.of(context).textTheme.titleLarge),
           _massListWidgetForDay(0),
           // On a Sunday the two headings would name the same day, and the
           // section would repeat itself.

@@ -93,6 +93,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
           mapController: _controller,
           markers: _markers,
           apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+          onTap: _closeCard,
         ),
         if (entry != null)
           Column(
@@ -164,6 +165,16 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 ),
         ));
     }
+  }
+
+  /// A tap on the map away from the markers puts the card away. Its refresh,
+  /// if still running, is let go: [_cardChurchId] no longer matches.
+  void _closeCard() {
+    if (_cardChurchId == null && _card == null) return;
+    setState(() {
+      _card = null;
+      _cardChurchId = null;
+    });
   }
 
   Future<void> _showChurchCard(int churchId) async {

@@ -378,9 +378,10 @@ void main() {
       await tester.pump();
     }
 
-    Color? massCardColor(WidgetTester tester) => tester
-        .widget<Card>(find
-            .ancestor(of: find.text('Ma'), matching: find.byType(Card))
+    Color? bannerColor(WidgetTester tester) => tester
+        .widget<Material>(find
+            .descendant(
+                of: find.byType(OfflineBanner), matching: find.byType(Material))
             .first)
         .color;
 
@@ -394,37 +395,43 @@ void main() {
 
       await pumpPage(tester, loader);
 
-      expect(find.byType(OfflineInfoButton), findsNothing);
+      expect(find.byType(OfflineBanner), findsNothing);
     });
 
     testWidgets('nothing is marked after a successful refresh', (tester) async {
       await refreshWith(
           tester, _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true));
 
-      expect(find.byType(OfflineInfoButton), findsNothing);
+      expect(find.byType(OfflineBanner), findsNothing);
     });
 
-    testWidgets('no connection puts an (i) at the masses, in the usual colour',
-        (tester) async {
+    testWidgets('no connection puts the lists\' banner above the page, '
+        'untinted', (tester) async {
       await refreshWith(
           tester,
           _page(_scheduleWith(_todayAt(9, 0)),
               failure: ApiFailure.noConnection));
-      final usual = Theme.of(tester.element(find.text('Ma'))).cardTheme.color;
 
+      expect(find.byType(OfflineBanner), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      expect(massCardColor(tester), usual);
+      expect(bannerColor(tester), isNot(OfflineNotice.serverErrorTint));
+      expect(tester.getTopLeft(find.byType(OfflineBanner)).dy,
+          lessThan(tester.getTopLeft(find.text('Ma')).dy));
     });
 
-    testWidgets('a server error puts an (i) at the masses and tints the card',
+    testWidgets('a server error tints the banner, not the masses card',
         (tester) async {
       await refreshWith(
           tester,
           _page(_scheduleWith(_todayAt(9, 0)),
               failure: ApiFailure.serverError));
 
+      expect(bannerColor(tester), OfflineNotice.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      expect(massCardColor(tester), OfflineNotice.serverErrorTint);
+      final massCard = tester.widget<Card>(find
+          .ancestor(of: find.text('Ma'), matching: find.byType(Card))
+          .first);
+      expect(massCard.color, isNull);
     });
 
     testWidgets('the (i) tells how old the data is and what to do',

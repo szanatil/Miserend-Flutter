@@ -226,6 +226,23 @@ void main() {
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
 
+    testWidgets('tapping the map away from the markers closes the card',
+        (tester) async {
+      await pumpPage(
+          tester,
+          _MapLoader([
+            [_entry(1, 'Tárolt templom')]
+          ]));
+      await tapMarker(tester, 1);
+      expect(find.text('Tárolt templom'), findsOneWidget);
+
+      // Top left, away from the markers near the centre and from the card.
+      await tester.tapAt(const Offset(40, 40));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(ChurchCard), findsNothing);
+    });
+
     testWidgets('a church removed from miserend.hu closes the card, loses its '
         'marker and says so', (tester) async {
       await pumpPage(

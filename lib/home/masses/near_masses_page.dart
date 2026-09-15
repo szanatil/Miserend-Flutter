@@ -186,7 +186,8 @@ class _NearMassesPageState extends State<NearMassesPage>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const LoadingView(message: 'Legközelebbi misék betöltése…');
+      return const _Ground(
+          child: LoadingView(message: 'Legközelebbi misék betöltése…'));
     }
     return RefreshIndicator(onRefresh: _fetch, child: _content());
   }
@@ -194,28 +195,32 @@ class _NearMassesPageState extends State<NearMassesPage>
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return PullableFill(
-        child: PositionUnavailableView(
-          reason: noPosition,
-          purpose: 'A legközelebbi misékhez',
-          location: _location,
-          onRetry: _fetch,
+      return _Ground(
+        child: PullableFill(
+          child: PositionUnavailableView(
+            reason: noPosition,
+            purpose: 'A legközelebbi misékhez',
+            location: _location,
+            onRetry: _fetch,
+          ),
         ),
       );
     }
     if (_apiFailed) {
-      return const PullableFill(
-          child: MessageView(
-              message: 'Nem sikerült betölteni a miséket. '
-                  'Ellenőrizd az internetkapcsolatot.'));
+      return const _Ground(
+          child: PullableFill(
+              child: MessageView(
+                  message: 'Nem sikerült betölteni a miséket. '
+                      'Ellenőrizd az internetkapcsolatot.')));
     }
 
     final now = widget.clock();
     final masses = selectNearestMasses(_items, now);
     if (masses.isEmpty) {
-      return const PullableFill(
-          child: MessageView(
-              message: 'A közelben ma már nincs elérhető mise.'));
+      return const _Ground(
+          child: PullableFill(
+              child: MessageView(
+                  message: 'A közelben ma már nincs elérhető mise.')));
     }
 
     return ListView.builder(
@@ -265,4 +270,16 @@ class _NearMassesPageState extends State<NearMassesPage>
     _onTick();
     _startTicker();
   }
+}
+
+/// The grey the Templomok tab draws its loading and message states on, so that
+/// the same state looks the same on both tabs.
+class _Ground extends StatelessWidget {
+  const _Ground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(color: Colors.black12, child: child);
 }

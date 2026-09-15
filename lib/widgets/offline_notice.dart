@@ -87,14 +87,20 @@ class OfflineInfoButton extends StatelessWidget {
   }
 }
 
-/// The strip above a list that shows it is not live, once, rather than on
-/// every row. There is no closing it: someone who never goes online sees it
-/// for good, as information rather than as an error.
+/// The strip above a list or the details page that shows it is not live,
+/// once, rather than on every row. There is no closing it: someone who never
+/// goes online sees it for good, as information rather than as an error.
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key, required this.failure, required this.asOf});
+  const OfflineBanner({
+    super.key,
+    required this.failure,
+    required this.asOf,
+    this.hint = RetryHint.pullList,
+  });
 
   final ApiFailure failure;
   final DateTime? asOf;
+  final RetryHint hint;
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +125,7 @@ class OfflineBanner extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
-            OfflineInfoButton(
-                failure: failure, asOf: asOf, hint: RetryHint.pullList),
+            OfflineInfoButton(failure: failure, asOf: asOf, hint: hint),
           ],
         ),
       ),
