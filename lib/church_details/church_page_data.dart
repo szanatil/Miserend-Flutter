@@ -26,6 +26,11 @@ class ChurchPageData {
   /// as not live only when this is set.
   final ApiFailure? failure;
 
+  /// True once the API has reported the church removed from miserend.hu.
+  /// It has then been deleted from the cache and the favorites, and the page
+  /// says so in place of the schedule.
+  final bool churchGone;
+
   /// How old the shown data is: when this phone last synced the church, or,
   /// for a church no API response has touched, when the bootstrap import ran.
   final DateTime? dataAsOf;
@@ -46,5 +51,6 @@ class ChurchPageData {
     required this.confessionLive,
     this.failure,
     this.dataAsOf,
+    this.churchGone = false,
   });
 }

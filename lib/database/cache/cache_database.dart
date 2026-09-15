@@ -268,6 +268,50 @@ class CacheDatabase {
     return _listEntries(rows, day);
   }
 
+  /// The churches with these ids that the cache holds, by name, with their
+  /// rows of [day].
+  Future<List<ChurchListEntry>> churchesByIds(
+      List<int> ids, DateTime day) async {
+    if (ids.isEmpty) return const [];
+    final rows = await db.query(
+      churchesTable,
+      columns: _listColumns.split(', '),
+      where: 'id IN (${List.filled(ids.length, '?').join(',')})',
+      whereArgs: ids,
+    );
+    // SQLite's NOCASE only folds ASCII, which would put "Ágota" after "Zirci".
+    final entries = await _listEntries(rows, day);
+    return entries
+      ..sort((a, b) {
+        final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
+        return byName != 0 ? byName : a.id.compareTo(b.id);
+      });
+  }
+
+  static const Map<String, String> _accents = {
+    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ö': 'o', 'ő': 'o',
+    'ú': 'u', 'ü': 'u', 'ű': 'u',
+  };
+
+  /// A name folded to lower case and to unaccented Hungarian letters, which
+  /// orders the way a reader expects closely enough for a short list.
+  static String _sortKey(String? name) => (name ?? '')
+      .toLowerCase()
+      .split('')
+      .map((char) => _accents[char] ?? char)
+      .join();
+
+  /// Forgets churches miserend.hu no longer has, with their masses.
+  Future<void> deleteChurches(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final batch = db.batch();
+    batch.delete(massesTable,
+        where: 'church_id IN ($placeholders)', whereArgs: ids);
+    batch.delete(churchesTable, where: 'id IN ($placeholders)', whereArgs: ids);
+    await batch.commit(noResult: true);
+  }
+
   static const String _listColumns = 'id, nev, ismertnev, varos, lat, lon, photos';
 
   Future<List<ChurchListEntry>> _listEntries(

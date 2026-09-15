@@ -1,4 +1,5 @@
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -13,12 +14,16 @@ class ChurchScheduleLoader {
   /// Today plus the days the page's horizontal strip shows.
   static const int scheduleDays = 20;
 
-  ChurchScheduleLoader({CacheDatabase? cache, MiserendApiClient? api})
+  ChurchScheduleLoader(
+      {CacheDatabase? cache, MiserendApiClient? api, this.onChurchesGone})
       : _cache = cache,
         _api = api ?? MiserendApiClient();
 
   CacheDatabase? _cache;
   final MiserendApiClient _api;
+
+  /// Told when the API reports the church removed from miserend.hu.
+  final ChurchesGone? onChurchesGone;
 
   Future<CacheDatabase> _db() async => _cache ??= await CacheDatabase.create();
 
@@ -42,8 +47,18 @@ class ChurchScheduleLoader {
     ApiFailure? churchFailure;
     switch (churchResult) {
       case ApiSuccess(:final value):
+        await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
+            .write(value, today: today, minimal: false);
+        if (value.missing.contains(church.id)) {
+          return ChurchPageData(
+            church: null,
+            massesByDay: _groupByDay(const [], today),
+            scheduleIsFresh: false,
+            confessionLive: false,
+            churchGone: true,
+          );
+        }
         for (final fresh in value.churches) {
-          await cache.upsertChurch(fresh);
           if (fresh.id == church.id) details = fresh;
         }
       case ApiFailed(:final failure):

@@ -346,4 +346,49 @@ void main() {
       expect(page.dataAsOf, DateTime(2026, 8, 1, 10, 0));
     });
   });
+
+  group('a church miserend.hu no longer has', () {
+    MiserendApiClient goneApi(List<String> paths) =>
+        MiserendApiClient(client: MockClient((request) async {
+          paths.add(request.url.path);
+          return http.Response.bytes(
+              utf8.encode(jsonEncode({
+                'templomok': [],
+                'hianyzo': [38],
+                'error': 0,
+              })),
+              200);
+        }));
+
+    test('is deleted from the cache and the favorites, and says so',
+        () async {
+      await cache.importChurches(
+          [BootstrapImporter.churchFromLegacyRow({'tid': 38, 'nev': 'Templom'})],
+          [_mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise')]);
+      final gone = <int>[];
+      final paths = <String>[];
+
+      final page = await ChurchScheduleLoader(
+        cache: cache,
+        api: goneApi(paths),
+        onChurchesGone: (ids) async => gone.addAll(ids),
+      ).refresh(_church, _today);
+
+      expect(page.churchGone, isTrue);
+      expect(page.failure, isNull);
+      expect(page.massesByDay.expand((day) => day), isEmpty);
+      expect(await cache.getChurch(38), isNull);
+      expect(await cache.getMassesForChurch(38), isEmpty);
+      expect(gone, [38]);
+      expect(paths, ['/api/v4/church'],
+          reason: 'there is no schedule left to ask for');
+    });
+
+    test('a church that is still there is not gone', () async {
+      final page = await ChurchScheduleLoader(cache: cache, api: _api())
+          .refresh(_church, _today);
+
+      expect(page.churchGone, isFalse);
+    });
+  });
 }

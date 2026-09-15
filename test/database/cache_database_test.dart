@@ -448,4 +448,49 @@ void main() {
           [(DateTime(2026, 9, 15, 9, 0), MassSource.nearbyMasses)]);
     });
   });
+
+  group('removed churches', () {
+    test('are deleted with their masses, and nothing else is', () async {
+      await cache.importChurches([
+        _at(1, 47.50, 19.04),
+        _at(2, 47.51, 19.04),
+      ], [
+        _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+        _mass(2, DateTime(2026, 9, 15, 9, 0), source: MassSource.bootstrap),
+      ]);
+
+      await cache.deleteChurches([1]);
+
+      expect(await cache.getChurch(1), isNull);
+      expect(await cache.getMassesForChurch(1), isEmpty);
+      expect(await cache.getChurch(2), isNotNull);
+      expect(await cache.getMassesForChurch(2), hasLength(1));
+    });
+  });
+
+  group('churches by id', () {
+    test('lists the ones the cache holds, by name, with the day\'s rows',
+        () async {
+      await cache.importChurches([
+        _at(1, 47.50, 19.04, name: 'Zirci apátság'),
+        _at(2, 47.51, 19.04, name: 'Ágota-templom'),
+        _at(3, 47.52, 19.04, name: 'Más'),
+      ], [
+        _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+        _mass(1, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
+      ]);
+
+      final entries =
+          await cache.churchesByIds([1, 2, 404], DateTime(2026, 9, 15));
+
+      expect(entries.map((e) => e.name), ['Ágota-templom', 'Zirci apátság']);
+      expect(entries.last.masses.map((m) => m.time),
+          [DateTime(2026, 9, 15, 8, 0)]);
+    });
+
+    test('is empty for no ids', () async {
+      expect(await cache.churchesByIds(const [], DateTime(2026, 9, 15)),
+          isEmpty);
+    });
+  });
 }

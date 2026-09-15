@@ -1,0 +1,520 @@
+{
+  "offset": 0,
+  "limit": 100,
+  "sum": 20291,
+  "error": 0,
+  "templomok": [
+    {
+      "id": 1155,
+      "nev": "Havas Boldogasszony templom",
+      "frissitve": "2026-08-19 00:00:00",
+      "ismertnev": "Alsóvárosi templom, Ferences templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2407191,
+        20.1368757
+      ],
+      "lat": 46.2407191,
+      "lon": 20.1368757,
+      "links": [
+        "https://szeged.ferencesek.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1158,
+      "nev": "Keresztelő Szent János-templom",
+      "frissitve": "2026-08-02 00:00:00",
+      "ismertnev": "Kiskundorozsmai templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2747554,
+        20.0625626
+      ],
+      "lat": 46.2747554,
+      "lon": 20.0625626,
+      "links": [
+        "http://www.dorozsmaiplebania.hu",
+        "https://dorozsmaitemplom.hu"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1159,
+      "nev": "Szent Rókus-templom",
+      "frissitve": "2023-08-06 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2592266,
+        20.1403786
+      ],
+      "lat": 46.2592266,
+      "lon": 20.1403786,
+      "links": [],
+      "tavolsag": 0
+    },
+    {
+      "id": 1257,
+      "nev": "Spanyol Piarista Vértanúk temploma",
+      "frissitve": "2021-03-13 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2690143,
+        20.1404408
+      ],
+      "lat": 46.2690143,
+      "lon": 20.1404408,
+      "links": [
+        "http://www.szepi.hu"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1254,
+      "nev": "Szent József jezsuita templom",
+      "frissitve": "2026-08-17 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        },
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentségimádás"
+        },
+        {
+          "idopont": "2026-09-15 17:15:00",
+          "informacio": "Római katolikus Rózsafüzér"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 00:01",
+          "vege": "2026-09-15 07:00",
+          "fajta": "",
+          "info": "24 órás hétfő reggeltől "
+        },
+        {
+          "kezdete": "2026-09-15 17:00",
+          "vege": "2026-09-15 00:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-09-17 07:30",
+          "vege": "2026-09-17 00:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-20 10:00",
+          "vege": "2026-09-20 19:30",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-09-21 07:30",
+          "vege": "2026-09-21 00:00",
+          "fajta": "csendes"
+        }
+      ],
+      "gyontatas": "OFF",
+      "koordinatak": [
+        46.2519336,
+        20.1435728
+      ],
+      "lat": 46.2519336,
+      "lon": 20.1435728,
+      "links": [
+        "https://www.facebook.com/SztJozsefSzeged",
+        "https://szentjozsef.jezsuita.hu",
+        "https://www.facebook.com/groups/1392969781508152/",
+        "https://www.facebook.com/missalatinaszeged",
+        "https://www.adoratio-szeged.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1252,
+      "nev": "Magyarok Nagyasszonya-székesegyház Dóm",
+      "frissitve": "2026-09-09 00:00:00",
+      "ismertnev": "Szegedi Dóm, Fogadalmi templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-16 17:00",
+          "vege": "2026-09-16 00:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-09-23 17:00",
+          "vege": "2026-09-23 00:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-09-30 17:00",
+          "vege": "2026-09-30 00:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-10-07 17:00",
+          "vege": "2026-10-07 00:00",
+          "fajta": ""
+        },
+        {
+          "kezdete": "2026-10-14 17:00",
+          "vege": "2026-10-14 00:00",
+          "fajta": ""
+        }
+      ],
+      "gyontatas": "OFF",
+      "koordinatak": [
+        46.2489061,
+        20.1490912
+      ],
+      "lat": 46.2489061,
+      "lon": 20.1490912,
+      "links": [
+        "http://www.fogadalmitemplom.hu",
+        "https://www.facebook.com/Domplebania",
+        "https://www.instagram.com/domplebania"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1037,
+      "nev": "Szent Mihály-templom",
+      "frissitve": "2025-01-18 00:00:00",
+      "ismertnev": "Tápéi templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2603157,
+        20.2039271
+      ],
+      "lat": 46.2603157,
+      "lon": 20.2039271,
+      "links": [],
+      "tavolsag": 0
+    },
+    {
+      "id": 1119,
+      "nev": "Szent Kereszt Felmagasztalása templom",
+      "frissitve": "2026-08-09 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 17:00:00",
+          "informacio": "Római katolikus Szentmise, Csendes"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2529127,
+        20.1297561
+      ],
+      "lat": 46.2529127,
+      "lon": 20.1297561,
+      "links": [
+        "http://szentkeresztplebaniaszeged.hu/",
+        "https://www.facebook.com/szegedmoravarosszentkeresztplebania"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 3748,
+      "nev": "Szent Rozália-kápolna",
+      "frissitve": "2026-05-03 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Görögkatolikus Szent Liturgia"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.258856,
+        20.1471001
+      ],
+      "lat": 46.258856,
+      "lon": 20.1471001,
+      "links": [
+        "http://szegoke.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1156,
+      "nev": "Szent Mihály-templom",
+      "frissitve": "2025-11-07 00:00:00",
+      "ismertnev": "Szeged - Szentmihálytelek templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2214826,
+        20.0829178
+      ],
+      "lat": 46.2214826,
+      "lon": 20.0829178,
+      "links": [],
+      "tavolsag": 0
+    },
+    {
+      "id": 1041,
+      "nev": "Szent Gellért-templom",
+      "frissitve": "2026-02-27 00:00:00",
+      "ismertnev": "Tarjánvárosi templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [
+        {
+          "kezdete": "2026-09-15 09:30",
+          "vege": "2026-09-15 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-22 09:30",
+          "vege": "2026-09-22 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-09-29 09:30",
+          "vege": "2026-09-29 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-06 09:30",
+          "vege": "2026-10-06 18:00",
+          "fajta": "vezetett"
+        },
+        {
+          "kezdete": "2026-10-13 09:30",
+          "vege": "2026-10-13 18:00",
+          "fajta": "vezetett"
+        }
+      ],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2760146,
+        20.1612256
+      ],
+      "lat": 46.2760146,
+      "lon": 20.1612256,
+      "links": [
+        "https://szegedtarjanplebania.hu"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1044,
+      "nev": "Szent Miklós-templom",
+      "frissitve": "2026-08-24 00:00:00",
+      "ismertnev": "Felsővárosi (minorita) templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2589352,
+        20.1588585
+      ],
+      "lat": 46.2589352,
+      "lon": 20.1588585,
+      "links": [
+        "https://www.facebook.com/SzentMiklosPlebania/",
+        "https://szentmiklosplebania.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 3673,
+      "nev": "Árpád-házi Szent Erzsébet-templom",
+      "frissitve": "2026-07-05 00:00:00",
+      "ismertnev": "Újszegedi Szent Erzsébet-templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 18:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.248337,
+        20.1591142
+      ],
+      "lat": 46.248337,
+      "lon": 20.1591142,
+      "links": [
+        "https://ujszegedplebania.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 4276,
+      "nev": "Kalkuttai Szent Teréz anya templom",
+      "frissitve": "2026-05-15 00:00:00",
+      "ismertnev": "Újszegedi Kalkuttai Szent Teréz anya templom",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [
+        {
+          "idopont": "2026-09-15 07:00:00",
+          "informacio": "Római katolikus Szentmise"
+        }
+      ],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2423118,
+        20.1812783
+      ],
+      "lat": 46.2423118,
+      "lon": 20.1812783,
+      "links": [
+        "http://www.ujszegediplebania.hu"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 4386,
+      "nev": "Kápolna",
+      "frissitve": "2012-02-05 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2048901,
+        20.1101485
+      ],
+      "lat": 46.2048901,
+      "lon": 20.1101485,
+      "links": [],
+      "tavolsag": 0
+    },
+    {
+      "id": 4387,
+      "nev": "Kecskéstelepi házkápolna",
+      "frissitve": "2012-02-05 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2352973,
+        20.1078967
+      ],
+      "lat": 46.2352973,
+      "lon": 20.1078967,
+      "links": [
+        "https://szeged.ferencesek.hu/"
+      ],
+      "tavolsag": 0
+    },
+    {
+      "id": 1038,
+      "nev": "Petőfitelepi Jézus szíve templom",
+      "frissitve": "2024-09-01 00:00:00",
+      "ismertnev": "",
+      "orszag": "Magyarország",
+      "varos": "Szeged",
+      "misek": [],
+      "adoraciok": [],
+      "gyontatas": false,
+      "koordinatak": [
+        46.2635572,
+        20.1805119
+      ],
+      "lat": 46.2635572,
+      "lon": 20.1805119,
+      "links": [],
+      "tavolsag": 0
+    }
+  ]
+}

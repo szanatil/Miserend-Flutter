@@ -196,4 +196,67 @@ void main() {
       expect(list.dataAsOf, _now);
     });
   });
+
+  group('refresh favorites', () {
+    setUp(() async {
+      await cache.importChurches([
+        BootstrapImporter.churchFromLegacyRow(
+            {'tid': 2, 'nev': 'Megszűnt templom', 'lat': 47.6, 'lng': 19.1}),
+      ], const []);
+    });
+
+    test('reads the favorites from the cache, by name', () async {
+      final list = await loaderWith(_Api((_) async => _json({})))
+          .load(const FavoritesQuery([1, 2]));
+
+      expect(list.churches.map((c) => c.name), ['Megszűnt templom', 'Régi név']);
+    });
+
+    test('asks the Church endpoint for every favorite, minimal', () async {
+      final api = _Api((_) async =>
+          _json({'templomok': [], 'hianyzo': [], 'error': 0}));
+
+      await loaderWith(api).refresh(const FavoritesQuery([1, 2]), const []);
+
+      expect(api.requests.single.url.path, '/api/v4/church');
+      expect(jsonDecode(api.requests.single.body), {
+        'ids': [1, 2],
+        'response_length': 'minimal',
+      });
+    });
+
+    test('a church the API no longer has leaves the cache and the favorites',
+        () async {
+      final gone = <int>[];
+      final api = _Api((_) async => _json({
+            'templomok': [_listed(1, 'Megmaradt')],
+            'hianyzo': [2],
+            'error': 0,
+          }));
+      final loader = ChurchListLoader(
+        cache: cache,
+        api: api.client,
+        clock: () => _now,
+        onChurchesGone: (ids) async => gone.addAll(ids),
+      );
+
+      final list =
+          await loader.refresh(const FavoritesQuery([1, 2]), const []);
+
+      expect(list.churches.map((c) => c.name), ['Megmaradt']);
+      expect(await cache.getChurch(2), isNull);
+      expect(gone, [2]);
+    });
+  });
+
+  group('a church missing from a search or nearby answer', () {
+    test('is not taken as removed', () async {
+      final api = _Api((_) async => _json({'templomok': [], 'error': 0}));
+
+      final list = await loaderWith(api).refresh(near, const []);
+
+      expect(list.churches.map((c) => c.id), [1]);
+      expect(await cache.getChurch(1), isNotNull);
+    });
+  });
 }

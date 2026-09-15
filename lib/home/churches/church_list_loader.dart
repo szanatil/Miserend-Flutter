@@ -1,4 +1,5 @@
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
@@ -58,18 +59,43 @@ class NearChurchesQuery extends ChurchListQuery {
       api.fetchNearbyChurches(lat: lat, lon: lon);
 }
 
+/// The Kedvencek list: the favorite churches, refreshed by id.
+class FavoritesQuery extends ChurchListQuery {
+  const FavoritesQuery(this.ids);
+
+  final List<int> ids;
+
+  @override
+  String get syncKey => 'list:favorites';
+
+  @override
+  Future<List<ChurchListEntry>> read(CacheDatabase cache, DateTime today) =>
+      cache.churchesByIds(ids, today);
+
+  @override
+  Future<ApiResult<ChurchesResponse>> fetch(
+          MiserendApiClient api, List<ChurchListEntry> shown) =>
+      api.fetchChurches(ids);
+}
+
 /// Supplies the church lists: first from the cache, then again once the
 /// API's answer has been written through to it. It lives outside the pages
 /// so that they can be pumped against a fake.
 class ChurchListLoader {
-  ChurchListLoader(
-      {CacheDatabase? cache, MiserendApiClient? api, this.clock = DateTime.now})
-      : _cache = cache,
+  ChurchListLoader({
+    CacheDatabase? cache,
+    MiserendApiClient? api,
+    this.clock = DateTime.now,
+    this.onChurchesGone,
+  })  : _cache = cache,
         _api = api ?? MiserendApiClient();
 
   CacheDatabase? _cache;
   final MiserendApiClient _api;
   final DateTime Function() clock;
+
+  /// Told when an answer reports churches removed from miserend.hu.
+  final ChurchesGone? onChurchesGone;
 
   Future<CacheDatabase> _db() async => _cache ??= await CacheDatabase.create();
 
@@ -99,24 +125,14 @@ class ChurchListLoader {
           dataAsOf: await _dataAsOf(cache, query),
         );
       case ApiSuccess(:final value):
-        await _writeThrough(cache, value, now);
+        await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
+            .write(value, today: now, minimal: true);
         await cache.setSyncTime(query.syncKey, now);
         return ChurchList(
           churches: await query.read(cache, now),
           failure: null,
           dataAsOf: now,
         );
-    }
-  }
-
-  /// Every church of a minimal answer over its cached row, and its `misek`
-  /// over the cached rows of [today].
-  Future<void> _writeThrough(
-      CacheDatabase cache, ChurchesResponse response, DateTime today) async {
-    for (final church in response.churches) {
-      await cache.upsertChurch(church, minimal: true);
-      await cache.replaceDailyMasses(
-          church.id, today, response.massesOf(church.id));
     }
   }
 

@@ -77,15 +77,37 @@ class MiserendApiClient {
   /// The churches with these ids. Always the `ids` form, even for one church:
   /// asked for by a single `id`, a church that no longer exists is an error
   /// response, which would read as a server error rather than as [missing].
+  ///
+  /// The API takes a hundred ids at a time, so more are asked for in batches;
+  /// one failed batch fails the whole call.
   Future<ApiResult<ChurchesResponse>> fetchChurches(
     List<int> ids, {
     ResponseLength length = ResponseLength.minimal,
   }) async {
-    final result = await _post('church', {
-      'ids': ids,
-      'response_length': length.name,
-    });
-    return _map(result, _churchesResponse);
+    final churches = <ChurchDetails>[];
+    final missing = <int>[];
+    final masses = <int, List<CachedMass>>{};
+    for (var start = 0; start < ids.length; start += _churchLimit) {
+      final batch = ids.skip(start).take(_churchLimit).toList();
+      final result = _map(
+          await _post('church', {
+            'ids': batch,
+            'response_length': length.name,
+          }),
+          _churchesResponse);
+      switch (result) {
+        case ApiFailed(:final failure):
+          return ApiFailed(failure);
+        case ApiSuccess(:final value):
+          churches.addAll(value.churches);
+          missing.addAll(value.missing);
+          for (final church in value.churches) {
+            masses[church.id] = value.massesOf(church.id);
+          }
+      }
+    }
+    return ApiSuccess(ChurchesResponse(
+        churches: churches, missing: missing, masses: masses));
   }
 
   /// The hundred churches nearest to the position, nearest first.

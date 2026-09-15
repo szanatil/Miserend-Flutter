@@ -16,6 +16,8 @@ import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'fake_church_list_loader.dart';
+
 Position _position() => Position(
       latitude: 47.4979,
       longitude: 19.0402,
@@ -72,54 +74,6 @@ class _FakeLocation extends LocationProvider {
   Future<void> openLocationSettings() async => locationSettingsOpened++;
 }
 
-/// Answers [load] with the cache's rows and each [refresh] with the next
-/// refresh answer: a [ChurchList], or a completer to wait on. With no refresh
-/// answers, a refresh succeeds and changes nothing.
-class _FakeLoader extends ChurchListLoader {
-  _FakeLoader(List<Object> cached, {List<Object> refreshed = const []})
-      : _cached = Queue.of(cached),
-        _refreshed = Queue.of(refreshed);
-
-  final Queue<Object> _cached;
-  final Queue<Object> _refreshed;
-  int reads = 0;
-  int refreshes = 0;
-  final List<ChurchListQuery> queries = [];
-
-  static Object _next(Queue<Object> answers) =>
-      answers.length > 1 ? answers.removeFirst() : answers.first;
-
-  @override
-  Future<ChurchList> load(ChurchListQuery query) async {
-    reads++;
-    queries.add(query);
-    final answer = _next(_cached);
-    if (answer is Completer<List<ChurchListEntry>>) {
-      return _listOf(await answer.future);
-    }
-    return _listOf(answer as List<ChurchListEntry>);
-  }
-
-  @override
-  Future<ChurchList> refresh(
-      ChurchListQuery query, List<ChurchListEntry> shown) async {
-    refreshes++;
-    if (_refreshed.isEmpty) return _listOf(shown);
-    final answer = _next(_refreshed);
-    if (answer is Completer<ChurchList>) return answer.future;
-    final list = answer as ChurchList;
-    // A failed refresh keeps what is shown, as the real loader does.
-    return list.failure == null
-        ? list
-        : ChurchList(
-            churches: shown, failure: list.failure, dataAsOf: list.dataAsOf);
-  }
-}
-
-ChurchList _listOf(List<ChurchListEntry> churches,
-        {ApiFailure? failure, DateTime? dataAsOf}) =>
-    ChurchList(churches: churches, failure: failure, dataAsOf: dataAsOf);
-
 void main() {
   // The rows read favorites, which live in a local database. Built once, in
   // the real async zone: see church_details_page_test.
@@ -161,7 +115,7 @@ void main() {
   group('states', () {
     testWidgets('shows the loading caption while the cache is read',
         (tester) async {
-      await pumpPage(tester, _FakeLoader([Completer<List<ChurchListEntry>>()]),
+      await pumpPage(tester, FakeChurchListLoader([Completer<List<ChurchListEntry>>()]),
           _FakeLocation([found]));
 
       expect(find.text('Közeli templomok betöltése...'), findsOneWidget);
@@ -169,7 +123,7 @@ void main() {
 
     testWidgets('says so when there is no church nearby', (tester) async {
       await pumpPage(
-          tester, _FakeLoader([<ChurchListEntry>[]]), _FakeLocation([found]));
+          tester, FakeChurchListLoader([<ChurchListEntry>[]]), _FakeLocation([found]));
 
       expect(find.text('Nem találhatóak közeli templomok.'), findsOneWidget);
     });
@@ -178,7 +132,7 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Közelebbi'), _entry('Távolabbi')]
           ]),
           _FakeLocation([found]));
@@ -193,7 +147,7 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [
               _entry('Templom', masses: [
                 _row(7, 'Szentmise', MassSource.nearbyMasses),
@@ -235,7 +189,7 @@ void main() {
     for (final MapEntry(key: reason, value: (text, button)) in cases.entries) {
       testWidgets('${reason.name}: the reason and its way out',
           (tester) async {
-        final loader = _FakeLoader([<ChurchListEntry>[]]);
+        final loader = FakeChurchListLoader([<ChurchListEntry>[]]);
         await pumpPage(
             tester, loader, _FakeLocation([PositionUnavailable(reason)]));
 
@@ -254,7 +208,7 @@ void main() {
         const PositionUnavailable(PositionUnavailableReason.permissionDenied),
         found,
       ]);
-      await pumpPage(tester, _FakeLoader([
+      await pumpPage(tester, FakeChurchListLoader([
         [_entry('Templom')]
       ]), location);
 
@@ -271,7 +225,7 @@ void main() {
         const PositionUnavailable(
             PositionUnavailableReason.permissionDeniedForever)
       ]);
-      await pumpPage(tester, _FakeLoader([<ChurchListEntry>[]]), location);
+      await pumpPage(tester, FakeChurchListLoader([<ChurchListEntry>[]]), location);
 
       await tester
           .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
@@ -285,7 +239,7 @@ void main() {
       final location = _FakeLocation([
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled)
       ]);
-      await pumpPage(tester, _FakeLoader([<ChurchListEntry>[]]), location);
+      await pumpPage(tester, FakeChurchListLoader([<ChurchListEntry>[]]), location);
 
       await tester
           .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
@@ -300,7 +254,7 @@ void main() {
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
         found,
       ]);
-      await pumpPage(tester, _FakeLoader([
+      await pumpPage(tester, FakeChurchListLoader([
         [_entry('Templom')]
       ]), location);
 
@@ -323,7 +277,7 @@ void main() {
     testWidgets('asks for the position again and reads the cache again',
         (tester) async {
       final location = _FakeLocation([found]);
-      final loader = _FakeLoader([
+      final loader = FakeChurchListLoader([
         [_entry('Régi')],
         [_entry('Új')],
       ]);
@@ -341,7 +295,7 @@ void main() {
         const PositionUnavailable(PositionUnavailableReason.noFreshFix),
         found,
       ]);
-      await pumpPage(tester, _FakeLoader([
+      await pumpPage(tester, FakeChurchListLoader([
         [_entry('Templom')]
       ]), location);
 
@@ -354,7 +308,7 @@ void main() {
   group('background refresh', () {
     testWidgets('asks around the position the list was read for',
         (tester) async {
-      final loader = _FakeLoader([
+      final loader = FakeChurchListLoader([
         [_entry('Templom')]
       ]);
       await pumpPage(tester, loader, _FakeLocation([found]));
@@ -368,7 +322,7 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Tárolt')]
           ], refreshed: [
             Completer<ChurchList>()
@@ -383,10 +337,10 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Tárolt')]
           ], refreshed: [
-            _listOf([_entry('Tárolt'), _entry('Új templom')])
+            listOf([_entry('Tárolt'), _entry('Új templom')])
           ]),
           _FakeLocation([found]));
 
@@ -398,10 +352,10 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Tárolt')]
           ], refreshed: [
-            _listOf(const [], failure: ApiFailure.noConnection)
+            listOf(const [], failure: ApiFailure.noConnection)
           ]),
           _FakeLocation([found]));
 
@@ -424,10 +378,10 @@ void main() {
     testWidgets('a server error tints the banner', (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Tárolt')]
           ], refreshed: [
-            _listOf(const [], failure: ApiFailure.serverError)
+            listOf(const [], failure: ApiFailure.serverError)
           ]),
           _FakeLocation([found]));
 
@@ -447,10 +401,10 @@ void main() {
         (tester) async {
       await pumpPage(
           tester,
-          _FakeLoader([
+          FakeChurchListLoader([
             [_entry('Tárolt')]
           ], refreshed: [
-            _listOf(const [],
+            listOf(const [],
                 failure: ApiFailure.noConnection,
                 dataAsOf: DateTime(2026, 9, 10, 8, 0))
           ]),
@@ -469,11 +423,11 @@ void main() {
 
     testWidgets('pulling down calls the API again, and success clears the '
         'banner', (tester) async {
-      final loader = _FakeLoader([
+      final loader = FakeChurchListLoader([
         [_entry('Tárolt')]
       ], refreshed: [
-        _listOf(const [], failure: ApiFailure.noConnection),
-        _listOf([_entry('Friss')]),
+        listOf(const [], failure: ApiFailure.noConnection),
+        listOf([_entry('Friss')]),
       ]);
       await pumpPage(tester, loader, _FakeLocation([found]));
       expect(find.byType(OfflineBanner), findsOneWidget);
@@ -486,8 +440,8 @@ void main() {
     });
 
     testWidgets('no position, no call and no banner', (tester) async {
-      final loader = _FakeLoader([<ChurchListEntry>[]],
-          refreshed: [_listOf(const [], failure: ApiFailure.noConnection)]);
+      final loader = FakeChurchListLoader([<ChurchListEntry>[]],
+          refreshed: [listOf(const [], failure: ApiFailure.noConnection)]);
       await pumpPage(
           tester,
           loader,

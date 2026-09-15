@@ -463,4 +463,32 @@ void main() {
           findsOneWidget);
     });
   });
+
+  testWidgets('a church no longer on miserend.hu says so in place of the '
+      'schedule, and the page stays open', (tester) async {
+    final loader = _FakeLoader(
+      cached: _page(_scheduleWith(_todayAt(9, 0)), church: _details()),
+      refreshed: ChurchPageData(
+        church: null,
+        massesByDay: _emptyDays(),
+        scheduleIsFresh: false,
+        confessionLive: false,
+        churchGone: true,
+      ),
+    );
+
+    await pumpPage(tester, loader);
+    loader.answerApi();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
+        findsOneWidget);
+    expect(find.text('09:00'), findsNothing);
+    expect(find.text('Nincs adat a mai miserendről'), findsNothing);
+    expect(find.text('Most vasárnap'), findsNothing);
+    expect(find.byType(ChurchDetailsPage), findsOneWidget);
+    // The name the page was opened with stays readable.
+    expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);
+  });
 }

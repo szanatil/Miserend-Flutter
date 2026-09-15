@@ -208,6 +208,15 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   Widget _massCard() {
+    if (_data?.churchGone ?? false) {
+      return SectionCard(
+        child: Text(
+          'Ez a templom már nem szerepel a miserend.hu-n.',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      );
+    }
+
     final note = MiserendText.normalize(_details?.massScheduleNote);
     final sundayOffset = DateTime.sunday - DateTime.now().weekday;
 
@@ -502,7 +511,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   /// Renders whatever the cache holds, then again once the API has answered.
   Future<void> loadMasses() async {
-    final loader = widget.loader ?? ChurchScheduleLoader();
+    final favorites = Provider.of<FavoritesService>(context, listen: false);
+    final loader = widget.loader ??
+        ChurchScheduleLoader(onChurchesGone: favorites.removeAll);
 
     final cached = await loader.loadCached(widget.church.id, _today);
     if (!mounted) {
@@ -514,7 +525,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     if (!mounted) {
       return;
     }
-    setState(() => _data = fresh);
+    setState(() {
+      _data = fresh;
+      if (fresh.churchGone) isFavorite = false;
+    });
   }
 
   DateTime _midnightToday() {

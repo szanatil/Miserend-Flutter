@@ -146,6 +146,60 @@ void main() {
       expect(church.isGreek, isNull);
     });
 
+    test('asks for more than a hundred churches in batches of a hundred',
+        () async {
+      final sent = <List<dynamic>>[];
+      final client = MiserendApiClient(client: MockClient((request) async {
+        final ids = (jsonDecode(request.body) as Map)['ids'] as List<dynamic>;
+        sent.add(ids);
+        return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'templomok': [
+                for (final id in ids) {'id': id, 'nev': 'Templom $id'}
+              ],
+              'hianyzo': ids.contains(150) ? [150] : [],
+              'error': 0,
+            })),
+            200);
+      }));
+
+      final result =
+          await client.fetchChurches([for (var id = 1; id <= 250; id++) id]);
+
+      expect(sent.map((ids) => ids.length), [100, 100, 50]);
+      expect(sent.expand((ids) => ids), [for (var id = 1; id <= 250; id++) id]);
+      final response = (result as ApiSuccess<ChurchesResponse>).value;
+      expect(response.churches, hasLength(250));
+      expect(response.missing, [150]);
+    });
+
+    test('a failed batch fails the whole call', () async {
+      var calls = 0;
+      final client = MiserendApiClient(client: MockClient((request) async {
+        calls++;
+        if (calls == 2) return http.Response('', 500);
+        return http.Response('{"templomok":[],"hianyzo":[],"error":0}', 200);
+      }));
+
+      final result =
+          await client.fetchChurches([for (var id = 1; id <= 150; id++) id]);
+
+      expect((result as ApiFailed).failure, ApiFailure.serverError);
+    });
+
+    test('asks nothing for no ids', () async {
+      var calls = 0;
+      final client = MiserendApiClient(client: MockClient((request) async {
+        calls++;
+        return http.Response('', 500);
+      }));
+
+      final result = await client.fetchChurches(const []);
+
+      expect(calls, 0);
+      expect((result as ApiSuccess<ChurchesResponse>).value.churches, isEmpty);
+    });
+
     test('a response without the church list is a server error', () async {
       final client = MiserendApiClient(
         client: MockClient((_) async => http.Response('{"error":0}', 200)),

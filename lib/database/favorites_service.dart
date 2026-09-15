@@ -31,6 +31,18 @@ class FavoritesService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Drops churches miserend.hu no longer has. Silent: the favorites list
+  /// shows no "removed" row for them.
+  Future<void> removeAll(List<int> churchIds) async {
+    final present = churchIds.where(isFavorite).toList();
+    if (present.isEmpty) return;
+    for (final churchId in present) {
+      await localDatabase.removeFavorite(churchId);
+    }
+    favorites = await localDatabase.getFavorites();
+    notifyListeners();
+  }
+
   bool isFavorite(int churchId) =>
       favorites.any((element) => element.churchId == churchId);
 }

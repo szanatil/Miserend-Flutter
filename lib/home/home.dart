@@ -5,7 +5,10 @@ import 'package:miserend/home/churches/churches_page.dart';
 import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/favorites_prefetch.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:provider/provider.dart';
 
 import '../church_details/church_details_page.dart';
 import '../database/church.dart';
@@ -141,6 +144,34 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return const MapPage();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _prefetchFavorites();
+  }
+
+  /// Refreshes the favorites' data and schedules in the background, once
+  /// their ids are known; the screen does not wait for it.
+  void _prefetchFavorites() {
+    final favorites = Provider.of<FavoritesService>(context, listen: false);
+    void run() {
+      unawaited(FavoritesPrefetch(onChurchesGone: favorites.removeAll)
+          .runIfDue(favorites.favorites.map((f) => f.churchId).toList()));
+    }
+
+    if (favorites.loaded) {
+      run();
+      return;
+    }
+    void onLoaded() {
+      if (!favorites.loaded) return;
+      favorites.removeListener(onLoaded);
+      run();
+    }
+
+    favorites.addListener(onLoaded);
   }
 
   void _onItemTapped(int index) {
