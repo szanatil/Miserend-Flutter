@@ -110,6 +110,19 @@ class MiserendApiClient {
         churches: churches, missing: missing, masses: masses));
   }
 
+  /// Churches the API finds for [q]. It does not look in the common name,
+  /// answers a fixed list for a term it cannot make sense of, and orders by
+  /// nothing useful — which is why the app only asks it when its own search
+  /// of the cache finds nothing (spec 0005, „Végpontok").
+  Future<ApiResult<ChurchesResponse>> searchChurches(String q) async {
+    final result = await _post('search', {
+      'q': q,
+      'limit': _churchLimit,
+      'response_length': ResponseLength.minimal.name,
+    });
+    return _map(result, _churchesResponse);
+  }
+
   /// The hundred churches nearest to the position, nearest first.
   Future<ApiResult<ChurchesResponse>> fetchNearbyChurches({
     required double lat,

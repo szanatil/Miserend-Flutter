@@ -78,6 +78,43 @@ class FavoritesQuery extends ChurchListQuery {
       api.fetchChurches(ids);
 }
 
+/// The Keresés results: churches by a part of their name, or the churches of
+/// a city. The found churches are refreshed by id; when the cache finds
+/// nothing, the API's search is asked for churches the cache does not know.
+class SearchQuery extends ChurchListQuery {
+  const SearchQuery.byName(String this.term) : city = null;
+
+  const SearchQuery.byCity(String this.city) : term = null;
+
+  /// A part of the name or common name; null when searching a city.
+  final String? term;
+
+  /// The whole name of a city; null when searching by name.
+  final String? city;
+
+  /// The most churches refreshed by id; the rest show the cache.
+  static const int refreshLimit = 100;
+
+  @override
+  String get syncKey => 'list:search';
+
+  @override
+  Future<List<ChurchListEntry>> read(CacheDatabase cache, DateTime today) {
+    final city = this.city;
+    return city != null
+        ? cache.churchesInCity(city, today)
+        : cache.searchChurches(term!, today);
+  }
+
+  @override
+  Future<ApiResult<ChurchesResponse>> fetch(
+      MiserendApiClient api, List<ChurchListEntry> shown) {
+    if (shown.isEmpty) return api.searchChurches(city ?? term!);
+    return api.fetchChurches(
+        shown.take(refreshLimit).map((church) => church.id).toList());
+  }
+}
+
 /// Supplies the church lists: first from the cache, then again once the
 /// API's answer has been written through to it. It lives outside the pages
 /// so that they can be pumped against a fake.

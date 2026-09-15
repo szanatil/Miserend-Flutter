@@ -259,4 +259,65 @@ void main() {
       expect(await cache.getChurch(1), isNotNull);
     });
   });
+
+  group('refresh search results', () {
+    test('asks the Church endpoint for at most the first hundred found',
+        () async {
+      await cache.importChurches([
+        for (var id = 100; id < 250; id++)
+          BootstrapImporter.churchFromLegacyRow(
+              {'tid': id, 'nev': 'Szent templom $id', 'lat': 47.5, 'lng': 19.0}),
+      ], const []);
+      final api = _Api((_) async =>
+          _json({'templomok': [], 'hianyzo': [], 'error': 0}));
+      final loader = loaderWith(api);
+      const query = SearchQuery.byName('Szent');
+      final shown = (await loader.load(query)).churches;
+
+      await loader.refresh(query, shown);
+
+      expect(shown, hasLength(150));
+      expect(api.requests.single.url.path, '/api/v4/church');
+      final ids = (jsonDecode(api.requests.single.body) as Map)['ids'] as List;
+      expect(ids, shown.take(100).map((c) => c.id).toList());
+    });
+
+    test('with nothing found in the cache, asks Search and shows what it '
+        'wrote', () async {
+      final api = _Api((_) async => _json({
+            'templomok': [_listed(4242, 'Új Szent Kereszt templom')],
+            'error': 0,
+          }));
+      final loader = loaderWith(api);
+      const query = SearchQuery.byName('Kereszt');
+      final shown = (await loader.load(query)).churches;
+
+      final list = await loader.refresh(query, shown);
+
+      expect(shown, isEmpty);
+      expect(api.requests.single.url.path, '/api/v4/search');
+      expect(jsonDecode(api.requests.single.body), containsPair('q', 'Kereszt'));
+      expect(list.churches.map((c) => c.name), ['Új Szent Kereszt templom']);
+    });
+
+    test('a city is searched in the cache by the city', () async {
+      final list = await loaderWith(_Api((_) async => _json({})))
+          .load(const SearchQuery.byCity('Budapest'));
+
+      expect(list.churches, isEmpty,
+          reason: 'the bootstrap row of this test has no city');
+    });
+
+    test('no connection keeps the found churches and says so', () async {
+      final api = _Api((_) async => throw const SocketException('offline'));
+      final loader = loaderWith(api);
+      const query = SearchQuery.byName('Régi');
+      final shown = (await loader.load(query)).churches;
+
+      final list = await loader.refresh(query, shown);
+
+      expect(list.churches.map((c) => c.name), ['Régi név']);
+      expect(list.failure, ApiFailure.noConnection);
+    });
+  });
 }

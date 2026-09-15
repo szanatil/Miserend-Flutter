@@ -493,4 +493,84 @@ void main() {
           isEmpty);
     });
   });
+
+  group('search', () {
+    final today = DateTime(2026, 9, 15);
+
+    setUp(() async {
+      await cache.importChurches([
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 1515,
+          'nev': 'Budavári Nagyboldogasszony-templom',
+          'ismertnev': 'Mátyás-templom',
+          'varos': 'Budapest I. kerület',
+        }),
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 1155,
+          'nev': 'Havas Boldogasszony templom',
+          'ismertnev': 'Alsóvárosi templom',
+          'varos': 'Szeged',
+        }),
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 1160,
+          'nev': 'Szent Mihály templom',
+          'ismertnev': null,
+          'varos': 'Szeged',
+        }),
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 7,
+          'nev': '100% templom',
+          'ismertnev': null,
+          'varos': 'Szegedi tanya',
+        }),
+      ], [
+        _mass(1155, DateTime(2026, 9, 15, 7, 0), source: MassSource.bootstrap),
+        _mass(1155, DateTime(2026, 9, 16, 7, 0), source: MassSource.bootstrap),
+      ]);
+    });
+
+    test('by name finds a part of the name', () async {
+      final found = await cache.searchChurches('Boldogasszony', today);
+
+      expect(found.map((c) => c.id), unorderedEquals([1515, 1155]));
+    });
+
+    test('by name finds a part of the common name', () async {
+      final found = await cache.searchChurches('Mátyás', today);
+
+      expect(found.map((c) => c.id), [1515]);
+    });
+
+    test("carries each found church's rows of the day", () async {
+      final found = await cache.searchChurches('Havas', today);
+
+      expect(found.single.masses.map((m) => m.time),
+          [DateTime(2026, 9, 15, 7, 0)]);
+    });
+
+    test('takes the search term literally, wildcards included', () async {
+      expect((await cache.searchChurches('100%', today)).map((c) => c.id), [7]);
+      expect(await cache.searchChurches('%', today), hasLength(1));
+      expect(await cache.searchChurches("'", today), isEmpty);
+    });
+
+    test('a city lists the churches of that city, by name', () async {
+      final found = await cache.churchesInCity('Szeged', today);
+
+      expect(found.map((c) => c.name),
+          ['Havas Boldogasszony templom', 'Szent Mihály templom']);
+    });
+
+    test('suggests cities by a part of their name, each once', () async {
+      expect(await cache.searchCities('Szeged'),
+          unorderedEquals(['Szeged', 'Szegedi tanya']));
+    });
+
+    test('suggests churches without reading their masses', () async {
+      final found = await cache.searchChurches('Havas', null);
+
+      expect(found.single.name, 'Havas Boldogasszony templom');
+      expect(found.single.masses, isEmpty);
+    });
+  });
 }

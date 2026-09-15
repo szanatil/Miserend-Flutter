@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/database/church_with_masses.dart';
-import 'package:miserend/database/miserend_database.dart';
-import 'package:miserend/home/churches/church_list_item.dart';
+import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_list_loader.dart';
+import 'package:miserend/home/churches/church_list_view.dart';
+import 'package:miserend/widgets/list_status_view.dart';
+import 'package:provider/provider.dart';
 
 class SearchParams {
   String? city;
@@ -21,16 +23,25 @@ class SearchParams {
     return param;
   }
 
+  ChurchListQuery get query => city != null
+      ? SearchQuery.byCity(city!)
+      : SearchQuery.byName(searchTerm!);
+
   @override
   String toString() {
     return city != null ? city! : searchTerm!;
   }
 }
 
+/// The churches found by name or city, drawn from the cache at once and
+/// refreshed in the background (ADR-0003).
 class SearchResultsPage extends StatefulWidget {
-  const SearchResultsPage({super.key, required this.searchParams});
+  const SearchResultsPage({super.key, required this.searchParams, this.loader});
 
   final SearchParams searchParams;
+
+  /// Injected by tests; the page builds its own otherwise.
+  final ChurchListLoader? loader;
 
   @override
   State<SearchResultsPage> createState() => _SearchResultsPageState();
@@ -39,51 +50,64 @@ class SearchResultsPage extends StatefulWidget {
 class _SearchResultsPageState extends State<SearchResultsPage>  with
     AutomaticKeepAliveClientMixin<SearchResultsPage>{
 
-  List<ChurchWithMasses> churches = <ChurchWithMasses>[];
+  late final ChurchListLoader _loader = widget.loader ??
+      ChurchListLoader(
+          onChurchesGone:
+              Provider.of<FavoritesService>(context, listen: false).removeAll);
+  late final ChurchListQuery _query = widget.searchParams.query;
+
+  ChurchList? _list;
+
+  /// Bumped per load so that a slow answer cannot overwrite a newer one.
+  int _loadId = 0;
 
   @override
   void initState() {
     super.initState();
-    loadChurches();
+    _load();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final list = _list;
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.searchParams.toString()),
         ),
       body: Container(
         color: Colors.black12,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: churches.length,
-          itemBuilder: (BuildContext context, int index) {
-            return ChurchListItem(
-                churchWithMasses: churches[index]
-            );
-          },
-        ),
+        child: list == null
+            ? const LoadingView(message: 'Keresés...')
+            : ChurchListView(
+                list: list,
+                emptyMessage: 'Nincs találat',
+                onRefresh: _load,
+              ),
       ),
     );
   }
 
-  Future<void> loadChurches() async {
-    MiserendDatabase db = await MiserendDatabase.create();
-    final DateTime today = DateTime.now();
-    List<ChurchWithMasses> list;
-    if (widget.searchParams.city != null) {
-      list = await db.getChurchesWithMassesForCity(
-          widget.searchParams.city!, today);
-    }
-    else {
-      list = await db.getChurchesWithMassesForSearchTerm(
-          widget.searchParams.searchTerm!, today);
-    }
+  /// Draws what the cache finds, then refreshes it in the background.
+  /// Pull-to-refresh waits for the whole of it.
+  Future<void> _load() async {
+    final loadId = ++_loadId;
+    bool current() => mounted && loadId == _loadId;
+
+    final cached = await _loader.load(_query);
+    if (!current()) return;
     setState(() {
-      churches = list;
+      // A banner already up stays until a refresh succeeds.
+      _list = ChurchList(
+        churches: cached.churches,
+        failure: _list?.failure,
+        dataAsOf: cached.dataAsOf,
+      );
     });
+
+    final refreshed = await _loader.refresh(_query, cached.churches);
+    if (!current()) return;
+    setState(() => _list = refreshed);
   }
 
   @override

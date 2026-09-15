@@ -268,6 +268,49 @@ class CacheDatabase {
     return _listEntries(rows, day);
   }
 
+  /// Churches whose name or common name contains [term], by name, with their
+  /// rows of [day] — none when [day] is null, as for the suggestions typed
+  /// out a key at a time. The term is taken literally.
+  Future<List<ChurchListEntry>> searchChurches(
+      String term, DateTime? day) async {
+    final pattern = '%${_escapeLike(term)}%';
+    final rows = await db.query(
+      churchesTable,
+      columns: _listColumns.split(', '),
+      where: "nev LIKE ? ESCAPE '\\' OR ismertnev LIKE ? ESCAPE '\\'",
+      whereArgs: [pattern, pattern],
+    );
+    return _byName(await _listEntries(rows, day));
+  }
+
+  /// The churches of [city], by name, with their rows of [day].
+  Future<List<ChurchListEntry>> churchesInCity(String city, DateTime day) async {
+    final rows = await db.query(
+      churchesTable,
+      columns: _listColumns.split(', '),
+      where: 'varos = ?',
+      whereArgs: [city],
+    );
+    return _byName(await _listEntries(rows, day));
+  }
+
+  /// Cities whose name contains [term], each once.
+  Future<List<String>> searchCities(String term) async {
+    final rows = await db.query(
+      churchesTable,
+      distinct: true,
+      columns: ['varos'],
+      where: "varos LIKE ? ESCAPE '\\'",
+      whereArgs: ['%${_escapeLike(term)}%'],
+    );
+    return rows.map((row) => row['varos'] as String).toList();
+  }
+
+  static String _escapeLike(String term) => term
+      .replaceAll('\\', '\\\\')
+      .replaceAll('%', '\\%')
+      .replaceAll('_', '\\_');
+
   /// The churches with these ids that the cache holds, by name, with their
   /// rows of [day].
   Future<List<ChurchListEntry>> churchesByIds(
@@ -279,14 +322,16 @@ class CacheDatabase {
       where: 'id IN (${List.filled(ids.length, '?').join(',')})',
       whereArgs: ids,
     );
-    // SQLite's NOCASE only folds ASCII, which would put "Ágota" after "Zirci".
-    final entries = await _listEntries(rows, day);
-    return entries
-      ..sort((a, b) {
-        final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
-        return byName != 0 ? byName : a.id.compareTo(b.id);
-      });
+    return _byName(await _listEntries(rows, day));
   }
+
+  /// SQLite's NOCASE only folds ASCII, which would put "Ágota" after "Zirci".
+  static List<ChurchListEntry> _byName(List<ChurchListEntry> entries) =>
+      entries
+        ..sort((a, b) {
+          final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
+          return byName != 0 ? byName : a.id.compareTo(b.id);
+        });
 
   static const Map<String, String> _accents = {
     'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ö': 'o', 'ő': 'o',
@@ -314,9 +359,15 @@ class CacheDatabase {
 
   static const String _listColumns = 'id, nev, ismertnev, varos, lat, lon, photos';
 
+  /// [day] null reads no masses at all.
   Future<List<ChurchListEntry>> _listEntries(
-      List<Map<String, Object?>> rows, DateTime day) async {
-    final masses = await _massesOn(day);
+      List<Map<String, Object?>> rows, DateTime? day) async {
+    final masses = day == null
+        ? const <int, List<CachedMass>>{}
+        : await _massesOn(day,
+            churchIds: rows.length <= _idListLimit
+                ? [for (final row in rows) row['id'] as int]
+                : null);
     return rows.map((row) {
       final id = row['id'] as int;
       final photos = _stringList(row['photos']);
@@ -333,14 +384,24 @@ class CacheDatabase {
     }).toList();
   }
 
-  /// Every cached row of [day], by church. One query for the whole list
-  /// rather than one per church.
-  Future<Map<int, List<CachedMass>>> _massesOn(DateTime day) async {
+  /// Below SQLite's default limit of 999 bound parameters.
+  static const int _idListLimit = 900;
+
+  /// Every cached row of [day], by church — of [churchIds] only, when given.
+  /// One query for the whole list rather than one per church.
+  Future<Map<int, List<CachedMass>>> _massesOn(DateTime day,
+      {List<int>? churchIds}) async {
+    if (churchIds != null && churchIds.isEmpty) return const {};
     final (from, until) = _dayBounds(day);
+    final where = StringBuffer('idopont >= ? AND idopont < ?');
+    if (churchIds != null) {
+      where.write(
+          ' AND church_id IN (${List.filled(churchIds.length, '?').join(',')})');
+    }
     final rows = await db.query(
       massesTable,
-      where: 'idopont >= ? AND idopont < ?',
-      whereArgs: [from, until],
+      where: where.toString(),
+      whereArgs: [from, until, ...?churchIds],
       orderBy: 'idopont',
     );
     final byChurch = <int, List<CachedMass>>{};

@@ -30,7 +30,7 @@ class ChurchCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () => _openDetails(context),
+          onTap: () => openChurchDetails(context, entry),
           child: SizedBox(
             height: _imageHeight,
             child: Row(
@@ -102,30 +102,6 @@ class ChurchCard extends StatelessWidget {
     );
   }
 
-  /// The details page loads everything by id; the entry only seeds the name,
-  /// the map and the header until then.
-  void _openDetails(BuildContext context) {
-    final church = Church(
-      id: entry.id,
-      name: entry.name,
-      commonName: entry.commonName,
-      isGreek: null,
-      lat: entry.lat,
-      lon: entry.lon,
-      address: null,
-      city: entry.city,
-      country: null,
-      county: null,
-      street: null,
-      gettingThere: null,
-      imageUrl: entry.photo,
-    );
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ChurchDetailsPage(church: church)),
-    );
-  }
-
   Widget _errorBuilder(
       BuildContext context, Object error, StackTrace? stackTrace) {
     return Image.asset('assets/images/church_blurred.png',
@@ -136,4 +112,28 @@ class ChurchCard extends StatelessWidget {
   /// height is the axis [BoxFit.cover] scales by and needs no headroom.
   int _decodeHeight(BuildContext context) =>
       PhotoDecode.forSlot(context, _imageHeight, tight: true);
+}
+
+/// Opens the details page of [entry]. The page loads everything by id; the
+/// entry only seeds the name, the map and the header until then.
+void openChurchDetails(BuildContext context, ChurchListEntry entry) {
+  final church = Church(
+    id: entry.id,
+    name: entry.name,
+    commonName: entry.commonName,
+    isGreek: null,
+    lat: entry.lat,
+    lon: entry.lon,
+    address: null,
+    city: entry.city,
+    country: null,
+    county: null,
+    street: null,
+    gettingThere: null,
+    imageUrl: entry.photo,
+  );
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => ChurchDetailsPage(church: church)),
+  );
 }

@@ -10,9 +10,9 @@ import 'package:miserend/favorites_prefetch.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
-import '../church_details/church_details_page.dart';
-import '../database/church.dart';
-import '../database/miserend_database.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
+import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/home/search_suggestions.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -30,7 +30,7 @@ class ChurchSuggestion extends Suggestion
 {
   static const double _thumbnailSize = 40;
 
-  Church church;
+  final ChurchListEntry church;
 
   ChurchSuggestion(this.church);
 
@@ -44,9 +44,7 @@ class ChurchSuggestion extends Suggestion
   @override
   Widget buildWidget(BuildContext context) {
     return ListTile(
-        onTap: () {
-          _openDetails(church, context);
-        },
+        onTap: () => openChurchDetails(context, church),
         titleAlignment: ListTileTitleAlignment.center,
         leading:  AspectRatio(
           aspectRatio: 1,
@@ -55,7 +53,7 @@ class ChurchSuggestion extends Suggestion
             child: FadeInImage.assetNetwork(
               fit: BoxFit.cover,
               placeholder: 'assets/images/church_blurred.png',
-              image: church.imageUrl ?? "",
+              image: church.photo ?? "",
               imageErrorBuilder: _errorBuilder,
               imageCacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
               placeholderCacheHeight:
@@ -64,14 +62,6 @@ class ChurchSuggestion extends Suggestion
           ),
         ),
         title: Text(church.name ?? "")
-    );
-  }
-
-  _openDetails(Church church, BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => ChurchDetailsPage(church: church)),
     );
   }
 }
@@ -119,6 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Suggestion> suggestions = <Suggestion>[];
 
   Timer? _searchDebounce;
+
+  final SearchSuggestions _suggestions = SearchSuggestions();
 
   /// Bumped per search so a slow query cannot overwrite newer suggestions.
   int _searchRequestId = 0;
@@ -248,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Each keystroke used to run two wildcard scans over all 5000 churches.
+  /// Each keystroke used to run two wildcard scans over every church.
   /// Waiting for a pause in typing collapses a typed word into one search.
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
@@ -266,12 +258,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _runSearch(String value) async {
     final int requestId = _searchRequestId;
-    MiserendDatabase db = await MiserendDatabase.create();
-    var churches = await db.getChurchesForSearchTerm(value);
-    var cities = await db.getCitiesForSearchTerm(value);
+    final found = await _suggestions.suggest(value);
     var combined = <Suggestion>[];
-    combined.addAll(churches.take(20).map((c) => ChurchSuggestion(c)));
-    combined.addAll(cities.map((c) => CitySuggestion(c)));
+    combined.addAll(found.churches.map((c) => ChurchSuggestion(c)));
+    combined.addAll(found.cities.map((c) => CitySuggestion(c)));
     if (!mounted || requestId != _searchRequestId) {
       return;
     }

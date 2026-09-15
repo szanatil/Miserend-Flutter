@@ -222,6 +222,7 @@ void main() {
             from: DateTime(2026, 9, 10),
             until: DateTime(2026, 9, 29),
           ),
+      'search': (api) => api.searchChurches('Szeged'),
       'nearby churches': (api) =>
           api.fetchNearbyChurches(lat: 47.4979, lon: 19.0402),
       'nearby masses': (api) => api.fetchNearbyMasses(
@@ -302,6 +303,45 @@ void main() {
     test('the limits are the ones the spec sets', () {
       expect(MiserendApiClient.callTimeout, const Duration(seconds: 15));
       expect(MiserendApiClient.connectTimeout, const Duration(seconds: 10));
+    });
+  });
+
+  group('searchChurches', () {
+    // Recorded live for "Szeged", 2026-09-15.
+    const fixture = 'search_szeged_2026-09-15.json';
+
+    test('maps the churches and their masses of the day', () async {
+      final client = MiserendApiClient(
+          client: MockClient((_) async => _fixtureResponse(fixture)));
+
+      final result = await client.searchChurches('Szeged');
+
+      final response = (result as ApiSuccess<ChurchesResponse>).value;
+      expect(response.churches, hasLength(17));
+      final first = response.churches.first;
+      expect(first.id, 1155);
+      expect(first.name, 'Havas Boldogasszony templom');
+      expect(first.commonName, 'Alsóvárosi templom, Ferences templom');
+      expect(first.city, 'Szeged');
+      expect(response.massesOf(1155).map((m) => m.time),
+          [DateTime(2026, 9, 15, 7, 0), DateTime(2026, 9, 15, 18, 0)]);
+    });
+
+    test('asks for a hundred results, minimal', () async {
+      late http.Request sent;
+      final client = MiserendApiClient(client: MockClient((request) async {
+        sent = request;
+        return _fixtureResponse(fixture);
+      }));
+
+      await client.searchChurches('Szeged');
+
+      expect(sent.url.toString(), 'https://miserend.hu/api/v4/search');
+      expect(jsonDecode(sent.body), {
+        'q': 'Szeged',
+        'limit': 100,
+        'response_length': 'minimal',
+      });
     });
   });
 
