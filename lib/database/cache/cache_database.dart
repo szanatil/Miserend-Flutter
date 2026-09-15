@@ -5,6 +5,7 @@ import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
+import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/cache/community.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -355,6 +356,23 @@ class CacheDatabase {
         where: 'church_id IN ($placeholders)', whereArgs: ids);
     batch.delete(churchesTable, where: 'id IN ($placeholders)', whereArgs: ids);
     await batch.commit(noResult: true);
+  }
+
+  /// Every church with a position, for the map's markers.
+  Future<List<ChurchLocation>> churchLocations() async {
+    final rows = await db.query(
+      churchesTable,
+      columns: ['id', 'lat', 'lon'],
+      where: 'lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0)',
+    );
+    return [
+      for (final row in rows)
+        ChurchLocation(
+          id: row['id'] as int,
+          lat: (row['lat'] as num).toDouble(),
+          lon: (row['lon'] as num).toDouble(),
+        ),
+    ];
   }
 
   static const String _listColumns = 'id, nev, ismertnev, varos, lat, lon, photos';

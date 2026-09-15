@@ -3,6 +3,7 @@ import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
+import 'package:miserend/database/cache/church_location.dart';
 
 /// What a church list screen draws: the rows, whether the last refresh got
 /// no answer, and how old the data is (ADR-0003).
@@ -11,6 +12,7 @@ class ChurchList {
     required this.churches,
     required this.failure,
     required this.dataAsOf,
+    this.removed = const [],
   });
 
   final List<ChurchListEntry> churches;
@@ -21,6 +23,9 @@ class ChurchList {
 
   /// The list's last successful refresh, or the bootstrap import before one.
   final DateTime? dataAsOf;
+
+  /// Churches the refresh found removed from miserend.hu, and deleted.
+  final List<int> removed;
 }
 
 /// One screen's list: how it reads the cache, and which API call refreshes
@@ -31,7 +36,17 @@ abstract class ChurchListQuery {
   /// Names the screen, whose last successful refresh is stored under it.
   String get syncKey;
 
+  /// Whether the background call's answer leaves fields out.
+  bool get minimal => true;
+
   Future<List<ChurchListEntry>> read(CacheDatabase cache, DateTime today);
+
+  /// When the data shown was last refreshed, or null if never.
+  Future<DateTime?> lastRefreshed(CacheDatabase cache) =>
+      cache.syncTime(syncKey);
+
+  Future<void> markRefreshed(CacheDatabase cache, DateTime now) =>
+      cache.setSyncTime(syncKey, now);
 
   /// The background call, given the rows the screen shows.
   Future<ApiResult<ChurchesResponse>> fetch(
@@ -115,6 +130,38 @@ class SearchQuery extends ChurchListQuery {
   }
 }
 
+/// The map's church card: one church, refreshed in full — photos and
+/// description too, which also warms up its details page. How old it is, is
+/// the church's own last sync rather than a screen's.
+class ChurchCardQuery extends ChurchListQuery {
+  const ChurchCardQuery(this.churchId);
+
+  final int churchId;
+
+  @override
+  String get syncKey => 'card:$churchId';
+
+  @override
+  bool get minimal => false;
+
+  @override
+  Future<List<ChurchListEntry>> read(CacheDatabase cache, DateTime today) =>
+      cache.churchesByIds([churchId], today);
+
+  @override
+  Future<DateTime?> lastRefreshed(CacheDatabase cache) async =>
+      (await cache.getChurch(churchId))?.localSyncedAt;
+
+  /// The write itself stamps the church's sync time.
+  @override
+  Future<void> markRefreshed(CacheDatabase cache, DateTime now) async {}
+
+  @override
+  Future<ApiResult<ChurchesResponse>> fetch(
+          MiserendApiClient api, List<ChurchListEntry> shown) =>
+      api.fetchChurches([churchId], length: ResponseLength.full);
+}
+
 /// Supplies the church lists: first from the cache, then again once the
 /// API's answer has been written through to it. It lives outside the pages
 /// so that they can be pumped against a fake.
@@ -163,16 +210,21 @@ class ChurchListLoader {
         );
       case ApiSuccess(:final value):
         await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
-            .write(value, today: now, minimal: true);
-        await cache.setSyncTime(query.syncKey, now);
+            .write(value, today: now, minimal: query.minimal);
+        await query.markRefreshed(cache, now);
         return ChurchList(
           churches: await query.read(cache, now),
           failure: null,
           dataAsOf: now,
+          removed: value.missing,
         );
     }
   }
 
+  /// Every church with a position, for the map's markers.
+  Future<List<ChurchLocation>> churchLocations() async =>
+      (await _db()).churchLocations();
+
   Future<DateTime?> _dataAsOf(CacheDatabase cache, ChurchListQuery query) async =>
-      await cache.syncTime(query.syncKey) ?? await cache.bootstrappedAt();
+      await query.lastRefreshed(cache) ?? await cache.bootstrappedAt();
 }

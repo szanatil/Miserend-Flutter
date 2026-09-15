@@ -320,4 +320,72 @@ void main() {
       expect(list.failure, ApiFailure.noConnection);
     });
   });
+
+  group('refresh the map card', () {
+    /// The recorded full church, answered for id 1.
+    Map<String, Object?> fullChurch() {
+      final church = jsonDecode(
+              File('test/fixtures/church_38.json').readAsStringSync())
+          as Map<String, dynamic>
+        ..remove('error');
+      return church..['id'] = 1;
+    }
+
+    test('asks for the whole church and writes its photos and description',
+        () async {
+      final api = _Api((_) async => _json({
+            'templomok': [fullChurch()],
+            'hianyzo': [],
+            'error': 0,
+          }));
+
+      final list = await loaderWith(api).refresh(const ChurchCardQuery(1), const []);
+
+      expect(jsonDecode(api.requests.single.body), {
+        'ids': [1],
+        'response_length': 'full',
+      });
+      final stored = (await cache.getChurch(1))!;
+      expect(stored.photos, hasLength(7));
+      expect(stored.description, contains('Contra Aquincum'));
+      expect(list.churches.single.photo, stored.photos.first);
+      expect(list.removed, isEmpty);
+    });
+
+    test('dates the card to when this phone last synced the church', () async {
+      final loader = loaderWith(_Api((_) async => _json({})));
+      expect((await loader.load(const ChurchCardQuery(1))).dataAsOf,
+          DateTime(2026, 8, 1, 10, 0),
+          reason: 'a church never synced dates to the bootstrap import');
+
+      await cache.upsertChurch(
+          (await cache.getChurch(1))!, minimal: true);
+      final synced = (await cache.getChurch(1))!.localSyncedAt;
+
+      final failing = ChurchListLoader(
+        cache: cache,
+        api: _Api((_) async => http.Response('', 500)).client,
+        clock: () => _now,
+      );
+      final list = await failing.refresh(const ChurchCardQuery(1), const []);
+      expect(list.dataAsOf, synced);
+    });
+
+    test('reports the church removed when the API no longer has it', () async {
+      final gone = <int>[];
+      final loader = ChurchListLoader(
+        cache: cache,
+        api: _Api((_) async =>
+            _json({'templomok': [], 'hianyzo': [1], 'error': 0})).client,
+        clock: () => _now,
+        onChurchesGone: (ids) async => gone.addAll(ids),
+      );
+
+      final list = await loader.refresh(const ChurchCardQuery(1), const []);
+
+      expect(list.removed, [1]);
+      expect(list.churches, isEmpty);
+      expect(gone, [1]);
+    });
+  });
 }

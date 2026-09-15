@@ -573,4 +573,20 @@ void main() {
       expect(found.single.masses, isEmpty);
     });
   });
+
+  group('church locations', () {
+    test('are every church with a position', () async {
+      await cache.importChurches([
+        _at(1, 47.50, 19.04),
+        _at(2, null, null),
+        _at(3, 0, 0),
+        _at(4, 46.25, 20.14),
+      ], const []);
+
+      final locations = await cache.churchLocations();
+
+      expect(locations.map((l) => (l.id, l.lat, l.lon)),
+          unorderedEquals([(1, 47.50, 19.04), (4, 46.25, 20.14)]));
+    });
+  });
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/mass_kind.dart';
+import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -11,9 +13,16 @@ import 'package:provider/provider.dart';
 /// One church of a list read from the cache: its names, today's masses and
 /// its first photo. Tapping it opens the details page.
 class ChurchCard extends StatelessWidget {
-  const ChurchCard({super.key, required this.entry});
+  const ChurchCard({super.key, required this.entry, this.failure, this.dataAsOf});
 
   final ChurchListEntry entry;
+
+  /// Set where the card stands alone — the map's — and its own refresh got no
+  /// answer; a list marks itself once, above the rows, instead.
+  final ApiFailure? failure;
+
+  /// How old the church's data is, for the (i) explanation.
+  final DateTime? dataAsOf;
 
   /// Height of the photo slot in logical pixels; the card is a fixed 176 tall.
   static const double _imageHeight = 176;
@@ -25,8 +34,13 @@ class ChurchCard extends StatelessWidget {
     final masses = entry.masses.where(isMass).toList();
     final photo = entry.photo;
 
+    final failure = this.failure;
+
     return Center(
       child: Card(
+        color: failure == ApiFailure.serverError
+            ? OfflineNotice.serverErrorTint
+            : null,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
@@ -41,10 +55,25 @@ class ChurchCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
-                        child: Text(entry.name ?? "",
-                            style: Theme.of(context).textTheme.titleLarge),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
+                              child: Text(entry.name ?? "",
+                                  style:
+                                      Theme.of(context).textTheme.titleLarge),
+                            ),
+                          ),
+                          if (failure != null)
+                            OfflineInfoButton(
+                              failure: failure,
+                              asOf: dataAsOf,
+                              hint: RetryHint.reopenChurch,
+                            ),
+                        ],
                       ),
                       Expanded(
                         child: Padding(
