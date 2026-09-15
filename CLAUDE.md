@@ -11,3 +11,7 @@ Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-f
 ### Domain docs
 
 Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Coding standards
+
+Writing or reviewing Dart code: follow `CODING_STANDARDS.md` (rule IDs like K2); formatting and lint are `dart format` and `flutter analyze`.
