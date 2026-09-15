@@ -37,6 +37,7 @@ CachedMass _mass(DateTime time, String info) => CachedMass(
       churchId: 38,
       time: time,
       info: info,
+      source: MassSource.nearbyMasses,
     );
 
 String _nearbyMassesAt(List<DateTime> times) {

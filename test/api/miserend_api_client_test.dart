@@ -269,6 +269,7 @@ void main() {
       expect(masses.first.apiMassId, 129807);
       expect(masses.first.info, 'Szentmise');
       expect(masses.first.id, isNull);
+      expect(masses.map((m) => m.source).toSet(), {MassSource.nearbyMasses});
     });
 
     test('reads the wall-clock time, not the offset-shifted one', () async {

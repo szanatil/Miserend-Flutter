@@ -118,6 +118,7 @@ class BootstrapImporter {
             churchId: rule.churchId ?? 0,
             time: at,
             info: rule.comment,
+            source: MassSource.bootstrap,
           ),
         );
       }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/database/cache/adoration.dart';
+import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -43,14 +44,30 @@ ChurchDetails _church(
       isGreek: isGreek,
     );
 
-CachedMass _mass(int churchId, DateTime time, {String? info, int? apiMassId}) =>
+CachedMass _mass(int churchId, DateTime time,
+        {String? info,
+        int? apiMassId,
+        MassSource source = MassSource.nearbyMasses}) =>
     CachedMass(
       id: null,
       apiMassId: apiMassId,
       churchId: churchId,
       time: time,
       info: info,
+      source: source,
     );
+
+/// A church at a position, with a photo of its own.
+ChurchDetails _at(int id, double? lat, double? lon, {String? name}) =>
+    BootstrapImporter.churchFromLegacyRow({
+      'tid': id,
+      'nev': name ?? 'Templom $id',
+      'ismertnev': 'Ismert $id',
+      'varos': 'Város $id',
+      'lat': lat,
+      'lng': lon,
+      'kep': 'https://miserend.hu/kepek/templomok/$id/a.jpg',
+    });
 
 void main() {
   sqfliteFfiInit();
@@ -225,6 +242,86 @@ void main() {
 
     test('is empty for a church with no cached masses', () async {
       expect(await cache.getMassesForChurch(38), isEmpty);
+    });
+  });
+
+  group('mass source', () {
+    test('is stored with every row', () async {
+      await cache.importChurches([_at(38, 47.49, 19.05)], [
+        _mass(38, DateTime(2026, 9, 10, 9, 0),
+            info: 'gitáros', source: MassSource.bootstrap),
+      ]);
+      await cache.replaceMassesForChurch(99, [
+        _mass(99, DateTime(2026, 9, 10, 17, 0),
+            info: 'Gyóntatás', source: MassSource.nearbyMasses),
+      ]);
+
+      expect((await cache.getMassesForChurch(38)).single.source,
+          MassSource.bootstrap);
+      expect((await cache.getMassesForChurch(99)).single.source,
+          MassSource.nearbyMasses);
+    });
+  });
+
+  group('near churches', () {
+    final today = DateTime(2026, 9, 10);
+
+    test('lists every church with a position, nearest first', () async {
+      await cache.importChurches([
+        _at(1, 47.60, 19.04),
+        _at(2, 47.50, 19.04),
+        _at(3, null, null),
+        _at(4, 47.55, 19.04),
+      ], const []);
+
+      final near = await cache.nearChurches(47.50, 19.04, today);
+
+      expect(near.map((c) => c.id), [2, 4, 1]);
+    });
+
+    test('measures east–west distance shorter than north–south', () async {
+      // At this latitude a degree of longitude is about two thirds of a
+      // degree of latitude, so 0.1° east is nearer than 0.08° north.
+      await cache.importChurches([
+        _at(1, 47.58, 19.00),
+        _at(2, 47.50, 19.10),
+      ], const []);
+
+      final near = await cache.nearChurches(47.50, 19.00, today);
+
+      expect(near.map((c) => c.id), [2, 1]);
+    });
+
+    test("carries each church's rows of that day, in time order", () async {
+      await cache.importChurches([
+        _at(1, 47.50, 19.04),
+        _at(2, 47.51, 19.04),
+      ], [
+        _mass(1, DateTime(2026, 9, 10, 18, 0), source: MassSource.bootstrap),
+        _mass(1, DateTime(2026, 9, 10, 7, 0), source: MassSource.bootstrap),
+        _mass(1, DateTime(2026, 9, 11, 7, 0), source: MassSource.bootstrap),
+        _mass(1, DateTime(2026, 9, 9, 23, 0), source: MassSource.bootstrap),
+      ]);
+
+      final near = await cache.nearChurches(47.50, 19.04, today);
+
+      expect(near[0].masses.map((m) => m.time),
+          [DateTime(2026, 9, 10, 7, 0), DateTime(2026, 9, 10, 18, 0)]);
+      expect(near[1].masses, isEmpty);
+    });
+
+    test('carries what a row shows: names, city, first photo', () async {
+      await cache.importChurches([_at(7, 47.50, 19.04, name: 'Bazilika')],
+          const []);
+
+      final entry = (await cache.nearChurches(47.50, 19.04, today)).single;
+
+      expect(entry.name, 'Bazilika');
+      expect(entry.commonName, 'Ismert 7');
+      expect(entry.city, 'Város 7');
+      expect(entry.lat, 47.50);
+      expect(entry.lon, 19.04);
+      expect(entry.photo, 'https://miserend.hu/kepek/templomok/7/a.jpg');
     });
   });
 }

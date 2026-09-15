@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/mass.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -111,6 +112,7 @@ void main() {
       expect(masses.map((m) => m.time), [DateTime(2026, 9, 9, 17, 0)]);
       expect(masses.single.churchId, 38);
       expect(masses.single.apiMassId, isNull);
+      expect(masses.single.source, MassSource.bootstrap);
     });
 
     test('repeats a rule that is held on any day of the week', () {
@@ -288,6 +290,16 @@ void main() {
       final masses = await cache.getMassesForChurch(38);
       expect(masses.map((m) => m.time), [DateTime(2026, 9, 9, 17, 0)]);
       expect(await cache.getMassesForChurch(99), hasLength(1));
+    });
+
+    test('records when it filled the cache', () async {
+      await insertChurch(38, 'Belvárosi');
+      final before = DateTime.now().subtract(const Duration(seconds: 1));
+
+      await BootstrapImporter.run(
+          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7));
+
+      expect((await cache.bootstrappedAt())!.isBefore(before), isFalse);
     });
 
     test('marks the rows as never synced from the API', () async {

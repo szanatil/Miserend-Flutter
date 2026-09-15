@@ -1,12 +1,6 @@
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/mass_kind.dart';
 
-/// The titles that count as a mass. Everything else the `NearbyMasses`
-/// endpoint returns — and any title nobody has listed yet — is left out.
-const Set<String> massTitles = {
-  'Szentmise',
-  'Szent Liturgia',
-  'Régi rítusú szentmise',
-};
 
 /// How long after its start a mass is still reachable. Someone who misses more
 /// than 10–15 minutes of the mass may no longer receive communion; this is the

@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/community.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -63,7 +65,8 @@ class CacheDatabase {
             'api_mass_id INTEGER, '
             'church_id INTEGER NOT NULL, '
             'idopont TEXT NOT NULL, '
-            'informacio TEXT)');
+            'informacio TEXT, '
+            'forras TEXT NOT NULL)');
         await db.execute('CREATE INDEX idx_masses_cache_church_time '
             'ON $massesTable(church_id, idopont)');
         await _createSyncTable(db);
@@ -72,8 +75,17 @@ class CacheDatabase {
         if (oldVersion < 2) {
           await _createSyncTable(db);
         }
+        if (oldVersion < 3) {
+          // Only the details page wrote API rows before, and only those carry
+          // an API mass id.
+          await db.execute(
+              "ALTER TABLE $massesTable ADD COLUMN forras TEXT NOT NULL "
+              "DEFAULT '${MassSource.bootstrap.name}'");
+          await db.execute("UPDATE $massesTable SET forras = "
+              "'${MassSource.nearbyMasses.name}' WHERE api_mass_id IS NOT NULL");
+        }
       },
-      version: 2,
+      version: 3,
     );
   }
 
@@ -162,6 +174,7 @@ class CacheDatabase {
         'church_id': mass.churchId,
         'idopont': _formatDateTime(mass.time),
         'informacio': mass.info,
+        'forras': mass.source.name,
       };
 
   Future<List<CachedMass>> getMassesForChurch(int churchId,
@@ -180,6 +193,65 @@ class CacheDatabase {
     final rows = await db.query(massesTable,
         where: where.toString(), whereArgs: args, orderBy: 'idopont');
     return rows.map(_toMass).toList();
+  }
+
+  /// Every church with a position, nearest to ([lat], [lon]) first, with its
+  /// rows of [day]. Unbounded: the list shows them all.
+  Future<List<ChurchListEntry>> nearChurches(
+      double lat, double lon, DateTime day) async {
+    // Degrees of longitude shrink towards the poles; scaling them keeps the
+    // order right without trigonometry in SQL.
+    final lonScale = cos(lat * pi / 180);
+    final rows = await db.rawQuery(
+      'SELECT $_listColumns FROM $churchesTable '
+      'WHERE lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0) '
+      'ORDER BY (lat - ?) * (lat - ?) + '
+      '(lon - ?) * (lon - ?) * ? * ?, id',
+      [lat, lat, lon, lon, lonScale, lonScale],
+    );
+    return _listEntries(rows, day);
+  }
+
+  static const String _listColumns = 'id, nev, ismertnev, varos, lat, lon, photos';
+
+  Future<List<ChurchListEntry>> _listEntries(
+      List<Map<String, Object?>> rows, DateTime day) async {
+    final masses = await _massesOn(day);
+    return rows.map((row) {
+      final id = row['id'] as int;
+      final photos = _stringList(row['photos']);
+      return ChurchListEntry(
+        id: id,
+        name: row['nev'] as String?,
+        commonName: row['ismertnev'] as String?,
+        city: row['varos'] as String?,
+        lat: row['lat'] as double?,
+        lon: row['lon'] as double?,
+        photo: photos.isEmpty ? null : photos.first,
+        masses: masses[id] ?? const <CachedMass>[],
+      );
+    }).toList();
+  }
+
+  /// Every cached row of [day], by church. One query for the whole list
+  /// rather than one per church.
+  Future<Map<int, List<CachedMass>>> _massesOn(DateTime day) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final rows = await db.query(
+      massesTable,
+      where: 'idopont >= ? AND idopont < ?',
+      whereArgs: [
+        _formatDateTime(start),
+        _formatDateTime(DateTime(start.year, start.month, start.day + 1)),
+      ],
+      orderBy: 'idopont',
+    );
+    final byChurch = <int, List<CachedMass>>{};
+    for (final row in rows) {
+      final mass = _toMass(row);
+      (byChurch[mass.churchId] ??= <CachedMass>[]).add(mass);
+    }
+    return byChurch;
   }
 
   Map<String, Object?> _toRow(ChurchDetails church) {
@@ -264,6 +336,7 @@ class CacheDatabase {
       churchId: row['church_id'] as int,
       time: _parseDateTime(row['idopont'] as String?)!,
       info: row['informacio'] as String?,
+      source: MassSource.values.byName(row['forras'] as String),
     );
   }
 

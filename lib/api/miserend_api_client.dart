@@ -116,6 +116,7 @@ class MiserendApiClient {
           churchId: churchId,
           time: time,
           info: _text(item['title']),
+          source: MassSource.nearbyMasses,
         ));
       }
       return occurrences;

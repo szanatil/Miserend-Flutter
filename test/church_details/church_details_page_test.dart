@@ -88,6 +88,7 @@ List<List<CachedMass>> _scheduleWith(DateTime time, {String? info}) {
     churchId: 38,
     time: time,
     info: info ?? 'Római katolikus Szentmise',
+    source: MassSource.nearbyMasses,
   ));
   return days;
 }
@@ -242,6 +243,7 @@ void main() {
       churchId: 38,
       time: _todayAt(7, 30).add(const Duration(days: 3)),
       info: null,
+      source: MassSource.nearbyMasses,
     ));
     final data = _page(masses, scheduleIsFresh: true);
 
