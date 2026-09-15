@@ -71,8 +71,8 @@ class MiserendApiClient {
   final http.Client _client;
 
   MiserendApiClient({http.Client? client})
-      : _client = client ??
-            IOClient(HttpClient()..connectionTimeout = connectTimeout);
+    : _client =
+          client ?? IOClient(HttpClient()..connectionTimeout = connectTimeout);
 
   /// The churches with these ids. Always the `ids` form, even for one church:
   /// asked for by a single `id`, a church that no longer exists is an error
@@ -90,11 +90,9 @@ class MiserendApiClient {
     for (var start = 0; start < ids.length; start += _churchLimit) {
       final batch = ids.skip(start).take(_churchLimit).toList();
       final result = _map(
-          await _post('church', {
-            'ids': batch,
-            'response_length': length.name,
-          }),
-          _churchesResponse);
+        await _post('church', {'ids': batch, 'response_length': length.name}),
+        _churchesResponse,
+      );
       switch (result) {
         case ApiFailed(:final failure):
           return ApiFailed(failure);
@@ -106,8 +104,9 @@ class MiserendApiClient {
           }
       }
     }
-    return ApiSuccess(ChurchesResponse(
-        churches: churches, missing: missing, masses: masses));
+    return ApiSuccess(
+      ChurchesResponse(churches: churches, missing: missing, masses: masses),
+    );
   }
 
   /// Churches the API finds for [q]. It does not look in the common name,
@@ -165,14 +164,16 @@ class MiserendApiClient {
     for (final item in value.whereType<Map>()) {
       final time = parseApiDateTime(_text(item['idopont']));
       if (time == null) continue;
-      masses.add(CachedMass(
-        id: null,
-        apiMassId: null,
-        churchId: churchId,
-        time: time,
-        info: _text(item['informacio']),
-        source: MassSource.dailyList,
-      ));
+      masses.add(
+        CachedMass(
+          id: null,
+          apiMassId: null,
+          churchId: churchId,
+          time: time,
+          info: _text(item['informacio']),
+          source: MassSource.dailyList,
+        ),
+      );
     }
     return masses;
   }
@@ -204,14 +205,16 @@ class MiserendApiClient {
         if (_churchIdOf(item) != churchId) continue;
         final time = parseApiDateTime(_text(item['start_date']));
         if (time == null) continue;
-        occurrences.add(CachedMass(
-          id: null,
-          apiMassId: item['id'] as int?,
-          churchId: churchId,
-          time: time,
-          info: _text(item['title']),
-          source: MassSource.nearbyMasses,
-        ));
+        occurrences.add(
+          CachedMass(
+            id: null,
+            apiMassId: item['id'] as int?,
+            churchId: churchId,
+            time: time,
+            info: _text(item['title']),
+            source: MassSource.nearbyMasses,
+          ),
+        );
       }
       return occurrences;
     });
@@ -245,16 +248,18 @@ class MiserendApiClient {
         final start = parseApiDateTime(_text(item['start_date']));
         final distance = _number(item['distance_km']);
         if (start == null || distance == null) continue;
-        parsed.add(NearbyMassesItem(
-          churchId: church['id'] as int,
-          churchName: _text(church['name']),
-          city: _text(church['city']),
-          lat: _number(church['lat']),
-          lon: _number(church['lon']),
-          distanceKm: distance,
-          start: start,
-          title: _text(item['title']),
-        ));
+        parsed.add(
+          NearbyMassesItem(
+            churchId: church['id'] as int,
+            churchName: _text(church['name']),
+            city: _text(church['city']),
+            lat: _number(church['lat']),
+            lon: _number(church['lon']),
+            distanceKm: distance,
+            start: start,
+            title: _text(item['title']),
+          ),
+        );
       }
       return parsed;
     });
@@ -262,8 +267,10 @@ class MiserendApiClient {
 
   /// Reads a successful body with [read]; a body [read] cannot make sense of
   /// (it returns null) is a server error like any other malformed answer.
-  ApiResult<T> _map<T>(ApiResult<Map<String, dynamic>> result,
-      T? Function(Map<String, dynamic> body) read) {
+  ApiResult<T> _map<T>(
+    ApiResult<Map<String, dynamic>> result,
+    T? Function(Map<String, dynamic> body) read,
+  ) {
     switch (result) {
       case ApiFailed(:final failure):
         return ApiFailed(failure);
@@ -295,7 +302,9 @@ class MiserendApiClient {
   /// through — socket, DNS, TLS, the connect timeout, [callTimeout]. Anything
   /// wrong with the response itself is the server's.
   Future<ApiResult<Map<String, dynamic>>> _post(
-      String endpoint, Map<String, dynamic> payload) async {
+    String endpoint,
+    Map<String, dynamic> payload,
+  ) async {
     final http.Response response;
     try {
       response = await _client
@@ -344,9 +353,10 @@ class MiserendApiClient {
       gettingThere: _text(json['megkozelites']),
       parish: _text(json['plebania']),
       description: _text(json['leiras']),
-      accessibility: json['accessibility'] is Map
-          ? Map<String, dynamic>.from(json['accessibility'] as Map)
-          : null,
+      accessibility:
+          json['accessibility'] is Map
+              ? Map<String, dynamic>.from(json['accessibility'] as Map)
+              : null,
       email: _text(json['email']),
       links: _stringList(json['links']),
       languages: _stringList(json['nyelvek']),
@@ -417,8 +427,9 @@ class MiserendApiClient {
 /// converted.
 DateTime? parseApiDateTime(String? value) {
   if (value == null) return null;
-  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?')
-      .firstMatch(value);
+  final match = RegExp(
+    r'^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?',
+  ).firstMatch(value);
   if (match == null) return null;
   return DateTime(
     int.parse(match.group(1)!),

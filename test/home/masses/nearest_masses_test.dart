@@ -76,23 +76,30 @@ void main() {
         _mass(church: 2, start: DateTime(2026, 12, 25, 0, 1)),
       ];
 
-      final selected =
-          selectNearestMasses(items, DateTime(2026, 12, 24, 23, 40));
+      final selected = selectNearestMasses(
+        items,
+        DateTime(2026, 12, 24, 23, 40),
+      );
 
       expect(selected.map((m) => m.churchId), [1]);
     });
 
-    test('at 00:05 yesterday\'s 23:55 mass is listed but the 23:50 one is not',
-        () {
-      final items = [
-        _mass(church: 1, start: DateTime(2026, 9, 13, 23, 55)),
-        _mass(church: 2, start: DateTime(2026, 9, 13, 23, 50)),
-      ];
+    test(
+      'at 00:05 yesterday\'s 23:55 mass is listed but the 23:50 one is not',
+      () {
+        final items = [
+          _mass(church: 1, start: DateTime(2026, 9, 13, 23, 55)),
+          _mass(church: 2, start: DateTime(2026, 9, 13, 23, 50)),
+        ];
 
-      final selected = selectNearestMasses(items, DateTime(2026, 9, 14, 0, 5));
+        final selected = selectNearestMasses(
+          items,
+          DateTime(2026, 9, 14, 0, 5),
+        );
 
-      expect(selected.map((m) => m.churchId), [1]);
-    });
+        expect(selected.map((m) => m.churchId), [1]);
+      },
+    );
 
     group('each church is listed once, with its earliest reachable mass', () {
       final items = [
@@ -114,15 +121,17 @@ void main() {
       });
     });
 
-    test('duplicates of the same church, start and title collapse into one',
-        () {
-      final items = [
-        _mass(church: 37, start: _at(18, 0)),
-        _mass(church: 37, start: _at(18, 0)),
-      ];
+    test(
+      'duplicates of the same church, start and title collapse into one',
+      () {
+        final items = [
+          _mass(church: 37, start: _at(18, 0)),
+          _mass(church: 37, start: _at(18, 0)),
+        ];
 
-      expect(selectNearestMasses(items, _at(12, 0)), hasLength(1));
-    });
+        expect(selectNearestMasses(items, _at(12, 0)), hasLength(1));
+      },
+    );
 
     test('lists at most the 10 nearest churches, even when the 11th has an '
         'earlier mass', () {
@@ -161,15 +170,19 @@ void main() {
       ];
 
       final forwards = selectNearestMasses(items, _at(12, 0));
-      final backwards = selectNearestMasses(items.reversed.toList(), _at(12, 0));
+      final backwards = selectNearestMasses(
+        items.reversed.toList(),
+        _at(12, 0),
+      );
 
       expect(forwards.map((m) => m.churchId), contains(10));
-      expect(forwards.map((m) => m.churchId),
-          orderedEquals(backwards.map((m) => m.churchId)));
+      expect(
+        forwards.map((m) => m.churchId),
+        orderedEquals(backwards.map((m) => m.churchId)),
+      );
     });
 
-    test('orders by start, then the nearer church first on the same start',
-        () {
+    test('orders by start, then the nearer church first on the same start', () {
       final items = [
         _mass(church: 1, km: 0.4, start: _at(19, 0)),
         _mass(church: 2, km: 2.5, start: _at(17, 0)),

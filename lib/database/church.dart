@@ -28,9 +28,10 @@ class Church {
     required this.county,
     required this.street,
     required this.gettingThere,
-    required this.imageUrl
+    required this.imageUrl,
   });
 
   @override
-  LatLng get location => (lat != null && lon != null) ? LatLng(lat!, lon!) : const LatLng(0, 0);
+  LatLng get location =>
+      (lat != null && lon != null) ? LatLng(lat!, lon!) : const LatLng(0, 0);
 }

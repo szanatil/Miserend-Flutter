@@ -5,17 +5,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:miserend/location_provider.dart';
 
 Position _fixAt(DateTime timestamp) => Position(
-      latitude: 47.4979,
-      longitude: 19.0402,
-      timestamp: timestamp,
-      accuracy: 10,
-      altitude: 0,
-      altitudeAccuracy: 0,
-      heading: 0,
-      headingAccuracy: 0,
-      speed: 0,
-      speedAccuracy: 0,
-    );
+  latitude: 47.4979,
+  longitude: 19.0402,
+  timestamp: timestamp,
+  accuracy: 10,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
 
 /// The device, as the geolocator plugin reports it.
 class _FakeGeolocator extends GeolocatorPlatform {
@@ -53,9 +53,9 @@ class _FakeGeolocator extends GeolocatorPlatform {
   }
 
   @override
-  Future<Position?> getLastKnownPosition(
-          {bool forceLocationManager = false}) async =>
-      lastKnown;
+  Future<Position?> getLastKnownPosition({
+    bool forceLocationManager = false,
+  }) async => lastKnown;
 
   @override
   Future<Position> getCurrentPosition({LocationSettings? locationSettings}) {
@@ -107,17 +107,22 @@ void main() {
       expect(device.permissionRequests, 1);
     });
 
-    test('permission denied for good, which cannot be asked for again',
-        () async {
-      final device =
-          _FakeGeolocator(permission: LocationPermission.deniedForever);
+    test(
+      'permission denied for good, which cannot be asked for again',
+      () async {
+        final device = _FakeGeolocator(
+          permission: LocationPermission.deniedForever,
+        );
 
-      final result = await providerFor(device).currentPosition();
+        final result = await providerFor(device).currentPosition();
 
-      expect(
-          reasonOf(result), PositionUnavailableReason.permissionDeniedForever);
-      expect(device.permissionRequests, 0);
-    });
+        expect(
+          reasonOf(result),
+          PositionUnavailableReason.permissionDeniedForever,
+        );
+        expect(device.permissionRequests, 0);
+      },
+    );
 
     test('asking again can turn into denied for good', () async {
       final device = _FakeGeolocator(
@@ -128,7 +133,9 @@ void main() {
       final result = await providerFor(device).currentPosition();
 
       expect(
-          reasonOf(result), PositionUnavailableReason.permissionDeniedForever);
+        reasonOf(result),
+        PositionUnavailableReason.permissionDeniedForever,
+      );
     });
 
     testWidgets('no fresh fix in time', (tester) async {
@@ -137,7 +144,9 @@ void main() {
 
       PositionResult? result;
       providerFor(device).currentPosition().then((value) => result = value);
-      await tester.pump(LocationProvider.fixTimeout - const Duration(seconds: 1));
+      await tester.pump(
+        LocationProvider.fixTimeout - const Duration(seconds: 1),
+      );
       expect(result, isNull);
 
       await tester.pump(const Duration(seconds: 1));

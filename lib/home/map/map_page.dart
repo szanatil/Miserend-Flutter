@@ -29,12 +29,13 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   late final MapController _controller =
       widget.mapController ?? MapController();
-  late final ChurchListLoader _loader = widget.loader ??
+  late final ChurchListLoader _loader =
+      widget.loader ??
       ChurchListLoader(
-          onChurchesGone:
-              Provider.of<FavoritesService>(context, listen: false).removeAll);
-  late final LocationProvider _location =
-      widget.location ?? LocationProvider();
+        onChurchesGone:
+            Provider.of<FavoritesService>(context, listen: false).removeAll,
+      );
+  late final LocationProvider _location = widget.location ?? LocationProvider();
 
   List<MiserendMapMarker> _markers = [];
 
@@ -125,13 +126,16 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     final locations = await _loader.churchLocations();
     if (!mounted) return;
     setState(() {
-      _markers = locations
-          .map((church) => MiserendMapMarker(
-                id: church.id,
-                point: LatLng(church.lat, church.lon),
-                onTap: () => _showChurchCard(church.id),
-              ))
-          .toList();
+      _markers =
+          locations
+              .map(
+                (church) => MiserendMapMarker(
+                  id: church.id,
+                  point: LatLng(church.lat, church.lon),
+                  onTap: () => _showChurchCard(church.id),
+                ),
+              )
+              .toList();
     });
   }
 
@@ -143,27 +147,40 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     switch (result) {
       case PositionFound(:final position):
         _controller.move(
-            LatLng(position.latitude, position.longitude), _positionZoom);
+          LatLng(position.latitude, position.longitude),
+          _positionZoom,
+        );
       case PositionUnavailable(:final reason):
         if (!announce) return;
         final action = PositionUnavailableView.action(
-            reason, _location, () => _goToMyPosition(announce: true));
+          reason,
+          _location,
+          () => _goToMyPosition(announce: true),
+        );
         final messenger = ScaffoldMessenger.of(context);
         messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(SnackBar(
-          content: Text(PositionUnavailableView.message(
-              reason, 'A helyzeted mutatásához')),
-          action: action == null
-              ? null
-              : SnackBarAction(
-                  label: action.$1,
-                  onPressed: () {
-                    _retryPositionOnResume =
-                        reason != PositionUnavailableReason.permissionDenied;
-                    action.$2();
-                  },
-                ),
-        ));
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              PositionUnavailableView.message(
+                reason,
+                'A helyzeted mutatásához',
+              ),
+            ),
+            action:
+                action == null
+                    ? null
+                    : SnackBarAction(
+                      label: action.$1,
+                      onPressed: () {
+                        _retryPositionOnResume =
+                            reason !=
+                            PositionUnavailableReason.permissionDenied;
+                        action.$2();
+                      },
+                    ),
+          ),
+        );
     }
   }
 
@@ -193,8 +210,11 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
         _cardChurchId = null;
         _markers = _markers.where((m) => m.id != churchId).toList();
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Ez a templom már nem szerepel a miserend.hu-n.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ez a templom már nem szerepel a miserend.hu-n.'),
+        ),
+      );
       return;
     }
     setState(() => _card = refreshed);

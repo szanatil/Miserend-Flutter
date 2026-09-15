@@ -4,8 +4,6 @@ class Favorite {
   Favorite({required this.churchId});
 
   Map<String, dynamic> toMap() {
-    return {
-      'tid': churchId,
-    };
+    return {'tid': churchId};
   }
 }

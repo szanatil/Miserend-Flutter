@@ -43,12 +43,12 @@ DateTime _at(int hour, int minute) => DateTime(2026, 9, 14, hour, minute);
 /// The blurred church placeholder, looking through the resize wrapper that
 /// decoding at thumbnail size puts around it.
 Finder _placeholderImage() => find.byWidgetPredicate((widget) {
-      if (widget is! Image) return false;
-      var provider = widget.image;
-      if (provider is ResizeImage) provider = provider.imageProvider;
-      return provider is AssetImage &&
-          provider.assetName == 'assets/images/church_blurred.png';
-    });
+  if (widget is! Image) return false;
+  var provider = widget.image;
+  if (provider is ResizeImage) provider = provider.imageProvider;
+  return provider is AssetImage &&
+      provider.assetName == 'assets/images/church_blurred.png';
+});
 
 /// Stands in for the real loader so that the page can be pumped without a
 /// position, a network call or a database. Each fetch takes the next answer:
@@ -62,7 +62,8 @@ class _FakeLoader extends NearestMassesLoader {
   @override
   Future<List<NearbyMassesItem>> fetch(DateTime now) async {
     fetchCount++;
-    final answer = _answers.length > 1 ? _answers.removeFirst() : _answers.first;
+    final answer =
+        _answers.length > 1 ? _answers.removeFirst() : _answers.first;
     if (answer is Exception) throw answer;
     if (answer is Completer<List<NearbyMassesItem>>) return answer.future;
     return answer as List<NearbyMassesItem>;
@@ -93,12 +94,14 @@ class _FakeLocation extends LocationProvider {
 /// Lets the details page open without a database or a network call.
 class _EmptyDetailsLoader extends ChurchScheduleLoader {
   ChurchPageData get _empty => ChurchPageData(
-        church: null,
-        massesByDay: List.generate(
-            ChurchScheduleLoader.scheduleDays, (_) => <CachedMass>[]),
-        scheduleIsFresh: false,
-        confessionLive: false,
-      );
+    church: null,
+    massesByDay: List.generate(
+      ChurchScheduleLoader.scheduleDays,
+      (_) => <CachedMass>[],
+    ),
+    scheduleIsFresh: false,
+    confessionLive: false,
+  );
 
   @override
   Future<ChurchPageData> loadCached(int churchId, DateTime today) async =>
@@ -126,48 +129,64 @@ void main() {
     }
   });
 
-  Future<void> pumpPage(WidgetTester tester, NearestMassesLoader loader,
-      {bool isActive = true, LocationProvider? location}) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NearMassesPage(
+  Future<void> pumpPage(
+    WidgetTester tester,
+    NearestMassesLoader loader, {
+    bool isActive = true,
+    LocationProvider? location,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NearMassesPage(
             loader: loader,
             clock: () => now,
             isActive: isActive,
-            location: location ?? _FakeLocation()),
+            location: location ?? _FakeLocation(),
+          ),
+        ),
       ),
-    ));
+    );
     await tester.pump();
   }
 
   /// Like [pumpPage], but able to open the real details page on top.
   Future<void> pumpWithDetails(
-      WidgetTester tester, NearestMassesLoader loader) async {
-    await tester.pumpWidget(ChangeNotifierProvider<FavoritesService>.value(
-      value: favorites,
-      child: MaterialApp(
-        home: Scaffold(
-          body: NearMassesPage(
-            loader: loader,
-            clock: () => now,
-            detailsLoader: _EmptyDetailsLoader(),
+    WidgetTester tester,
+    NearestMassesLoader loader,
+  ) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: MaterialApp(
+          home: Scaffold(
+            body: NearMassesPage(
+              loader: loader,
+              clock: () => now,
+              detailsLoader: _EmptyDetailsLoader(),
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.pump();
   }
 
   Future<void> pullToRefresh(WidgetTester tester) async {
     await tester.fling(
-        find.byType(Scrollable).first, const Offset(0, 400), 1000);
+      find.byType(Scrollable).first,
+      const Offset(0, 400),
+      1000,
+    );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
   }
 
-  Future<void> goToBackgroundAndBack(WidgetTester tester,
-      {Future<void> Function()? whileAway}) async {
+  Future<void> goToBackgroundAndBack(
+    WidgetTester tester, {
+    Future<void> Function()? whileAway,
+  }) async {
     final binding = tester.binding;
     binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
@@ -180,23 +199,32 @@ void main() {
   }
 
   group('states', () {
-    testWidgets('shows the loading caption while the first fetch is outstanding',
-        (tester) async {
-      await pumpPage(tester, _FakeLoader([Completer<List<NearbyMassesItem>>()]));
-
-      expect(find.text('Legközelebbi misék betöltése…'), findsOneWidget);
-    });
-
-    testWidgets('says so when the position cannot be determined in time',
-        (tester) async {
-      await pumpPage(
+    testWidgets(
+      'shows the loading caption while the first fetch is outstanding',
+      (tester) async {
+        await pumpPage(
           tester,
-          _FakeLoader([
-            const LocationUnavailable(PositionUnavailableReason.noFreshFix)
-          ]));
+          _FakeLoader([Completer<List<NearbyMassesItem>>()]),
+        );
 
-      expect(find.text('Nem sikerült meghatározni a helyzetedet.'),
-          findsOneWidget);
+        expect(find.text('Legközelebbi misék betöltése…'), findsOneWidget);
+      },
+    );
+
+    testWidgets('says so when the position cannot be determined in time', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          const LocationUnavailable(PositionUnavailableReason.noFreshFix),
+        ]),
+      );
+
+      expect(
+        find.text('Nem sikerült meghatározni a helyzetedet.'),
+        findsOneWidget,
+      );
       expect(find.byType(FilledButton), findsNothing);
     });
 
@@ -204,9 +232,12 @@ void main() {
       await pumpPage(tester, _FakeLoader([const MassesUnavailable()]));
 
       expect(
-          find.text('Nem sikerült betölteni a miséket. '
-              'Ellenőrizd az internetkapcsolatot.'),
-          findsOneWidget);
+        find.text(
+          'Nem sikerült betölteni a miséket. '
+          'Ellenőrizd az internetkapcsolatot.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('says so when no mass is reachable nearby', (tester) async {
@@ -217,7 +248,10 @@ void main() {
         ]),
       );
 
-      expect(find.text('A közelben ma már nincs elérhető mise.'), findsOneWidget);
+      expect(
+        find.text('A közelben ma már nincs elérhető mise.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('lists the church name and the 24-hour start', (tester) async {
@@ -234,20 +268,25 @@ void main() {
   });
 
   group('position unavailable', () {
-    testWidgets('sits on the same grey ground as on the Templomok tab',
-        (tester) async {
+    testWidgets('sits on the same grey ground as on the Templomok tab', (
+      tester,
+    ) async {
       await pumpPage(
-          tester,
-          _FakeLoader([
-            const LocationUnavailable(PositionUnavailableReason.serviceDisabled)
-          ]));
+        tester,
+        _FakeLoader([
+          const LocationUnavailable(PositionUnavailableReason.serviceDisabled),
+        ]),
+      );
 
       expect(
-          find.ancestor(
-              of: find.byType(PositionUnavailableView),
-              matching: find.byWidgetPredicate(
-                  (w) => w is Container && w.color == Colors.black12)),
-          findsOneWidget);
+        find.ancestor(
+          of: find.byType(PositionUnavailableView),
+          matching: find.byWidgetPredicate(
+            (w) => w is Container && w.color == Colors.black12,
+          ),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('permission denied asks for it with a button that loads the '
@@ -258,8 +297,10 @@ void main() {
       ]);
       await pumpPage(tester, loader);
 
-      expect(find.text('A legközelebbi misékhez engedélyezd a helyadatot.'),
-          findsOneWidget);
+      expect(
+        find.text('A legközelebbi misékhez engedélyezd a helyadatot.'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.widgetWithText(FilledButton, 'Engedélyezés'));
       await tester.pump();
@@ -269,61 +310,75 @@ void main() {
       expect(find.text('Friss'), findsOneWidget);
     });
 
-    testWidgets('permission denied for good opens the app settings',
-        (tester) async {
+    testWidgets('permission denied for good opens the app settings', (
+      tester,
+    ) async {
       final location = _FakeLocation();
       await pumpPage(
-          tester,
-          _FakeLoader([
-            const LocationUnavailable(
-                PositionUnavailableReason.permissionDeniedForever)
-          ]),
-          location: location);
+        tester,
+        _FakeLoader([
+          const LocationUnavailable(
+            PositionUnavailableReason.permissionDeniedForever,
+          ),
+        ]),
+        location: location,
+      );
 
       expect(
-          find.text('A legközelebbi misékhez engedélyezd a helyadatot a '
-              'telefon beállításaiban.'),
-          findsOneWidget);
+        find.text(
+          'A legközelebbi misékhez engedélyezd a helyadatot a '
+          'telefon beállításaiban.',
+        ),
+        findsOneWidget,
+      );
 
-      await tester
-          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Beállítások megnyitása'),
+      );
       await tester.pump();
 
       expect(location.appSettingsOpened, 1);
       expect(location.locationSettingsOpened, 0);
     });
 
-    testWidgets('location services off opens the location settings',
-        (tester) async {
+    testWidgets('location services off opens the location settings', (
+      tester,
+    ) async {
       final location = _FakeLocation();
       await pumpPage(
-          tester,
-          _FakeLoader([
-            const LocationUnavailable(PositionUnavailableReason.serviceDisabled)
-          ]),
-          location: location);
+        tester,
+        _FakeLoader([
+          const LocationUnavailable(PositionUnavailableReason.serviceDisabled),
+        ]),
+        location: location,
+      );
 
-      expect(find.text('A legközelebbi misékhez kapcsold be a helymeghatározást.'),
-          findsOneWidget);
+      expect(
+        find.text('A legközelebbi misékhez kapcsold be a helymeghatározást.'),
+        findsOneWidget,
+      );
 
-      await tester
-          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Beállítások megnyitása'),
+      );
       await tester.pump();
 
       expect(location.locationSettingsOpened, 1);
       expect(location.appSettingsOpened, 0);
     });
 
-    testWidgets('coming back from the settings tries the position again',
-        (tester) async {
+    testWidgets('coming back from the settings tries the position again', (
+      tester,
+    ) async {
       final loader = _FakeLoader([
         const LocationUnavailable(PositionUnavailableReason.serviceDisabled),
         [_mass(name: 'Friss', start: _at(18, 0))],
       ]);
       await pumpPage(tester, loader);
 
-      await tester
-          .tap(find.widgetWithText(FilledButton, 'Beállítások megnyitása'));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Beállítások megnyitása'),
+      );
       await goToBackgroundAndBack(tester);
 
       expect(loader.fetchCount, 2);
@@ -332,8 +387,9 @@ void main() {
   });
 
   group('row', () {
-    testWidgets('shows the city and the distance with a decimal comma',
-        (tester) async {
+    testWidgets('shows the city and the distance with a decimal comma', (
+      tester,
+    ) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -345,8 +401,9 @@ void main() {
       expect(find.text('1,2 km'), findsOneWidget);
     });
 
-    testWidgets('marks a mass as ongoing only once it has started',
-        (tester) async {
+    testWidgets('marks a mass as ongoing only once it has started', (
+      tester,
+    ) async {
       now = _at(14, 5);
       await pumpPage(
         tester,
@@ -360,14 +417,18 @@ void main() {
 
       expect(find.text('Épp most tart'), findsOneWidget);
       final ongoingRow = find.ancestor(
-          of: find.text('Elkezdődött'), matching: find.byType(MassListItem));
+        of: find.text('Elkezdődött'),
+        matching: find.byType(MassListItem),
+      );
       expect(
-          find.descendant(of: ongoingRow, matching: find.text('Épp most tart')),
-          findsOneWidget);
+        find.descendant(of: ongoingRow, matching: find.text('Épp most tart')),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('shows the title only when it is not plain Szentmise',
-        (tester) async {
+    testWidgets('shows the title only when it is not plain Szentmise', (
+      tester,
+    ) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -386,33 +447,31 @@ void main() {
         'before it arrives', (tester) async {
       final loader = _FakeLoader([
         [_mass(church: 37, start: _at(18, 0))],
-      ])
-        ..thumbnail = Completer<String?>();
+      ])..thumbnail = Completer<String?>();
 
       await pumpPage(tester, loader);
 
       expect(find.text('Szent István-bazilika'), findsOneWidget);
       expect(loader.thumbnailsAskedFor, [37]);
-      expect(_placeholderImage(),
-          findsOneWidget);
+      expect(_placeholderImage(), findsOneWidget);
     });
 
-    testWidgets('keeps the placeholder when the cache has no photo',
-        (tester) async {
+    testWidgets('keeps the placeholder when the cache has no photo', (
+      tester,
+    ) async {
       final loader = _FakeLoader([
         [_mass(church: 37, start: _at(18, 0))],
-      ])
-        ..thumbnail = (Completer<String?>()..complete(null));
+      ])..thumbnail = (Completer<String?>()..complete(null));
 
       await pumpPage(tester, loader);
       await tester.pump();
 
-      expect(_placeholderImage(),
-          findsOneWidget);
+      expect(_placeholderImage(), findsOneWidget);
     });
 
-    testWidgets('tapping a row opens the details page of that church',
-        (tester) async {
+    testWidgets('tapping a row opens the details page of that church', (
+      tester,
+    ) async {
       await pumpWithDetails(
         tester,
         _FakeLoader([
@@ -426,8 +485,9 @@ void main() {
       await tester.tap(find.text('Második'));
       await tester.pumpAndSettle();
 
-      final details =
-          tester.widget<ChurchDetailsPage>(find.byType(ChurchDetailsPage));
+      final details = tester.widget<ChurchDetailsPage>(
+        find.byType(ChurchDetailsPage),
+      );
       expect(details.church.id, 37);
       expect(details.church.name, 'Második');
       expect(details.church.city, 'Budapest V. kerület');
@@ -460,22 +520,25 @@ void main() {
       expect(find.text('Friss'), findsOneWidget);
     });
 
-    testWidgets('pulling down fetches again when there was no position in time',
-        (tester) async {
-      final loader = _FakeLoader([
-        const LocationUnavailable(PositionUnavailableReason.noFreshFix),
-        [_mass(name: 'Friss', start: _at(18, 0))],
-      ]);
-      await pumpPage(tester, loader);
+    testWidgets(
+      'pulling down fetches again when there was no position in time',
+      (tester) async {
+        final loader = _FakeLoader([
+          const LocationUnavailable(PositionUnavailableReason.noFreshFix),
+          [_mass(name: 'Friss', start: _at(18, 0))],
+        ]);
+        await pumpPage(tester, loader);
 
-      await pullToRefresh(tester);
+        await pullToRefresh(tester);
 
-      expect(loader.fetchCount, 2);
-      expect(find.text('Friss'), findsOneWidget);
-    });
+        expect(loader.fetchCount, 2);
+        expect(find.text('Friss'), findsOneWidget);
+      },
+    );
 
-    testWidgets('pulling down fetches again from the error message',
-        (tester) async {
+    testWidgets('pulling down fetches again from the error message', (
+      tester,
+    ) async {
       final loader = _FakeLoader([
         const MassesUnavailable(),
         [_mass(name: 'Friss', start: _at(18, 0))],
@@ -488,8 +551,9 @@ void main() {
       expect(find.text('Friss'), findsOneWidget);
     });
 
-    testWidgets('pulling down fetches again from the empty message',
-        (tester) async {
+    testWidgets('pulling down fetches again from the empty message', (
+      tester,
+    ) async {
       final loader = _FakeLoader([
         <NearbyMassesItem>[],
         [_mass(name: 'Friss', start: _at(18, 0))],
@@ -502,8 +566,9 @@ void main() {
       expect(find.text('Friss'), findsOneWidget);
     });
 
-    testWidgets('coming back to the app fetches again while the tab is shown',
-        (tester) async {
+    testWidgets('coming back to the app fetches again while the tab is shown', (
+      tester,
+    ) async {
       final loader = _FakeLoader([
         [_mass(start: _at(18, 0))],
       ]);
@@ -569,10 +634,11 @@ void main() {
           _mass(church: 1, name: 'Templom 1', km: 1, start: _at(14, 0)),
           for (var church = 2; church <= 11; church++)
             _mass(
-                church: church,
-                name: 'Templom $church',
-                km: church.toDouble(),
-                start: _at(18, 0)),
+              church: church,
+              name: 'Templom $church',
+              km: church.toDouble(),
+              start: _at(18, 0),
+            ),
         ],
       ]);
       // Tall enough to build all ten rows.
@@ -637,8 +703,9 @@ void main() {
       expect(loader.fetchCount, 2);
     });
 
-    testWidgets('does not run while the app is in the background',
-        (tester) async {
+    testWidgets('does not run while the app is in the background', (
+      tester,
+    ) async {
       now = DateTime(2026, 9, 14, 23, 58);
       final loader = _FakeLoader([
         [_mass(start: DateTime(2026, 9, 15, 0, 0))],
@@ -646,11 +713,14 @@ void main() {
       await pumpPage(tester, loader);
 
       var fetchesWhileAway = -1;
-      await goToBackgroundAndBack(tester, whileAway: () async {
-        now = DateTime(2026, 9, 15, 0, 1);
-        await tester.pump(const Duration(minutes: 2));
-        fetchesWhileAway = loader.fetchCount;
-      });
+      await goToBackgroundAndBack(
+        tester,
+        whileAway: () async {
+          now = DateTime(2026, 9, 15, 0, 1);
+          await tester.pump(const Duration(minutes: 2));
+          fetchesWhileAway = loader.fetchCount;
+        },
+      );
 
       expect(fetchesWhileAway, 1);
     });

@@ -40,8 +40,10 @@ bool _isMassDescription(String? info) {
       break;
     }
   }
-  return massTitles.any((title) =>
-      kind == title ||
-      kind.startsWith('$title ') ||
-      kind.startsWith('$title('));
+  return massTitles.any(
+    (title) =>
+        kind == title ||
+        kind.startsWith('$title ') ||
+        kind.startsWith('$title('),
+  );
 }

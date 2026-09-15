@@ -187,7 +187,8 @@ class _NearMassesPageState extends State<NearMassesPage>
   Widget build(BuildContext context) {
     if (!_loaded) {
       return const _Ground(
-          child: LoadingView(message: 'Legközelebbi misék betöltése…'));
+        child: LoadingView(message: 'Legközelebbi misék betöltése…'),
+      );
     }
     return RefreshIndicator(onRefresh: _fetch, child: _content());
   }
@@ -208,19 +209,24 @@ class _NearMassesPageState extends State<NearMassesPage>
     }
     if (_apiFailed) {
       return const _Ground(
-          child: PullableFill(
-              child: MessageView(
-                  message: 'Nem sikerült betölteni a miséket. '
-                      'Ellenőrizd az internetkapcsolatot.')));
+        child: PullableFill(
+          child: MessageView(
+            message:
+                'Nem sikerült betölteni a miséket. '
+                'Ellenőrizd az internetkapcsolatot.',
+          ),
+        ),
+      );
     }
 
     final now = widget.clock();
     final masses = selectNearestMasses(_items, now);
     if (masses.isEmpty) {
       return const _Ground(
-          child: PullableFill(
-              child: MessageView(
-                  message: 'A közelben ma már nincs elérhető mise.')));
+        child: PullableFill(
+          child: MessageView(message: 'A közelben ma már nincs elérhető mise.'),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -261,8 +267,9 @@ class _NearMassesPageState extends State<NearMassesPage>
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            ChurchDetailsPage(church: church, loader: widget.detailsLoader),
+        builder:
+            (context) =>
+                ChurchDetailsPage(church: church, loader: widget.detailsLoader),
       ),
     );
     if (!mounted || !widget.isActive || !_inForeground) return;

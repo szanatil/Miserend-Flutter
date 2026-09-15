@@ -14,10 +14,12 @@ class ChurchScheduleLoader {
   /// Today plus the days the page's horizontal strip shows.
   static const int scheduleDays = 20;
 
-  ChurchScheduleLoader(
-      {CacheDatabase? cache, MiserendApiClient? api, this.onChurchesGone})
-      : _cache = cache,
-        _api = api ?? MiserendApiClient();
+  ChurchScheduleLoader({
+    CacheDatabase? cache,
+    MiserendApiClient? api,
+    this.onChurchesGone,
+  }) : _cache = cache,
+       _api = api ?? MiserendApiClient();
 
   CacheDatabase? _cache;
   final MiserendApiClient _api;
@@ -31,8 +33,13 @@ class ChurchScheduleLoader {
   /// earlier visit's API response. Confession is never reported from here:
   /// see [ChurchPageData.confessionLive].
   Future<ChurchPageData> loadCached(int churchId, DateTime today) async {
-    return _read(churchId, today,
-        scheduleIsFresh: false, confessionLive: false, failure: null);
+    return _read(
+      churchId,
+      today,
+      scheduleIsFresh: false,
+      confessionLive: false,
+      failure: null,
+    );
   }
 
   /// Asks the API, writes what it gets through to the cache, and reads it back.
@@ -41,14 +48,17 @@ class ChurchScheduleLoader {
   Future<ChurchPageData> refresh(Church church, DateTime today) async {
     final cache = await _db();
 
-    final churchResult =
-        await _api.fetchChurches([church.id], length: ResponseLength.full);
+    final churchResult = await _api.fetchChurches([
+      church.id,
+    ], length: ResponseLength.full);
     ChurchDetails? details;
     ApiFailure? churchFailure;
     switch (churchResult) {
       case ApiSuccess(:final value):
-        await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
-            .write(value, today: today, minimal: false);
+        await CacheWriteThrough(
+          cache,
+          onChurchesGone: onChurchesGone,
+        ).write(value, today: today, minimal: false);
         if (value.missing.contains(church.id)) {
           return ChurchPageData(
             church: null,
@@ -126,9 +136,12 @@ class ChurchScheduleLoader {
   List<List<CachedMass>> _groupByDay(List<CachedMass> cached, DateTime today) {
     final days = List.generate(scheduleDays, (_) => <CachedMass>[]);
     for (final mass in cached) {
-      final offset = DateTime(mass.time.year, mass.time.month, mass.time.day)
-          .difference(today)
-          .inDays;
+      final offset =
+          DateTime(
+            mass.time.year,
+            mass.time.month,
+            mass.time.day,
+          ).difference(today).inDays;
       if (offset >= 0 && offset < days.length) {
         days[offset].add(mass);
       }

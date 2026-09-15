@@ -22,7 +22,10 @@ class OfflineNotice {
   /// The explanation the (i) opens. [asOf] is how old the data is; null only
   /// when not even the bootstrap import recorded a date.
   static String explanation(
-      ApiFailure failure, DateTime? asOf, RetryHint hint) {
+    ApiFailure failure,
+    DateTime? asOf,
+    RetryHint hint,
+  ) {
     final state = asOf == null ? '' : ', ${_date.format(asOf)}-i';
     switch (failure) {
       case ApiFailure.noConnection:
@@ -43,19 +46,24 @@ class OfflineNotice {
     }
   }
 
-  static Future<void> show(BuildContext context, ApiFailure failure,
-      DateTime? asOf, RetryHint hint) {
+  static Future<void> show(
+    BuildContext context,
+    ApiFailure failure,
+    DateTime? asOf,
+    RetryHint hint,
+  ) {
     return showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Text(explanation(failure, asOf, hint)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Rendben'),
+      builder:
+          (context) => AlertDialog(
+            content: Text(explanation(failure, asOf, hint)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Rendben'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -77,9 +85,10 @@ class OfflineInfoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.info_outline),
-      color: failure == ApiFailure.serverError
-          ? OfflineNotice.serverErrorAccent
-          : Colors.black54,
+      color:
+          failure == ApiFailure.serverError
+              ? OfflineNotice.serverErrorAccent
+              : Colors.black54,
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,
       onPressed: () => OfflineNotice.show(context, failure, asOf, hint),
@@ -106,7 +115,8 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final serverError = failure == ApiFailure.serverError;
     return Material(
-      color: serverError ? OfflineNotice.serverErrorTint : const Color(0xFFEEEEEE),
+      color:
+          serverError ? OfflineNotice.serverErrorTint : const Color(0xFFEEEEEE),
       child: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: Row(
@@ -114,7 +124,10 @@ class OfflineBanner extends StatelessWidget {
             Icon(
               serverError ? Icons.cloud_off : Icons.signal_wifi_off,
               size: 18,
-              color: serverError ? OfflineNotice.serverErrorAccent : Colors.black54,
+              color:
+                  serverError
+                      ? OfflineNotice.serverErrorAccent
+                      : Colors.black54,
             ),
             const SizedBox(width: 8),
             Expanded(

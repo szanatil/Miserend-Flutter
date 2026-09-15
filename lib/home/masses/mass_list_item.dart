@@ -57,22 +57,30 @@ class MassListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(mass.churchName ?? "?",
-                        style: textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      mass.churchName ?? "?",
+                      style: textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     if (mass.city != null)
-                      Text(mass.city!,
-                          style: textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        mass.city!,
+                        style: textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text(TimeOfDay.fromDateTime(mass.start).to24hours(),
-                            style: textTheme.headlineMedium),
+                        Text(
+                          TimeOfDay.fromDateTime(mass.start).to24hours(),
+                          style: textTheme.headlineMedium,
+                        ),
                         const SizedBox(width: 12),
-                        Text(formatDistance(mass.distanceKm),
-                            style: textTheme.bodyMedium),
+                        Text(
+                          formatDistance(mass.distanceKm),
+                          style: textTheme.bodyMedium,
+                        ),
                       ],
                     ),
                     if (ongoing || showTitle)
@@ -133,10 +141,9 @@ class _OngoingBadge extends StatelessWidget {
       ),
       child: Text(
         'Épp most tart',
-        style: Theme.of(context)
-            .textTheme
-            .labelMedium
-            ?.copyWith(color: colors.onPrimaryContainer),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: colors.onPrimaryContainer),
       ),
     );
   }

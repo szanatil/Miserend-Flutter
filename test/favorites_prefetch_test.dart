@@ -24,37 +24,37 @@ class _Api {
   final List<String> paths = [];
 
   MiserendApiClient get client => MiserendApiClient(
-        client: MockClient((request) async {
-          paths.add(request.url.path);
-          if (failing) throw const SocketException('offline');
-          final body = jsonDecode(request.body) as Map<String, dynamic>;
-          if (request.url.path.endsWith('/church')) {
-            final ids = (body['ids'] as List).cast<int>();
-            return _json({
-              'templomok': [
-                for (final id in ids)
-                  if (!missing.contains(id))
-                    {'id': id, 'nev': 'Templom $id', 'lat': 47.5, 'lon': 19.0}
-              ],
-              'hianyzo': missing,
-              'error': 0,
-            });
-          }
-          return _json({
-            'error': 0,
-            'misek': [
-              {
-                'id': 1,
-                'start_date': '2026-09-20T10:00:00+02:00',
-                'title': 'Szentmise',
-                // The schedule call is made per church, by its position; the
-                // fake does not know which, so it answers for all of them.
-                'church': {'id': -1},
-              }
-            ],
-          });
-        }),
-      );
+    client: MockClient((request) async {
+      paths.add(request.url.path);
+      if (failing) throw const SocketException('offline');
+      final body = jsonDecode(request.body) as Map<String, dynamic>;
+      if (request.url.path.endsWith('/church')) {
+        final ids = (body['ids'] as List).cast<int>();
+        return _json({
+          'templomok': [
+            for (final id in ids)
+              if (!missing.contains(id))
+                {'id': id, 'nev': 'Templom $id', 'lat': 47.5, 'lon': 19.0},
+          ],
+          'hianyzo': missing,
+          'error': 0,
+        });
+      }
+      return _json({
+        'error': 0,
+        'misek': [
+          {
+            'id': 1,
+            'start_date': '2026-09-20T10:00:00+02:00',
+            'title': 'Szentmise',
+            // The schedule call is made per church, by its position; the
+            // fake does not know which, so it answers for all of them.
+            'church': {'id': -1},
+          },
+        ],
+      });
+    }),
+  );
 }
 
 void main() {
@@ -69,8 +69,12 @@ void main() {
     cache = await CacheDatabase.create(path: inMemoryDatabasePath);
     await cache.importChurches([
       for (final id in [1, 2, 3])
-        BootstrapImporter.churchFromLegacyRow(
-            {'tid': id, 'nev': 'Templom $id', 'lat': 47.5, 'lng': 19.0}),
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': id,
+          'nev': 'Templom $id',
+          'lat': 47.5,
+          'lng': 19.0,
+        }),
     ], const []);
   });
 
@@ -89,42 +93,49 @@ void main() {
   int scheduleCalls(_Api api) =>
       api.paths.where((p) => p == '/api/v4/nearbymasses').length;
 
-  test('asks once for every favorite, then each favorite\'s schedule',
-      () async {
-    final api = _Api();
+  test(
+    'asks once for every favorite, then each favorite\'s schedule',
+    () async {
+      final api = _Api();
 
-    await prefetchWith(api).runIfDue([1, 2, 3]);
+      await prefetchWith(api).runIfDue([1, 2, 3]);
 
-    expect(churchCalls(api), 1);
-    expect(scheduleCalls(api), 3);
-  });
+      expect(churchCalls(api), 1);
+      expect(scheduleCalls(api), 3);
+    },
+  );
 
   test('stores the schedule it gets as the details page would', () async {
-    final api = MiserendApiClient(client: MockClient((request) async {
-      if (request.url.path.endsWith('/church')) {
+    final api = MiserendApiClient(
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('/church')) {
+          return _json({
+            'templomok': [
+              {'id': 1, 'nev': 'Templom 1', 'lat': 47.5, 'lon': 19.0},
+            ],
+            'hianyzo': [],
+            'error': 0,
+          });
+        }
         return _json({
-          'templomok': [
-            {'id': 1, 'nev': 'Templom 1', 'lat': 47.5, 'lon': 19.0}
-          ],
-          'hianyzo': [],
           'error': 0,
+          'misek': [
+            {
+              'id': 7,
+              'start_date': '2026-09-20T10:00:00+02:00',
+              'title': 'Szentmise',
+              'church': {'id': 1},
+            },
+          ],
         });
-      }
-      return _json({
-        'error': 0,
-        'misek': [
-          {
-            'id': 7,
-            'start_date': '2026-09-20T10:00:00+02:00',
-            'title': 'Szentmise',
-            'church': {'id': 1},
-          }
-        ],
-      });
-    }));
+      }),
+    );
 
-    await FavoritesPrefetch(cache: cache, api: api, clock: () => now)
-        .runIfDue([1]);
+    await FavoritesPrefetch(
+      cache: cache,
+      api: api,
+      clock: () => now,
+    ).runIfDue([1]);
 
     final masses = await cache.getMassesForChurch(1);
     expect(masses.single.time, DateTime(2026, 9, 20, 10, 0));
@@ -157,17 +168,19 @@ void main() {
     expect(scheduleCalls(api), 2);
   });
 
-  test('a favorite removed from miserend.hu is let go, with no schedule call',
-      () async {
-    final api = _Api(missing: [2]);
-    final gone = <int>[];
+  test(
+    'a favorite removed from miserend.hu is let go, with no schedule call',
+    () async {
+      final api = _Api(missing: [2]);
+      final gone = <int>[];
 
-    await prefetchWith(api, gone: gone).runIfDue([1, 2]);
+      await prefetchWith(api, gone: gone).runIfDue([1, 2]);
 
-    expect(gone, [2]);
-    expect(await cache.getChurch(2), isNull);
-    expect(scheduleCalls(api), 1);
-  });
+      expect(gone, [2]);
+      expect(await cache.getChurch(2), isNull);
+      expect(scheduleCalls(api), 1);
+    },
+  );
 
   test('with no favorites, asks nothing', () async {
     final api = _Api();

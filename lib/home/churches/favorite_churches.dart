@@ -20,13 +20,19 @@ class FavoriteChurchesPage extends StatefulWidget {
 
 class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
     with AutomaticKeepAliveClientMixin<FavoriteChurchesPage> {
-  late final FavoritesService favoritesService =
-      Provider.of<FavoritesService>(context, listen: false);
-  late final ChurchListLoader _loader = widget.loader ??
+  late final FavoritesService favoritesService = Provider.of<FavoritesService>(
+    context,
+    listen: false,
+  );
+  late final ChurchListLoader _loader =
+      widget.loader ??
       ChurchListLoader(onChurchesGone: favoritesService.removeAll);
 
-  ChurchList _list =
-      const ChurchList(churches: [], failure: null, dataAsOf: null);
+  ChurchList _list = const ChurchList(
+    churches: [],
+    failure: null,
+    dataAsOf: null,
+  );
   bool loading = true;
 
   /// Incremented on every load so that a slow, outdated read cannot
@@ -60,13 +66,14 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
     super.build(context);
     return Container(
       color: Colors.black12,
-      child: loading
-          ? const LoadingView(message: 'Kedvencek betöltése...')
-          : ChurchListView(
-              list: _list,
-              emptyMessage: 'Még nincsenek kedvenc templomaid.',
-              onRefresh: () => _load(refresh: true),
-            ),
+      child:
+          loading
+              ? const LoadingView(message: 'Kedvencek betöltése...')
+              : ChurchListView(
+                list: _list,
+                emptyMessage: 'Még nincsenek kedvenc templomaid.',
+                onRefresh: () => _load(refresh: true),
+              ),
     );
   }
 
@@ -80,7 +87,8 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
     bool current() => mounted && loadId == _loadId;
 
     final query = FavoritesQuery(
-        favoritesService.favorites.map((e) => e.churchId).toList());
+      favoritesService.favorites.map((e) => e.churchId).toList(),
+    );
     final cached = await _loader.load(query);
     if (!current()) return;
     setState(() {

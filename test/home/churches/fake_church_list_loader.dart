@@ -10,8 +10,8 @@ import 'package:miserend/home/churches/church_list_loader.dart';
 /// answers, a refresh succeeds and changes nothing.
 class FakeChurchListLoader extends ChurchListLoader {
   FakeChurchListLoader(List<Object> cached, {List<Object> refreshed = const []})
-      : _cached = Queue.of(cached),
-        _refreshed = Queue.of(refreshed);
+    : _cached = Queue.of(cached),
+      _refreshed = Queue.of(refreshed);
 
   final Queue<Object> _cached;
   final Queue<Object> _refreshed;
@@ -35,7 +35,9 @@ class FakeChurchListLoader extends ChurchListLoader {
 
   @override
   Future<ChurchList> refresh(
-      ChurchListQuery query, List<ChurchListEntry> shown) async {
+    ChurchListQuery query,
+    List<ChurchListEntry> shown,
+  ) async {
     refreshes++;
     if (_refreshed.isEmpty) return listOf(shown);
     final answer = _next(_refreshed);
@@ -45,11 +47,15 @@ class FakeChurchListLoader extends ChurchListLoader {
     return list.failure == null
         ? list
         : ChurchList(
-            churches: shown, failure: list.failure, dataAsOf: list.dataAsOf);
+          churches: shown,
+          failure: list.failure,
+          dataAsOf: list.dataAsOf,
+        );
   }
 }
 
-ChurchList listOf(List<ChurchListEntry> churches,
-        {ApiFailure? failure, DateTime? dataAsOf}) =>
-    ChurchList(churches: churches, failure: failure, dataAsOf: dataAsOf);
-
+ChurchList listOf(
+  List<ChurchListEntry> churches, {
+  ApiFailure? failure,
+  DateTime? dataAsOf,
+}) => ChurchList(churches: churches, failure: failure, dataAsOf: dataAsOf);

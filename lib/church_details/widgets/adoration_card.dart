@@ -51,14 +51,15 @@ class AdorationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(kind.isEmpty ? _range(adoration) : '${_range(adoration)} · $kind'),
+          Text(
+            kind.isEmpty ? _range(adoration) : '${_range(adoration)} · $kind',
+          ),
           if (info.isNotEmpty)
             Text(
               info,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.apply(color: Colors.black54),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.apply(color: Colors.black54),
             ),
         ],
       ),
@@ -73,7 +74,8 @@ class AdorationCard extends StatelessWidget {
     if (start == null || end == null) {
       return 'Egész nap';
     }
-    final coversDay = start.hour == 0 &&
+    final coversDay =
+        start.hour == 0 &&
         start.minute == 0 &&
         end.hour == 23 &&
         end.minute >= 59;
@@ -94,8 +96,9 @@ class AdorationCard extends StatelessWidget {
 
   /// Insertion-ordered, so the days come out chronologically.
   Map<DateTime, List<Adoration>> _byDay() {
-    final sorted = adorations.where((a) => a.start != null).toList()
-      ..sort((a, b) => a.start!.compareTo(b.start!));
+    final sorted =
+        adorations.where((a) => a.start != null).toList()
+          ..sort((a, b) => a.start!.compareTo(b.start!));
     final byDay = <DateTime, List<Adoration>>{};
     for (final adoration in sorted) {
       final start = adoration.start!;

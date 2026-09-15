@@ -25,11 +25,13 @@ class _NearChurchesPageState extends State<NearChurchesPage>
         AutomaticKeepAliveClientMixin<NearChurchesPage>,
         WidgetsBindingObserver {
   late final ChurchListLoader _loader = widget.loader ?? ChurchListLoader();
-  late final LocationProvider _location =
-      widget.location ?? LocationProvider();
+  late final LocationProvider _location = widget.location ?? LocationProvider();
 
-  ChurchList _list =
-      const ChurchList(churches: [], failure: null, dataAsOf: null);
+  ChurchList _list = const ChurchList(
+    churches: [],
+    failure: null,
+    dataAsOf: null,
+  );
   PositionUnavailableReason? _noPosition;
   bool _loaded = false;
 
@@ -76,9 +78,10 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     super.build(context);
     return Container(
       color: Colors.black12,
-      child: _loaded
-          ? _content()
-          : const LoadingView(message: 'Közeli templomok betöltése...'),
+      child:
+          _loaded
+              ? _content()
+              : const LoadingView(message: 'Közeli templomok betöltése...'),
     );
   }
 
@@ -125,7 +128,9 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     }
 
     final query = NearChurchesQuery(
-        lat: position.latitude, lon: position.longitude);
+      lat: position.latitude,
+      lon: position.longitude,
+    );
     final cached = await _loader.load(query);
     if (!current()) return;
     setState(() {

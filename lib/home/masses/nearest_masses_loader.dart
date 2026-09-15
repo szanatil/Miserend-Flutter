@@ -23,11 +23,13 @@ class MassesUnavailable implements Exception {
 /// position, and each church's thumbnail from the cache. It lives outside the
 /// page so that the page can be pumped against a fake.
 class NearestMassesLoader {
-  NearestMassesLoader(
-      {MiserendApiClient? api, CacheDatabase? cache, LocationProvider? location})
-      : _api = api ?? MiserendApiClient(),
-        _cache = cache,
-        _location = location ?? LocationProvider();
+  NearestMassesLoader({
+    MiserendApiClient? api,
+    CacheDatabase? cache,
+    LocationProvider? location,
+  }) : _api = api ?? MiserendApiClient(),
+       _cache = cache,
+       _location = location ?? LocationProvider();
 
   final MiserendApiClient _api;
   final LocationProvider _location;

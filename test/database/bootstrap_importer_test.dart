@@ -12,21 +12,20 @@ Mass _rule(
   int to = 1231,
   TimeOfDay time = const TimeOfDay(hour: 17, minute: 0),
   String? comment,
-}) =>
-    Mass(
-      id: 1,
-      churchId: 38,
-      day: day,
-      time: time,
-      season: null,
-      language: null,
-      tags: null,
-      period: null,
-      weight: null,
-      startDate: from,
-      endDate: to,
-      comment: comment,
-    );
+}) => Mass(
+  id: 1,
+  churchId: 38,
+  day: day,
+  time: time,
+  season: null,
+  language: null,
+  tags: null,
+  period: null,
+  weight: null,
+  startDate: from,
+  endDate: to,
+  comment: comment,
+);
 
 void main() {
   sqfliteFfiInit();
@@ -65,15 +64,19 @@ void main() {
     });
 
     test('keeps the greek-rite flag, which no API response carries', () {
-      final church =
-          BootstrapImporter.churchFromLegacyRow({'tid': 1, 'gorog': 1});
+      final church = BootstrapImporter.churchFromLegacyRow({
+        'tid': 1,
+        'gorog': 1,
+      });
 
       expect(church.isGreek, isTrue);
     });
 
     test('starts the API-only fields empty', () {
-      final church =
-          BootstrapImporter.churchFromLegacyRow({'tid': 1, 'gorog': 0});
+      final church = BootstrapImporter.churchFromLegacyRow({
+        'tid': 1,
+        'gorog': 0,
+      });
 
       expect(church.diocese, isNull);
       expect(church.email, isNull);
@@ -90,11 +93,13 @@ void main() {
 
     test('has no photo when the legacy row carries no image', () {
       expect(
-          BootstrapImporter.churchFromLegacyRow({'tid': 1, 'kep': ''}).photos,
-          isEmpty);
+        BootstrapImporter.churchFromLegacyRow({'tid': 1, 'kep': ''}).photos,
+        isEmpty,
+      );
       expect(
-          BootstrapImporter.churchFromLegacyRow({'tid': 1, 'kep': null}).photos,
-          isEmpty);
+        BootstrapImporter.churchFromLegacyRow({'tid': 1, 'kep': null}).photos,
+        isEmpty,
+      );
     });
   });
 
@@ -131,25 +136,37 @@ void main() {
       final adventOnly = _rule(DateTime.wednesday, from: 1101, to: 228);
 
       expect(
-          BootstrapImporter.expandMasses([adventOnly], from: monday, days: 7),
-          isEmpty,
-          reason: 'September falls outside a November-to-February season');
+        BootstrapImporter.expandMasses([adventOnly], from: monday, days: 7),
+        isEmpty,
+        reason: 'September falls outside a November-to-February season',
+      );
       expect(
-          BootstrapImporter.expandMasses([adventOnly],
-              from: DateTime(2026, 11, 2), days: 7),
-          hasLength(1));
+        BootstrapImporter.expandMasses(
+          [adventOnly],
+          from: DateTime(2026, 11, 2),
+          days: 7,
+        ),
+        hasLength(1),
+      );
       expect(
-          BootstrapImporter.expandMasses([adventOnly],
-              from: DateTime(2026, 1, 5), days: 7),
-          hasLength(1));
+        BootstrapImporter.expandMasses(
+          [adventOnly],
+          from: DateTime(2026, 1, 5),
+          days: 7,
+        ),
+        hasLength(1),
+      );
     });
 
     test('keeps a single-day rule to that one date', () {
       // 0909 is the Wednesday inside the window.
       final christmasLike = _rule(0, from: 909, to: 909);
 
-      final masses =
-          BootstrapImporter.expandMasses([christmasLike], from: monday, days: 7);
+      final masses = BootstrapImporter.expandMasses(
+        [christmasLike],
+        from: monday,
+        days: 7,
+      );
 
       expect(masses.map((m) => m.time), [DateTime(2026, 9, 9, 17, 0)]);
     });
@@ -220,8 +237,10 @@ void main() {
         comment: null,
       );
 
-      expect(BootstrapImporter.expandMasses([untimed], from: monday, days: 7),
-          isEmpty);
+      expect(
+        BootstrapImporter.expandMasses([untimed], from: monday, days: 7),
+        isEmpty,
+      );
     });
   });
 
@@ -232,16 +251,22 @@ void main() {
     setUp(() async {
       // Not a single instance, so that it stays a different database from the
       // cache, which opens the same in-memory path.
-      legacy = await databaseFactory.openDatabase(inMemoryDatabasePath,
-          options: OpenDatabaseOptions(singleInstance: false));
-      await legacy.execute('CREATE TABLE templomok (tid INTEGER PRIMARY KEY, '
-          'nev TEXT, ismertnev TEXT, gorog INTEGER, lat REAL, lng REAL, '
-          'geocim TEXT, varos TEXT, orszag TEXT, megye TEXT, cim TEXT, '
-          'megkozelites TEXT, kep TEXT)');
-      await legacy.execute('CREATE TABLE misek (mid INTEGER PRIMARY KEY, '
-          'tid INTEGER, nap INTEGER, ido TEXT, idoszak TEXT, nyelv TEXT, '
-          'milyen TEXT, periodus TEXT, suly INTEGER, datumtol INT, '
-          'datumig INT, megjegyzes TEXT)');
+      legacy = await databaseFactory.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(singleInstance: false),
+      );
+      await legacy.execute(
+        'CREATE TABLE templomok (tid INTEGER PRIMARY KEY, '
+        'nev TEXT, ismertnev TEXT, gorog INTEGER, lat REAL, lng REAL, '
+        'geocim TEXT, varos TEXT, orszag TEXT, megye TEXT, cim TEXT, '
+        'megkozelites TEXT, kep TEXT)',
+      );
+      await legacy.execute(
+        'CREATE TABLE misek (mid INTEGER PRIMARY KEY, '
+        'tid INTEGER, nap INTEGER, ido TEXT, idoszak TEXT, nyelv TEXT, '
+        'milyen TEXT, periodus TEXT, suly INTEGER, datumtol INT, '
+        'datumig INT, megjegyzes TEXT)',
+      );
 
       cache = await CacheDatabase.create(path: inMemoryDatabasePath);
     });
@@ -297,7 +322,10 @@ void main() {
       final before = DateTime.now().subtract(const Duration(seconds: 1));
 
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7));
+        legacy: legacy,
+        cache: cache,
+        from: DateTime(2026, 9, 7),
+      );
 
       expect((await cache.bootstrappedAt())!.isBefore(before), isFalse);
     });
@@ -306,10 +334,16 @@ void main() {
       await insertChurch(38, 'Belvárosi');
 
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7));
+        legacy: legacy,
+        cache: cache,
+        from: DateTime(2026, 9, 7),
+      );
 
-      expect((await cache.getChurch(38))!.localSyncedAt, isNull,
-          reason: 'only an API response may stamp local_synced_at');
+      expect(
+        (await cache.getChurch(38))!.localSyncedAt,
+        isNull,
+        reason: 'only an API response may stamp local_synced_at',
+      );
     });
 
     test('imports the thirty days starting on the install day', () async {
@@ -333,9 +367,17 @@ void main() {
       await insertRule(1, 38, DateTime.wednesday, '17:00:00');
 
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7), days: 7);
+        legacy: legacy,
+        cache: cache,
+        from: DateTime(2026, 9, 7),
+        days: 7,
+      );
       await BootstrapImporter.run(
-          legacy: legacy, cache: cache, from: DateTime(2026, 9, 7), days: 7);
+        legacy: legacy,
+        cache: cache,
+        from: DateTime(2026, 9, 7),
+        days: 7,
+      );
 
       expect(await cache.db.query('churches_cache'), hasLength(1));
       expect(await cache.getMassesForChurch(38), hasLength(1));

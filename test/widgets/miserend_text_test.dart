@@ -17,19 +17,26 @@ void main() {
     });
 
     test('decodes the entities the API encodes everything with', () {
-      expect(MiserendText.normalize('Pl&eacute;b&aacute;nia &ndash; iroda'),
-          'Plébánia – iroda');
+      expect(
+        MiserendText.normalize('Pl&eacute;b&aacute;nia &ndash; iroda'),
+        'Plébánia – iroda',
+      );
     });
 
     test('turns a line break tag into a line break', () {
-      expect(MiserendText.normalize('első<br />második<BR>harmadik'),
-          'első\nmásodik\nharmadik');
+      expect(
+        MiserendText.normalize('első<br />második<BR>harmadik'),
+        'első\nmásodik\nharmadik',
+      );
     });
 
-    test('handles tags before entities, so escaped markup survives as text', () {
-      // &lt;br&gt; is the text "<br>", not a line break.
-      expect(MiserendText.normalize('a &lt;br&gt; b'), 'a <br> b');
-    });
+    test(
+      'handles tags before entities, so escaped markup survives as text',
+      () {
+        // &lt;br&gt; is the text "<br>", not a line break.
+        expect(MiserendText.normalize('a &lt;br&gt; b'), 'a <br> b');
+      },
+    );
 
     test('collapses the runs of blank padding lines', () {
       const raw = 'Cím:\r\n&nbsp;\r\n&nbsp;\r\n&nbsp;\r\n&nbsp;\r\nSzöveg';
@@ -66,7 +73,8 @@ void main() {
 
     test('church 2 parish block survives its markup', () {
       final text = MiserendText.normalize(
-          _fixture('church_2.json')['plebania'] as String);
+        _fixture('church_2.json')['plebania'] as String,
+      );
 
       expect(text, isNotEmpty);
       expect(text, isNot(contains('<br')));

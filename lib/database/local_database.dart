@@ -11,12 +11,13 @@ class LocalDatabase {
 
   static Future<LocalDatabase> create() async {
     LocalDatabase instance = LocalDatabase();
-  await instance.openDb();
-  return instance;
+    await instance.openDb();
+    return instance;
   }
 
   Future<void> openDb() async {
-    db = await openDatabase(join(await getDatabasesPath(), databaseName),
+    db = await openDatabase(
+      join(await getDatabasesPath(), databaseName),
       onCreate: (db, version) {
         return db.execute(
           'CREATE TABLE $favoritesTable(id INTEGER PRIMARY KEY, tid INTEGER)',
@@ -32,9 +33,15 @@ class LocalDatabase {
       return Favorite(churchId: maps[i]['tid']);
     });
   }
-  
+
   Future<bool> isFavorite(int churchId) async {
-    int count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $favoritesTable WHERE tid=$churchId')) ?? 0;
+    int count =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM $favoritesTable WHERE tid=$churchId',
+          ),
+        ) ??
+        0;
     return count > 0;
   }
 
@@ -45,12 +52,8 @@ class LocalDatabase {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
-  
+
   Future<void> removeFavorite(int churchId) async {
-    await db.delete(
-      favoritesTable,
-      where: 'tid = ?',
-      whereArgs: [churchId],
-    );
+    await db.delete(favoritesTable, where: 'tid = ?', whereArgs: [churchId]);
   }
 }

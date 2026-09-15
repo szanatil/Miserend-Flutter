@@ -14,7 +14,6 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/search_suggestions.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,8 +25,7 @@ abstract class Suggestion {
   Widget buildWidget(BuildContext context);
 }
 
-class ChurchSuggestion extends Suggestion
-{
+class ChurchSuggestion extends Suggestion {
   static const double _thumbnailSize = 40;
 
   final ChurchListEntry church;
@@ -35,39 +33,45 @@ class ChurchSuggestion extends Suggestion
   ChurchSuggestion(this.church);
 
   Widget _errorBuilder(
-      BuildContext context, Object error, StackTrace? stackTrace) {
-    return Image.asset('assets/images/church_blurred.png',
-        fit: BoxFit.cover,
-        cacheHeight: PhotoDecode.forSlot(context, _thumbnailSize));
+    BuildContext context,
+    Object error,
+    StackTrace? stackTrace,
+  ) {
+    return Image.asset(
+      'assets/images/church_blurred.png',
+      fit: BoxFit.cover,
+      cacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
+    );
   }
 
   @override
   Widget buildWidget(BuildContext context) {
     return ListTile(
-        onTap: () => openChurchDetails(context, church),
-        titleAlignment: ListTileTitleAlignment.center,
-        leading:  AspectRatio(
-          aspectRatio: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: FadeInImage.assetNetwork(
-              fit: BoxFit.cover,
-              placeholder: 'assets/images/church_blurred.png',
-              image: church.photo ?? "",
-              imageErrorBuilder: _errorBuilder,
-              imageCacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
-              placeholderCacheHeight:
-                  PhotoDecode.forSlot(context, _thumbnailSize),
+      onTap: () => openChurchDetails(context, church),
+      titleAlignment: ListTileTitleAlignment.center,
+      leading: AspectRatio(
+        aspectRatio: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: FadeInImage.assetNetwork(
+            fit: BoxFit.cover,
+            placeholder: 'assets/images/church_blurred.png',
+            image: church.photo ?? "",
+            imageErrorBuilder: _errorBuilder,
+            imageCacheHeight: PhotoDecode.forSlot(context, _thumbnailSize),
+            placeholderCacheHeight: PhotoDecode.forSlot(
+              context,
+              _thumbnailSize,
             ),
           ),
         ),
-        title: Text(church.name ?? "")
+      ),
+      title: Text(church.name ?? ""),
     );
   }
 }
 
 class CitySuggestion extends Suggestion {
-
   String cityName = "";
 
   CitySuggestion(this.cityName);
@@ -79,30 +83,27 @@ class CitySuggestion extends Suggestion {
         Navigator.push(
           context,
           MaterialPageRoute(
-          builder: (context) => SearchResultsPage(searchParams: SearchParams.fromCity(cityName))),
+            builder:
+                (context) => SearchResultsPage(
+                  searchParams: SearchParams.fromCity(cityName),
+                ),
+          ),
         );
       },
-        titleAlignment: ListTileTitleAlignment.center,
-        leading:  AspectRatio(
-          aspectRatio: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: Icon(
-              Icons.location_city,
-              color: Colors.black54,
-              size: 24.0,
-            ),
-          ),
+      titleAlignment: ListTileTitleAlignment.center,
+      leading: AspectRatio(
+        aspectRatio: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Icon(Icons.location_city, color: Colors.black54, size: 24.0),
         ),
-        title: Text(cityName)
+      ),
+      title: Text(cityName),
     );
   }
-
 }
 
-
 class _HomeScreenState extends State<HomeScreen> {
-
   final SearchController _searchController = SearchController();
   int _selectedIndex = 0;
 
@@ -152,8 +153,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _prefetchFavorites() {
     final favorites = Provider.of<FavoritesService>(context, listen: false);
     void run() {
-      unawaited(FavoritesPrefetch(onChurchesGone: favorites.removeAll)
-          .runIfDue(favorites.favorites.map((f) => f.churchId).toList()));
+      unawaited(
+        FavoritesPrefetch(
+          onChurchesGone: favorites.removeAll,
+        ).runIfDue(favorites.favorites.map((f) => f.churchId).toList()),
+      );
     }
 
     if (favorites.loaded) {
@@ -189,9 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         clipBehavior: Clip.none,
-        iconTheme:  IconThemeData(
-            color: Colors.black54
-        ),
+        iconTheme: IconThemeData(color: Colors.black54),
         title: ExcludeFocus(
           child: SizedBox(
             height: _searchBarHeight,
@@ -202,13 +204,17 @@ class _HomeScreenState extends State<HomeScreen> {
               // the bar's width and height and grows with the suggestions,
               // up to a cap that leaves room for the keyboard.
               viewHeaderHeight: _searchBarHeight,
-              viewConstraints:
-                  const BoxConstraints(maxHeight: _searchViewMaxHeight),
+              viewConstraints: const BoxConstraints(
+                maxHeight: _searchViewMaxHeight,
+              ),
               shrinkWrap: true,
               onChanged: _onSearchChanged,
               onSubmitted: _onSearchSubmitted,
               searchController: _searchController,
-              suggestionsBuilder: (BuildContext context, SearchController controller) {
+              suggestionsBuilder: (
+                BuildContext context,
+                SearchController controller,
+              ) {
                 return List<Widget>.generate(suggestions.length, (int index) {
                   return suggestions[index].buildWidget(context);
                 });
@@ -222,25 +228,17 @@ class _HomeScreenState extends State<HomeScreen> {
         sizing: StackFit.expand,
         children: List<Widget>.generate(
           _tabCount,
-          (int index) => _builtTabs.contains(index)
-              ? _tab(index)
-              : const SizedBox.shrink(),
+          (int index) =>
+              _builtTabs.contains(index)
+                  ? _tab(index)
+                  : const SizedBox.shrink(),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.church),
-            label: 'Templomok',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule),
-            label: 'Misék',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Térkép',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.church), label: 'Templomok'),
+          BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Misék'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
         ],
         currentIndex: _selectedIndex,
         backgroundColor: Theme.of(context).primaryColor,
@@ -258,7 +256,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchRequestId++;
     if (value.length > 2) {
       _searchDebounce = Timer(
-          const Duration(milliseconds: 250), () => _runSearch(value));
+        const Duration(milliseconds: 250),
+        () => _runSearch(value),
+      );
     } else {
       setState(() {
         suggestions.clear();
@@ -293,7 +293,11 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => SearchResultsPage(searchParams: SearchParams.fromSearchTerm(value))),
+        builder:
+            (context) => SearchResultsPage(
+              searchParams: SearchParams.fromSearchTerm(value),
+            ),
+      ),
     );
   }
 }

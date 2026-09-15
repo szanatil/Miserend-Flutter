@@ -82,14 +82,16 @@ List<List<CachedMass>> _emptyDays() =>
 
 List<List<CachedMass>> _scheduleWith(DateTime time, {String? info}) {
   final days = _emptyDays();
-  days[0].add(CachedMass(
-    id: null,
-    apiMassId: null,
-    churchId: 38,
-    time: time,
-    info: info ?? 'Római katolikus Szentmise',
-    source: MassSource.nearbyMasses,
-  ));
+  days[0].add(
+    CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: time,
+      info: info ?? 'Római katolikus Szentmise',
+      source: MassSource.nearbyMasses,
+    ),
+  );
   return days;
 }
 
@@ -152,7 +154,10 @@ void main() {
     }
   });
 
-  Future<void> pumpPage(WidgetTester tester, ChurchScheduleLoader loader) async {
+  Future<void> pumpPage(
+    WidgetTester tester,
+    ChurchScheduleLoader loader,
+  ) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
     tester.view.physicalSize = const Size(1000, 4000);
@@ -160,18 +165,21 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(ChangeNotifierProvider<FavoritesService>.value(
-      value: favorites,
-      child: MaterialApp(
-        home: ChurchDetailsPage(church: _church, loader: loader),
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: MaterialApp(
+          home: ChurchDetailsPage(church: _church, loader: loader),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pump();
   }
 
-  testWidgets('shows the cached schedule while the API call is outstanding',
-      (tester) async {
+  testWidgets('shows the cached schedule while the API call is outstanding', (
+    tester,
+  ) async {
     final loader = _FakeLoader(
       cached: _page(_scheduleWith(_todayAt(9, 0))),
       refreshed: _page(_scheduleWith(_todayAt(18, 30))),
@@ -183,8 +191,9 @@ void main() {
     expect(find.text('18:30'), findsNothing);
   });
 
-  testWidgets('shows the refreshed schedule once the API has answered',
-      (tester) async {
+  testWidgets('shows the refreshed schedule once the API has answered', (
+    tester,
+  ) async {
     final loader = _FakeLoader(
       cached: _page(_scheduleWith(_todayAt(9, 0))),
       refreshed: _page(_scheduleWith(_todayAt(18, 30))),
@@ -216,8 +225,10 @@ void main() {
     // row is not drawn at all because it would repeat "Ma".
     expect(find.text('Nincs adat a mai miserendről'), findsOneWidget);
     expect(find.text('Ezen a napon nincs mise'), findsNothing);
-    expect(find.text('Nincs adat erről a napról'),
-        DateTime.now().weekday == DateTime.sunday ? findsNothing : findsOneWidget);
+    expect(
+      find.text('Nincs adat erről a napról'),
+      DateTime.now().weekday == DateTime.sunday ? findsNothing : findsOneWidget,
+    );
   });
 
   testWidgets('an empty day with a response reads as no mass', (tester) async {
@@ -237,14 +248,16 @@ void main() {
 
   testWidgets('the day strip skips days with no masses', (tester) async {
     final masses = _emptyDays();
-    masses[3].add(CachedMass(
-      id: null,
-      apiMassId: null,
-      churchId: 38,
-      time: _todayAt(7, 30).add(const Duration(days: 3)),
-      info: null,
-      source: MassSource.nearbyMasses,
-    ));
+    masses[3].add(
+      CachedMass(
+        id: null,
+        apiMassId: null,
+        churchId: 38,
+        time: _todayAt(7, 30).add(const Duration(days: 3)),
+        info: null,
+        source: MassSource.nearbyMasses,
+      ),
+    );
     final data = _page(masses, scheduleIsFresh: true);
 
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
@@ -256,8 +269,11 @@ void main() {
 
   testWidgets('no confession tile without a live response', (tester) async {
     // The cache says yes, but a cached value is a stale switch reading.
-    final cached = _page(_emptyDays(),
-        church: _details(hasConfession: true), confessionLive: false);
+    final cached = _page(
+      _emptyDays(),
+      church: _details(hasConfession: true),
+      confessionLive: false,
+    );
     await pumpPage(tester, _FakeLoader(cached: cached, refreshed: cached));
 
     expect(find.text('Most gyóntatnak!'), findsNothing);
@@ -266,8 +282,11 @@ void main() {
   testWidgets('confession tile appears for a live response', (tester) async {
     final loader = _FakeLoader(
       cached: _page(_emptyDays()),
-      refreshed: _page(_emptyDays(),
-          church: _details(hasConfession: true), confessionLive: true),
+      refreshed: _page(
+        _emptyDays(),
+        church: _details(hasConfession: true),
+        confessionLive: true,
+      ),
     );
 
     await pumpPage(tester, loader);
@@ -296,10 +315,13 @@ void main() {
     expect(find.text('Nyelvek'), findsNothing);
   });
 
-  testWidgets('languages are drawn as flags, named for screen readers',
-      (tester) async {
-    final data =
-        _page(_emptyDays(), church: _details(languages: ['hu', 'en', 'ua']));
+  testWidgets('languages are drawn as flags, named for screen readers', (
+    tester,
+  ) async {
+    final data = _page(
+      _emptyDays(),
+      church: _details(languages: ['hu', 'en', 'ua']),
+    );
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     expect(find.text('Nyelvek'), findsOneWidget);
@@ -312,12 +334,15 @@ void main() {
     expect(find.bySemanticsLabel('ukrán'), findsOneWidget);
   });
 
-  testWidgets('the Vatican flag stands for Latin, not for a country',
-      (tester) async {
+  testWidgets('the Vatican flag stands for Latin, not for a country', (
+    tester,
+  ) async {
     // `va` and `tl` are miserend's own vocabulary, not ISO 639; reading them
     // as language codes is what used to render "VA" and "TL" as text.
-    final data =
-        _page(_emptyDays(), church: _details(languages: ['hu', 'va', 'tl']));
+    final data = _page(
+      _emptyDays(),
+      church: _details(languages: ['hu', 'va', 'tl']),
+    );
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     expect(find.text('VA'), findsNothing);
@@ -326,29 +351,32 @@ void main() {
     expect(find.bySemanticsLabel('tagalog'), findsOneWidget);
   });
 
-  testWidgets('a code with no flag falls back to text rather than vanishing',
-      (tester) async {
-    final data =
-        _page(_emptyDays(), church: _details(languages: ['hu', 'zz']));
+  testWidgets('a code with no flag falls back to text rather than vanishing', (
+    tester,
+  ) async {
+    final data = _page(_emptyDays(), church: _details(languages: ['hu', 'zz']));
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     expect(find.text('ZZ'), findsOneWidget);
     expect(find.byType(SvgPicture), findsOneWidget);
   });
 
-  testWidgets('an all-day adoration window is named, not printed as a range',
-      (tester) async {
+  testWidgets('an all-day adoration window is named, not printed as a range', (
+    tester,
+  ) async {
     final start = _todayAt(0, 0);
     final data = _page(
       _emptyDays(),
-      church: _details(adorations: [
-        Adoration(
-          start: start,
-          end: _todayAt(23, 59),
-          kind: 'csendes',
-          info: null,
-        ),
-      ]),
+      church: _details(
+        adorations: [
+          Adoration(
+            start: start,
+            end: _todayAt(23, 59),
+            kind: 'csendes',
+            info: null,
+          ),
+        ],
+      ),
     );
 
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
@@ -359,15 +387,20 @@ void main() {
   });
 
   testWidgets('accessibility states a "no" plainly', (tester) async {
-    final data = _page(_emptyDays(),
-        church: _details(accessibility: {'wheelchair': 'no'}));
+    final data = _page(
+      _emptyDays(),
+      church: _details(accessibility: {'wheelchair': 'no'}),
+    );
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     expect(find.text('Kerekesszékkel nem megközelíthető'), findsOneWidget);
   });
 
   group('marking data that is not live', () {
-    Future<void> refreshWith(WidgetTester tester, ChurchPageData refreshed) async {
+    Future<void> refreshWith(
+      WidgetTester tester,
+      ChurchPageData refreshed,
+    ) async {
       final loader = _FakeLoader(
         cached: _page(_scheduleWith(_todayAt(9, 0))),
         refreshed: refreshed,
@@ -378,19 +411,27 @@ void main() {
       await tester.pump();
     }
 
-    Color? bannerColor(WidgetTester tester) => tester
-        .widget<Material>(find
-            .descendant(
-                of: find.byType(OfflineBanner), matching: find.byType(Material))
-            .first)
-        .color;
+    Color? bannerColor(WidgetTester tester) =>
+        tester
+            .widget<Material>(
+              find
+                  .descendant(
+                    of: find.byType(OfflineBanner),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            )
+            .color;
 
-    testWidgets('nothing is marked while the API call is outstanding',
-        (tester) async {
+    testWidgets('nothing is marked while the API call is outstanding', (
+      tester,
+    ) async {
       final loader = _FakeLoader(
         cached: _page(_scheduleWith(_todayAt(9, 0))),
-        refreshed: _page(_scheduleWith(_todayAt(9, 0)),
-            failure: ApiFailure.noConnection),
+        refreshed: _page(
+          _scheduleWith(_todayAt(9, 0)),
+          failure: ApiFailure.noConnection,
+        ),
       );
 
       await pumpPage(tester, loader);
@@ -400,7 +441,9 @@ void main() {
 
     testWidgets('nothing is marked after a successful refresh', (tester) async {
       await refreshWith(
-          tester, _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true));
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true),
+      );
 
       expect(find.byType(OfflineBanner), findsNothing);
     });
@@ -408,66 +451,83 @@ void main() {
     testWidgets('no connection puts the lists\' banner above the page, '
         'untinted', (tester) async {
       await refreshWith(
-          tester,
-          _page(_scheduleWith(_todayAt(9, 0)),
-              failure: ApiFailure.noConnection));
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.noConnection),
+      );
 
       expect(find.byType(OfflineBanner), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
       expect(bannerColor(tester), isNot(OfflineNotice.serverErrorTint));
-      expect(tester.getTopLeft(find.byType(OfflineBanner)).dy,
-          lessThan(tester.getTopLeft(find.text('Ma')).dy));
+      expect(
+        tester.getTopLeft(find.byType(OfflineBanner)).dy,
+        lessThan(tester.getTopLeft(find.text('Ma')).dy),
+      );
     });
 
-    testWidgets('a server error tints the banner, not the masses card',
-        (tester) async {
+    testWidgets('a server error tints the banner, not the masses card', (
+      tester,
+    ) async {
       await refreshWith(
-          tester,
-          _page(_scheduleWith(_todayAt(9, 0)),
-              failure: ApiFailure.serverError));
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.serverError),
+      );
 
       expect(bannerColor(tester), OfflineNotice.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      final massCard = tester.widget<Card>(find
-          .ancestor(of: find.text('Ma'), matching: find.byType(Card))
-          .first);
+      final massCard = tester.widget<Card>(
+        find.ancestor(of: find.text('Ma'), matching: find.byType(Card)).first,
+      );
       expect(massCard.color, isNull);
     });
 
-    testWidgets('the (i) tells how old the data is and what to do',
-        (tester) async {
+    testWidgets('the (i) tells how old the data is and what to do', (
+      tester,
+    ) async {
       await refreshWith(
-          tester,
-          _page(_scheduleWith(_todayAt(9, 0)),
-              failure: ApiFailure.noConnection,
-              dataAsOf: DateTime(2026, 8, 1, 10, 0)));
+        tester,
+        _page(
+          _scheduleWith(_todayAt(9, 0)),
+          failure: ApiFailure.noConnection,
+          dataAsOf: DateTime(2026, 8, 1, 10, 0),
+        ),
+      );
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
 
       expect(
-          find.text('Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot '
-              'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
-              'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
-              'beállításaiban, majd nyisd meg újra a templomot.'),
-          findsOneWidget);
+        find.text(
+          'Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot '
+          'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
+          'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
+          'beállításaiban, majd nyisd meg újra a templomot.',
+        ),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('the (i) of a server error says miserend.hu is unavailable',
-        (tester) async {
+    testWidgets('the (i) of a server error says miserend.hu is unavailable', (
+      tester,
+    ) async {
       await refreshWith(
-          tester,
-          _page(_scheduleWith(_todayAt(9, 0)),
-              failure: ApiFailure.serverError,
-              dataAsOf: DateTime(2026, 8, 1, 10, 0)));
+        tester,
+        _page(
+          _scheduleWith(_todayAt(9, 0)),
+          failure: ApiFailure.serverError,
+          dataAsOf: DateTime(2026, 8, 1, 10, 0),
+        ),
+      );
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
 
       expect(
-          find.text('A miserend.hu jelenleg nem elérhető, az adatok '
-              '2026. 08. 01-i állapotot mutatnak.'),
-          findsOneWidget);
+        find.text(
+          'A miserend.hu jelenleg nem elérhető, az adatok '
+          '2026. 08. 01-i állapotot mutatnak.',
+        ),
+        findsOneWidget,
+      );
     });
   });
 
@@ -489,8 +549,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
-        findsOneWidget);
+    expect(
+      find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
+      findsOneWidget,
+    );
     expect(find.text('09:00'), findsNothing);
     expect(find.text('Nincs adat a mai miserendről'), findsNothing);
     expect(find.text('Most vasárnap'), findsNothing);

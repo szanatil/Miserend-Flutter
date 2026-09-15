@@ -15,28 +15,31 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 final DateTime _now = DateTime(2026, 9, 15, 12, 0);
 
 /// A church answered by a list endpoint, with today's `misek`.
-Map<String, Object?> _listed(int id, String name,
-        {double lat = 47.50, List<(int, String)> masses = const []}) =>
-    {
-      'id': id,
-      'nev': name,
-      'ismertnev': null,
-      'varos': 'Budapest',
-      'orszag': 'Magyarország',
-      'lat': lat,
-      'lon': 19.04,
-      'links': [],
-      'adoraciok': [],
-      'gyontatas': false,
-      'frissitve': '2026-09-01 00:00:00',
-      'misek': [
-        for (final (hour, info) in masses)
-          {
-            'idopont': '2026-09-15 ${hour.toString().padLeft(2, '0')}:00:00',
-            'informacio': info,
-          }
-      ],
-    };
+Map<String, Object?> _listed(
+  int id,
+  String name, {
+  double lat = 47.50,
+  List<(int, String)> masses = const [],
+}) => {
+  'id': id,
+  'nev': name,
+  'ismertnev': null,
+  'varos': 'Budapest',
+  'orszag': 'Magyarország',
+  'lat': lat,
+  'lon': 19.04,
+  'links': [],
+  'adoraciok': [],
+  'gyontatas': false,
+  'frissitve': '2026-09-01 00:00:00',
+  'misek': [
+    for (final (hour, info) in masses)
+      {
+        'idopont': '2026-09-15 ${hour.toString().padLeft(2, '0')}:00:00',
+        'informacio': info,
+      },
+  ],
+};
 
 http.Response _json(Map<String, Object?> body) =>
     http.Response.bytes(utf8.encode(jsonEncode(body)), 200);
@@ -49,11 +52,11 @@ class _Api {
   final List<http.Request> requests = [];
 
   MiserendApiClient get client => MiserendApiClient(
-        client: MockClient((request) async {
-          requests.add(request);
-          return answer(request);
-        }),
-      );
+    client: MockClient((request) async {
+      requests.add(request);
+      return answer(request);
+    }),
+  );
 }
 
 void main() {
@@ -64,24 +67,27 @@ void main() {
 
   setUp(() async {
     cache = await CacheDatabase.create(path: inMemoryDatabasePath);
-    await cache.importChurches([
-      BootstrapImporter.churchFromLegacyRow({
-        'tid': 1,
-        'nev': 'Régi név',
-        'lat': 47.50,
-        'lng': 19.04,
-        'kep': 'https://miserend.hu/kepek/templomok/1/a.jpg',
-      }),
-    ], [
-      CachedMass(
-        id: null,
-        apiMassId: null,
-        churchId: 1,
-        time: DateTime(2026, 9, 15, 8, 0),
-        info: null,
-        source: MassSource.bootstrap,
-      ),
-    ]);
+    await cache.importChurches(
+      [
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 1,
+          'nev': 'Régi név',
+          'lat': 47.50,
+          'lng': 19.04,
+          'kep': 'https://miserend.hu/kepek/templomok/1/a.jpg',
+        }),
+      ],
+      [
+        CachedMass(
+          id: null,
+          apiMassId: null,
+          churchId: 1,
+          time: DateTime(2026, 9, 15, 8, 0),
+          info: null,
+          source: MassSource.bootstrap,
+        ),
+      ],
+    );
     await cache.setBootstrappedAt(DateTime(2026, 8, 1, 10, 0));
   });
 
@@ -99,14 +105,15 @@ void main() {
       final list = await loaderWith(api).load(near);
 
       expect(list.churches.map((c) => c.name), ['Régi név']);
-      expect(list.churches.single.masses.single.time,
-          DateTime(2026, 9, 15, 8, 0));
+      expect(
+        list.churches.single.masses.single.time,
+        DateTime(2026, 9, 15, 8, 0),
+      );
       expect(list.failure, isNull);
       expect(api.requests, isEmpty);
     });
 
-    test('dates the data to the bootstrap import before any refresh',
-        () async {
+    test('dates the data to the bootstrap import before any refresh', () async {
       final list = await loaderWith(_Api((_) async => _json({}))).load(near);
 
       expect(list.dataAsOf, DateTime(2026, 8, 1, 10, 0));
@@ -120,42 +127,51 @@ void main() {
       await loaderWith(api).refresh(near, const []);
 
       expect(api.requests.single.url.path, '/api/v4/nearby');
-      expect(jsonDecode(api.requests.single.body),
-          containsPair('lat', 47.50));
+      expect(jsonDecode(api.requests.single.body), containsPair('lat', 47.50));
     });
 
     test('writes the answer through and reads the list again', () async {
-      final api = _Api((_) async => _json({
-            'templomok': [
-              _listed(1, 'Javított név',
-                  masses: [(7, 'Római katolikus Szentmise')]),
-              _listed(2, 'Új templom', lat: 47.51),
-            ],
-            'error': 0,
-          }));
+      final api = _Api(
+        (_) async => _json({
+          'templomok': [
+            _listed(
+              1,
+              'Javított név',
+              masses: [(7, 'Római katolikus Szentmise')],
+            ),
+            _listed(2, 'Új templom', lat: 47.51),
+          ],
+          'error': 0,
+        }),
+      );
 
       final list = await loaderWith(api).refresh(near, const []);
 
       expect(list.failure, isNull);
       expect(list.churches.map((c) => c.name), ['Javított név', 'Új templom']);
-      expect(list.churches.first.masses.map((m) => m.time),
-          [DateTime(2026, 9, 15, 7, 0)]);
+      expect(list.churches.first.masses.map((m) => m.time), [
+        DateTime(2026, 9, 15, 7, 0),
+      ]);
       // A minimal answer carries no photo; the cached one stays.
-      expect(list.churches.first.photo,
-          'https://miserend.hu/kepek/templomok/1/a.jpg');
+      expect(
+        list.churches.first.photo,
+        'https://miserend.hu/kepek/templomok/1/a.jpg',
+      );
     });
 
-    test('dates the data to the successful refresh, for later loads too',
-        () async {
-      final api = _Api((_) async => _json({'templomok': [], 'error': 0}));
-      final loader = loaderWith(api);
+    test(
+      'dates the data to the successful refresh, for later loads too',
+      () async {
+        final api = _Api((_) async => _json({'templomok': [], 'error': 0}));
+        final loader = loaderWith(api);
 
-      final refreshed = await loader.refresh(near, const []);
-      final later = await loader.load(near);
+        final refreshed = await loader.refresh(near, const []);
+        final later = await loader.load(near);
 
-      expect(refreshed.dataAsOf, _now);
-      expect(later.dataAsOf, _now);
-    });
+        expect(refreshed.dataAsOf, _now);
+        expect(later.dataAsOf, _now);
+      },
+    );
 
     test('no connection keeps what is shown and says so', () async {
       final api = _Api((_) async => throw const SocketException('offline'));
@@ -183,7 +199,8 @@ void main() {
 
     test('a failed refresh does not move the date of the data', () async {
       final loader = loaderWith(
-          _Api((_) async => _json({'templomok': [], 'error': 0})));
+        _Api((_) async => _json({'templomok': [], 'error': 0})),
+      );
       await loader.refresh(near, const []);
 
       final failing = ChurchListLoader(
@@ -200,21 +217,30 @@ void main() {
   group('refresh favorites', () {
     setUp(() async {
       await cache.importChurches([
-        BootstrapImporter.churchFromLegacyRow(
-            {'tid': 2, 'nev': 'Megszűnt templom', 'lat': 47.6, 'lng': 19.1}),
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 2,
+          'nev': 'Megszűnt templom',
+          'lat': 47.6,
+          'lng': 19.1,
+        }),
       ], const []);
     });
 
     test('reads the favorites from the cache, by name', () async {
-      final list = await loaderWith(_Api((_) async => _json({})))
-          .load(const FavoritesQuery([1, 2]));
+      final list = await loaderWith(
+        _Api((_) async => _json({})),
+      ).load(const FavoritesQuery([1, 2]));
 
-      expect(list.churches.map((c) => c.name), ['Megszűnt templom', 'Régi név']);
+      expect(list.churches.map((c) => c.name), [
+        'Megszűnt templom',
+        'Régi név',
+      ]);
     });
 
     test('asks the Church endpoint for every favorite, minimal', () async {
-      final api = _Api((_) async =>
-          _json({'templomok': [], 'hianyzo': [], 'error': 0}));
+      final api = _Api(
+        (_) async => _json({'templomok': [], 'hianyzo': [], 'error': 0}),
+      );
 
       await loaderWith(api).refresh(const FavoritesQuery([1, 2]), const []);
 
@@ -225,28 +251,34 @@ void main() {
       });
     });
 
-    test('a church the API no longer has leaves the cache and the favorites',
-        () async {
-      final gone = <int>[];
-      final api = _Api((_) async => _json({
+    test(
+      'a church the API no longer has leaves the cache and the favorites',
+      () async {
+        final gone = <int>[];
+        final api = _Api(
+          (_) async => _json({
             'templomok': [_listed(1, 'Megmaradt')],
             'hianyzo': [2],
             'error': 0,
-          }));
-      final loader = ChurchListLoader(
-        cache: cache,
-        api: api.client,
-        clock: () => _now,
-        onChurchesGone: (ids) async => gone.addAll(ids),
-      );
+          }),
+        );
+        final loader = ChurchListLoader(
+          cache: cache,
+          api: api.client,
+          clock: () => _now,
+          onChurchesGone: (ids) async => gone.addAll(ids),
+        );
 
-      final list =
-          await loader.refresh(const FavoritesQuery([1, 2]), const []);
+        final list = await loader.refresh(
+          const FavoritesQuery([1, 2]),
+          const [],
+        );
 
-      expect(list.churches.map((c) => c.name), ['Megmaradt']);
-      expect(await cache.getChurch(2), isNull);
-      expect(gone, [2]);
-    });
+        expect(list.churches.map((c) => c.name), ['Megmaradt']);
+        expect(await cache.getChurch(2), isNull);
+        expect(gone, [2]);
+      },
+    );
   });
 
   group('a church missing from a search or nearby answer', () {
@@ -261,33 +293,43 @@ void main() {
   });
 
   group('refresh search results', () {
-    test('asks the Church endpoint for at most the first hundred found',
-        () async {
-      await cache.importChurches([
-        for (var id = 100; id < 250; id++)
-          BootstrapImporter.churchFromLegacyRow(
-              {'tid': id, 'nev': 'Szent templom $id', 'lat': 47.5, 'lng': 19.0}),
-      ], const []);
-      final api = _Api((_) async =>
-          _json({'templomok': [], 'hianyzo': [], 'error': 0}));
-      final loader = loaderWith(api);
-      const query = SearchQuery.byName('Szent');
-      final shown = (await loader.load(query)).churches;
+    test(
+      'asks the Church endpoint for at most the first hundred found',
+      () async {
+        await cache.importChurches([
+          for (var id = 100; id < 250; id++)
+            BootstrapImporter.churchFromLegacyRow({
+              'tid': id,
+              'nev': 'Szent templom $id',
+              'lat': 47.5,
+              'lng': 19.0,
+            }),
+        ], const []);
+        final api = _Api(
+          (_) async => _json({'templomok': [], 'hianyzo': [], 'error': 0}),
+        );
+        final loader = loaderWith(api);
+        const query = SearchQuery.byName('Szent');
+        final shown = (await loader.load(query)).churches;
 
-      await loader.refresh(query, shown);
+        await loader.refresh(query, shown);
 
-      expect(shown, hasLength(150));
-      expect(api.requests.single.url.path, '/api/v4/church');
-      final ids = (jsonDecode(api.requests.single.body) as Map)['ids'] as List;
-      expect(ids, shown.take(100).map((c) => c.id).toList());
-    });
+        expect(shown, hasLength(150));
+        expect(api.requests.single.url.path, '/api/v4/church');
+        final ids =
+            (jsonDecode(api.requests.single.body) as Map)['ids'] as List;
+        expect(ids, shown.take(100).map((c) => c.id).toList());
+      },
+    );
 
     test('with nothing found in the cache, asks Search and shows what it '
         'wrote', () async {
-      final api = _Api((_) async => _json({
-            'templomok': [_listed(4242, 'Új Szent Kereszt templom')],
-            'error': 0,
-          }));
+      final api = _Api(
+        (_) async => _json({
+          'templomok': [_listed(4242, 'Új Szent Kereszt templom')],
+          'error': 0,
+        }),
+      );
       final loader = loaderWith(api);
       const query = SearchQuery.byName('Kereszt');
       final shown = (await loader.load(query)).churches;
@@ -296,16 +338,23 @@ void main() {
 
       expect(shown, isEmpty);
       expect(api.requests.single.url.path, '/api/v4/search');
-      expect(jsonDecode(api.requests.single.body), containsPair('q', 'Kereszt'));
+      expect(
+        jsonDecode(api.requests.single.body),
+        containsPair('q', 'Kereszt'),
+      );
       expect(list.churches.map((c) => c.name), ['Új Szent Kereszt templom']);
     });
 
     test('a city is searched in the cache by the city', () async {
-      final list = await loaderWith(_Api((_) async => _json({})))
-          .load(const SearchQuery.byCity('Budapest'));
+      final list = await loaderWith(
+        _Api((_) async => _json({})),
+      ).load(const SearchQuery.byCity('Budapest'));
 
-      expect(list.churches, isEmpty,
-          reason: 'the bootstrap row of this test has no city');
+      expect(
+        list.churches,
+        isEmpty,
+        reason: 'the bootstrap row of this test has no city',
+      );
     });
 
     test('no connection keeps the found churches and says so', () async {
@@ -324,42 +373,49 @@ void main() {
   group('refresh the map card', () {
     /// The recorded full church, answered for id 1.
     Map<String, Object?> fullChurch() {
-      final church = jsonDecode(
-              File('test/fixtures/church_38.json').readAsStringSync())
-          as Map<String, dynamic>
-        ..remove('error');
+      final church =
+          jsonDecode(File('test/fixtures/church_38.json').readAsStringSync())
+                as Map<String, dynamic>
+            ..remove('error');
       return church..['id'] = 1;
     }
 
-    test('asks for the whole church and writes its photos and description',
-        () async {
-      final api = _Api((_) async => _json({
+    test(
+      'asks for the whole church and writes its photos and description',
+      () async {
+        final api = _Api(
+          (_) async => _json({
             'templomok': [fullChurch()],
             'hianyzo': [],
             'error': 0,
-          }));
+          }),
+        );
 
-      final list = await loaderWith(api).refresh(const ChurchCardQuery(1), const []);
+        final list = await loaderWith(
+          api,
+        ).refresh(const ChurchCardQuery(1), const []);
 
-      expect(jsonDecode(api.requests.single.body), {
-        'ids': [1],
-        'response_length': 'full',
-      });
-      final stored = (await cache.getChurch(1))!;
-      expect(stored.photos, hasLength(7));
-      expect(stored.description, contains('Contra Aquincum'));
-      expect(list.churches.single.photo, stored.photos.first);
-      expect(list.removed, isEmpty);
-    });
+        expect(jsonDecode(api.requests.single.body), {
+          'ids': [1],
+          'response_length': 'full',
+        });
+        final stored = (await cache.getChurch(1))!;
+        expect(stored.photos, hasLength(7));
+        expect(stored.description, contains('Contra Aquincum'));
+        expect(list.churches.single.photo, stored.photos.first);
+        expect(list.removed, isEmpty);
+      },
+    );
 
     test('dates the card to when this phone last synced the church', () async {
       final loader = loaderWith(_Api((_) async => _json({})));
-      expect((await loader.load(const ChurchCardQuery(1))).dataAsOf,
-          DateTime(2026, 8, 1, 10, 0),
-          reason: 'a church never synced dates to the bootstrap import');
+      expect(
+        (await loader.load(const ChurchCardQuery(1))).dataAsOf,
+        DateTime(2026, 8, 1, 10, 0),
+        reason: 'a church never synced dates to the bootstrap import',
+      );
 
-      await cache.upsertChurch(
-          (await cache.getChurch(1))!, minimal: true);
+      await cache.upsertChurch((await cache.getChurch(1))!, minimal: true);
       final synced = (await cache.getChurch(1))!.localSyncedAt;
 
       final failing = ChurchListLoader(
@@ -375,8 +431,14 @@ void main() {
       final gone = <int>[];
       final loader = ChurchListLoader(
         cache: cache,
-        api: _Api((_) async =>
-            _json({'templomok': [], 'hianyzo': [1], 'error': 0})).client,
+        api:
+            _Api(
+              (_) async => _json({
+                'templomok': [],
+                'hianyzo': [1],
+                'error': 0,
+              }),
+            ).client,
         clock: () => _now,
         onChurchesGone: (ids) async => gone.addAll(ids),
       );

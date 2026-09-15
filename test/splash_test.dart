@@ -25,7 +25,8 @@ class _FakeStartup extends AppStartup {
 
   @override
   Future<void> bootstrapCache() async {
-    final succeeds = importSucceeds[imports.clamp(0, importSucceeds.length - 1)];
+    final succeeds =
+        importSucceeds[imports.clamp(0, importSucceeds.length - 1)];
     imports++;
     if (!succeeds) throw StateError('import failed');
     bootstrapped = true;
@@ -34,17 +35,20 @@ class _FakeStartup extends AppStartup {
 
 void main() {
   Future<void> pumpSplash(WidgetTester tester, AppStartup startup) async {
-    await tester.pumpWidget(MaterialApp(
-      home: RouteSplash(
-        startup: startup,
-        homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RouteSplash(
+          startup: startup,
+          homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('goes to the home screen once the cache has been filled',
-      (tester) async {
+  testWidgets('goes to the home screen once the cache has been filled', (
+    tester,
+  ) async {
     final startup = _FakeStartup(bootstrapped: true, importSucceeds: [true]);
 
     await pumpSplash(tester, startup);
@@ -53,8 +57,9 @@ void main() {
     expect(startup.imports, 0);
   });
 
-  testWidgets('fills the cache on the first start, then goes on',
-      (tester) async {
+  testWidgets('fills the cache on the first start, then goes on', (
+    tester,
+  ) async {
     final startup = _FakeStartup(bootstrapped: false, importSucceeds: [true]);
 
     await pumpSplash(tester, startup);
@@ -65,15 +70,18 @@ void main() {
 
   testWidgets('a failed first import stops on an error with a retry, rather '
       'than going on to empty lists', (tester) async {
-    final startup =
-        _FakeStartup(bootstrapped: false, importSucceeds: [false, true]);
+    final startup = _FakeStartup(
+      bootstrapped: false,
+      importSucceeds: [false, true],
+    );
 
     await pumpSplash(tester, startup);
 
     expect(find.text('Főképernyő'), findsNothing);
     expect(
-        find.text('Az adatok előkészítése nem sikerült. Próbáld újra.'),
-        findsOneWidget);
+      find.text('Az adatok előkészítése nem sikerült. Próbáld újra.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.widgetWithText(FilledButton, 'Újrapróbálás'));
     await tester.pumpAndSettle();

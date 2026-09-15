@@ -13,9 +13,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: true),
-        ),
+        const MaterialApp(home: MiserendMap(interactive: true)),
       );
 
       final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
@@ -52,9 +50,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: true, apiKey: ''),
-        ),
+        const MaterialApp(home: MiserendMap(interactive: true, apiKey: '')),
       );
 
       final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
@@ -71,15 +67,10 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: true),
-        ),
+        const MaterialApp(home: MiserendMap(interactive: true)),
       );
 
-      expect(
-        find.text('© OpenStreetMap contributors © CARTO'),
-        findsOneWidget,
-      );
+      expect(find.text('© OpenStreetMap contributors © CARTO'), findsOneWidget);
     });
 
     testWidgets('shows a compact attribution when compactAttribution is true', (
@@ -92,34 +83,34 @@ void main() {
       );
 
       expect(find.text('© OSM © CARTO'), findsOneWidget);
-      expect(
-        find.text('© OpenStreetMap contributors © CARTO'),
-        findsNothing,
-      );
+      expect(find.text('© OpenStreetMap contributors © CARTO'), findsNothing);
     });
   });
 
   group('MiserendMap markers', () {
-    testWidgets('renders one Marker per entry in markers, at the given points', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            markers: [
-              MiserendMapMarker(id: 1, point: budapest),
-              MiserendMapMarker(id: 2, point: debrecen),
-            ],
+    testWidgets(
+      'renders one Marker per entry in markers, at the given points',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MiserendMap(
+              interactive: true,
+              markers: [
+                MiserendMapMarker(id: 1, point: budapest),
+                MiserendMapMarker(id: 2, point: debrecen),
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      final markerLayer = tester.widget<MarkerLayer>(find.byType(MarkerLayer));
-      expect(markerLayer.markers, hasLength(2));
-      expect(markerLayer.markers[0].point, budapest);
-      expect(markerLayer.markers[1].point, debrecen);
-    });
+        final markerLayer = tester.widget<MarkerLayer>(
+          find.byType(MarkerLayer),
+        );
+        expect(markerLayer.markers, hasLength(2));
+        expect(markerLayer.markers[0].point, budapest);
+        expect(markerLayer.markers[1].point, debrecen);
+      },
+    );
 
     testWidgets('invokes onTap when a marker is tapped', (
       WidgetTester tester,
@@ -153,32 +144,22 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: true),
-        ),
+        const MaterialApp(home: MiserendMap(interactive: true)),
       );
 
       final flutterMap = tester.widget<FlutterMap>(find.byType(FlutterMap));
-      expect(
-        flutterMap.options.interactionOptions.flags,
-        InteractiveFlag.all,
-      );
+      expect(flutterMap.options.interactionOptions.flags, InteractiveFlag.all);
     });
 
     testWidgets('disables pan/zoom gestures when interactive is false', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: false),
-        ),
+        const MaterialApp(home: MiserendMap(interactive: false)),
       );
 
       final flutterMap = tester.widget<FlutterMap>(find.byType(FlutterMap));
-      expect(
-        flutterMap.options.interactionOptions.flags,
-        InteractiveFlag.none,
-      );
+      expect(flutterMap.options.interactionOptions.flags, InteractiveFlag.none);
     });
   });
 }

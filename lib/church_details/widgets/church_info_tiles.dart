@@ -34,8 +34,10 @@ class AccessibilityTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = _value(accessibility, 'wheelchair');
     final description =
-        (accessibility['wheelchair:description'] as Object?)?.toString().trim() ??
-            '';
+        (accessibility['wheelchair:description'] as Object?)
+            ?.toString()
+            .trim() ??
+        '';
 
     return SectionCard(
       title: 'Akadálymentesség',
@@ -58,10 +60,9 @@ class AccessibilityTile extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       description,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.apply(color: Colors.black54),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.apply(color: Colors.black54),
                     ),
                   ),
               ],
@@ -122,10 +123,11 @@ class LanguagesTile extends StatelessWidget {
     return codes.isNotEmpty && !(codes.length == 1 && codes.first == 'hu');
   }
 
-  static List<String> _clean(List<String> languages) => languages
-      .map((code) => code.trim().toLowerCase())
-      .where((code) => code.isNotEmpty)
-      .toList();
+  static List<String> _clean(List<String> languages) =>
+      languages
+          .map((code) => code.trim().toLowerCase())
+          .where((code) => code.isNotEmpty)
+          .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -165,10 +167,7 @@ class LanguagesTile extends StatelessWidget {
           border: Border.all(color: Colors.black12),
           borderRadius: BorderRadius.circular(2),
         ),
-        child: SvgPicture.asset(
-          'assets/flags/$code.svg',
-          fit: BoxFit.contain,
-        ),
+        child: SvgPicture.asset('assets/flags/$code.svg', fit: BoxFit.contain),
       ),
     );
   }
@@ -218,10 +217,9 @@ class CommunitiesTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           name,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.apply(color: CustomColors.accent),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
         ),
       ),
     );

@@ -9,23 +9,22 @@ class SearchParams {
   String? city;
   String? searchTerm;
 
-  static SearchParams fromCity(String city)
-  {
+  static SearchParams fromCity(String city) {
     var param = SearchParams();
     param.city = city;
     return param;
   }
 
-  static SearchParams fromSearchTerm(String searchTerm)
-  {
+  static SearchParams fromSearchTerm(String searchTerm) {
     var param = SearchParams();
     param.searchTerm = searchTerm;
     return param;
   }
 
-  ChurchListQuery get query => city != null
-      ? SearchQuery.byCity(city!)
-      : SearchQuery.byName(searchTerm!);
+  ChurchListQuery get query =>
+      city != null
+          ? SearchQuery.byCity(city!)
+          : SearchQuery.byName(searchTerm!);
 
   @override
   String toString() {
@@ -47,13 +46,14 @@ class SearchResultsPage extends StatefulWidget {
   State<SearchResultsPage> createState() => _SearchResultsPageState();
 }
 
-class _SearchResultsPageState extends State<SearchResultsPage>  with
-    AutomaticKeepAliveClientMixin<SearchResultsPage>{
-
-  late final ChurchListLoader _loader = widget.loader ??
+class _SearchResultsPageState extends State<SearchResultsPage>
+    with AutomaticKeepAliveClientMixin<SearchResultsPage> {
+  late final ChurchListLoader _loader =
+      widget.loader ??
       ChurchListLoader(
-          onChurchesGone:
-              Provider.of<FavoritesService>(context, listen: false).removeAll);
+        onChurchesGone:
+            Provider.of<FavoritesService>(context, listen: false).removeAll,
+      );
   late final ChurchListQuery _query = widget.searchParams.query;
 
   ChurchList? _list;
@@ -72,18 +72,17 @@ class _SearchResultsPageState extends State<SearchResultsPage>  with
     super.build(context);
     final list = _list;
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.searchParams.toString()),
-        ),
+      appBar: AppBar(title: Text(widget.searchParams.toString())),
       body: Container(
         color: Colors.black12,
-        child: list == null
-            ? const LoadingView(message: 'Keresés...')
-            : ChurchListView(
-                list: list,
-                emptyMessage: 'Nincs találat',
-                onRefresh: _load,
-              ),
+        child:
+            list == null
+                ? const LoadingView(message: 'Keresés...')
+                : ChurchListView(
+                  list: list,
+                  emptyMessage: 'Nincs találat',
+                  onRefresh: _load,
+                ),
       ),
     );
   }

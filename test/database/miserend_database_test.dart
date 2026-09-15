@@ -14,8 +14,10 @@ void main() {
   final firstExpiredDay = DateTime(2026, 8, 31, 0, 1);
 
   setUp(() async {
-    db = await databaseFactory.openDatabase(inMemoryDatabasePath,
-        options: OpenDatabaseOptions(singleInstance: false));
+    db = await databaseFactory.openDatabase(
+      inMemoryDatabasePath,
+      options: OpenDatabaseOptions(singleInstance: false),
+    );
   });
 
   tearDown(() async => db.close());

@@ -20,8 +20,8 @@ class FavoritesPrefetch {
     MiserendApiClient? api,
     this.clock = DateTime.now,
     this.onChurchesGone,
-  })  : _cache = cache,
-        _api = api ?? MiserendApiClient();
+  }) : _cache = cache,
+       _api = api ?? MiserendApiClient();
 
   CacheDatabase? _cache;
   final MiserendApiClient _api;
@@ -55,8 +55,10 @@ class FavoritesPrefetch {
       case ApiSuccess(:final value):
         response = value;
     }
-    await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
-        .write(response, today: now, minimal: true);
+    await CacheWriteThrough(
+      cache,
+      onChurchesGone: onChurchesGone,
+    ).write(response, today: now, minimal: true);
 
     final today = DateTime(now.year, now.month, now.day);
     for (final id in favoriteIds) {
@@ -71,7 +73,9 @@ class FavoritesPrefetch {
         lat: lat,
         lon: lon,
         from: today,
-        until: today.add(const Duration(days: ChurchScheduleLoader.scheduleDays)),
+        until: today.add(
+          const Duration(days: ChurchScheduleLoader.scheduleDays),
+        ),
       );
       switch (masses) {
         case ApiFailed():

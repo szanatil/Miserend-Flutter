@@ -77,7 +77,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
   /// Runs only while there is something to advance through, the header is open,
   /// the app is in front, and the person has not taken over.
   void _syncTimer({bool resumed = true}) {
-    final shouldRun = widget.photos.length > 1 &&
+    final shouldRun =
+        widget.photos.length > 1 &&
         !_handedOver &&
         !_collapsed &&
         resumed &&
@@ -95,8 +96,11 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
       return;
     }
     final next = (_index + 1) % widget.photos.length;
-    _controller.animateToPage(next,
-        duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+    _controller.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _handOver() {
@@ -113,22 +117,22 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
     // point animating a 56px sliver of a photo behind the toolbar.
     final settings =
         context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
-    final collapsed = settings != null &&
-        settings.currentExtent <= settings.minExtent + 1.0;
+    final collapsed =
+        settings != null && settings.currentExtent <= settings.minExtent + 1.0;
     if (collapsed != _collapsed) {
       _collapsed = collapsed;
       WidgetsBinding.instance.addPostFrameCallback((_) => _syncTimer());
     }
 
     if (widget.photos.isEmpty) {
-      return Image.asset(_placeholder,
-          fit: BoxFit.cover, cacheHeight: _decodeHeight(context));
+      return Image.asset(
+        _placeholder,
+        fit: BoxFit.cover,
+        cacheHeight: _decodeHeight(context),
+      );
     }
     if (widget.photos.length == 1) {
-      return GestureDetector(
-        onTap: () => _openGallery(0),
-        child: _photo(0),
-      );
+      return GestureDetector(onTap: () => _openGallery(0), child: _photo(0));
     }
 
     return Stack(
@@ -140,18 +144,14 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
             controller: _controller,
             itemCount: widget.photos.length,
             onPageChanged: (index) => setState(() => _index = index),
-            itemBuilder: (context, index) => GestureDetector(
-              onTap: () => _openGallery(index),
-              child: _photo(index),
-            ),
+            itemBuilder:
+                (context, index) => GestureDetector(
+                  onTap: () => _openGallery(index),
+                  child: _photo(index),
+                ),
           ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 8,
-          child: _dots(),
-        ),
+        Positioned(left: 0, right: 0, bottom: 8, child: _dots()),
       ],
     );
   }
@@ -163,10 +163,12 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
         image: widget.photos[index],
         fit: BoxFit.cover,
         placeholder: _placeholder,
-        imageErrorBuilder: (context, error, stackTrace) => Image.asset(
-            _placeholder,
-            fit: BoxFit.cover,
-            cacheHeight: _decodeHeight(context)),
+        imageErrorBuilder:
+            (context, error, stackTrace) => Image.asset(
+              _placeholder,
+              fit: BoxFit.cover,
+              cacheHeight: _decodeHeight(context),
+            ),
         imageCacheHeight: _decodeHeight(context),
         placeholderCacheHeight: _decodeHeight(context),
       ),
@@ -193,13 +195,16 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
 
   void _openGallery(int index) {
     _handOver();
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => PhotoGalleryPage(
-        photos: widget.photos,
-        initialIndex: index,
-        heroPrefix: widget.heroPrefix,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (_) => PhotoGalleryPage(
+              photos: widget.photos,
+              initialIndex: index,
+              heroPrefix: widget.heroPrefix,
+            ),
       ),
-    ));
+    );
   }
 
   int _decodeHeight(BuildContext context) =>

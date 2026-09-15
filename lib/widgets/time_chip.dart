@@ -22,8 +22,10 @@ class TimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = Text(time?.to24hours() ?? "?",
-        style: Theme.of(context).textTheme.bodyMedium?.apply(color: Colors.white));
+    final label = Text(
+      time?.to24hours() ?? "?",
+      style: Theme.of(context).textTheme.bodyMedium?.apply(color: Colors.white),
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
@@ -33,17 +35,21 @@ class TimeChip extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(4.0),
-            child: hasInfo
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      label,
-                      const SizedBox(width: 4),
-                      const Icon(Icons.info_outline,
-                          size: 14, color: Colors.white),
-                    ],
-                  )
-                : label,
+            child:
+                hasInfo
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        label,
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ],
+                    )
+                    : label,
           ),
         ),
       ),

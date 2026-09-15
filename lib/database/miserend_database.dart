@@ -35,10 +35,13 @@ class MiserendDatabase {
     final db = await openDatabase(join(await getDatabasesPath(), databaseName));
     await _createIndexes(db);
     final downloaded = await Preferences.getDatabaseLastUpdated();
-    return MiserendDatabase(db,
-        downloadedAt: downloaded == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(downloaded));
+    return MiserendDatabase(
+      db,
+      downloadedAt:
+          downloaded == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(downloaded),
+    );
   }
 
   /// The downloaded file ships without any index, so the bootstrap import's
@@ -56,10 +59,12 @@ class MiserendDatabase {
   bool massesExpiredOn(DateTime day) {
     final downloaded = downloadedAt;
     if (downloaded == null) return true;
-    final age = DateTime.utc(day.year, day.month, day.day)
-        .difference(
-            DateTime.utc(downloaded.year, downloaded.month, downloaded.day))
-        .inDays;
+    final age =
+        DateTime.utc(day.year, day.month, day.day)
+            .difference(
+              DateTime.utc(downloaded.year, downloaded.month, downloaded.day),
+            )
+            .inDays;
     return age > massesValidForDays;
   }
 }

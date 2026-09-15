@@ -28,28 +28,28 @@ const _locations = [
 ];
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
-      id: id,
-      name: name,
-      commonName: null,
-      city: 'Kecskemét',
-      lat: 47.2537,
-      lon: 19.7523,
-      photo: null,
-      masses: const [],
-    );
+  id: id,
+  name: name,
+  commonName: null,
+  city: 'Kecskemét',
+  lat: 47.2537,
+  lon: 19.7523,
+  photo: null,
+  masses: const [],
+);
 
 Position _position(double lat, double lon) => Position(
-      latitude: lat,
-      longitude: lon,
-      timestamp: DateTime(2026, 9, 15, 12, 0),
-      accuracy: 10,
-      altitude: 0,
-      altitudeAccuracy: 0,
-      heading: 0,
-      headingAccuracy: 0,
-      speed: 0,
-      speedAccuracy: 0,
-    );
+  latitude: lat,
+  longitude: lon,
+  timestamp: DateTime(2026, 9, 15, 12, 0),
+  accuracy: 10,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
 
 class _MapLoader extends FakeChurchListLoader {
   _MapLoader(super.cached, {super.refreshed});
@@ -98,31 +98,37 @@ void main() {
 
   const noFix = PositionUnavailable(PositionUnavailableReason.noFreshFix);
 
-  Future<MapController> pumpPage(WidgetTester tester, _MapLoader loader,
-      {LocationProvider? location}) async {
+  Future<MapController> pumpPage(
+    WidgetTester tester,
+    _MapLoader loader, {
+    LocationProvider? location,
+  }) async {
     final controller = MapController();
-    await tester.pumpWidget(ChangeNotifierProvider<FavoritesService>.value(
-      value: favorites,
-      child: MaterialApp(
-        home: Scaffold(
-          body: MapPage(
-            loader: loader,
-            location: location ?? _FakeLocation([noFix]),
-            mapController: controller,
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: MaterialApp(
+          home: Scaffold(
+            body: MapPage(
+              loader: loader,
+              location: location ?? _FakeLocation([noFix]),
+              mapController: controller,
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pump();
     return controller;
   }
 
-  List<Object?> markerIds(WidgetTester tester) => tester
-      .widget<MarkerLayer>(find.byType(MarkerLayer))
-      .markers
-      .map((marker) => (marker.key as ValueKey).value)
-      .toList();
+  List<Object?> markerIds(WidgetTester tester) =>
+      tester
+          .widget<MarkerLayer>(find.byType(MarkerLayer))
+          .markers
+          .map((marker) => (marker.key as ValueKey).value)
+          .toList();
 
   /// Taps the marker the way a finger on its pin would.
   Future<void> tapMarker(WidgetTester tester, int id) async {
@@ -152,11 +158,12 @@ void main() {
   group('church card', () {
     testWidgets('appears from the cache at once, while the whole church is '
         'asked for', (tester) async {
-      final loader = _MapLoader([
-        [_entry(1, 'Tárolt templom')]
-      ], refreshed: [
-        Completer<ChurchList>()
-      ]);
+      final loader = _MapLoader(
+        [
+          [_entry(1, 'Tárolt templom')],
+        ],
+        refreshed: [Completer<ChurchList>()],
+      );
       await pumpPage(tester, loader);
 
       await tapMarker(tester, 1);
@@ -171,12 +178,16 @@ void main() {
 
     testWidgets('reads again once the answer is in', (tester) async {
       await pumpPage(
-          tester,
-          _MapLoader([
-            [_entry(1, 'Tárolt templom')]
-          ], refreshed: [
-            listOf([_entry(1, 'Javított templom')])
-          ]));
+        tester,
+        _MapLoader(
+          [
+            [_entry(1, 'Tárolt templom')],
+          ],
+          refreshed: [
+            listOf([_entry(1, 'Javított templom')]),
+          ],
+        ),
+      );
 
       await tapMarker(tester, 1);
 
@@ -186,21 +197,31 @@ void main() {
 
     testWidgets('no connection marks the card with an (i)', (tester) async {
       await pumpPage(
-          tester,
-          _MapLoader([
-            [_entry(1, 'Tárolt templom')]
-          ], refreshed: [
-            listOf(const [],
-                failure: ApiFailure.noConnection,
-                dataAsOf: DateTime(2026, 9, 1, 9, 0))
-          ]));
+        tester,
+        _MapLoader(
+          [
+            [_entry(1, 'Tárolt templom')],
+          ],
+          refreshed: [
+            listOf(
+              const [],
+              failure: ApiFailure.noConnection,
+              dataAsOf: DateTime(2026, 9, 1, 9, 0),
+            ),
+          ],
+        ),
+      );
 
       await tapMarker(tester, 1);
 
       expect(find.text('Tárolt templom'), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      final card = tester.widget<Card>(find.descendant(
-          of: find.byType(ChurchCard), matching: find.byType(Card)));
+      final card = tester.widget<Card>(
+        find.descendant(
+          of: find.byType(ChurchCard),
+          matching: find.byType(Card),
+        ),
+      );
       expect(card.color, isNot(OfflineNotice.serverErrorTint));
 
       await tester.tap(find.byType(OfflineInfoButton));
@@ -211,28 +232,36 @@ void main() {
 
     testWidgets('a server error tints the card and marks it', (tester) async {
       await pumpPage(
-          tester,
-          _MapLoader([
-            [_entry(1, 'Tárolt templom')]
-          ], refreshed: [
-            listOf(const [], failure: ApiFailure.serverError)
-          ]));
+        tester,
+        _MapLoader(
+          [
+            [_entry(1, 'Tárolt templom')],
+          ],
+          refreshed: [listOf(const [], failure: ApiFailure.serverError)],
+        ),
+      );
 
       await tapMarker(tester, 1);
 
-      final card = tester.widget<Card>(find.descendant(
-          of: find.byType(ChurchCard), matching: find.byType(Card)));
+      final card = tester.widget<Card>(
+        find.descendant(
+          of: find.byType(ChurchCard),
+          matching: find.byType(Card),
+        ),
+      );
       expect(card.color, OfflineNotice.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
 
-    testWidgets('tapping the map away from the markers closes the card',
-        (tester) async {
+    testWidgets('tapping the map away from the markers closes the card', (
+      tester,
+    ) async {
       await pumpPage(
-          tester,
-          _MapLoader([
-            [_entry(1, 'Tárolt templom')]
-          ]));
+        tester,
+        _MapLoader([
+          [_entry(1, 'Tárolt templom')],
+        ]),
+      );
       await tapMarker(tester, 1);
       expect(find.text('Tárolt templom'), findsOneWidget);
 
@@ -246,36 +275,56 @@ void main() {
     testWidgets('a church removed from miserend.hu closes the card, loses its '
         'marker and says so', (tester) async {
       await pumpPage(
-          tester,
-          _MapLoader([
-            [_entry(1, 'Megszűnt templom')]
-          ], refreshed: [
+        tester,
+        _MapLoader(
+          [
+            [_entry(1, 'Megszűnt templom')],
+          ],
+          refreshed: [
             const ChurchList(
-                churches: [], failure: null, dataAsOf: null, removed: [1])
-          ]));
+              churches: [],
+              failure: null,
+              dataAsOf: null,
+              removed: [1],
+            ),
+          ],
+        ),
+      );
 
       await tapMarker(tester, 1);
 
       expect(find.text('Megszűnt templom'), findsNothing);
       expect(markerIds(tester), [2]);
-      expect(find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
-          findsOneWidget);
+      expect(
+        find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
+        findsOneWidget,
+      );
     });
   });
 
   group('position', () {
-    testWidgets('without a position the map stays on the country',
-        (tester) async {
-      final controller = await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
+    testWidgets('without a position the map stays on the country', (
+      tester,
+    ) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+      );
 
       expect(controller.camera.center, MiserendMap.defaultInitialCenter);
-      expect(find.byType(SnackBar), findsNothing,
-          reason: 'the automatic attempt at opening stays quiet');
+      expect(
+        find.byType(SnackBar),
+        findsNothing,
+        reason: 'the automatic attempt at opening stays quiet',
+      );
     });
 
     testWidgets('with a position the map moves there', (tester) async {
-      final controller = await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]),
-          location: _FakeLocation([PositionFound(_position(47.5, 19.04))]));
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: _FakeLocation([PositionFound(_position(47.5, 19.04))]),
+      );
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
     });
@@ -283,28 +332,31 @@ void main() {
     const cases = {
       PositionUnavailableReason.permissionDenied: (
         'A helyzeted mutatásához engedélyezd a helyadatot.',
-        'Engedélyezés'
+        'Engedélyezés',
       ),
       PositionUnavailableReason.permissionDeniedForever: (
         'A helyzeted mutatásához engedélyezd a helyadatot a telefon '
             'beállításaiban.',
-        'Beállítások megnyitása'
+        'Beállítások megnyitása',
       ),
       PositionUnavailableReason.serviceDisabled: (
         'A helyzeted mutatásához kapcsold be a helymeghatározást.',
-        'Beállítások megnyitása'
+        'Beállítások megnyitása',
       ),
       PositionUnavailableReason.noFreshFix: (
         'Nem sikerült meghatározni a helyzetedet.',
-        null
+        null,
       ),
     };
 
     for (final MapEntry(key: reason, value: (text, action)) in cases.entries) {
       testWidgets('my-position button, ${reason.name}: a SnackBar with the '
           'reason and its way out', (tester) async {
-        await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]),
-            location: _FakeLocation([PositionUnavailable(reason)]));
+        await pumpPage(
+          tester,
+          _MapLoader([<ChurchListEntry>[]]),
+          location: _FakeLocation([PositionUnavailable(reason)]),
+        );
 
         await tester.tap(find.byIcon(Icons.my_location));
         await tester.pump();
@@ -320,15 +372,19 @@ void main() {
       });
     }
 
-    testWidgets('allowing the permission from the SnackBar moves the map',
-        (tester) async {
+    testWidgets('allowing the permission from the SnackBar moves the map', (
+      tester,
+    ) async {
       final location = _FakeLocation([
         noFix,
         const PositionUnavailable(PositionUnavailableReason.permissionDenied),
         PositionFound(_position(47.5, 19.04)),
       ]);
-      final controller =
-          await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]), location: location);
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: location,
+      );
 
       await tester.tap(find.byIcon(Icons.my_location));
       await showSnackBar(tester);
@@ -346,13 +402,17 @@ void main() {
         const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
         PositionFound(_position(47.5, 19.04)),
       ]);
-      final controller =
-          await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]), location: location);
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: location,
+      );
 
       await tester.tap(find.byIcon(Icons.my_location));
       await showSnackBar(tester);
-      await tester
-          .tap(find.widgetWithText(SnackBarAction, 'Beállítások megnyitása'));
+      await tester.tap(
+        find.widgetWithText(SnackBarAction, 'Beállítások megnyitása'),
+      );
       await tester.pump();
       expect(location.locationSettingsOpened, 1);
 

@@ -71,27 +71,31 @@ class _MiserendMapState extends State<MiserendMap> {
     }
   }
 
-  List<Marker> _buildMarkers() => widget.markers
-      .map((m) => Marker(
-            key: ValueKey(m.id),
-            point: m.point,
-            alignment: Alignment.topCenter,
-            child: GestureDetector(
-              onTap: m.onTap,
-              child: const Icon(
-                Icons.location_pin,
-                color: Colors.red,
-                size: 40,
+  List<Marker> _buildMarkers() =>
+      widget.markers
+          .map(
+            (m) => Marker(
+              key: ValueKey(m.id),
+              point: m.point,
+              alignment: Alignment.topCenter,
+              child: GestureDetector(
+                onTap: m.onTap,
+                child: const Icon(
+                  Icons.location_pin,
+                  color: Colors.red,
+                  size: 40,
+                ),
               ),
             ),
-          ))
-      .toList();
+          )
+          .toList();
 
   bool get _hasApiKey => widget.apiKey != null && widget.apiKey!.isNotEmpty;
 
-  String get _tileUrlTemplate => _hasApiKey
-      ? 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${widget.apiKey}'
-      : MiserendMap._freeTileUrlTemplate;
+  String get _tileUrlTemplate =>
+      _hasApiKey
+          ? 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${widget.apiKey}'
+          : MiserendMap._freeTileUrlTemplate;
 
   List<String> get _tileSubdomains =>
       _hasApiKey ? const [] : MiserendMap._freeTileSubdomains;
@@ -107,9 +111,10 @@ class _MiserendMapState extends State<MiserendMap> {
             initialZoom: widget.initialZoom,
             onTap: widget.onTap == null ? null : (_, __) => widget.onTap!(),
             interactionOptions: InteractionOptions(
-              flags: widget.interactive
-                  ? InteractiveFlag.all
-                  : InteractiveFlag.none,
+              flags:
+                  widget.interactive
+                      ? InteractiveFlag.all
+                      : InteractiveFlag.none,
             ),
           ),
           children: [

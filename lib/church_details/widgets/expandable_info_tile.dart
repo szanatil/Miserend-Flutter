@@ -34,7 +34,9 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
   @override
   Widget build(BuildContext context) {
     final style =
-        widget.style ?? Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+        widget.style ??
+        Theme.of(context).textTheme.bodyMedium ??
+        const TextStyle();
     final title = widget.title;
 
     return LayoutBuilder(
@@ -51,9 +53,10 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
               widget.text,
               style: style,
               maxLines: _expanded || !overflows ? null : widget.previewLines,
-              overflow: _expanded || !overflows
-                  ? TextOverflow.clip
-                  : TextOverflow.ellipsis,
+              overflow:
+                  _expanded || !overflows
+                      ? TextOverflow.clip
+                      : TextOverflow.ellipsis,
             ),
             if (overflows)
               Align(
@@ -70,7 +73,9 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
                   ),
                   onPressed: () => setState(() => _expanded = !_expanded),
                   icon: Icon(
-                    _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     size: 20,
                   ),
                   label: Text(_expanded ? 'Kevesebb' : 'Több'),

@@ -26,11 +26,7 @@ import '../widgets/time_chip.dart';
 import 'package:map_launcher/map_launcher.dart';
 
 class ChurchDetailsPage extends StatefulWidget {
-  const ChurchDetailsPage({
-    super.key,
-    required this.church,
-    this.loader,
-  });
+  const ChurchDetailsPage({super.key, required this.church, this.loader});
 
   /// The row the calling list already had. It seeds the name and the map while
   /// the cache read is in flight; everything the page renders afterwards comes
@@ -57,8 +53,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   void initState() {
     super.initState();
     loadMasses();
-    isFavorite =
-        Provider.of<FavoritesService>(context, listen: false).isFavorite(widget.church.id);
+    isFavorite = Provider.of<FavoritesService>(
+      context,
+      listen: false,
+    ).isFavorite(widget.church.id);
   }
 
   ChurchDetails? get _details => _data?.church;
@@ -148,10 +146,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           if (commonName.isNotEmpty)
             Text(
               commonName,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.apply(color: Colors.black45),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.apply(color: Colors.black45),
             ),
           if (address.isNotEmpty)
             Padding(
@@ -160,16 +157,18 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 onTap: _showLocationOnMap,
                 child: Row(
                   children: [
-                    const Icon(Icons.place_outlined,
-                        size: 18, color: Colors.black54),
+                    const Icon(
+                      Icons.place_outlined,
+                      size: 18,
+                      color: Colors.black54,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         address,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.apply(color: Colors.black54),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.apply(color: Colors.black54),
                       ),
                     ),
                   ],
@@ -184,10 +183,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   String _address() {
     final city = _details?.city ?? widget.church.city ?? '';
     final street = _details?.street ?? widget.church.street ?? '';
-    return [city, street]
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
-        .join(', ');
+    return [
+      city,
+      street,
+    ].map((part) => part.trim()).where((part) => part.isNotEmpty).join(', ');
   }
 
   Widget _actionButtons() {
@@ -202,9 +201,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             child: Column(
               spacing: 8,
               children: [
-                Icon(isFavorite ? Icons.favorite : Icons.favorite_border,
-                    size: 32, color: Colors.black54),
-                Text("Kedvencekhez")
+                Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  size: 32,
+                  color: Colors.black54,
+                ),
+                Text("Kedvencekhez"),
               ],
             ),
           ),
@@ -214,10 +216,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               spacing: 8,
               children: [
                 Icon(Icons.error, size: 32, color: Colors.black54),
-                Text("Hibajelentés")
+                Text("Hibajelentés"),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -246,8 +248,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           // section would repeat itself.
           if (sundayOffset != 0) ...[
             const SizedBox(height: 8),
-            Text("Most vasárnap",
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              "Most vasárnap",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             _massListWidgetForDay(sundayOffset),
           ],
           if (note.isNotEmpty) ...[
@@ -255,10 +259,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             ExpandableInfoTile(
               title: 'Megjegyzés a miserendhez',
               text: note,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.apply(color: Colors.black54),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.apply(color: Colors.black54),
             ),
           ],
         ],
@@ -272,9 +275,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// before that it means "not downloaded yet", and on a mass-times app the two
   /// must not look alike.
   Widget _massListWidgetForDay(int offset) {
-    final masses = offset >= 0 && offset < _masses.length
-        ? _masses[offset]
-        : const <CachedMass>[];
+    final masses =
+        offset >= 0 && offset < _masses.length
+            ? _masses[offset]
+            : const <CachedMass>[];
 
     if (masses.isEmpty) {
       final fresh = _data?.scheduleIsFresh ?? false;
@@ -282,18 +286,18 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       if (fresh) {
         text = 'Ezen a napon nincs mise';
       } else {
-        text = offset == 0
-            ? 'Nincs adat a mai miserendről'
-            : 'Nincs adat erről a napról';
+        text =
+            offset == 0
+                ? 'Nincs adat a mai miserendről'
+                : 'Nincs adat erről a napról';
       }
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: Text(
           text,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.apply(color: Colors.black45),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.apply(color: Colors.black45),
         ),
       );
     }
@@ -324,7 +328,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   Widget _dayStrip() {
     final days = <int>[
       for (var offset = 1; offset < _masses.length; offset++)
-        if (_masses[offset].isNotEmpty) offset
+        if (_masses[offset].isNotEmpty) offset,
     ];
     if (days.isEmpty) {
       return const SizedBox.shrink();
@@ -351,15 +355,17 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(DayLabel.forDate(dateTime, _today),
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                DayLabel.forDate(dateTime, _today),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               Text(DayLabel.date.format(dateTime)),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 4,
                 runSpacing: 4,
                 children: [
-                  for (final mass in _masses[dayOffset]) _timeChip(mass)
+                  for (final mass in _masses[dayOffset]) _timeChip(mass),
                 ],
               ),
             ],
@@ -394,7 +400,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         email: details.email,
         links: details.links,
         parish: details.parish,
-      )
+      ),
     ];
   }
 
@@ -431,17 +437,17 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Text(
         'Frissítve: ${DayLabel.date.format(updatedAt)}',
-        style: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.apply(color: Colors.black38),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.apply(color: Colors.black38),
       ),
     );
   }
 
   Widget _mapCard() {
-    final gettingThere =
-        MiserendText.normalize(_details?.gettingThere ?? widget.church.gettingThere);
+    final gettingThere = MiserendText.normalize(
+      _details?.gettingThere ?? widget.church.gettingThere,
+    );
 
     return SectionCard(
       title: "Megközelítés",
@@ -459,10 +465,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 compactAttribution: true,
                 apiKey: const String.fromEnvironment('CARTO_API_KEY'),
                 markers: [
-                  MiserendMapMarker(
-                    id: widget.church.id,
-                    point: _location(),
-                  ),
+                  MiserendMapMarker(id: widget.church.id, point: _location()),
                 ],
               ),
             ),
@@ -480,11 +483,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             onTap: _showDirectionsOnMap,
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Text("ÚTVONAL",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium!
-                      .apply(color: CustomColors.accent)),
+              child: Text(
+                "ÚTVONAL",
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium!.apply(color: CustomColors.accent),
+              ),
             ),
           ),
         ],
@@ -495,11 +499,16 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   LatLng _location() {
     final lat = _details?.lat ?? widget.church.lat;
     final lon = _details?.lon ?? widget.church.lon;
-    return (lat != null && lon != null) ? LatLng(lat, lon) : widget.church.location;
+    return (lat != null && lon != null)
+        ? LatLng(lat, lon)
+        : widget.church.location;
   }
 
   Future<void> _toggleFavorites() async {
-    Provider.of<FavoritesService>(context, listen: false).toggle(widget.church.id);
+    Provider.of<FavoritesService>(
+      context,
+      listen: false,
+    ).toggle(widget.church.id);
     setState(() {
       isFavorite = !isFavorite;
     });
@@ -508,7 +517,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Renders whatever the cache holds, then again once the API has answered.
   Future<void> loadMasses() async {
     final favorites = Provider.of<FavoritesService>(context, listen: false);
-    final loader = widget.loader ??
+    final loader =
+        widget.loader ??
         ChurchScheduleLoader(onChurchesGone: favorites.removeAll);
 
     final cached = await loader.loadCached(widget.church.id, _today);
@@ -537,10 +547,13 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-            content: StatefulBuilder(// You need this, notice the parameters below:
-                builder: (BuildContext context, StateSetter setState) {
-          return ReportPopup(church: widget.church);
-        }));
+          content: StatefulBuilder(
+            // You need this, notice the parameters below:
+            builder: (BuildContext context, StateSetter setState) {
+              return ReportPopup(church: widget.church);
+            },
+          ),
+        );
       },
     );
   }
@@ -565,8 +578,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     }
     final location = _location();
     await map.showDirections(
-        destination: Coords(location.latitude, location.longitude),
-        destinationTitle: _details?.name ?? widget.church.name ?? "");
+      destination: Coords(location.latitude, location.longitude),
+      destinationTitle: _details?.name ?? widget.church.name ?? "",
+    );
   }
 
   /// Null when the device has no map application at all, which is the case on
@@ -578,8 +592,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       return availableMaps.first;
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Nincs telepítve térkép alkalmazás a készüléken.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nincs telepítve térkép alkalmazás a készüléken.'),
+        ),
+      );
     }
     return null;
   }

@@ -40,18 +40,21 @@ class PositionUnavailableView extends StatelessWidget {
 
   /// The button's label and action for [reason], or null when there is
   /// nothing to press — no fix in time is retried by pulling the list down.
-  static (String, VoidCallback)? action(PositionUnavailableReason reason,
-      LocationProvider location, VoidCallback onRetry) {
+  static (String, VoidCallback)? action(
+    PositionUnavailableReason reason,
+    LocationProvider location,
+    VoidCallback onRetry,
+  ) {
     return switch (reason) {
       PositionUnavailableReason.permissionDenied => ('Engedélyezés', onRetry),
       PositionUnavailableReason.permissionDeniedForever => (
-          'Beállítások megnyitása',
-          location.openAppSettings
-        ),
+        'Beállítások megnyitása',
+        location.openAppSettings,
+      ),
       PositionUnavailableReason.serviceDisabled => (
-          'Beállítások megnyitása',
-          location.openLocationSettings
-        ),
+        'Beállítások megnyitása',
+        location.openLocationSettings,
+      ),
       PositionUnavailableReason.noFreshFix => null,
     };
   }

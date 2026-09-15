@@ -11,25 +11,27 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 
-http.Response _fixtureResponse(String name) => http.Response.bytes(
-      File('test/fixtures/$name').readAsBytesSync(),
-      200,
-    );
+http.Response _fixtureResponse(String name) =>
+    http.Response.bytes(File('test/fixtures/$name').readAsBytesSync(), 200);
 
 void main() {
   group('fetchChurches', () {
     /// The single-church recording, in the shape the `ids` form answers with.
     http.Response idsResponse(String fixture, {List<int> missing = const []}) {
-      final church = jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
-          as Map<String, dynamic>
-        ..remove('error');
+      final church =
+          jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
+                as Map<String, dynamic>
+            ..remove('error');
       return http.Response.bytes(
-          utf8.encode(jsonEncode({
+        utf8.encode(
+          jsonEncode({
             'templomok': [church],
             'hianyzo': missing,
             'error': 0,
-          })),
-          200);
+          }),
+        ),
+        200,
+      );
     }
 
     Future<ChurchDetails> fetchOne(String fixture) async {
@@ -45,7 +47,10 @@ void main() {
 
       expect(church.id, 38);
       expect(church.name, 'Belvárosi Nagyboldogasszony-templom');
-      expect(church.commonName, 'Belvárosi Nagyboldogasszony Főplébániatemplom');
+      expect(
+        church.commonName,
+        'Belvárosi Nagyboldogasszony Főplébániatemplom',
+      );
       expect(church.country, 'Magyarország');
       expect(church.diocese, 'Esztergom-Budapest');
       expect(church.county, 'Budapest');
@@ -83,7 +88,8 @@ void main() {
       // Recorded live on 2026-09-15 for ids 1515, 38 and 999999.
       final client = MiserendApiClient(
         client: MockClient(
-            (_) async => _fixtureResponse('church_ids_hianyzo_2026-09-15.json')),
+          (_) async => _fixtureResponse('church_ids_hianyzo_2026-09-15.json'),
+        ),
       );
 
       final result = await client.fetchChurches([1515, 38, 999999]);
@@ -99,8 +105,10 @@ void main() {
       final church = await fetchOne('church_38.json');
 
       expect(church.photos, hasLength(7));
-      expect(church.photos.first,
-          'https://miserend.hu/kepek/templomok/38/8266570111.jpg');
+      expect(
+        church.photos.first,
+        'https://miserend.hu/kepek/templomok/38/8266570111.jpg',
+      );
       expect(church.links, [
         'http://belvarosiplebania.hu',
         'http://www.facebook.com/belvarosiplebaniatemplom',
@@ -118,8 +126,7 @@ void main() {
       expect(church.adorations.first.kind, 'csendes');
       expect(church.adorations.first.info, isNull);
 
-      final withInfo =
-          church.adorations.firstWhere((a) => a.info != null);
+      final withInfo = church.adorations.firstWhere((a) => a.info != null);
       expect(withInfo.info, 'Kivéve júliusban és augusztusban');
       expect(withInfo.start, DateTime(2026, 9, 10, 16, 0));
     });
@@ -129,8 +136,10 @@ void main() {
 
       expect(church.communities, hasLength(1));
       expect(church.communities.first.name, 'Szent Imre Antióchia Közösség');
-      expect(church.communities.first.link,
-          'https://kozossegek.hu/kozosseg/szent-imre-antiochia-kozosseg-140');
+      expect(
+        church.communities.first.link,
+        'https://kozossegek.hu/kozosseg/szent-imre-antiochia-kozosseg-140',
+      );
     });
 
     test('leaves the empty strings of the response as null', () async {
@@ -146,53 +155,69 @@ void main() {
       expect(church.isGreek, isNull);
     });
 
-    test('asks for more than a hundred churches in batches of a hundred',
-        () async {
-      final sent = <List<dynamic>>[];
-      final client = MiserendApiClient(client: MockClient((request) async {
-        final ids = (jsonDecode(request.body) as Map)['ids'] as List<dynamic>;
-        sent.add(ids);
-        return http.Response.bytes(
-            utf8.encode(jsonEncode({
-              'templomok': [
-                for (final id in ids) {'id': id, 'nev': 'Templom $id'}
-              ],
-              'hianyzo': ids.contains(150) ? [150] : [],
-              'error': 0,
-            })),
-            200);
-      }));
+    test(
+      'asks for more than a hundred churches in batches of a hundred',
+      () async {
+        final sent = <List<dynamic>>[];
+        final client = MiserendApiClient(
+          client: MockClient((request) async {
+            final ids =
+                (jsonDecode(request.body) as Map)['ids'] as List<dynamic>;
+            sent.add(ids);
+            return http.Response.bytes(
+              utf8.encode(
+                jsonEncode({
+                  'templomok': [
+                    for (final id in ids) {'id': id, 'nev': 'Templom $id'},
+                  ],
+                  'hianyzo': ids.contains(150) ? [150] : [],
+                  'error': 0,
+                }),
+              ),
+              200,
+            );
+          }),
+        );
 
-      final result =
-          await client.fetchChurches([for (var id = 1; id <= 250; id++) id]);
+        final result = await client.fetchChurches([
+          for (var id = 1; id <= 250; id++) id,
+        ]);
 
-      expect(sent.map((ids) => ids.length), [100, 100, 50]);
-      expect(sent.expand((ids) => ids), [for (var id = 1; id <= 250; id++) id]);
-      final response = (result as ApiSuccess<ChurchesResponse>).value;
-      expect(response.churches, hasLength(250));
-      expect(response.missing, [150]);
-    });
+        expect(sent.map((ids) => ids.length), [100, 100, 50]);
+        expect(sent.expand((ids) => ids), [
+          for (var id = 1; id <= 250; id++) id,
+        ]);
+        final response = (result as ApiSuccess<ChurchesResponse>).value;
+        expect(response.churches, hasLength(250));
+        expect(response.missing, [150]);
+      },
+    );
 
     test('a failed batch fails the whole call', () async {
       var calls = 0;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        calls++;
-        if (calls == 2) return http.Response('', 500);
-        return http.Response('{"templomok":[],"hianyzo":[],"error":0}', 200);
-      }));
+      final client = MiserendApiClient(
+        client: MockClient((request) async {
+          calls++;
+          if (calls == 2) return http.Response('', 500);
+          return http.Response('{"templomok":[],"hianyzo":[],"error":0}', 200);
+        }),
+      );
 
-      final result =
-          await client.fetchChurches([for (var id = 1; id <= 150; id++) id]);
+      final result = await client.fetchChurches([
+        for (var id = 1; id <= 150; id++) id,
+      ]);
 
       expect((result as ApiFailed).failure, ApiFailure.serverError);
     });
 
     test('asks nothing for no ids', () async {
       var calls = 0;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        calls++;
-        return http.Response('', 500);
-      }));
+      final client = MiserendApiClient(
+        client: MockClient((request) async {
+          calls++;
+          return http.Response('', 500);
+        }),
+      );
 
       final result = await client.fetchChurches(const []);
 
@@ -213,30 +238,36 @@ void main() {
 
   group('outcomes', () {
     /// Every call of the client, each run against the same fake transport.
-    final calls = <String, Future<ApiResult<Object>> Function(MiserendApiClient)>{
-      'church': (api) => api.fetchChurches([38]),
-      'masses for a church': (api) => api.fetchMassesForChurch(
-            churchId: 38,
-            lat: 47.492233,
-            lon: 19.0522943,
-            from: DateTime(2026, 9, 10),
-            until: DateTime(2026, 9, 29),
-          ),
-      'search': (api) => api.searchChurches('Szeged'),
-      'nearby churches': (api) =>
-          api.fetchNearbyChurches(lat: 47.4979, lon: 19.0402),
-      'nearby masses': (api) => api.fetchNearbyMasses(
-            lat: 47.4979,
-            lon: 19.0402,
-            from: DateTime(2026, 9, 14, 15, 45),
-            until: DateTime(2026, 9, 15),
-          ),
-    };
+    final calls =
+        <String, Future<ApiResult<Object>> Function(MiserendApiClient)>{
+          'church': (api) => api.fetchChurches([38]),
+          'masses for a church':
+              (api) => api.fetchMassesForChurch(
+                churchId: 38,
+                lat: 47.492233,
+                lon: 19.0522943,
+                from: DateTime(2026, 9, 10),
+                until: DateTime(2026, 9, 29),
+              ),
+          'search': (api) => api.searchChurches('Szeged'),
+          'nearby churches':
+              (api) => api.fetchNearbyChurches(lat: 47.4979, lon: 19.0402),
+          'nearby masses':
+              (api) => api.fetchNearbyMasses(
+                lat: 47.4979,
+                lon: 19.0402,
+                from: DateTime(2026, 9, 14, 15, 45),
+                until: DateTime(2026, 9, 15),
+              ),
+        };
 
     Future<ApiFailure?> failureOf(
-        Future<ApiResult<Object>> Function(MiserendApiClient) call,
-        Future<http.Response> Function(http.Request) transport) async {
-      final result = await call(MiserendApiClient(client: MockClient(transport)));
+      Future<ApiResult<Object>> Function(MiserendApiClient) call,
+      Future<http.Response> Function(http.Request) transport,
+    ) async {
+      final result = await call(
+        MiserendApiClient(client: MockClient(transport)),
+      );
       return switch (result) {
         ApiSuccess() => null,
         ApiFailed(:final failure) => failure,
@@ -247,45 +278,62 @@ void main() {
       group(name, () {
         test('a socket error is no connection', () async {
           expect(
-              await failureOf(
-                  call, (_) async => throw const SocketException('offline')),
-              ApiFailure.noConnection);
+            await failureOf(
+              call,
+              (_) async => throw const SocketException('offline'),
+            ),
+            ApiFailure.noConnection,
+          );
         });
 
         test('a TLS handshake error is no connection', () async {
           expect(
-              await failureOf(
-                  call, (_) async => throw const HandshakeException('tls')),
-              ApiFailure.noConnection);
+            await failureOf(
+              call,
+              (_) async => throw const HandshakeException('tls'),
+            ),
+            ApiFailure.noConnection,
+          );
         });
 
         test('an HTTP error status is a server error', () async {
-          expect(await failureOf(call, (_) async => http.Response('', 500)),
-              ApiFailure.serverError);
+          expect(
+            await failureOf(call, (_) async => http.Response('', 500)),
+            ApiFailure.serverError,
+          );
         });
 
         test('an error flag in the payload is a server error', () async {
           expect(
-              await failureOf(
-                  call,
-                  (_) async => http.Response.bytes(
-                      utf8.encode('{"error":"Nem létezik misézőhely ezzel '
-                          'az asonosítóval."}'),
-                      200)),
-              ApiFailure.serverError);
+            await failureOf(
+              call,
+              (_) async => http.Response.bytes(
+                utf8.encode(
+                  '{"error":"Nem létezik misézőhely ezzel '
+                  'az asonosítóval."}',
+                ),
+                200,
+              ),
+            ),
+            ApiFailure.serverError,
+          );
         });
 
         test('JSON that does not parse is a server error', () async {
           expect(
-              await failureOf(
-                  call, (_) async => http.Response('<html>oops</html>', 200)),
-              ApiFailure.serverError);
+            await failureOf(
+              call,
+              (_) async => http.Response('<html>oops</html>', 200),
+            ),
+            ApiFailure.serverError,
+          );
         });
       });
     }
 
-    testWidgets('a call with no answer in 15 seconds is no connection',
-        (tester) async {
+    testWidgets('a call with no answer in 15 seconds is no connection', (
+      tester,
+    ) async {
       // testWidgets runs on a fake clock, so the wait costs nothing.
       final never = Completer<http.Response>();
       final api = MiserendApiClient(client: MockClient((_) => never.future));
@@ -312,7 +360,8 @@ void main() {
 
     test('maps the churches and their masses of the day', () async {
       final client = MiserendApiClient(
-          client: MockClient((_) async => _fixtureResponse(fixture)));
+        client: MockClient((_) async => _fixtureResponse(fixture)),
+      );
 
       final result = await client.searchChurches('Szeged');
 
@@ -323,16 +372,20 @@ void main() {
       expect(first.name, 'Havas Boldogasszony templom');
       expect(first.commonName, 'Alsóvárosi templom, Ferences templom');
       expect(first.city, 'Szeged');
-      expect(response.massesOf(1155).map((m) => m.time),
-          [DateTime(2026, 9, 15, 7, 0), DateTime(2026, 9, 15, 18, 0)]);
+      expect(response.massesOf(1155).map((m) => m.time), [
+        DateTime(2026, 9, 15, 7, 0),
+        DateTime(2026, 9, 15, 18, 0),
+      ]);
     });
 
     test('asks for a hundred results, minimal', () async {
       late http.Request sent;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        sent = request;
-        return _fixtureResponse(fixture);
-      }));
+      final client = MiserendApiClient(
+        client: MockClient((request) async {
+          sent = request;
+          return _fixtureResponse(fixture);
+        }),
+      );
 
       await client.searchChurches('Szeged');
 
@@ -350,8 +403,13 @@ void main() {
     const fixture = 'nearby_budapest_2026-09-15.json';
 
     Future<ChurchesResponse> fetchWith(http.Response response) async {
-      final client = MiserendApiClient(client: MockClient((_) async => response));
-      final result = await client.fetchNearbyChurches(lat: 47.4979, lon: 19.0402);
+      final client = MiserendApiClient(
+        client: MockClient((_) async => response),
+      );
+      final result = await client.fetchNearbyChurches(
+        lat: 47.4979,
+        lon: 19.0402,
+      );
       return (result as ApiSuccess<ChurchesResponse>).value;
     }
 
@@ -368,25 +426,31 @@ void main() {
       expect(response.missing, isEmpty);
     });
 
-    test("maps each church's masses of the day, marked as a list answer",
-        () async {
-      final response = await fetchWith(_fixtureResponse(fixture));
+    test(
+      "maps each church's masses of the day, marked as a list answer",
+      () async {
+        final response = await fetchWith(_fixtureResponse(fixture));
 
-      final masses = response.massesOf(1515);
-      expect(masses.map((m) => m.time),
-          [DateTime(2026, 9, 15, 7, 0), DateTime(2026, 9, 15, 18, 0)]);
-      expect(masses.first.info, 'Római katolikus Szentmise, Csendes');
-      expect(masses.first.churchId, 1515);
-      expect(masses.map((m) => m.source).toSet(), {MassSource.dailyList});
-      expect(response.massesOf(2721), isEmpty);
-    });
+        final masses = response.massesOf(1515);
+        expect(masses.map((m) => m.time), [
+          DateTime(2026, 9, 15, 7, 0),
+          DateTime(2026, 9, 15, 18, 0),
+        ]);
+        expect(masses.first.info, 'Római katolikus Szentmise, Csendes');
+        expect(masses.first.churchId, 1515);
+        expect(masses.map((m) => m.source).toSet(), {MassSource.dailyList});
+        expect(response.massesOf(2721), isEmpty);
+      },
+    );
 
     test('asks for a hundred churches around the position, minimal', () async {
       late http.Request sent;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        sent = request;
-        return _fixtureResponse(fixture);
-      }));
+      final client = MiserendApiClient(
+        client: MockClient((request) async {
+          sent = request;
+          return _fixtureResponse(fixture);
+        }),
+      );
 
       await client.fetchNearbyChurches(lat: 47.4979, lon: 19.0402);
 
@@ -402,7 +466,9 @@ void main() {
 
   group('fetchMassesForChurch', () {
     Future<List<CachedMass>> fetchWith(http.Response response) async {
-      final client = MiserendApiClient(client: MockClient((_) async => response));
+      final client = MiserendApiClient(
+        client: MockClient((_) async => response),
+      );
       final result = await client.fetchMassesForChurch(
         churchId: 38,
         lat: 47.492233,
@@ -435,10 +501,12 @@ void main() {
     test('keeps the same mass id across its occurrences', () async {
       final masses = await fetchWith(_fixtureResponse('nearbymasses_38.json'));
 
-      final recurring =
-          masses.where((m) => m.apiMassId == 129807).toList();
-      expect(recurring.length, greaterThan(1),
-          reason: 'the API repeats one mass id for every occurrence');
+      final recurring = masses.where((m) => m.apiMassId == 129807).toList();
+      expect(
+        recurring.length,
+        greaterThan(1),
+        reason: 'the API repeats one mass id for every occurrence',
+      );
       expect(recurring.map((m) => m.time).toSet(), hasLength(recurring.length));
     });
 
@@ -462,7 +530,9 @@ void main() {
         ],
       });
 
-      final masses = await fetchWith(http.Response.bytes(utf8.encode(body), 200));
+      final masses = await fetchWith(
+        http.Response.bytes(utf8.encode(body), 200),
+      );
 
       expect(masses, hasLength(1));
       expect(masses.single.apiMassId, 1);
@@ -488,7 +558,9 @@ void main() {
         ],
       });
 
-      final masses = await fetchWith(http.Response.bytes(utf8.encode(body), 200));
+      final masses = await fetchWith(
+        http.Response.bytes(utf8.encode(body), 200),
+      );
 
       expect(masses, hasLength(1));
       expect(masses.single.apiMassId, 2);
@@ -496,10 +568,12 @@ void main() {
 
     test('asks for the narrow radius and the date range', () async {
       Map<String, dynamic>? sent;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        sent = jsonDecode(request.body) as Map<String, dynamic>;
-        return _fixtureResponse('nearbymasses_38.json');
-      }));
+      final client = MiserendApiClient(
+        client: MockClient((request) async {
+          sent = jsonDecode(request.body) as Map<String, dynamic>;
+          return _fixtureResponse('nearbymasses_38.json');
+        }),
+      );
 
       await client.fetchMassesForChurch(
         churchId: 38,
@@ -520,8 +594,10 @@ void main() {
     });
 
     test('an answer with no masses is a success with none', () async {
-      expect(await fetchWith(http.Response('{"error":0,"sum":0,"misek":[]}', 200)),
-          isEmpty);
+      expect(
+        await fetchWith(http.Response('{"error":0,"sum":0,"misek":[]}', 200)),
+        isEmpty,
+      );
     });
   });
 
@@ -530,8 +606,11 @@ void main() {
     const fixture = 'nearbymasses_budapest_2026-09-14_1545.json';
 
     Future<ApiResult<List<NearbyMassesItem>>> resultWith(
-        http.Response response) {
-      final client = MiserendApiClient(client: MockClient((_) async => response));
+      http.Response response,
+    ) {
+      final client = MiserendApiClient(
+        client: MockClient((_) async => response),
+      );
       return client.fetchNearbyMasses(
         lat: 47.4979,
         lon: 19.0402,
@@ -565,50 +644,59 @@ void main() {
       expect(masses.first.start, DateTime(2026, 9, 14, 18, 0));
     });
 
-    test('keeps the items that are not masses, for the caller to filter',
-        () async {
-      final masses = await fetchWith(_fixtureResponse(fixture));
+    test(
+      'keeps the items that are not masses, for the caller to filter',
+      () async {
+        final masses = await fetchWith(_fixtureResponse(fixture));
 
-      expect(masses.map((m) => m.title), contains('Gyóntatás'));
-    });
+        expect(masses.map((m) => m.title), contains('Gyóntatás'));
+      },
+    );
 
-    test('asks for the wide radius, the time-of-day window and the limit',
-        () async {
-      Map<String, dynamic>? sent;
-      Uri? url;
-      final client = MiserendApiClient(client: MockClient((request) async {
-        url = request.url;
-        sent = jsonDecode(request.body) as Map<String, dynamic>;
-        return _fixtureResponse(fixture);
-      }));
+    test(
+      'asks for the wide radius, the time-of-day window and the limit',
+      () async {
+        Map<String, dynamic>? sent;
+        Uri? url;
+        final client = MiserendApiClient(
+          client: MockClient((request) async {
+            url = request.url;
+            sent = jsonDecode(request.body) as Map<String, dynamic>;
+            return _fixtureResponse(fixture);
+          }),
+        );
 
-      await client.fetchNearbyMasses(
-        lat: 47.4979,
-        lon: 19.0402,
-        from: DateTime(2026, 9, 14, 15, 45),
-        until: DateTime(2026, 9, 15),
-      );
+        await client.fetchNearbyMasses(
+          lat: 47.4979,
+          lon: 19.0402,
+          from: DateTime(2026, 9, 14, 15, 45),
+          until: DateTime(2026, 9, 15),
+        );
 
-      expect(url.toString(), 'https://miserend.hu/api/v4/nearbymasses');
-      expect(sent, {
-        'lat': 47.4979,
-        'lon': 19.0402,
-        'radius': 200,
-        'from': '2026-09-14 15:45',
-        'until': '2026-09-15 00:00',
-        'limit': 100,
-      });
-    });
+        expect(url.toString(), 'https://miserend.hu/api/v4/nearbymasses');
+        expect(sent, {
+          'lat': 47.4979,
+          'lon': 19.0402,
+          'radius': 200,
+          'from': '2026-09-14 15:45',
+          'until': '2026-09-15 00:00',
+          'limit': 100,
+        });
+      },
+    );
 
     test('an empty response is an empty list', () async {
       final masses = await fetchWith(
-          http.Response('{"error":0,"sum":0,"misek":[]}', 200));
+        http.Response('{"error":0,"sum":0,"misek":[]}', 200),
+      );
 
       expect(masses, isEmpty);
     });
 
     test('a response without the item list is a server error', () async {
-      final result = await resultWith(http.Response('{"error":0,"sum":0}', 200));
+      final result = await resultWith(
+        http.Response('{"error":0,"sum":0}', 200),
+      );
 
       expect((result as ApiFailed).failure, ApiFailure.serverError);
     });
@@ -618,17 +706,32 @@ void main() {
         'error': 0,
         'sum': 3,
         'misek': [
-          {'id': 1, 'start_date': null, 'title': 'Szentmise',
-            'distance_km': 1, 'church': {'id': 38}},
-          {'id': 2, 'start_date': '2026-09-14T18:00:00+02:00',
-            'title': 'Szentmise', 'distance_km': 1},
-          {'id': 3, 'start_date': '2026-09-14T18:00:00+02:00',
-            'title': 'Szentmise', 'distance_km': 1, 'church': {'id': 38}},
+          {
+            'id': 1,
+            'start_date': null,
+            'title': 'Szentmise',
+            'distance_km': 1,
+            'church': {'id': 38},
+          },
+          {
+            'id': 2,
+            'start_date': '2026-09-14T18:00:00+02:00',
+            'title': 'Szentmise',
+            'distance_km': 1,
+          },
+          {
+            'id': 3,
+            'start_date': '2026-09-14T18:00:00+02:00',
+            'title': 'Szentmise',
+            'distance_km': 1,
+            'church': {'id': 38},
+          },
         ],
       });
 
-      final masses =
-          await fetchWith(http.Response.bytes(utf8.encode(body), 200));
+      final masses = await fetchWith(
+        http.Response.bytes(utf8.encode(body), 200),
+      );
 
       expect(masses, hasLength(1));
       expect(masses.single.churchId, 38);

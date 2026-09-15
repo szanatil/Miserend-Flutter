@@ -50,12 +50,11 @@ class PullableFill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(height: constraints.maxHeight, child: child),
-        ],
-      ),
+      builder:
+          (context, constraints) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [SizedBox(height: constraints.maxHeight, child: child)],
+          ),
     );
   }
 }

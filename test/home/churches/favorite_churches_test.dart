@@ -15,20 +15,20 @@ import 'package:provider/provider.dart';
 import 'fake_church_list_loader.dart';
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
-      id: id,
-      name: name,
-      commonName: null,
-      city: 'Budapest',
-      lat: 47.5,
-      lon: 19.04,
-      photo: null,
-      masses: const [],
-    );
+  id: id,
+  name: name,
+  commonName: null,
+  city: 'Budapest',
+  lat: 47.5,
+  lon: 19.04,
+  photo: null,
+  masses: const [],
+);
 
 /// Favorites held in memory, so no test writes the device's database.
 class _FakeFavorites extends ChangeNotifier implements FavoritesService {
   _FakeFavorites(List<int> ids, {this.loaded = true})
-      : favorites = [for (final id in ids) Favorite(churchId: id)];
+    : favorites = [for (final id in ids) Favorite(churchId: id)];
 
   @override
   List<Favorite> favorites;
@@ -62,36 +62,44 @@ class _FakeFavorites extends ChangeNotifier implements FavoritesService {
   }
 
   @override
-  bool isFavorite(int churchId) =>
-      favorites.any((f) => f.churchId == churchId);
+  bool isFavorite(int churchId) => favorites.any((f) => f.churchId == churchId);
 }
 
 void main() {
-  Future<void> pumpPage(WidgetTester tester, ChurchListLoader loader,
-      FavoritesService favorites) async {
-    await tester.pumpWidget(ChangeNotifierProvider<FavoritesService>.value(
-      value: favorites,
-      child: MaterialApp(
-        home: Scaffold(body: FavoriteChurchesPage(loader: loader)),
+  Future<void> pumpPage(
+    WidgetTester tester,
+    ChurchListLoader loader,
+    FavoritesService favorites,
+  ) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: MaterialApp(
+          home: Scaffold(body: FavoriteChurchesPage(loader: loader)),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pump();
   }
 
   Future<void> pullToRefresh(WidgetTester tester) async {
     await tester.fling(
-        find.byType(Scrollable).first, const Offset(0, 400), 1000);
+      find.byType(Scrollable).first,
+      const Offset(0, 400),
+      1000,
+    );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
   }
 
-  testWidgets('shows the loading caption until the favorites are known',
-      (tester) async {
+  testWidgets('shows the loading caption until the favorites are known', (
+    tester,
+  ) async {
     final favorites = _FakeFavorites(const [1], loaded: false);
     final loader = FakeChurchListLoader([
-      [_entry(1, 'Kedvenc')]
+      [_entry(1, 'Kedvenc')],
     ]);
 
     await pumpPage(tester, loader, favorites);
@@ -113,13 +121,15 @@ void main() {
     expect(loader.refreshes, 0);
   });
 
-  testWidgets('lists the favorites from the cache, then refreshes them by id',
-      (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1, 'Első'), _entry(2, 'Második')]
-    ], refreshed: [
-      Completer<ChurchList>()
-    ]);
+  testWidgets('lists the favorites from the cache, then refreshes them by id', (
+    tester,
+  ) async {
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1, 'Első'), _entry(2, 'Második')],
+      ],
+      refreshed: [Completer<ChurchList>()],
+    );
 
     await pumpPage(tester, loader, _FakeFavorites(const [1, 2]));
 
@@ -132,11 +142,14 @@ void main() {
 
   testWidgets('a favorite removed from miserend.hu disappears after the '
       'refresh', (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1, 'Megmaradt'), _entry(2, 'Megszűnt')]
-    ], refreshed: [
-      listOf([_entry(1, 'Megmaradt')])
-    ]);
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1, 'Megmaradt'), _entry(2, 'Megszűnt')],
+      ],
+      refreshed: [
+        listOf([_entry(1, 'Megmaradt')]),
+      ],
+    );
 
     await pumpPage(tester, loader, _FakeFavorites(const [1, 2]));
 
@@ -144,29 +157,36 @@ void main() {
     expect(find.text('Megszűnt'), findsNothing);
   });
 
-  testWidgets('no connection and server error put up the banner',
-      (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1, 'Kedvenc')]
-    ], refreshed: [
-      listOf(const [], failure: ApiFailure.serverError)
-    ]);
+  testWidgets('no connection and server error put up the banner', (
+    tester,
+  ) async {
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1, 'Kedvenc')],
+      ],
+      refreshed: [listOf(const [], failure: ApiFailure.serverError)],
+    );
 
     await pumpPage(tester, loader, _FakeFavorites(const [1]));
 
     expect(find.text('Kedvenc'), findsOneWidget);
     expect(find.byType(OfflineBanner), findsOneWidget);
-    expect(find.text('A miserend.hu nem elérhető, tárolt adatok'),
-        findsOneWidget);
+    expect(
+      find.text('A miserend.hu nem elérhető, tárolt adatok'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('pulling down refreshes again', (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1, 'Kedvenc')]
-    ], refreshed: [
-      listOf(const [], failure: ApiFailure.noConnection),
-      listOf([_entry(1, 'Kedvenc')]),
-    ]);
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1, 'Kedvenc')],
+      ],
+      refreshed: [
+        listOf(const [], failure: ApiFailure.noConnection),
+        listOf([_entry(1, 'Kedvenc')]),
+      ],
+    );
     await pumpPage(tester, loader, _FakeFavorites(const [1]));
     expect(find.byType(OfflineBanner), findsOneWidget);
 

@@ -50,7 +50,9 @@ abstract class ChurchListQuery {
 
   /// The background call, given the rows the screen shows.
   Future<ApiResult<ChurchesResponse>> fetch(
-      MiserendApiClient api, List<ChurchListEntry> shown);
+    MiserendApiClient api,
+    List<ChurchListEntry> shown,
+  );
 }
 
 /// The Közeli templomok list: every church, nearest first, refreshed from
@@ -70,8 +72,9 @@ class NearChurchesQuery extends ChurchListQuery {
 
   @override
   Future<ApiResult<ChurchesResponse>> fetch(
-          MiserendApiClient api, List<ChurchListEntry> shown) =>
-      api.fetchNearbyChurches(lat: lat, lon: lon);
+    MiserendApiClient api,
+    List<ChurchListEntry> shown,
+  ) => api.fetchNearbyChurches(lat: lat, lon: lon);
 }
 
 /// The Kedvencek list: the favorite churches, refreshed by id.
@@ -89,8 +92,9 @@ class FavoritesQuery extends ChurchListQuery {
 
   @override
   Future<ApiResult<ChurchesResponse>> fetch(
-          MiserendApiClient api, List<ChurchListEntry> shown) =>
-      api.fetchChurches(ids);
+    MiserendApiClient api,
+    List<ChurchListEntry> shown,
+  ) => api.fetchChurches(ids);
 }
 
 /// The Keresés results: churches by a part of their name, or the churches of
@@ -123,10 +127,13 @@ class SearchQuery extends ChurchListQuery {
 
   @override
   Future<ApiResult<ChurchesResponse>> fetch(
-      MiserendApiClient api, List<ChurchListEntry> shown) {
+    MiserendApiClient api,
+    List<ChurchListEntry> shown,
+  ) {
     if (shown.isEmpty) return api.searchChurches(city ?? term!);
     return api.fetchChurches(
-        shown.take(refreshLimit).map((church) => church.id).toList());
+      shown.take(refreshLimit).map((church) => church.id).toList(),
+    );
   }
 }
 
@@ -158,8 +165,9 @@ class ChurchCardQuery extends ChurchListQuery {
 
   @override
   Future<ApiResult<ChurchesResponse>> fetch(
-          MiserendApiClient api, List<ChurchListEntry> shown) =>
-      api.fetchChurches([churchId], length: ResponseLength.full);
+    MiserendApiClient api,
+    List<ChurchListEntry> shown,
+  ) => api.fetchChurches([churchId], length: ResponseLength.full);
 }
 
 /// Supplies the church lists: first from the cache, then again once the
@@ -171,8 +179,8 @@ class ChurchListLoader {
     MiserendApiClient? api,
     this.clock = DateTime.now,
     this.onChurchesGone,
-  })  : _cache = cache,
-        _api = api ?? MiserendApiClient();
+  }) : _cache = cache,
+       _api = api ?? MiserendApiClient();
 
   CacheDatabase? _cache;
   final MiserendApiClient _api;
@@ -197,7 +205,9 @@ class ChurchListLoader {
   /// failed call leaves the cache and the [shown] rows as they are, and says
   /// which way it failed.
   Future<ChurchList> refresh(
-      ChurchListQuery query, List<ChurchListEntry> shown) async {
+    ChurchListQuery query,
+    List<ChurchListEntry> shown,
+  ) async {
     final cache = await _db();
     final now = clock();
 
@@ -209,8 +219,10 @@ class ChurchListLoader {
           dataAsOf: await _dataAsOf(cache, query),
         );
       case ApiSuccess(:final value):
-        await CacheWriteThrough(cache, onChurchesGone: onChurchesGone)
-            .write(value, today: now, minimal: query.minimal);
+        await CacheWriteThrough(
+          cache,
+          onChurchesGone: onChurchesGone,
+        ).write(value, today: now, minimal: query.minimal);
         await query.markRefreshed(cache, now);
         return ChurchList(
           churches: await query.read(cache, now),
@@ -225,6 +237,8 @@ class ChurchListLoader {
   Future<List<ChurchLocation>> churchLocations() async =>
       (await _db()).churchLocations();
 
-  Future<DateTime?> _dataAsOf(CacheDatabase cache, ChurchListQuery query) async =>
-      await query.lastRefreshed(cache) ?? await cache.bootstrappedAt();
+  Future<DateTime?> _dataAsOf(
+    CacheDatabase cache,
+    ChurchListQuery query,
+  ) async => await query.lastRefreshed(cache) ?? await cache.bootstrappedAt();
 }

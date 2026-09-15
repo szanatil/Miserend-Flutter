@@ -29,15 +29,17 @@ class ChurchListView extends StatelessWidget {
         Expanded(
           child: RefreshIndicator(
             onRefresh: onRefresh,
-            child: list.churches.isEmpty
-                ? PullableFill(child: MessageView(message: emptyMessage))
-                : ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(8),
-                    itemCount: list.churches.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        ChurchCard(entry: list.churches[index]),
-                  ),
+            child:
+                list.churches.isEmpty
+                    ? PullableFill(child: MessageView(message: emptyMessage))
+                    : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(8),
+                      itemCount: list.churches.length,
+                      itemBuilder:
+                          (BuildContext context, int index) =>
+                              ChurchCard(entry: list.churches[index]),
+                    ),
           ),
         ),
       ],

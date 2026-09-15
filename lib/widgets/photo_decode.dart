@@ -14,8 +14,11 @@ class PhotoDecode {
   /// Decode height in device pixels for a slot [slotHeight] logical pixels
   /// tall. Pass [tight] for a slot taller than it is wide, where the height is
   /// already the axis cover scales by and no headroom is needed.
-  static int forSlot(BuildContext context, double slotHeight,
-      {bool tight = false}) {
+  static int forSlot(
+    BuildContext context,
+    double slotHeight, {
+    bool tight = false,
+  }) {
     final double scale = tight ? 1 : _coverHeadroom;
     return (slotHeight * scale * MediaQuery.devicePixelRatioOf(context))
         .round();

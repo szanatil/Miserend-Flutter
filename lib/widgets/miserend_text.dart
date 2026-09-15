@@ -11,7 +11,10 @@ import 'package:html_unescape/html_unescape.dart';
 class MiserendText {
   static final HtmlUnescape _unescape = HtmlUnescape();
 
-  static final RegExp _lineBreakTag = RegExp(r'<br\s*/?>', caseSensitive: false);
+  static final RegExp _lineBreakTag = RegExp(
+    r'<br\s*/?>',
+    caseSensitive: false,
+  );
 
   /// Anything else that looks like a tag. The live data only ever carries
   /// `<br>`, but a stray `<p>` would otherwise be shown to the user verbatim.

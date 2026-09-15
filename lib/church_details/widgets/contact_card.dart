@@ -40,7 +40,10 @@ class ContactCard extends StatelessWidget {
     final email = this.email?.trim() ?? '';
     final parishText = MiserendText.normalize(parish);
     final links =
-        this.links.map((link) => link.trim()).where((l) => l.isNotEmpty).toList();
+        this.links
+            .map((link) => link.trim())
+            .where((l) => l.isNotEmpty)
+            .toList();
 
     return SectionCard(
       title: 'Elérhetőség',
@@ -52,8 +55,11 @@ class ContactCard extends StatelessWidget {
               context,
               icon: Icons.mail_outline,
               label: email,
-              onTap: () =>
-                  launchExternal(context, Uri(scheme: 'mailto', path: email)),
+              onTap:
+                  () => launchExternal(
+                    context,
+                    Uri(scheme: 'mailto', path: email),
+                  ),
             ),
           for (final link in links)
             _row(
@@ -77,10 +83,12 @@ class ContactCard extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context,
-      {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+  Widget _row(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -92,10 +100,9 @@ class ContactCard extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.apply(color: CustomColors.accent),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
               ),
             ),
           ],

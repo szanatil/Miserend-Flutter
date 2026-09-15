@@ -16,12 +16,18 @@ class CacheWriteThrough {
 
   /// [minimal] says the answer leaves fields out, which must not overwrite
   /// the cached ones.
-  Future<void> write(ChurchesResponse response,
-      {required DateTime today, required bool minimal}) async {
+  Future<void> write(
+    ChurchesResponse response, {
+    required DateTime today,
+    required bool minimal,
+  }) async {
     for (final church in response.churches) {
       await cache.upsertChurch(church, minimal: minimal);
       await cache.replaceDailyMasses(
-          church.id, today, response.massesOf(church.id));
+        church.id,
+        today,
+        response.massesOf(church.id),
+      );
     }
     // Only an explicit report counts: a search or nearby answer leaving a
     // church out says nothing about whether it still exists.

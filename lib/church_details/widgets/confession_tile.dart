@@ -26,10 +26,9 @@ class ConfessionTile extends StatelessWidget {
             Expanded(
               child: Text(
                 'Most gyóntatnak!',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.apply(color: Colors.white),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.apply(color: Colors.white),
               ),
             ),
           ],

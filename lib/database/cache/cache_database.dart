@@ -33,43 +33,49 @@ class CacheDatabase {
     db = await openDatabase(
       path,
       onCreate: (db, version) async {
-        await db.execute('CREATE TABLE $churchesTable('
-            'id INTEGER PRIMARY KEY, '
-            'nev TEXT, '
-            'ismertnev TEXT, '
-            'names TEXT, '
-            'alternative_names TEXT, '
-            'orszag TEXT, '
-            'egyhazmegye TEXT, '
-            'megye TEXT, '
-            'varos TEXT, '
-            'cim TEXT, '
-            'megkozelites TEXT, '
-            'plebania TEXT, '
-            'leiras TEXT, '
-            'accessibility TEXT, '
-            'email TEXT, '
-            'links TEXT, '
-            'nyelvek TEXT, '
-            'miserend_megjegyzes TEXT, '
-            'adoraciok TEXT, '
-            'gyontatas INTEGER, '
-            'kozossegek TEXT, '
-            'lat REAL, '
-            'lon REAL, '
-            'photos TEXT, '
-            'frissitve TEXT, '
-            'local_synced_at TEXT, '
-            'gorog INTEGER)');
-        await db.execute('CREATE TABLE $massesTable('
-            'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-            'api_mass_id INTEGER, '
-            'church_id INTEGER NOT NULL, '
-            'idopont TEXT NOT NULL, '
-            'informacio TEXT, '
-            'forras TEXT NOT NULL)');
-        await db.execute('CREATE INDEX idx_masses_cache_church_time '
-            'ON $massesTable(church_id, idopont)');
+        await db.execute(
+          'CREATE TABLE $churchesTable('
+          'id INTEGER PRIMARY KEY, '
+          'nev TEXT, '
+          'ismertnev TEXT, '
+          'names TEXT, '
+          'alternative_names TEXT, '
+          'orszag TEXT, '
+          'egyhazmegye TEXT, '
+          'megye TEXT, '
+          'varos TEXT, '
+          'cim TEXT, '
+          'megkozelites TEXT, '
+          'plebania TEXT, '
+          'leiras TEXT, '
+          'accessibility TEXT, '
+          'email TEXT, '
+          'links TEXT, '
+          'nyelvek TEXT, '
+          'miserend_megjegyzes TEXT, '
+          'adoraciok TEXT, '
+          'gyontatas INTEGER, '
+          'kozossegek TEXT, '
+          'lat REAL, '
+          'lon REAL, '
+          'photos TEXT, '
+          'frissitve TEXT, '
+          'local_synced_at TEXT, '
+          'gorog INTEGER)',
+        );
+        await db.execute(
+          'CREATE TABLE $massesTable('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'api_mass_id INTEGER, '
+          'church_id INTEGER NOT NULL, '
+          'idopont TEXT NOT NULL, '
+          'informacio TEXT, '
+          'forras TEXT NOT NULL)',
+        );
+        await db.execute(
+          'CREATE INDEX idx_masses_cache_church_time '
+          'ON $massesTable(church_id, idopont)',
+        );
         await _createSyncTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -80,10 +86,13 @@ class CacheDatabase {
           // Only the details page wrote API rows before, and only those carry
           // an API mass id.
           await db.execute(
-              "ALTER TABLE $massesTable ADD COLUMN forras TEXT NOT NULL "
-              "DEFAULT '${MassSource.bootstrap.name}'");
-          await db.execute("UPDATE $massesTable SET forras = "
-              "'${MassSource.nearbyMasses.name}' WHERE api_mass_id IS NOT NULL");
+            "ALTER TABLE $massesTable ADD COLUMN forras TEXT NOT NULL "
+            "DEFAULT '${MassSource.bootstrap.name}'",
+          );
+          await db.execute(
+            "UPDATE $massesTable SET forras = "
+            "'${MassSource.nearbyMasses.name}' WHERE api_mass_id IS NOT NULL",
+          );
         }
       },
       version: 3,
@@ -93,7 +102,8 @@ class CacheDatabase {
   /// When things happened to the cache as a whole, as opposed to one church:
   /// the bootstrap import, a list's last successful refresh.
   static Future<void> _createSyncTable(Database db) => db.execute(
-      'CREATE TABLE $syncTable(kulcs TEXT PRIMARY KEY, idopont TEXT NOT NULL)');
+    'CREATE TABLE $syncTable(kulcs TEXT PRIMARY KEY, idopont TEXT NOT NULL)',
+  );
 
   static const String _bootstrapKey = 'bootstrap';
 
@@ -105,22 +115,29 @@ class CacheDatabase {
       setSyncTime(_bootstrapKey, time);
 
   Future<DateTime?> syncTime(String key) async {
-    final rows = await db.query(syncTable,
-        where: 'kulcs = ?', whereArgs: [key], limit: 1);
+    final rows = await db.query(
+      syncTable,
+      where: 'kulcs = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return _parseDateTime(rows.first['idopont'] as String?);
   }
 
   Future<void> setSyncTime(String key, DateTime time) async {
-    await db.insert(
-      syncTable,
-      {'kulcs': key, 'idopont': _formatDateTime(time)},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(syncTable, {
+      'kulcs': key,
+      'idopont': _formatDateTime(time),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<ChurchDetails?> getChurch(int id) async {
-    final rows = await db.query(churchesTable, where: 'id = ?', whereArgs: [id]);
+    final rows = await db.query(
+      churchesTable,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     if (rows.isEmpty) return null;
     return _toChurch(rows.first);
   }
@@ -144,16 +161,20 @@ class CacheDatabase {
   /// Writes an API response over the cached row. A column the API does not
   /// carry — `gorog` — keeps whatever the bootstrap import put there, and so
   /// do the columns a [minimal] response leaves out.
-  Future<void> upsertChurch(ChurchDetails church,
-      {bool minimal = false}) async {
+  Future<void> upsertChurch(
+    ChurchDetails church, {
+    bool minimal = false,
+  }) async {
     final row = _toRow(church);
-    if (minimal) row.removeWhere((column, _) => !_minimalColumns.contains(column));
-    final values = {
-      ...row,
-      'local_synced_at': _formatDateTime(DateTime.now()),
-    };
-    final updated = await db.update(churchesTable, values,
-        where: 'id = ?', whereArgs: [church.id]);
+    if (minimal)
+      row.removeWhere((column, _) => !_minimalColumns.contains(column));
+    final values = {...row, 'local_synced_at': _formatDateTime(DateTime.now())};
+    final updated = await db.update(
+      churchesTable,
+      values,
+      where: 'id = ?',
+      whereArgs: [church.id],
+    );
     if (updated == 0) {
       await db.insert(churchesTable, {...values, 'id': church.id});
     }
@@ -164,14 +185,21 @@ class CacheDatabase {
   /// import covers every church the app knows. It writes no
   /// `local_synced_at` — these rows have never seen an API response.
   Future<void> importChurches(
-      List<ChurchDetails> churches, List<CachedMass> masses) async {
+    List<ChurchDetails> churches,
+    List<CachedMass> masses,
+  ) async {
     await db.transaction((txn) async {
       final batch = txn.batch();
       for (final church in churches) {
-        batch.insert(churchesTable, {..._toRow(church), 'id': church.id},
-            conflictAlgorithm: ConflictAlgorithm.replace);
-        batch.delete(massesTable,
-            where: 'church_id = ?', whereArgs: [church.id]);
+        batch.insert(churchesTable, {
+          ..._toRow(church),
+          'id': church.id,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.delete(
+          massesTable,
+          where: 'church_id = ?',
+          whereArgs: [church.id],
+        );
       }
       for (final mass in masses) {
         batch.insert(massesTable, _massRow(mass));
@@ -181,7 +209,9 @@ class CacheDatabase {
   }
 
   Future<void> replaceMassesForChurch(
-      int churchId, List<CachedMass> masses) async {
+    int churchId,
+    List<CachedMass> masses,
+  ) async {
     final batch = db.batch();
     batch.delete(massesTable, where: 'church_id = ?', whereArgs: [churchId]);
     for (final mass in masses) {
@@ -194,7 +224,10 @@ class CacheDatabase {
   /// unless the details page's schedule already covers the day, which is the
   /// more precise source and is left as it is.
   Future<void> replaceDailyMasses(
-      int churchId, DateTime day, List<CachedMass> masses) async {
+    int churchId,
+    DateTime day,
+    List<CachedMass> masses,
+  ) async {
     final (from, until) = _dayBounds(day);
     await db.transaction((txn) async {
       final detailed = await txn.query(
@@ -207,9 +240,11 @@ class CacheDatabase {
       if (detailed.isNotEmpty) return;
 
       final batch = txn.batch();
-      batch.delete(massesTable,
-          where: 'church_id = ? AND idopont >= ? AND idopont < ?',
-          whereArgs: [churchId, from, until]);
+      batch.delete(
+        massesTable,
+        where: 'church_id = ? AND idopont >= ? AND idopont < ?',
+        whereArgs: [churchId, from, until],
+      );
       for (final mass in masses) {
         batch.insert(massesTable, _massRow(mass));
       }
@@ -227,15 +262,18 @@ class CacheDatabase {
   }
 
   Map<String, Object?> _massRow(CachedMass mass) => {
-        'api_mass_id': mass.apiMassId,
-        'church_id': mass.churchId,
-        'idopont': _formatDateTime(mass.time),
-        'informacio': mass.info,
-        'forras': mass.source.name,
-      };
+    'api_mass_id': mass.apiMassId,
+    'church_id': mass.churchId,
+    'idopont': _formatDateTime(mass.time),
+    'informacio': mass.info,
+    'forras': mass.source.name,
+  };
 
-  Future<List<CachedMass>> getMassesForChurch(int churchId,
-      {DateTime? from, DateTime? until}) async {
+  Future<List<CachedMass>> getMassesForChurch(
+    int churchId, {
+    DateTime? from,
+    DateTime? until,
+  }) async {
     final where = StringBuffer('church_id = ?');
     final args = <Object>[churchId];
     if (from != null) {
@@ -247,15 +285,22 @@ class CacheDatabase {
       args.add(_formatDateTime(until)!);
     }
 
-    final rows = await db.query(massesTable,
-        where: where.toString(), whereArgs: args, orderBy: 'idopont');
+    final rows = await db.query(
+      massesTable,
+      where: where.toString(),
+      whereArgs: args,
+      orderBy: 'idopont',
+    );
     return rows.map(_toMass).toList();
   }
 
   /// Every church with a position, nearest to ([lat], [lon]) first, with its
   /// rows of [day]. Unbounded: the list shows them all.
   Future<List<ChurchListEntry>> nearChurches(
-      double lat, double lon, DateTime day) async {
+    double lat,
+    double lon,
+    DateTime day,
+  ) async {
     // Degrees of longitude shrink towards the poles; scaling them keeps the
     // order right without trigonometry in SQL.
     final lonScale = cos(lat * pi / 180);
@@ -273,7 +318,9 @@ class CacheDatabase {
   /// rows of [day] — none when [day] is null, as for the suggestions typed
   /// out a key at a time. The term is taken literally.
   Future<List<ChurchListEntry>> searchChurches(
-      String term, DateTime? day) async {
+    String term,
+    DateTime? day,
+  ) async {
     final pattern = '%${_escapeLike(term)}%';
     final rows = await db.query(
       churchesTable,
@@ -285,7 +332,10 @@ class CacheDatabase {
   }
 
   /// The churches of [city], by name, with their rows of [day].
-  Future<List<ChurchListEntry>> churchesInCity(String city, DateTime day) async {
+  Future<List<ChurchListEntry>> churchesInCity(
+    String city,
+    DateTime day,
+  ) async {
     final rows = await db.query(
       churchesTable,
       columns: _listColumns.split(', '),
@@ -315,7 +365,9 @@ class CacheDatabase {
   /// The churches with these ids that the cache holds, by name, with their
   /// rows of [day].
   Future<List<ChurchListEntry>> churchesByIds(
-      List<int> ids, DateTime day) async {
+    List<int> ids,
+    DateTime day,
+  ) async {
     if (ids.isEmpty) return const [];
     final rows = await db.query(
       churchesTable,
@@ -328,32 +380,42 @@ class CacheDatabase {
 
   /// SQLite's NOCASE only folds ASCII, which would put "Ágota" after "Zirci".
   static List<ChurchListEntry> _byName(List<ChurchListEntry> entries) =>
-      entries
-        ..sort((a, b) {
-          final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
-          return byName != 0 ? byName : a.id.compareTo(b.id);
-        });
+      entries..sort((a, b) {
+        final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
+        return byName != 0 ? byName : a.id.compareTo(b.id);
+      });
 
   static const Map<String, String> _accents = {
-    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ö': 'o', 'ő': 'o',
-    'ú': 'u', 'ü': 'u', 'ű': 'u',
+    'á': 'a',
+    'é': 'e',
+    'í': 'i',
+    'ó': 'o',
+    'ö': 'o',
+    'ő': 'o',
+    'ú': 'u',
+    'ü': 'u',
+    'ű': 'u',
   };
 
   /// A name folded to lower case and to unaccented Hungarian letters, which
   /// orders the way a reader expects closely enough for a short list.
-  static String _sortKey(String? name) => (name ?? '')
-      .toLowerCase()
-      .split('')
-      .map((char) => _accents[char] ?? char)
-      .join();
+  static String _sortKey(String? name) =>
+      (name ?? '')
+          .toLowerCase()
+          .split('')
+          .map((char) => _accents[char] ?? char)
+          .join();
 
   /// Forgets churches miserend.hu no longer has, with their masses.
   Future<void> deleteChurches(List<int> ids) async {
     if (ids.isEmpty) return;
     final placeholders = List.filled(ids.length, '?').join(',');
     final batch = db.batch();
-    batch.delete(massesTable,
-        where: 'church_id IN ($placeholders)', whereArgs: ids);
+    batch.delete(
+      massesTable,
+      where: 'church_id IN ($placeholders)',
+      whereArgs: ids,
+    );
     batch.delete(churchesTable, where: 'id IN ($placeholders)', whereArgs: ids);
     await batch.commit(noResult: true);
   }
@@ -363,7 +425,8 @@ class CacheDatabase {
     final rows = await db.query(
       churchesTable,
       columns: ['id', 'lat', 'lon'],
-      where: 'lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0)',
+      where:
+          'lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0)',
     );
     return [
       for (final row in rows)
@@ -375,17 +438,24 @@ class CacheDatabase {
     ];
   }
 
-  static const String _listColumns = 'id, nev, ismertnev, varos, lat, lon, photos';
+  static const String _listColumns =
+      'id, nev, ismertnev, varos, lat, lon, photos';
 
   /// [day] null reads no masses at all.
   Future<List<ChurchListEntry>> _listEntries(
-      List<Map<String, Object?>> rows, DateTime? day) async {
-    final masses = day == null
-        ? const <int, List<CachedMass>>{}
-        : await _massesOn(day,
-            churchIds: rows.length <= _idListLimit
-                ? [for (final row in rows) row['id'] as int]
-                : null);
+    List<Map<String, Object?>> rows,
+    DateTime? day,
+  ) async {
+    final masses =
+        day == null
+            ? const <int, List<CachedMass>>{}
+            : await _massesOn(
+              day,
+              churchIds:
+                  rows.length <= _idListLimit
+                      ? [for (final row in rows) row['id'] as int]
+                      : null,
+            );
     return rows.map((row) {
       final id = row['id'] as int;
       final photos = _stringList(row['photos']);
@@ -407,14 +477,17 @@ class CacheDatabase {
 
   /// Every cached row of [day], by church — of [churchIds] only, when given.
   /// One query for the whole list rather than one per church.
-  Future<Map<int, List<CachedMass>>> _massesOn(DateTime day,
-      {List<int>? churchIds}) async {
+  Future<Map<int, List<CachedMass>>> _massesOn(
+    DateTime day, {
+    List<int>? churchIds,
+  }) async {
     if (churchIds != null && churchIds.isEmpty) return const {};
     final (from, until) = _dayBounds(day);
     final where = StringBuffer('idopont >= ? AND idopont < ?');
     if (churchIds != null) {
       where.write(
-          ' AND church_id IN (${List.filled(churchIds.length, '?').join(',')})');
+        ' AND church_id IN (${List.filled(churchIds.length, '?').join(',')})',
+      );
     }
     final rows = await db.query(
       massesTable,
@@ -444,27 +517,31 @@ class CacheDatabase {
       'megkozelites': church.gettingThere,
       'plebania': church.parish,
       'leiras': church.description,
-      'accessibility': church.accessibility == null
-          ? null
-          : jsonEncode(church.accessibility),
+      'accessibility':
+          church.accessibility == null
+              ? null
+              : jsonEncode(church.accessibility),
       'email': church.email,
       'links': jsonEncode(church.links),
       'nyelvek': jsonEncode(church.languages),
       'miserend_megjegyzes': church.massScheduleNote,
-      'adoraciok': jsonEncode(church.adorations
-          .map((a) => {
+      'adoraciok': jsonEncode(
+        church.adorations
+            .map(
+              (a) => {
                 'kezdete': _formatDateTime(a.start),
                 'vege': _formatDateTime(a.end),
                 'fajta': a.kind,
                 'info': a.info,
-              })
-          .toList()),
-      'gyontatas': church.hasConfession == null
-          ? null
-          : (church.hasConfession! ? 1 : 0),
-      'kozossegek': jsonEncode(church.communities
-          .map((c) => {'nev': c.name, 'link': c.link})
-          .toList()),
+              },
+            )
+            .toList(),
+      ),
+      'gyontatas':
+          church.hasConfession == null ? null : (church.hasConfession! ? 1 : 0),
+      'kozossegek': jsonEncode(
+        church.communities.map((c) => {'nev': c.name, 'link': c.link}).toList(),
+      ),
       'lat': church.lat,
       'lon': church.lon,
       'photos': jsonEncode(church.photos),
@@ -532,7 +609,9 @@ class CacheDatabase {
     final decoded = _list(encoded);
     return decoded.whereType<Map>().map((item) {
       return Community(
-          name: item['nev'] as String?, link: item['link'] as String?);
+        name: item['nev'] as String?,
+        link: item['link'] as String?,
+      );
     }).toList();
   }
 

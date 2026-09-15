@@ -1,7 +1,6 @@
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/mass_kind.dart';
 
-
 /// How long after its start a mass is still reachable. Someone who misses more
 /// than 10–15 minutes of the mass may no longer receive communion; this is the
 /// safe end of that range.
@@ -22,7 +21,9 @@ DateTime nearestMassesUntil(DateTime now) =>
 /// The nearest masses of CONTEXT.md, chosen from a raw `NearbyMasses`
 /// response as it stands at [now].
 List<NearbyMassesItem> selectNearestMasses(
-    List<NearbyMassesItem> items, DateTime now) {
+  List<NearbyMassesItem> items,
+  DateTime now,
+) {
   final from = reachableFrom(now);
   final until = nearestMassesUntil(now);
   final masses = items
@@ -43,20 +44,18 @@ List<NearbyMassesItem> selectNearestMasses(
   // church id breaks the remaining ties, because List.sort is not stable and
   // distances come rounded to two decimals, so which church makes the cut
   // would otherwise change from one minute's re-selection to the next.
-  final nearest = earliestByChurch.values.toList()
-    ..sort((a, b) {
-      final byDistance = a.distanceKm.compareTo(b.distanceKm);
-      return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
-    });
-  return nearest.take(nearestChurchLimit).toList()
-    ..sort((a, b) {
-      final byStart = a.start.compareTo(b.start);
-      if (byStart != 0) return byStart;
-      final byDistance = a.distanceKm.compareTo(b.distanceKm);
-      return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
-    });
+  final nearest =
+      earliestByChurch.values.toList()..sort((a, b) {
+        final byDistance = a.distanceKm.compareTo(b.distanceKm);
+        return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
+      });
+  return nearest.take(nearestChurchLimit).toList()..sort((a, b) {
+    final byStart = a.start.compareTo(b.start);
+    if (byStart != 0) return byStart;
+    final byDistance = a.distanceKm.compareTo(b.distanceKm);
+    return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
+  });
 }
 
 /// An ongoing mass has already started but is still reachable.
-bool isOngoing(NearbyMassesItem mass, DateTime now) =>
-    !mass.start.isAfter(now);
+bool isOngoing(NearbyMassesItem mass, DateTime now) => !mass.start.isAfter(now);

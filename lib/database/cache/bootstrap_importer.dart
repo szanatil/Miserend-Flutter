@@ -36,8 +36,11 @@ class BootstrapImporter {
       final ids = chunk.map((row) => row['tid'] as int).toList();
 
       final placeholders = List.filled(ids.length, '?').join(',');
-      final rules = await legacy.query('misek',
-          where: 'tid IN ($placeholders)', whereArgs: ids);
+      final rules = await legacy.query(
+        'misek',
+        where: 'tid IN ($placeholders)',
+        whereArgs: ids,
+      );
 
       final rulesByChurch = <int, List<Mass>>{};
       for (final row in rules) {
@@ -47,12 +50,19 @@ class BootstrapImporter {
 
       final masses = <CachedMass>[];
       for (final id in ids) {
-        masses.addAll(expandMasses(rulesByChurch[id] ?? const <Mass>[],
-            from: from, days: days));
+        masses.addAll(
+          expandMasses(
+            rulesByChurch[id] ?? const <Mass>[],
+            from: from,
+            days: days,
+          ),
+        );
       }
 
       await cache.importChurches(
-          chunk.map(churchFromLegacyRow).toList(), masses);
+        chunk.map(churchFromLegacyRow).toList(),
+        masses,
+      );
     }
     await cache.setBootstrappedAt(DateTime.now());
   }
@@ -106,8 +116,13 @@ class BootstrapImporter {
         final time = rule.time;
         if (time == null || !MassFilter.isMassOnDay(rule, day)) continue;
 
-        final at =
-            DateTime(day.year, day.month, day.day, time.hour, time.minute);
+        final at = DateTime(
+          day.year,
+          day.month,
+          day.day,
+          time.hour,
+          time.minute,
+        );
         // Overlapping seasons can describe the same mass twice; two masses at
         // one time are only genuinely different if they say different things.
         occurrences.putIfAbsent(

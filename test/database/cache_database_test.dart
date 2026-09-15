@@ -13,49 +13,50 @@ ChurchDetails _church(
   bool? isGreek,
   List<Adoration> adorations = const [],
   List<Community> communities = const [],
-}) =>
-    ChurchDetails(
-      id: id,
-      name: name,
-      commonName: 'Ismert név',
-      names: const ['Templom', 'Church'],
-      alternativeNames: const ['Alt'],
-      country: 'Magyarország',
-      diocese: 'Esztergom-Budapest',
-      county: 'Budapest',
-      city: 'Budapest V. kerület',
-      street: 'Március 15. tér',
-      gettingThere: null,
-      parish: 'Pl&eacute;b&aacute;nos: X',
-      description: 'Leírás',
-      accessibility: const {'wheelchair': 'no'},
-      email: 'iroda@example.com',
-      links: const ['http://example.com'],
-      languages: const ['hu', 'en'],
-      massScheduleNote: null,
-      adorations: adorations,
-      hasConfession: false,
-      communities: communities,
-      lat: 47.492233,
-      lon: 19.0522943,
-      photos: const ['https://miserend.hu/kepek/templomok/38/a.jpg'],
-      updatedAt: DateTime(2026, 7, 27),
-      localSyncedAt: null,
-      isGreek: isGreek,
-    );
+}) => ChurchDetails(
+  id: id,
+  name: name,
+  commonName: 'Ismert név',
+  names: const ['Templom', 'Church'],
+  alternativeNames: const ['Alt'],
+  country: 'Magyarország',
+  diocese: 'Esztergom-Budapest',
+  county: 'Budapest',
+  city: 'Budapest V. kerület',
+  street: 'Március 15. tér',
+  gettingThere: null,
+  parish: 'Pl&eacute;b&aacute;nos: X',
+  description: 'Leírás',
+  accessibility: const {'wheelchair': 'no'},
+  email: 'iroda@example.com',
+  links: const ['http://example.com'],
+  languages: const ['hu', 'en'],
+  massScheduleNote: null,
+  adorations: adorations,
+  hasConfession: false,
+  communities: communities,
+  lat: 47.492233,
+  lon: 19.0522943,
+  photos: const ['https://miserend.hu/kepek/templomok/38/a.jpg'],
+  updatedAt: DateTime(2026, 7, 27),
+  localSyncedAt: null,
+  isGreek: isGreek,
+);
 
-CachedMass _mass(int churchId, DateTime time,
-        {String? info,
-        int? apiMassId,
-        MassSource source = MassSource.nearbyMasses}) =>
-    CachedMass(
-      id: null,
-      apiMassId: apiMassId,
-      churchId: churchId,
-      time: time,
-      info: info,
-      source: source,
-    );
+CachedMass _mass(
+  int churchId,
+  DateTime time, {
+  String? info,
+  int? apiMassId,
+  MassSource source = MassSource.nearbyMasses,
+}) => CachedMass(
+  id: null,
+  apiMassId: apiMassId,
+  churchId: churchId,
+  time: time,
+  info: info,
+  source: source,
+);
 
 /// A church at a position, with a photo of its own.
 ChurchDetails _at(int id, double? lat, double? lon, {String? name}) =>
@@ -84,7 +85,8 @@ void main() {
   group('schema', () {
     test('creates both cache tables', () async {
       final tables = await cache.db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
+        "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+      );
       final names = tables.map((row) => row['name']).toList();
 
       expect(names, containsAll(<String>['churches_cache', 'masses_cache']));
@@ -92,8 +94,9 @@ void main() {
 
     test('indexes masses by church and time', () async {
       final indexes = await cache.db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type = 'index' "
-          "AND tbl_name = 'masses_cache'");
+        "SELECT name FROM sqlite_master WHERE type = 'index' "
+        "AND tbl_name = 'masses_cache'",
+      );
 
       expect(indexes, isNotEmpty);
     });
@@ -105,18 +108,20 @@ void main() {
     });
 
     test('round-trips every field, including the JSON ones', () async {
-      await cache.upsertChurch(_church(
-        38,
-        adorations: [
-          Adoration(
-            start: DateTime(2026, 9, 10, 16, 0),
-            end: DateTime(2026, 9, 10, 17, 10),
-            kind: 'csendes',
-            info: 'Kivéve júliusban',
-          ),
-        ],
-        communities: [Community(name: 'Közösség', link: 'http://k.hu')],
-      ));
+      await cache.upsertChurch(
+        _church(
+          38,
+          adorations: [
+            Adoration(
+              start: DateTime(2026, 9, 10, 16, 0),
+              end: DateTime(2026, 9, 10, 17, 10),
+              kind: 'csendes',
+              info: 'Kivéve júliusban',
+            ),
+          ],
+          communities: [Community(name: 'Közösség', link: 'http://k.hu')],
+        ),
+      );
 
       final stored = (await cache.getChurch(38))!;
 
@@ -162,9 +167,11 @@ void main() {
 
       expect(stored.localSyncedAt, isNotNull);
       expect(
-          stored.localSyncedAt!
-              .isBefore(before.subtract(const Duration(seconds: 1))),
-          isFalse);
+        stored.localSyncedAt!.isBefore(
+          before.subtract(const Duration(seconds: 1)),
+        ),
+        isFalse,
+      );
     });
 
     test('overwrites the existing row instead of adding another', () async {
@@ -176,17 +183,19 @@ void main() {
       expect((await cache.getChurch(38))!.name, 'Új név');
     });
 
-    test('keeps the bootstrap-only isGreek when the API rewrites the row',
-        () async {
-      await cache.upsertChurch(_church(38, isGreek: true));
+    test(
+      'keeps the bootstrap-only isGreek when the API rewrites the row',
+      () async {
+        await cache.upsertChurch(_church(38, isGreek: true));
 
-      // An API response carries no isGreek at all.
-      await cache.upsertChurch(_church(38, name: 'API név', isGreek: null));
+        // An API response carries no isGreek at all.
+        await cache.upsertChurch(_church(38, name: 'API név', isGreek: null));
 
-      final stored = (await cache.getChurch(38))!;
-      expect(stored.name, 'API név');
-      expect(stored.isGreek, isTrue);
-    });
+        final stored = (await cache.getChurch(38))!;
+        expect(stored.name, 'API név');
+        expect(stored.isGreek, isTrue);
+      },
+    );
   });
 
   group('masses', () {
@@ -247,19 +256,34 @@ void main() {
 
   group('mass source', () {
     test('is stored with every row', () async {
-      await cache.importChurches([_at(38, 47.49, 19.05)], [
-        _mass(38, DateTime(2026, 9, 10, 9, 0),
-            info: 'gitáros', source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [_at(38, 47.49, 19.05)],
+        [
+          _mass(
+            38,
+            DateTime(2026, 9, 10, 9, 0),
+            info: 'gitáros',
+            source: MassSource.bootstrap,
+          ),
+        ],
+      );
       await cache.replaceMassesForChurch(99, [
-        _mass(99, DateTime(2026, 9, 10, 17, 0),
-            info: 'Gyóntatás', source: MassSource.nearbyMasses),
+        _mass(
+          99,
+          DateTime(2026, 9, 10, 17, 0),
+          info: 'Gyóntatás',
+          source: MassSource.nearbyMasses,
+        ),
       ]);
 
-      expect((await cache.getMassesForChurch(38)).single.source,
-          MassSource.bootstrap);
-      expect((await cache.getMassesForChurch(99)).single.source,
-          MassSource.nearbyMasses);
+      expect(
+        (await cache.getMassesForChurch(38)).single.source,
+        MassSource.bootstrap,
+      );
+      expect(
+        (await cache.getMassesForChurch(99)).single.source,
+        MassSource.nearbyMasses,
+      );
     });
   });
 
@@ -293,26 +317,29 @@ void main() {
     });
 
     test("carries each church's rows of that day, in time order", () async {
-      await cache.importChurches([
-        _at(1, 47.50, 19.04),
-        _at(2, 47.51, 19.04),
-      ], [
-        _mass(1, DateTime(2026, 9, 10, 18, 0), source: MassSource.bootstrap),
-        _mass(1, DateTime(2026, 9, 10, 7, 0), source: MassSource.bootstrap),
-        _mass(1, DateTime(2026, 9, 11, 7, 0), source: MassSource.bootstrap),
-        _mass(1, DateTime(2026, 9, 9, 23, 0), source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [_at(1, 47.50, 19.04), _at(2, 47.51, 19.04)],
+        [
+          _mass(1, DateTime(2026, 9, 10, 18, 0), source: MassSource.bootstrap),
+          _mass(1, DateTime(2026, 9, 10, 7, 0), source: MassSource.bootstrap),
+          _mass(1, DateTime(2026, 9, 11, 7, 0), source: MassSource.bootstrap),
+          _mass(1, DateTime(2026, 9, 9, 23, 0), source: MassSource.bootstrap),
+        ],
+      );
 
       final near = await cache.nearChurches(47.50, 19.04, today);
 
-      expect(near[0].masses.map((m) => m.time),
-          [DateTime(2026, 9, 10, 7, 0), DateTime(2026, 9, 10, 18, 0)]);
+      expect(near[0].masses.map((m) => m.time), [
+        DateTime(2026, 9, 10, 7, 0),
+        DateTime(2026, 9, 10, 18, 0),
+      ]);
       expect(near[1].masses, isEmpty);
     });
 
     test('carries what a row shows: names, city, first photo', () async {
-      await cache.importChurches([_at(7, 47.50, 19.04, name: 'Bazilika')],
-          const []);
+      await cache.importChurches([
+        _at(7, 47.50, 19.04, name: 'Bazilika'),
+      ], const []);
 
       final entry = (await cache.nearChurches(47.50, 19.04, today)).single;
 
@@ -327,54 +354,59 @@ void main() {
 
   group('a minimal answer', () {
     /// What a `minimal` response maps to: none of the fields it leaves out.
-    ChurchDetails minimal(int id, {String name = 'API név', double lat = 47.6}) =>
-        ChurchDetails(
-          id: id,
-          name: name,
-          commonName: 'API ismert név',
-          names: const [],
-          alternativeNames: const [],
-          country: 'Magyarország',
-          diocese: null,
-          county: null,
-          city: 'API város',
-          street: null,
-          gettingThere: null,
-          parish: null,
-          description: null,
-          accessibility: null,
-          email: null,
-          links: const ['http://api.example.com'],
-          languages: const [],
-          massScheduleNote: null,
-          adorations: const [],
-          hasConfession: true,
-          communities: const [],
-          lat: lat,
-          lon: 19.1,
-          photos: const [],
-          updatedAt: DateTime(2026, 9, 1),
-          localSyncedAt: null,
-          isGreek: null,
-        );
+    ChurchDetails minimal(
+      int id, {
+      String name = 'API név',
+      double lat = 47.6,
+    }) => ChurchDetails(
+      id: id,
+      name: name,
+      commonName: 'API ismert név',
+      names: const [],
+      alternativeNames: const [],
+      country: 'Magyarország',
+      diocese: null,
+      county: null,
+      city: 'API város',
+      street: null,
+      gettingThere: null,
+      parish: null,
+      description: null,
+      accessibility: null,
+      email: null,
+      links: const ['http://api.example.com'],
+      languages: const [],
+      massScheduleNote: null,
+      adorations: const [],
+      hasConfession: true,
+      communities: const [],
+      lat: lat,
+      lon: 19.1,
+      photos: const [],
+      updatedAt: DateTime(2026, 9, 1),
+      localSyncedAt: null,
+      isGreek: null,
+    );
 
-    test('overwrites what it carries, corrected coordinates included',
-        () async {
-      await cache.upsertChurch(_church(38, isGreek: true));
+    test(
+      'overwrites what it carries, corrected coordinates included',
+      () async {
+        await cache.upsertChurch(_church(38, isGreek: true));
 
-      await cache.upsertChurch(minimal(38, lat: 47.7), minimal: true);
+        await cache.upsertChurch(minimal(38, lat: 47.7), minimal: true);
 
-      final stored = (await cache.getChurch(38))!;
-      expect(stored.name, 'API név');
-      expect(stored.commonName, 'API ismert név');
-      expect(stored.city, 'API város');
-      expect(stored.lat, 47.7);
-      expect(stored.lon, 19.1);
-      expect(stored.links, ['http://api.example.com']);
-      expect(stored.hasConfession, isTrue);
-      expect(stored.updatedAt, DateTime(2026, 9, 1));
-      expect(stored.localSyncedAt, isNotNull);
-    });
+        final stored = (await cache.getChurch(38))!;
+        expect(stored.name, 'API név');
+        expect(stored.commonName, 'API ismert név');
+        expect(stored.city, 'API város');
+        expect(stored.lat, 47.7);
+        expect(stored.lon, 19.1);
+        expect(stored.links, ['http://api.example.com']);
+        expect(stored.hasConfession, isTrue);
+        expect(stored.updatedAt, DateTime(2026, 9, 1));
+        expect(stored.localSyncedAt, isNotNull);
+      },
+    );
 
     test('keeps the fields it leaves out, and the greek-rite flag', () async {
       await cache.upsertChurch(_church(38, isGreek: true));
@@ -393,7 +425,10 @@ void main() {
     });
 
     test('adds a church the cache has never seen', () async {
-      await cache.upsertChurch(minimal(4242, name: 'Új templom'), minimal: true);
+      await cache.upsertChurch(
+        minimal(4242, name: 'Új templom'),
+        minimal: true,
+      );
 
       final stored = (await cache.getChurch(4242))!;
       expect(stored.name, 'Új templom');
@@ -404,15 +439,22 @@ void main() {
   group('daily masses', () {
     final today = DateTime(2026, 9, 15);
 
-    CachedMass listed(int hour) => _mass(38, DateTime(2026, 9, 15, hour, 0),
-        info: 'Római katolikus Szentmise', source: MassSource.dailyList);
+    CachedMass listed(int hour) => _mass(
+      38,
+      DateTime(2026, 9, 15, hour, 0),
+      info: 'Római katolikus Szentmise',
+      source: MassSource.dailyList,
+    );
 
     test("replace the day's rows, leaving the other days alone", () async {
-      await cache.importChurches([_at(38, 47.49, 19.05)], [
-        _mass(38, DateTime(2026, 9, 14, 8, 0), source: MassSource.bootstrap),
-        _mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
-        _mass(38, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [_at(38, 47.49, 19.05)],
+        [
+          _mass(38, DateTime(2026, 9, 14, 8, 0), source: MassSource.bootstrap),
+          _mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+          _mass(38, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
+        ],
+      );
 
       await cache.replaceDailyMasses(38, today, [listed(7), listed(18)]);
 
@@ -426,9 +468,10 @@ void main() {
     });
 
     test('an empty day empties the day', () async {
-      await cache.importChurches([_at(38, 47.49, 19.05)], [
-        _mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [_at(38, 47.49, 19.05)],
+        [_mass(38, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap)],
+      );
 
       await cache.replaceDailyMasses(38, today, const []);
 
@@ -437,27 +480,32 @@ void main() {
 
     test('leave a day the details schedule has filled untouched', () async {
       await cache.replaceMassesForChurch(38, [
-        _mass(38, DateTime(2026, 9, 15, 9, 0),
-            info: 'Szentmise', source: MassSource.nearbyMasses),
+        _mass(
+          38,
+          DateTime(2026, 9, 15, 9, 0),
+          info: 'Szentmise',
+          source: MassSource.nearbyMasses,
+        ),
       ]);
 
       await cache.replaceDailyMasses(38, today, [listed(7)]);
 
       final stored = await cache.getMassesForChurch(38);
-      expect(stored.map((m) => (m.time, m.source)),
-          [(DateTime(2026, 9, 15, 9, 0), MassSource.nearbyMasses)]);
+      expect(stored.map((m) => (m.time, m.source)), [
+        (DateTime(2026, 9, 15, 9, 0), MassSource.nearbyMasses),
+      ]);
     });
   });
 
   group('removed churches', () {
     test('are deleted with their masses, and nothing else is', () async {
-      await cache.importChurches([
-        _at(1, 47.50, 19.04),
-        _at(2, 47.51, 19.04),
-      ], [
-        _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
-        _mass(2, DateTime(2026, 9, 15, 9, 0), source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [_at(1, 47.50, 19.04), _at(2, 47.51, 19.04)],
+        [
+          _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+          _mass(2, DateTime(2026, 9, 15, 9, 0), source: MassSource.bootstrap),
+        ],
+      );
 
       await cache.deleteChurches([1]);
 
@@ -469,28 +517,39 @@ void main() {
   });
 
   group('churches by id', () {
-    test('lists the ones the cache holds, by name, with the day\'s rows',
-        () async {
-      await cache.importChurches([
-        _at(1, 47.50, 19.04, name: 'Zirci apátság'),
-        _at(2, 47.51, 19.04, name: 'Ágota-templom'),
-        _at(3, 47.52, 19.04, name: 'Más'),
-      ], [
-        _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
-        _mass(1, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
-      ]);
+    test(
+      'lists the ones the cache holds, by name, with the day\'s rows',
+      () async {
+        await cache.importChurches(
+          [
+            _at(1, 47.50, 19.04, name: 'Zirci apátság'),
+            _at(2, 47.51, 19.04, name: 'Ágota-templom'),
+            _at(3, 47.52, 19.04, name: 'Más'),
+          ],
+          [
+            _mass(1, DateTime(2026, 9, 15, 8, 0), source: MassSource.bootstrap),
+            _mass(1, DateTime(2026, 9, 16, 8, 0), source: MassSource.bootstrap),
+          ],
+        );
 
-      final entries =
-          await cache.churchesByIds([1, 2, 404], DateTime(2026, 9, 15));
+        final entries = await cache.churchesByIds([
+          1,
+          2,
+          404,
+        ], DateTime(2026, 9, 15));
 
-      expect(entries.map((e) => e.name), ['Ágota-templom', 'Zirci apátság']);
-      expect(entries.last.masses.map((m) => m.time),
-          [DateTime(2026, 9, 15, 8, 0)]);
-    });
+        expect(entries.map((e) => e.name), ['Ágota-templom', 'Zirci apátság']);
+        expect(entries.last.masses.map((m) => m.time), [
+          DateTime(2026, 9, 15, 8, 0),
+        ]);
+      },
+    );
 
     test('is empty for no ids', () async {
-      expect(await cache.churchesByIds(const [], DateTime(2026, 9, 15)),
-          isEmpty);
+      expect(
+        await cache.churchesByIds(const [], DateTime(2026, 9, 15)),
+        isEmpty,
+      );
     });
   });
 
@@ -498,35 +557,46 @@ void main() {
     final today = DateTime(2026, 9, 15);
 
     setUp(() async {
-      await cache.importChurches([
-        BootstrapImporter.churchFromLegacyRow({
-          'tid': 1515,
-          'nev': 'Budavári Nagyboldogasszony-templom',
-          'ismertnev': 'Mátyás-templom',
-          'varos': 'Budapest I. kerület',
-        }),
-        BootstrapImporter.churchFromLegacyRow({
-          'tid': 1155,
-          'nev': 'Havas Boldogasszony templom',
-          'ismertnev': 'Alsóvárosi templom',
-          'varos': 'Szeged',
-        }),
-        BootstrapImporter.churchFromLegacyRow({
-          'tid': 1160,
-          'nev': 'Szent Mihály templom',
-          'ismertnev': null,
-          'varos': 'Szeged',
-        }),
-        BootstrapImporter.churchFromLegacyRow({
-          'tid': 7,
-          'nev': '100% templom',
-          'ismertnev': null,
-          'varos': 'Szegedi tanya',
-        }),
-      ], [
-        _mass(1155, DateTime(2026, 9, 15, 7, 0), source: MassSource.bootstrap),
-        _mass(1155, DateTime(2026, 9, 16, 7, 0), source: MassSource.bootstrap),
-      ]);
+      await cache.importChurches(
+        [
+          BootstrapImporter.churchFromLegacyRow({
+            'tid': 1515,
+            'nev': 'Budavári Nagyboldogasszony-templom',
+            'ismertnev': 'Mátyás-templom',
+            'varos': 'Budapest I. kerület',
+          }),
+          BootstrapImporter.churchFromLegacyRow({
+            'tid': 1155,
+            'nev': 'Havas Boldogasszony templom',
+            'ismertnev': 'Alsóvárosi templom',
+            'varos': 'Szeged',
+          }),
+          BootstrapImporter.churchFromLegacyRow({
+            'tid': 1160,
+            'nev': 'Szent Mihály templom',
+            'ismertnev': null,
+            'varos': 'Szeged',
+          }),
+          BootstrapImporter.churchFromLegacyRow({
+            'tid': 7,
+            'nev': '100% templom',
+            'ismertnev': null,
+            'varos': 'Szegedi tanya',
+          }),
+        ],
+        [
+          _mass(
+            1155,
+            DateTime(2026, 9, 15, 7, 0),
+            source: MassSource.bootstrap,
+          ),
+          _mass(
+            1155,
+            DateTime(2026, 9, 16, 7, 0),
+            source: MassSource.bootstrap,
+          ),
+        ],
+      );
     });
 
     test('by name finds a part of the name', () async {
@@ -544,8 +614,9 @@ void main() {
     test("carries each found church's rows of the day", () async {
       final found = await cache.searchChurches('Havas', today);
 
-      expect(found.single.masses.map((m) => m.time),
-          [DateTime(2026, 9, 15, 7, 0)]);
+      expect(found.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 15, 7, 0),
+      ]);
     });
 
     test('takes the search term literally, wildcards included', () async {
@@ -557,13 +628,17 @@ void main() {
     test('a city lists the churches of that city, by name', () async {
       final found = await cache.churchesInCity('Szeged', today);
 
-      expect(found.map((c) => c.name),
-          ['Havas Boldogasszony templom', 'Szent Mihály templom']);
+      expect(found.map((c) => c.name), [
+        'Havas Boldogasszony templom',
+        'Szent Mihály templom',
+      ]);
     });
 
     test('suggests cities by a part of their name, each once', () async {
-      expect(await cache.searchCities('Szeged'),
-          unorderedEquals(['Szeged', 'Szegedi tanya']));
+      expect(
+        await cache.searchCities('Szeged'),
+        unorderedEquals(['Szeged', 'Szegedi tanya']),
+      );
     });
 
     test('suggests churches without reading their masses', () async {
@@ -585,8 +660,10 @@ void main() {
 
       final locations = await cache.churchLocations();
 
-      expect(locations.map((l) => (l.id, l.lat, l.lon)),
-          unorderedEquals([(1, 47.50, 19.04), (4, 46.25, 20.14)]));
+      expect(
+        locations.map((l) => (l.id, l.lat, l.lon)),
+        unorderedEquals([(1, 47.50, 19.04), (4, 46.25, 20.14)]),
+      );
     });
   });
 }

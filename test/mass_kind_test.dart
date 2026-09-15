@@ -3,13 +3,13 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/mass_kind.dart';
 
 CachedMass _row(MassSource source, String? info) => CachedMass(
-      id: null,
-      apiMassId: null,
-      churchId: 38,
-      time: DateTime(2026, 9, 15, 18, 0),
-      info: info,
-      source: source,
-    );
+  id: null,
+  apiMassId: null,
+  churchId: 38,
+  time: DateTime(2026, 9, 15, 18, 0),
+  info: info,
+  source: source,
+);
 
 void main() {
   group('a bootstrap row', () {
@@ -20,13 +20,22 @@ void main() {
   });
 
   group('a NearbyMasses row', () {
-    for (final title in ['Szentmise', 'Szent Liturgia', 'Régi rítusú szentmise']) {
+    for (final title in [
+      'Szentmise',
+      'Szent Liturgia',
+      'Régi rítusú szentmise',
+    ]) {
       test('"$title" is a mass', () {
         expect(isMass(_row(MassSource.nearbyMasses, title)), isTrue);
       });
     }
 
-    for (final title in ['Gyóntatás', 'Vecsernye', 'Szentségimádás', 'Ismeretlen']) {
+    for (final title in [
+      'Gyóntatás',
+      'Vecsernye',
+      'Szentségimádás',
+      'Ismeretlen',
+    ]) {
       test('"$title" is not a mass', () {
         expect(isMass(_row(MassSource.nearbyMasses, title)), isFalse);
       });

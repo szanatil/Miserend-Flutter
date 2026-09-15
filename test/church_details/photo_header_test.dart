@@ -30,8 +30,9 @@ double _page(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('a church with no photo gets the placeholder, not a slideshow',
-      (tester) async {
+  testWidgets('a church with no photo gets the placeholder, not a slideshow', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(const []));
 
     expect(find.byType(PageView), findsNothing);

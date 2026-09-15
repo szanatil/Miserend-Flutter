@@ -22,15 +22,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: CustomColors.purple
-        ),
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: CustomColors.purple),
         appBarTheme: AppBarTheme(
-          titleTextStyle: Theme.of(context).textTheme.titleLarge!.apply(color: Colors.white),
+          titleTextStyle: Theme.of(
+            context,
+          ).textTheme.titleLarge!.apply(color: Colors.white),
           iconTheme: IconThemeData(color: Colors.white),
-          color:  CustomColors.purple,
-
-        )
+          color: CustomColors.purple,
+        ),
       ),
       home: const RouteSplash(),
     );

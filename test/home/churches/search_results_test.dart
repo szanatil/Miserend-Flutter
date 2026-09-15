@@ -14,15 +14,15 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'fake_church_list_loader.dart';
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
-      id: id,
-      name: name,
-      commonName: null,
-      city: 'Szeged',
-      lat: 46.25,
-      lon: 20.14,
-      photo: null,
-      masses: const [],
-    );
+  id: id,
+  name: name,
+  commonName: null,
+  city: 'Szeged',
+  lat: 46.25,
+  lon: 20.14,
+  photo: null,
+  masses: const [],
+);
 
 void main() {
   // The rows read favorites, which live in a local database. Built once, in
@@ -38,24 +38,33 @@ void main() {
     }
   });
 
-  Future<void> pumpPage(WidgetTester tester, ChurchListLoader loader,
-      {SearchParams? params}) async {
-    await tester.pumpWidget(ChangeNotifierProvider<FavoritesService>.value(
-      value: favorites,
-      child: MaterialApp(
-        home: SearchResultsPage(
-          searchParams: params ?? SearchParams.fromSearchTerm('Boldogasszony'),
-          loader: loader,
+  Future<void> pumpPage(
+    WidgetTester tester,
+    ChurchListLoader loader, {
+    SearchParams? params,
+  }) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: MaterialApp(
+          home: SearchResultsPage(
+            searchParams:
+                params ?? SearchParams.fromSearchTerm('Boldogasszony'),
+            loader: loader,
+          ),
         ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pump();
   }
 
   Future<void> pullToRefresh(WidgetTester tester) async {
     await tester.fling(
-        find.byType(Scrollable).first, const Offset(0, 400), 1000);
+      find.byType(Scrollable).first,
+      const Offset(0, 400),
+      1000,
+    );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
@@ -67,10 +76,13 @@ void main() {
     expect(find.text('Boldogasszony'), findsOneWidget);
   });
 
-  testWidgets('shows the loading caption while the cache is searched',
-      (tester) async {
+  testWidgets('shows the loading caption while the cache is searched', (
+    tester,
+  ) async {
     await pumpPage(
-        tester, FakeChurchListLoader([Completer<List<ChurchListEntry>>()]));
+      tester,
+      FakeChurchListLoader([Completer<List<ChurchListEntry>>()]),
+    );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
@@ -82,11 +94,12 @@ void main() {
   });
 
   testWidgets('lists what the cache found, then refreshes it', (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1155, 'Havas Boldogasszony templom')]
-    ], refreshed: [
-      Completer<ChurchList>()
-    ]);
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1155, 'Havas Boldogasszony templom')],
+      ],
+      refreshed: [Completer<ChurchList>()],
+    );
 
     await pumpPage(tester, loader);
 
@@ -106,41 +119,50 @@ void main() {
     expect(find.text('Szeged'), findsOneWidget);
   });
 
-  testWidgets('a church found by the API search appears after the refresh',
-      (tester) async {
+  testWidgets('a church found by the API search appears after the refresh', (
+    tester,
+  ) async {
     await pumpPage(
-        tester,
-        FakeChurchListLoader([
-          <ChurchListEntry>[]
-        ], refreshed: [
-          listOf([_entry(4242, 'Új Boldogasszony templom')])
-        ]));
+      tester,
+      FakeChurchListLoader(
+        [<ChurchListEntry>[]],
+        refreshed: [
+          listOf([_entry(4242, 'Új Boldogasszony templom')]),
+        ],
+      ),
+    );
 
     expect(find.text('Új Boldogasszony templom'), findsOneWidget);
     expect(find.text('Nincs találat'), findsNothing);
   });
 
-  testWidgets('a failed refresh puts up the banner over the results',
-      (tester) async {
+  testWidgets('a failed refresh puts up the banner over the results', (
+    tester,
+  ) async {
     await pumpPage(
-        tester,
-        FakeChurchListLoader([
-          [_entry(1155, 'Havas Boldogasszony templom')]
-        ], refreshed: [
-          listOf(const [], failure: ApiFailure.noConnection)
-        ]));
+      tester,
+      FakeChurchListLoader(
+        [
+          [_entry(1155, 'Havas Boldogasszony templom')],
+        ],
+        refreshed: [listOf(const [], failure: ApiFailure.noConnection)],
+      ),
+    );
 
     expect(find.byType(OfflineBanner), findsOneWidget);
     expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
   });
 
   testWidgets('pulling down refreshes again', (tester) async {
-    final loader = FakeChurchListLoader([
-      [_entry(1155, 'Havas Boldogasszony templom')]
-    ], refreshed: [
-      listOf(const [], failure: ApiFailure.serverError),
-      listOf([_entry(1155, 'Havas Boldogasszony templom')]),
-    ]);
+    final loader = FakeChurchListLoader(
+      [
+        [_entry(1155, 'Havas Boldogasszony templom')],
+      ],
+      refreshed: [
+        listOf(const [], failure: ApiFailure.serverError),
+        listOf([_entry(1155, 'Havas Boldogasszony templom')]),
+      ],
+    );
     await pumpPage(tester, loader);
 
     await pullToRefresh(tester);

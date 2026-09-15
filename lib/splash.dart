@@ -113,8 +113,11 @@ class _RouteSplashState extends State<RouteSplash> {
     if (await widget.startup.exportExists()) {
       if (mounted) {
         const snackBar = SnackBar(
-            content: Text('Az adatbázis letöltése nem sikerült, '
-                'a korábban letöltött adatokkal folytatjuk.'));
+          content: Text(
+            'Az adatbázis letöltése nem sikerült, '
+            'a korábban letöltött adatokkal folytatjuk.',
+          ),
+        );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
       _goToMainScreen();

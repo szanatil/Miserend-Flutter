@@ -15,6 +15,7 @@ Future<void> launchExternal(BuildContext context, Uri uri) async {
   }
   if (!opened) {
     messenger.showSnackBar(
-        const SnackBar(content: Text('Nem sikerült megnyitni.')));
+      const SnackBar(content: Text('Nem sikerült megnyitni.')),
+    );
   }
 }

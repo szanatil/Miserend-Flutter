@@ -18,8 +18,9 @@ class PhotoGalleryPage extends StatefulWidget {
 }
 
 class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.initialIndex,
+  );
   late int _index = widget.initialIndex;
 
   @override
@@ -35,9 +36,10 @@ class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: widget.photos.length > 1
-            ? Text('${_index + 1} / ${widget.photos.length}')
-            : null,
+        title:
+            widget.photos.length > 1
+                ? Text('${_index + 1} / ${widget.photos.length}')
+                : null,
       ),
       body: PageView.builder(
         controller: _controller,
@@ -50,9 +52,11 @@ class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
               child: Image.network(
                 widget.photos[index],
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/church_blurred.png',
-                    fit: BoxFit.contain),
+                errorBuilder:
+                    (context, error, stackTrace) => Image.asset(
+                      'assets/images/church_blurred.png',
+                      fit: BoxFit.contain,
+                    ),
               ),
             ),
           );
