@@ -21,7 +21,7 @@ A miserend.hu naponta generált, teljes adatbázis-pillanatképe (templomok, mis
 _Avoid_: "az adatbázis" önmagában; "v3 export" (megszűnt); a letöltött fájl neve (a végpont mögött, átirányítással változhat).
 
 **Helyi gyorsítótár (local cache)**:
-Az eszközön tárolt templom- és mise-adatok, amelyek a v4 API válaszait tükrözik, és az app **egyetlen offline adatforrásai**. Első indításkor a **SQLite exportból** töltődnek fel egyszeri **kezdeti feltöltéssel**, utána kizárólag API-hívások írják felül soronként — a SQLite exportot többé nem töltjük le. Online az API v4 a tekintélyelvű forrás, a gyorsítótár csak tükör; adatkapcsolat nélkül (akár mert a felhasználó nem engedélyezi, akár mert nincs lefedettség) a képernyők a gyorsítótárból dolgoznak. Ha a felhasználó soha többé nem kapcsolódik, a kezdeti feltöltés állapota marad meg. Kivétel: a **legközelebbi misék** és a **gyóntatás** jelzése soha nem jön a gyorsítótárból (ld. `docs/adr/0002-*`).
+Az eszközön tárolt templom- és mise-adatok, amelyek a v4 API válaszait tükrözik, és az app **egyetlen offline adatforrásai**. Első indításkor a **SQLite exportból** töltődnek fel egyszeri **kezdeti feltöltéssel**, utána kizárólag API-hívások írják felül soronként — a SQLite exportot többé nem töltjük le. Az API v4 a tekintélyelvű forrás, a gyorsítótár a tükre — a listaképernyők viszont online is a gyorsítótárat mutatják, és az API válasza a gyorsítótáron át jut el hozzájuk. Ha az API nem válaszol (akár mert a felhasználó nem engedélyezi az adatkapcsolatot, akár mert nincs lefedettség), a képernyő a gyorsítótár állapotánál marad, és ezt jelzi. Ha a felhasználó soha többé nem kapcsolódik, a kezdeti feltöltés állapota marad meg. Kivétel: a **legközelebbi misék** és a **gyóntatás** jelzése soha nem jön a gyorsítótárból (ld. `docs/adr/0002-*`).
 _Avoid_: "az adatbázis" önmagában — korábban ez a teljes, letöltött SQLite fájlt jelentette; most az API részleges, esetlegesen elavult tükrözése.
 
 **Kezdeti feltöltés (bootstrap import)**:
@@ -33,11 +33,19 @@ Az API-kérés el sem jutott a szerverig: a felhasználó nem engedélyezte az a
 _Avoid_: "offline mód" (nem a felhasználó kapcsolja be); "nincs internet" (a tiltás nem a hálózat hiánya).
 
 **Szerverhiba (server error)**:
-A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótárból** töltődik újra, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel.
+A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótár** állapotát mutatja, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel.
 _Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
 
+**Helyzet (position)**:
+A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült.
+_Avoid_: "utolsó ismert pozíció" a helyzet szinonimájaként; "GPS" (a helymeghatározás nem csak műholdas).
+
+**Helyzet nem elérhető (position unavailable)**:
+Az app nem tudja a felhasználó **helyzetét**. Négy oka van, és a felhasználónak mindegyiknél mást kell tennie: **engedély megtagadva** (az app újra kérheti), **engedély véglegesen megtagadva** (csak a telefon beállításaiban adható meg), **helymeghatározás kikapcsolva** (a telefon beállításaiban kapcsolható be), **nincs friss helyzet időben** (újrapróbálható). A helyzethez kötött listák ilyenkor nem jelennek meg, helyettük az okhoz tartozó tájékoztató áll; a Térkép az ország nézetében marad. Független a **Nincs kapcsolat** állapottól: a helymeghatározás adatkapcsolat nélkül is működik, és a két állapot egyszerre is fennállhat.
+_Avoid_: "helyadat" állapotként (az az engedély neve); "GPS-hiba" (az ok legtöbbször az engedély vagy a kikapcsolt helymeghatározás).
+
 **Napi miserend (daily masses)**:
-Egy adott templom aznapi miséinek listája — ezt adja vissza közvetlenül a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként).
+Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb liturgikus esemény**): a napi miserendbe csak a misék tartoznak. A listákon a templomsor mise-időpontjai a napi miserendet mutatják.
 _Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkozik, nem a kiterjesztett listára.
 
 **Kiterjesztett miserend (extended schedule)**:
@@ -45,8 +53,8 @@ A templom-részletező oldal több napra (ma / következő vasárnap / 19 nap) k
 _Avoid_: "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
 
 **Mise vs. egyéb liturgikus esemény**:
-A v4 API `NearbyMasses` végpontja nevével ellentétben nem csak miséket ad vissza, hanem minden, a miserendben rögzített eseményt, amelyeket csak a `title` szövege különböztet meg. **Mise**: *Szentmise*, *Szent Liturgia* (a görögkatolikus szentmise — a neve nem árulja el, de mise), *Régi rítusú szentmise*. **Nem mise**: *Vecsernye*, *Utrenye* (görögkatolikus imaórák), *Igeliturgia* (pap és áldozás nélküli szertartás), *Gyóntatás*, *Szentségimádás*, *Rózsafüzér*, *Litánia*. Ismeretlen cím nem számít misének, amíg valaki fel nem veszi. **Ellenőrizve**: nyolc helyszín két napján (2026-09-19/20, 50 km) ezek voltak az előforduló címek.
-_Avoid_: a `NearbyMasses` válasz elemeit válogatás nélkül "misének" nevezni.
+A v4 API `NearbyMasses` végpontja nevével ellentétben nem csak miséket ad vissza, hanem minden, a miserendben rögzített eseményt, amelyeket csak a `title` szövege különböztet meg. **Mise**: *Szentmise*, *Szent Liturgia* (a görögkatolikus szentmise — a neve nem árulja el, de mise), *Régi rítusú szentmise*. **Nem mise**: *Vecsernye*, *Utrenye* (görögkatolikus imaórák), *Igeliturgia* (pap és áldozás nélküli szertartás), *Gyóntatás*, *Szentségimádás*, *Rózsafüzér*, *Litánia*. Ismeretlen cím nem számít misének, amíg valaki fel nem veszi. **Ellenőrizve**: nyolc helyszín két napján (2026-09-19/20, 50 km) ezek voltak az előforduló címek. Ugyanez igaz a `Church`/`Search`/`NearBy` válasz `misek` mezőjére, ahol az esemény fajtáját az `informacio` szöveg eleje hordozza, felekezeti előtaggal és a vessző után jellemzőkkel (pl. „Római katolikus Szentmise, Csendes", „Római katolikus Gyóntatás") — a fajta itt is a fenti listával dől el. **Ellenőrizve** (2026-09-15, Budapest-keresés és tid 1515).
+_Avoid_: a `NearbyMasses` vagy a `misek` elemeit válogatás nélkül "misének" nevezni.
 
 **Legközelebbi misék (nearest masses)**:
 A Misék fül listája: a felhasználó pozíciójához **térben** legközelebbi (legfeljebb 10) templom, **templomonként egyetlen** — a legkorábbi **elérhető** — miséjével. Nem egy templomhoz tartozik (szemben a napi miserenddel), hanem a felhasználó helyzetéhez. A "legközelebbi" **a templomok kiválasztására** vonatkozik (térbeli közelség); a lista viszont **időrendben** áll, azonos kezdésnél a közelebbi templom elöl. Csak **misét** tartalmaz, más liturgikus eseményt nem, és csak a mai nap miséit. A "mai nap" két szélén van egy-egy kivétel: egy tegnap késő este kezdődött, még elérhető mise is benne van, és a **holnap pontban 00:00-kor** kezdődő mise is — az éjféli mise (karácsony, újév) a felhasználó fejében az előző estéhez tartozik. Egy templom további mai miséi a templom-részletezőn látszanak, itt nem.
