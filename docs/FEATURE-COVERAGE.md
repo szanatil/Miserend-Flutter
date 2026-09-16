@@ -109,13 +109,16 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 ## Permissions & platform capabilities in use
 
-- **Location** (`ACCESS_FINE_LOCATION`, Android) — for "nearby" churches/masses and initial map centering. Note: no `NSLocationWhenInUseUsageDescription` (or similar) was found in `ios/Runner/Info.plist` — iOS will silently deny the permission prompt without one, which would break "nearby" features on iOS as currently configured.
-- **Internet** — database download, static map images, problem reports.
+- **Location** (`ACCESS_FINE_LOCATION` on Android, `NSLocationWhenInUseUsageDescription` in `ios/Runner/Info.plist`) — for "nearby" churches/masses and initial map centering.
+- **Internet** — database download, API v4 calls, map tiles, problem reports.
 - **Storage** (`READ/WRITE_INTERNAL_STORAGE`, Android) — for the downloaded SQLite file (largely a no-op on modern Android scoped storage, but declared).
 
 ## Explicitly out of scope / not present
 
 - No user accounts, login, or server-synced state of any kind.
-- No offline map tiles — the Map tab requires network for Google Maps; the static map image on the details page likewise requires network.
+- No offline map tiles — the CARTO Voyager tiles of the Map tab and of the location card on the details page require network.
 - No localization — every string in the UI is a hardcoded Hungarian literal; there is no `intl` message catalog despite the `intl` package being a dependency (it's used only for date formatting).
-- No automated tests exercise any of the above — `test/widget_test.dart` is unmodified Flutter counter-app boilerplate and does not reference any feature described here.
+
+## Tests
+
+`test/` mirrors `lib/`: unit and widget tests for the API client, the cache and bootstrap import, the list and schedule loaders, the three tabs, the details page and the shared widgets. API responses are recorded JSON fixtures in `test/fixtures/`; location and favorites are faked (`fake_location_provider.dart`, `fake_favorites_service.dart`). Run with `flutter test`.
