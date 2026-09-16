@@ -51,6 +51,11 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   ChurchList? _card;
   int? _cardChurchId;
 
+  /// Where the user is, as of the last position that came back (CONTEXT.md,
+  /// „Helyzet"). Null while it is not known — an older position may have been
+  /// recorded in another town, so a mark left behind would be a lie.
+  LatLng? _userPosition;
+
   /// Why there is no position, while the strip says so. Part of the page's
   /// state rather than a message fired and forgotten, so that the strip going
   /// up, going away and being closed all follow from [build].
@@ -114,6 +119,8 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 interactive: true,
                 mapController: _controller,
                 markers: _markers,
+                selectedMarkerId: _cardChurchId,
+                userPosition: _userPosition,
                 apiKey: const String.fromEnvironment('CARTO_API_KEY'),
                 onTap: _closeCard,
               ),
@@ -182,18 +189,28 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     if (!mounted) return;
     switch (result) {
       case PositionFound(:final position):
-        _controller.move(
-          LatLng(position.latitude, position.longitude),
-          _positionZoom,
-        );
-        // Whatever the strip was asking for has been settled.
-        if (_positionUnavailableReason != null) {
-          setState(() => _positionUnavailableReason = null);
-        }
+        final point = LatLng(position.latitude, position.longitude);
+        _controller.move(point, _zoomForPosition());
+        setState(() {
+          _userPosition = point;
+          // Whatever the strip was asking for has been settled.
+          _positionUnavailableReason = null;
+        });
       case PositionUnavailable(:final reason):
-        if (!announce) return;
-        setState(() => _positionUnavailableReason = reason);
+        // The mark goes with the position: the blue dot and a strip saying we
+        // do not know where the user is cannot both be true.
+        setState(() {
+          _userPosition = null;
+          if (announce) _positionUnavailableReason = reason;
+        });
     }
+  }
+
+  /// Brings the position into view without taking away a closer zoom the user
+  /// set by hand — the button says „take me there", not „zoom out".
+  double _zoomForPosition() {
+    final current = _controller.camera.zoom;
+    return current > _positionZoom ? current : _positionZoom;
   }
 
   /// A tap on the map away from the markers puts the card away. Its refresh,
@@ -210,7 +227,9 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   Future<void> _showChurchCard(int churchId) async {
     final query = ChurchCardQuery(churchId);
-    _cardChurchId = churchId;
+    // At once, not after the cache read: the pin has to show which church the
+    // card that is coming belongs to.
+    setState(() => _cardChurchId = churchId);
 
     final cached = await _loader.load(query);
     if (!mounted || _cardChurchId != churchId) return;

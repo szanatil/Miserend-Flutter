@@ -84,10 +84,14 @@ void main() {
 
   const noFix = PositionUnavailable(PositionUnavailableReason.noFreshFix);
 
+  /// Most of these tests are about the church card, which only a pin opens —
+  /// below [MiserendMap.pinMinZoom] a tap zooms in instead (spec 0006). The
+  /// tests about the country view ask for the map's own opening zoom.
   Future<MapController> pumpPage(
     WidgetTester tester,
     _MapLoader loader, {
     LocationProvider? location,
+    double zoom = MiserendMap.pinMinZoom,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
@@ -106,22 +110,27 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+    if (zoom != MiserendMap.defaultInitialZoom) {
+      controller.move(MiserendMap.defaultInitialCenter, zoom);
+      await tester.pump();
+    }
     return controller;
   }
 
+  /// The churches' layer is the first one; the user's position gets its own.
+  MarkerLayer churchLayer(WidgetTester tester) =>
+      tester.widgetList<MarkerLayer>(find.byType(MarkerLayer)).first;
+
   List<Object?> markerIds(WidgetTester tester) =>
-      tester
-          .widget<MarkerLayer>(find.byType(MarkerLayer))
-          .markers
-          .map((marker) => (marker.key as ValueKey).value)
-          .toList();
+      churchLayer(
+        tester,
+      ).markers.map((marker) => (marker.key as ValueKey).value).toList();
 
   /// Taps the marker the way a finger on its pin would.
   Future<void> tapMarker(WidgetTester tester, int id) async {
-    final marker = tester
-        .widget<MarkerLayer>(find.byType(MarkerLayer))
-        .markers
-        .singleWhere((marker) => (marker.key as ValueKey).value == id);
+    final marker = churchLayer(
+      tester,
+    ).markers.singleWhere((marker) => (marker.key as ValueKey).value == id);
     (marker.child as GestureDetector).onTap!();
     await tester.pump();
     await tester.pump();
@@ -346,9 +355,11 @@ void main() {
       final controller = await pumpPage(
         tester,
         _MapLoader([<ChurchListEntry>[]]),
+        zoom: MiserendMap.defaultInitialZoom,
       );
 
       expect(controller.camera.center, MiserendMap.defaultInitialCenter);
+      expect(controller.camera.zoom, MiserendMap.defaultInitialZoom);
       expect(
         find.byType(PositionUnavailableBanner),
         findsNothing,
@@ -361,9 +372,77 @@ void main() {
         tester,
         _MapLoader([<ChurchListEntry>[]]),
         location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: MiserendMap.defaultInitialZoom,
       );
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('a position found marks the map with the blue dot', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+      );
+
+      final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
+      expect(layers, hasLength(2), reason: 'the churches, then the position');
+      expect(layers.last.markers.single.point, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('the dot goes with the position: a failed try takes the mark '
+        'away', (tester) async {
+      await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([
+          PositionFound(_position(47.5, 19.04)),
+          noFix,
+        ]),
+      );
+      expect(find.byType(MarkerLayer), findsNWidgets(2));
+
+      await tapMyPosition(tester);
+
+      expect(
+        find.byType(MarkerLayer),
+        findsOneWidget,
+        reason: 'a dot next to the "no position" strip would contradict it',
+      );
+      expect(find.byType(PositionUnavailableBanner), findsOneWidget);
+    });
+
+    testWidgets('the my-position button does not take away a closer zoom', (
+      tester,
+    ) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: 16,
+      );
+
+      await tapMyPosition(tester);
+
+      expect(controller.camera.center, const LatLng(47.5, 19.04));
+      expect(controller.camera.zoom, 16);
+    });
+
+    testWidgets('the my-position button brings a far-out map in', (
+      tester,
+    ) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: MiserendMap.defaultInitialZoom,
+      );
+
+      await tapMyPosition(tester);
+
+      expect(controller.camera.zoom, 14);
     });
 
     const cases = {

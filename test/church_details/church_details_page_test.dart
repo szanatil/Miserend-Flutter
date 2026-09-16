@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
@@ -13,6 +14,7 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -560,5 +562,29 @@ void main() {
     expect(find.byType(ChurchDetailsPage), findsOneWidget);
     // The name the page was opened with stays readable.
     expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);
+  });
+
+  group('location card', () {
+    testWidgets('marks the church with the miserend.hu pin', (tester) async {
+      final empty = _page(_emptyDays());
+
+      await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
+
+      final map = tester.widget<MiserendMap>(find.byType(MiserendMap));
+      expect(map.markers.single.point.latitude, _church.lat);
+      expect(map.initialZoom, greaterThanOrEqualTo(MiserendMap.pinMinZoom));
+    });
+
+    testWidgets('carries no blue dot: at this zoom the user is off the card', (
+      tester,
+    ) async {
+      final empty = _page(_emptyDays());
+
+      await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
+
+      final map = tester.widget<MiserendMap>(find.byType(MiserendMap));
+      expect(map.userPosition, isNull);
+      expect(find.byType(MarkerLayer), findsOneWidget);
+    });
   });
 }

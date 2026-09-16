@@ -37,7 +37,7 @@ A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, ért
 _Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
 
 **Helyzet (position)**:
-A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült.
+A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. A Térkép fülön a helyzet **látható jelölés** is, nem csak kameracél — a felhasználó innen olvassa le, milyen messze van tőle egy templom. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült, ezért a jelölés is csak addig látszik, amíg a helyzet ismert: sikertelen helymeghatározás után eltűnik.
 _Avoid_: "utolsó ismert pozíció" a helyzet szinonimájaként; "GPS" (a helymeghatározás nem csak műholdas).
 
 **Helyzet nem elérhető (position unavailable)**:
