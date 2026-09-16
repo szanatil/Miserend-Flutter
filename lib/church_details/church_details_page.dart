@@ -94,7 +94,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               OfflineBanner(
                 failure: failure,
                 asOf: _data?.dataAsOf,
-                hint: RetryHint.reopenChurch,
+                onRetry: _refresh,
               ),
             Expanded(child: _sections()),
           ],
@@ -517,20 +517,28 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     });
   }
 
+  ChurchScheduleLoader get _loader =>
+      widget.loader ??
+      ChurchScheduleLoader(
+        onChurchesGone:
+            Provider.of<FavoritesService>(context, listen: false).removeAll,
+      );
+
   /// Renders whatever the cache holds, then again once the API has answered.
   Future<void> loadMasses() async {
-    final favorites = Provider.of<FavoritesService>(context, listen: false);
-    final loader =
-        widget.loader ??
-        ChurchScheduleLoader(onChurchesGone: favorites.removeAll);
-
-    final cached = await loader.loadCached(widget.church.id, _today);
+    final cached = await _loader.loadCached(widget.church.id, _today);
     if (!mounted) {
       return;
     }
     setState(() => _data = cached);
+    await _refresh();
+  }
 
-    final fresh = await loader.refresh(widget.church, _today);
+  /// Asks the API again, without dropping back to the cache first: what is on
+  /// screen came from there already, and reading it again would blink the
+  /// **Nincs kapcsolat** strip off and on at every retry.
+  Future<void> _refresh() async {
+    final fresh = await _loader.refresh(widget.church, _today);
     if (!mounted) {
       return;
     }
