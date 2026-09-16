@@ -5,7 +5,7 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/church.dart';
-import 'package:miserend/home/masses/mass_list_item.dart';
+import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
@@ -17,8 +17,9 @@ import 'package:miserend/widgets/position_unavailable_view.dart';
 /// The list follows the clock and the user's position rather than being loaded
 /// once: it fetches again when it is shown again (tab switch, app back in the
 /// foreground), on pull-to-refresh, and after midnight; in between, it is
-/// re-selected from the last response every minute, so a mass that stops being
-/// reachable drops off by itself.
+/// re-selected from the last response on every whole minute, so a mass that
+/// stops being reachable drops off by itself, and the time until start changes
+/// together with the phone's clock.
 class NearMassesPage extends StatefulWidget {
   const NearMassesPage({
     super.key,
@@ -52,6 +53,17 @@ class NearMassesPage extends StatefulWidget {
 class _NearMassesPageState extends State<NearMassesPage>
     with WidgetsBindingObserver {
   static const Duration _reselectEvery = Duration(minutes: 1);
+
+  /// How long until the clock reaches the next whole minute: the time until
+  /// start drops the seconds (spec 0008, „Ticker igazítása egész percekhez"),
+  /// so a tick at any other second would show it up to a minute late.
+  static Duration _untilNextMinute(DateTime now) =>
+      _reselectEvery -
+      Duration(
+        seconds: now.second,
+        milliseconds: now.millisecond,
+        microseconds: now.microsecond,
+      );
 
   late final LocationProvider _location = widget.location ?? LocationProvider();
   late final NearestMassesLoader _loader =
@@ -132,7 +144,17 @@ class _NearMassesPageState extends State<NearMassesPage>
   void _startTicker() {
     if (!_inForeground) return;
     _ticker?.cancel();
-    _ticker = Timer.periodic(_reselectEvery, (_) => _onTick());
+    _scheduleTick();
+  }
+
+  /// Each tick waits for the next whole minute on the clock afresh, rather
+  /// than repeating a fixed period, so that a timer running late or a clock
+  /// set right does not leave the ticks off the minute.
+  void _scheduleTick() {
+    _ticker = Timer(_untilNextMinute(widget.clock()), () {
+      _scheduleTick();
+      _onTick();
+    });
   }
 
   void _stopTicker() {
@@ -229,19 +251,21 @@ class _NearMassesPageState extends State<NearMassesPage>
       );
     }
 
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(8),
-      itemCount: masses.length,
-      itemBuilder: (BuildContext context, int index) {
-        final mass = masses[index];
-        return MassListItem(
-          mass: mass,
-          ongoing: isOngoing(mass, now),
-          thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-          onTap: () => _openChurch(mass),
-        );
-      },
+    return _Ground(
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(8),
+        itemCount: masses.length,
+        itemBuilder: (BuildContext context, int index) {
+          final mass = masses[index];
+          return MassCard(
+            mass: mass,
+            now: now,
+            thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
+            onTap: () => _openChurch(mass),
+          );
+        },
+      ),
     );
   }
 
@@ -279,8 +303,8 @@ class _NearMassesPageState extends State<NearMassesPage>
   }
 }
 
-/// The grey the Templomok tab draws its loading and message states on, so that
-/// the same state looks the same on both tabs.
+/// The grey the Templomok tab draws its lists and its loading and message
+/// states on, so that the two tabs look like one app.
 class _Ground extends StatelessWidget {
   const _Ground({required this.child});
 

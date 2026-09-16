@@ -10,7 +10,7 @@ import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
-import 'package:miserend/home/masses/mass_list_item.dart';
+import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
@@ -41,7 +41,8 @@ NearbyMassesItem _mass({
   );
 }
 
-DateTime _at(int hour, int minute) => DateTime(2026, 9, 14, hour, minute);
+DateTime _at(int hour, int minute, [int second = 0]) =>
+    DateTime(2026, 9, 14, hour, minute, second);
 
 /// The blurred church placeholder, looking through the resize wrapper that
 /// decoding at thumbnail size puts around it.
@@ -377,10 +378,28 @@ void main() {
     });
   });
 
-  group('row', () {
-    testWidgets('keeps the city and puts the distance at the right end', (
-      tester,
-    ) async {
+  group('card', () {
+    testWidgets('the list sits on the same grey ground as on the Templomok '
+        'tab', (tester) async {
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [_mass(start: _at(18, 30))],
+        ]),
+      );
+
+      expect(
+        find.ancestor(
+          of: find.byType(ListView),
+          matching: find.byWidgetPredicate(
+            (w) => w is Container && w.color == Colors.black12,
+          ),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('keeps the city and shows the distance', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -396,10 +415,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      final row = tester.getRect(find.byType(MassListItem));
-      final chip = tester.getRect(find.byType(DistanceChip));
-      expect(row.right - chip.right, 16);
-      expect(chip.left, greaterThan(tester.getRect(find.text('18:30')).right));
     });
 
     testWidgets('marks a mass as ongoing only once it has started', (
@@ -419,7 +434,7 @@ void main() {
       expect(find.text('Épp most tart'), findsOneWidget);
       final ongoingRow = find.ancestor(
         of: find.text('Elkezdődött'),
-        matching: find.byType(MassListItem),
+        matching: find.byType(MassCard),
       );
       expect(
         find.descendant(of: ongoingRow, matching: find.text('Épp most tart')),
@@ -427,9 +442,8 @@ void main() {
       );
     });
 
-    testWidgets('shows the title only when it is not plain Szentmise', (
-      tester,
-    ) async {
+    testWidgets('shows the title after the city only when it is not plain '
+        'Szentmise', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -440,8 +454,8 @@ void main() {
         ]),
       );
 
-      expect(find.text('Szent Liturgia'), findsOneWidget);
-      expect(find.text('Szentmise'), findsNothing);
+      expect(find.text('Budapest V. kerület · Szent Liturgia'), findsOneWidget);
+      expect(find.textContaining('Szentmise'), findsNothing);
     });
 
     testWidgets('asks for the thumbnail by church id and shows the list '
@@ -607,6 +621,47 @@ void main() {
   });
 
   group('every minute', () {
+    testWidgets('the time until start counts down', (tester) async {
+      now = _at(17, 35);
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [_mass(start: _at(18, 0))],
+        ]),
+      );
+      expect(find.text('25 perc múlva'), findsOneWidget);
+
+      now = _at(17, 36);
+      await tester.pump(const Duration(minutes: 1));
+
+      expect(find.text('24 perc múlva'), findsOneWidget);
+    });
+
+    testWidgets('ticks on the whole minute, not a minute after the page '
+        'opened', (tester) async {
+      now = _at(17, 35, 40);
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [_mass(start: _at(18, 0))],
+        ]),
+      );
+      expect(find.text('25 perc múlva'), findsOneWidget);
+
+      now = _at(17, 35, 59);
+      await tester.pump(const Duration(seconds: 19));
+      now = _at(17, 36);
+      expect(find.text('25 perc múlva'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('24 perc múlva'), findsOneWidget);
+
+      // And every whole minute after that.
+      now = _at(17, 37);
+      await tester.pump(const Duration(minutes: 1));
+      expect(find.text('23 perc múlva'), findsOneWidget);
+    });
+
     testWidgets('an expired mass gives way to the same church\'s next one, '
         'without a network call', (tester) async {
       now = _at(14, 5);

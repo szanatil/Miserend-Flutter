@@ -195,4 +195,48 @@ void main() {
       expect(selected.map((m) => m.churchId), [4, 2, 3, 1]);
     });
   });
+
+  group('timeUntilStart', () {
+    test('in the last second before the start it is 1 minute', () {
+      expect(timeUntilStart(_at(18, 0), _at(17, 59, 59)), '1 perc múlva');
+    });
+
+    test('a start with seconds in the current minute still reads 1 minute', () {
+      expect(timeUntilStart(_at(18, 0, 30), _at(18, 0, 10)), '1 perc múlva');
+    });
+
+    test('drops the seconds of now before counting', () {
+      expect(timeUntilStart(_at(18, 0), _at(17, 35, 40)), '25 perc múlva');
+    });
+
+    test('counts minutes below an hour', () {
+      expect(timeUntilStart(_at(18, 0), _at(17, 59)), '1 perc múlva');
+      expect(timeUntilStart(_at(18, 0), _at(17, 1)), '59 perc múlva');
+    });
+
+    test('a whole hour leaves the minutes out', () {
+      expect(timeUntilStart(_at(18, 0), _at(17, 0)), '1 óra múlva');
+      expect(timeUntilStart(_at(18, 0), _at(16, 0)), '2 óra múlva');
+    });
+
+    test('otherwise gives hours and minutes', () {
+      expect(timeUntilStart(_at(18, 5), _at(17, 0)), '1 óra 5 perc múlva');
+    });
+
+    test('says nothing from 121 minutes on', () {
+      expect(timeUntilStart(_at(18, 1), _at(16, 0)), isNull);
+    });
+
+    test('counts across midnight', () {
+      expect(
+        timeUntilStart(DateTime(2026, 9, 15), _at(23, 30)),
+        '30 perc múlva',
+      );
+    });
+
+    test('says nothing once the mass has started', () {
+      expect(timeUntilStart(_at(18, 0), _at(18, 0)), isNull);
+      expect(timeUntilStart(_at(18, 0), _at(18, 4)), isNull);
+    });
+  });
 }

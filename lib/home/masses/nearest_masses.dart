@@ -59,3 +59,33 @@ List<NearbyMassesItem> selectNearestMasses(
 
 /// An ongoing mass has already started but is still reachable.
 bool isOngoing(NearbyMassesItem mass, DateTime now) => !mass.start.isAfter(now);
+
+/// How far ahead a start still gets its time until start. Beyond two hours the
+/// start alone says enough, and "7 óra 40 perc múlva" in the morning is noise
+/// (spec 0008, „Hátralévő idő").
+const Duration timeUntilStartLimit = Duration(minutes: 120);
+
+/// The time until start of CONTEXT.md, in whole minutes — „25 perc múlva",
+/// „1 óra 5 perc múlva" — or null where there is nothing to say: past
+/// [timeUntilStartLimit], or once the mass has started, where the card says
+/// „Épp most tart" instead.
+///
+/// [now] loses its seconds first, so the text changes together with the
+/// phone's clock rather than up to a minute after it. A start carrying seconds
+/// of its own would then be 0 minutes away; it still reads as 1.
+String? timeUntilStart(DateTime start, DateTime now) {
+  if (!start.isAfter(now)) return null;
+  final wholeMinute = DateTime(
+    now.year,
+    now.month,
+    now.day,
+    now.hour,
+    now.minute,
+  );
+  final minutes = start.difference(wholeMinute).inMinutes;
+  if (minutes > timeUntilStartLimit.inMinutes) return null;
+  if (minutes < 60) return '${minutes < 1 ? 1 : minutes} perc múlva';
+  final hours = minutes ~/ 60;
+  final rest = minutes % 60;
+  return rest == 0 ? '$hours óra múlva' : '$hours óra $rest perc múlva';
+}

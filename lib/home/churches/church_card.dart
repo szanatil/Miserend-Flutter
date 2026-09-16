@@ -13,6 +13,7 @@ import 'package:miserend/straight_line_distance.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/reserved_room.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
@@ -94,7 +95,7 @@ class ChurchCard extends StatelessWidget {
                               // The slot keeps both lines even for a short
                               // name, so that everything below stands at the
                               // same height on every card.
-                              child: _LineSlot(
+                              child: ReservedRoom.lines(
                                 lines: _nameLines,
                                 style: textTheme.titleLarge,
                                 child: Text(
@@ -209,39 +210,6 @@ class ChurchCard extends StatelessWidget {
   /// height is the axis [BoxFit.cover] scales by and needs no headroom.
   int _decodeHeight(BuildContext context) =>
       PhotoDecode.forSlot(context, height, tight: true);
-}
-
-/// Reserves [lines] lines of [style] for [child], whether it takes them or not:
-/// an invisible run of empty lines sets the height, in the font and the text
-/// scale the child is drawn in.
-class _LineSlot extends StatelessWidget {
-  const _LineSlot({
-    required this.lines,
-    required this.style,
-    required this.child,
-  });
-
-  final int lines;
-  final TextStyle? style;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ExcludeSemantics(
-          child: Visibility(
-            visible: false,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: Text('\n' * (lines - 1), style: style),
-          ),
-        ),
-        child,
-      ],
-    );
-  }
 }
 
 /// Today's masses on a single line. Those that do not fit give way to one

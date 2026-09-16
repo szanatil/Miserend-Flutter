@@ -72,6 +72,10 @@ _Avoid_: "még nem kezdődött el" (a néhány perce kezdődött mise is elérhe
 Olyan elérhető mise, amely már elkezdődött (legfeljebb 10 perce) — a listán ezzel jelölve jelenik meg. Nem azt jelenti, hogy a mise bármikor a befejezéséig "tart" a lista szempontjából: 10 perc után kikerül, mert onnantól nem elérhető.
 _Avoid_: "folyamatban lévő mise" általánosságban — a mise még tarthat, csak már nem elérhető.
 
+**Hátralévő idő (time until start)**:
+Mennyi idő van még egy **elérhető** mise kezdéséig, a kezdés pontos időpontja mellett kiírva („25 perc múlva", „1 óra 5 perc múlva"), percre pontosan. Csak **2 órán belül** kezdődő misénél látszik — azon túl a pontos időpont önmagában elég. Az **épp most tartó misénél** nincs hátralévő idő, és az eltelt percek sincsenek kiírva: a helyén az „Épp most tart" jelölés áll, mert a lista nem a mise hosszát követi, hanem az elérhetőséget. Nem menetidő-becslés: azt mondja meg, mikor kezdődik a mise, nem azt, hogy mikor kell elindulni.
+_Avoid_: "visszaszámlálás" (másodpercre pontos, élő órát sugall — percenként frissül); "indulásig hátralévő idő" (menetidővel nem számolunk).
+
 **Gyóntatás (confession)**:
 Nem miserend-adat és nem nyitvatartás, hanem egy **pillanatnyi állapot**: a miserend.hu gyóntatószékekbe szerelt fizikai kapcsolókat üzemeltet, amelyek LoRaWAN-on jelentik, hogy éppen van-e gyónási lehetőség (`POST /api/v4/lorawan`, tokenhez kötött, a `/apidocs` szerint kísérleti). A v4 `Church` válasz `gyontatas` mezője ennek a kapcsolónak az **aktuális** állása. **Ellenőrizve**: a mező puszta bool, és nem különbözteti meg a *kikapcsolt kapcsolót* a *nem létező kapcsolótól* — mindkettő `false`, miközben a webapp harmadik állapotként külön kiírja, hogy "Ezen a misézőhelyen nincs gyóntatást jelző kapcsoló". Élő mintavétel (2026-09-11, id 1–400): 338 válaszból 338 `false`. Következmény: a kliens csak a `true` esetet jeleníti meg, és csak friss API-válaszból — gyorsítótárazott értékből soha (ld. `docs/adr/0002-*`).
 _Avoid_: "gyóntatási rend" / "gyóntatási időpontok" (azt sugallja, hogy menetrend, pedig egy kapcsoló állása); "van-e gyóntatás" (a `false` erre nem válasz).
