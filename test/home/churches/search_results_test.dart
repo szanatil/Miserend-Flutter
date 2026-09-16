@@ -7,6 +7,7 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/search_results.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -106,6 +107,20 @@ void main() {
     expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
     expect(loader.refreshes, 1);
     expect(find.byType(OfflineBanner), findsNothing);
+  });
+
+  testWidgets('shows no distance: the page does not ask for the position', (
+    tester,
+  ) async {
+    await pumpPage(
+      tester,
+      FakeChurchListLoader([
+        [_entry(1155, 'Havas Boldogasszony templom')],
+      ]),
+    );
+
+    expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
+    expect(find.byType(DistanceChip), findsNothing);
   });
 
   testWidgets('searches a city as a city', (tester) async {

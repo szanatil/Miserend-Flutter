@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
-
-/// "1,2 km": one decimal, with the Hungarian decimal comma.
-String formatDistance(double km) =>
-    '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
 
 /// One row of the nearest masses.
 class MassListItem extends StatelessWidget {
@@ -68,20 +65,9 @@ class MassListItem extends StatelessWidget {
                         style: textTheme.bodySmall,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          TimeOfDay.fromDateTime(mass.start).to24hours(),
-                          style: textTheme.headlineMedium,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          formatDistance(mass.distanceKm),
-                          style: textTheme.bodyMedium,
-                        ),
-                      ],
+                    Text(
+                      TimeOfDay.fromDateTime(mass.start).to24hours(),
+                      style: textTheme.headlineMedium,
                     ),
                     if (ongoing || showTitle)
                       Wrap(
@@ -96,6 +82,12 @@ class MassListItem extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+            // Outside the text column, so that the city keeps its line: in a
+            // village the church's name alone does not say which village.
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: DistanceChip(km: mass.distanceKm),
             ),
           ],
         ),

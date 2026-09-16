@@ -11,6 +11,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/near_churches_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -139,6 +140,22 @@ void main() {
         tester.getTopLeft(find.text('Közelebbi')).dy,
         lessThan(tester.getTopLeft(find.text('Távolabbi')).dy),
       );
+    });
+
+    testWidgets('a row shows how far the church is from the position', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([
+          [_entry('Templom')],
+        ]),
+        FakeLocationProvider([found]),
+      );
+
+      // (47.5, 19.04) is some 230 m from the position.
+      expect(find.byType(DistanceChip), findsOneWidget);
+      expect(find.text('230 m'), findsOneWidget);
     });
 
     testWidgets('a row shows masses only, not confession or adoration', (

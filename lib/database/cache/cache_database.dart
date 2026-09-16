@@ -307,7 +307,7 @@ class CacheDatabase {
     final lonScale = cos(lat * pi / 180);
     final rows = await db.rawQuery(
       'SELECT $_listColumns FROM $churchesTable '
-      'WHERE lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0) '
+      'WHERE ${ChurchLocation.knownSql} '
       'ORDER BY (lat - ?) * (lat - ?) + '
       '(lon - ?) * (lon - ?) * ? * ?, id',
       [lat, lat, lon, lon, lonScale, lonScale],
@@ -426,8 +426,7 @@ class CacheDatabase {
     final rows = await db.query(
       churchesTable,
       columns: ['id', 'lat', 'lon'],
-      where:
-          'lat IS NOT NULL AND lon IS NOT NULL AND NOT (lat = 0 AND lon = 0)',
+      where: ChurchLocation.knownSql,
     );
     return [
       for (final row in rows)

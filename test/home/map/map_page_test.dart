@@ -15,6 +15,7 @@ import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
@@ -333,6 +334,50 @@ void main() {
       );
       expect(card.color, CustomColors.serverErrorTint);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
+    });
+
+    testWidgets('shows how far the church is while the position is known, '
+        'and not once it is lost', (tester) async {
+      // About 300 m north of the church.
+      await pumpPage(
+        tester,
+        _MapLoader([
+          [_entry(1, 'Tárolt templom')],
+        ]),
+        location: FakeLocationProvider([
+          PositionFound(_position(47.2564, 19.7523)),
+          noFix,
+        ]),
+      );
+      await tapMarker(tester, 1);
+
+      expect(find.byType(DistanceChip), findsOneWidget);
+      expect(find.text('300 m'), findsOneWidget);
+
+      await tapMyPosition(tester);
+
+      expect(find.byType(ChurchCard), findsOneWidget);
+      expect(find.byType(DistanceChip), findsNothing);
+    });
+
+    testWidgets('the my-position button stands clear above the card', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        _MapLoader([
+          [_entry(1, 'Tárolt templom')],
+        ]),
+      );
+      await tapMarker(tester, 1);
+
+      final map = tester.getRect(find.byType(MiserendMap));
+      final button = tester.getRect(find.byType(FloatingActionButton));
+      expect(map.bottom - button.bottom, ChurchCard.height + 16);
+      expect(
+        button.bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(Card)).top),
+      );
     });
 
     testWidgets('tapping the map away from the markers closes the card', (

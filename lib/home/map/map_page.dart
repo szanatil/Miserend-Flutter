@@ -44,6 +44,9 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   static const double _positionZoom = 14;
 
+  /// Around the church card, between it and the map's edges.
+  static const double _cardPadding = 8;
+
   late final MapController _controller =
       widget.mapController ?? MapController();
   late final ChurchListLoader _loader =
@@ -150,14 +153,16 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                   children: [
                     Expanded(child: Container()),
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(_cardPadding),
                       child: _cardWithRetry(entry, card!),
                     ),
                   ],
                 ),
               Positioned(
                 right: 8,
-                bottom: entry != null ? 192 : 8,
+                // Above the card and its padding on both sides.
+                bottom:
+                    entry != null ? ChurchCard.height + 2 * _cardPadding : 8,
                 child: FloatingActionButton(
                   onPressed: _goToMyPosition,
                   child: const Icon(Icons.my_location),
@@ -185,6 +190,8 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   Widget _cardWithRetry(ChurchListEntry entry, ChurchList card) {
     final child = ChurchCard(
       entry: entry,
+      // The position as of now: the distance goes and comes with the mark.
+      position: _userPosition,
       failure: card.failure,
       dataAsOf: card.dataAsOf,
     );

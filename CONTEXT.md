@@ -37,12 +37,16 @@ A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, ért
 _Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
 
 **Helyzet (position)**:
-A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. A Térkép fülön a helyzet **látható jelölés** is, nem csak kameracél — a felhasználó innen olvassa le, milyen messze van tőle egy templom. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült, ezért a jelölés is csak addig látszik, amíg a helyzet ismert: sikertelen helymeghatározás után eltűnik.
+A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. A Térkép fülön a helyzet **látható jelölés** is, nem csak kameracél — a jelölés mutatja, merre és nagyjából milyen messze van egy templom; a pontos számot a **légvonal-távolság** írja ki. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült, ezért a jelölés is csak addig látszik, amíg a helyzet ismert: sikertelen helymeghatározás után eltűnik.
 _Avoid_: "utolsó ismert pozíció" a helyzet szinonimájaként; "GPS" (a helymeghatározás nem csak műholdas).
 
 **Helyzet nem elérhető (position unavailable)**:
 Az app nem tudja a felhasználó **helyzetét**. Négy oka van, és a felhasználónak mindegyiknél mást kell tennie: **engedély megtagadva** (az app újra kérheti), **engedély véglegesen megtagadva** (csak a telefon beállításaiban adható meg), **helymeghatározás kikapcsolva** (a telefon beállításaiban kapcsolható be), **nincs friss helyzet időben** (újrapróbálható). A helyzethez kötött listák ilyenkor nem jelennek meg, helyettük az okhoz tartozó tájékoztató áll; a Térkép az ország nézetében marad. Független a **Nincs kapcsolat** állapottól: a helymeghatározás adatkapcsolat nélkül is működik, és a két állapot egyszerre is fennállhat.
 _Avoid_: "helyadat" állapotként (az az engedély neve); "GPS-hiba" (az ok legtöbbször az engedély vagy a kikapcsolt helymeghatározás).
+
+**Légvonal-távolság (straight-line distance)**:
+A templom és a **helyzet** közti távolság a földfelszínen, egyenes vonalban — nem az út hossza és nem a menetidő. Az app nem tudja, gyalog vagy autóval indul a felhasználó, és útvonaltervezője sincs (ugyanaz a korlát, mint az **Elérhető mise**-nél). Tíz méterre kerekítve áll ki, mert a helymeghatározás és a templom koordinátája sem pontosabb ennél. Csak ott látszik, ahol a helyzet ismert és a templomnak van érvényes koordinátája; különben nincs kiírva — nem nulla, hanem ismeretlen.
+_Avoid_: „távolság" önmagában, ha az útvonal is szóba jöhet; „messze/közel" mértékként; „menetidő".
 
 **Napi miserend (daily masses)**:
 Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb liturgikus esemény**): a napi miserendbe csak a misék tartoznak. A listákon a templomsor mise-időpontjai a napi miserendet mutatják.

@@ -14,6 +14,7 @@ import 'package:miserend/home/masses/mass_list_item.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -377,7 +378,7 @@ void main() {
   });
 
   group('row', () {
-    testWidgets('shows the city and the distance with a decimal comma', (
+    testWidgets('keeps the city and puts the distance at the right end', (
       tester,
     ) async {
       await pumpPage(
@@ -388,7 +389,17 @@ void main() {
       );
 
       expect(find.text('Budapest V. kerület'), findsOneWidget);
-      expect(find.text('1,2 km'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(DistanceChip),
+          matching: find.text('1,2 km'),
+        ),
+        findsOneWidget,
+      );
+      final row = tester.getRect(find.byType(MassListItem));
+      final chip = tester.getRect(find.byType(DistanceChip));
+      expect(row.right - chip.right, 16);
+      expect(chip.left, greaterThan(tester.getRect(find.text('18:30')).right));
     });
 
     testWidgets('marks a mass as ongoing only once it has started', (
@@ -713,14 +724,6 @@ void main() {
       );
 
       expect(fetchesWhileAway, 1);
-    });
-  });
-
-  group('formatDistance', () {
-    test('rounds to one decimal and uses a decimal comma', () {
-      expect(formatDistance(1.23), '1,2 km');
-      expect(formatDistance(0.64), '0,6 km');
-      expect(formatDistance(12), '12,0 km');
     });
   });
 }

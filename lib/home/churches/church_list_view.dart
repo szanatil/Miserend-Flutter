@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/widgets/list_status_view.dart';
@@ -13,11 +14,16 @@ class ChurchListView extends StatelessWidget {
     required this.list,
     required this.emptyMessage,
     required this.onRefresh,
+    this.position,
   });
 
   final ChurchList list;
   final String emptyMessage;
   final Future<void> Function() onRefresh;
+
+  /// The position the rows show their distance from; null where the screen
+  /// does not ask for one (spec 0007, „Hol jelenik meg a távolság").
+  final LatLng? position;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +47,10 @@ class ChurchListView extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       itemCount: list.churches.length,
                       itemBuilder:
-                          (BuildContext context, int index) =>
-                              ChurchCard(entry: list.churches[index]),
+                          (BuildContext context, int index) => ChurchCard(
+                            entry: list.churches[index],
+                            position: position,
+                          ),
                     ),
           ),
         ),

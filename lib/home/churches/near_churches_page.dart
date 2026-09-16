@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/church_list_view.dart';
 import 'package:miserend/location_provider.dart';
@@ -35,6 +36,10 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     dataAsOf: null,
   );
   PositionUnavailableReason? _noPosition;
+
+  /// The position [_list] was read around, and so the one its distances are
+  /// measured from.
+  LatLng? _position;
   bool _loaded = false;
 
   /// Bumped per load so that a slow answer cannot overwrite a newer one.
@@ -107,6 +112,7 @@ class _NearChurchesPageState extends State<NearChurchesPage>
       list: _list,
       emptyMessage: 'Nem találhatóak közeli templomok.',
       onRefresh: _load,
+      position: _position,
     );
   }
 
@@ -139,6 +145,7 @@ class _NearChurchesPageState extends State<NearChurchesPage>
       // No banner while the refresh runs: it marks a failed attempt only
       // (spec 0005, „Offline-jelölés").
       _list = cached;
+      _position = LatLng(query.lat, query.lon);
       _noPosition = null;
       _loaded = true;
     });

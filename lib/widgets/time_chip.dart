@@ -8,9 +8,25 @@ class TimeChip extends StatelessWidget {
     required this.time,
     this.onTap,
     this.hasInfo = false,
-  });
+  }) : _label = null;
+
+  /// Stands in for the masses a row has no room for. It opens nothing of its
+  /// own: whatever the row sits on leads to where every mass is listed.
+  const TimeChip.more({super.key})
+    : time = null,
+      onTap = null,
+      hasInfo = false,
+      _label = moreLabel;
+
+  /// Around the label on every side; a row that fits chips by width counts it.
+  static const double padding = 4;
+
+  /// The text of [TimeChip.more].
+  static const String moreLabel = '…';
 
   final TimeOfDay? time;
+
+  final String? _label;
 
   /// Only set where there is something to open; most masses carry nothing but
   /// the generic "Római katolikus Szentmise", and a chip that opens an empty
@@ -23,7 +39,7 @@ class TimeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = Text(
-      time?.to24hours() ?? '?',
+      _label ?? time?.to24hours() ?? '?',
       style: Theme.of(context).textTheme.bodyMedium?.apply(color: Colors.white),
     );
 
@@ -34,7 +50,7 @@ class TimeChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(4.0),
+            padding: const EdgeInsets.all(padding),
             child:
                 hasInfo
                     ? Row(

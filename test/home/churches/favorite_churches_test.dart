@@ -7,6 +7,7 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/favorite_churches.dart';
+import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 
@@ -97,6 +98,21 @@ void main() {
     expect((loader.queries.single as FavoritesQuery).ids, [1, 2]);
     expect(loader.refreshes, 1);
     expect(find.byType(OfflineBanner), findsNothing);
+  });
+
+  testWidgets('shows no distance: the page does not ask for the position', (
+    tester,
+  ) async {
+    await pumpPage(
+      tester,
+      FakeChurchListLoader([
+        [_entry(1, 'Kedvenc')],
+      ]),
+      FakeFavoritesService(const [1]),
+    );
+
+    expect(find.text('Kedvenc'), findsOneWidget);
+    expect(find.byType(DistanceChip), findsNothing);
   });
 
   testWidgets('a favorite removed from miserend.hu disappears after the '
