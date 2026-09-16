@@ -84,10 +84,50 @@ void main() {
 
   const noFix = PositionUnavailable(PositionUnavailableReason.noFreshFix);
 
+  /// The map as one tab of a home screen that keeps it alive: pumping it again
+  /// with a different [isActive] is the page leaving the screen and coming
+  /// back, the way the IndexedStack does it.
+  Widget mapTab({
+    required _MapLoader loader,
+    required LocationProvider location,
+    required MapController controller,
+    required bool isActive,
+  }) => ChangeNotifierProvider<FavoritesService>.value(
+    value: favorites,
+    child: MaterialApp(
+      home: Scaffold(
+        body: MapPage(
+          isActive: isActive,
+          loader: loader,
+          location: location,
+          mapController: controller,
+        ),
+      ),
+    ),
+  );
+
+  /// Backgrounds the app and brings it back, the way returning from the
+  /// phone's settings does.
+  Future<void> leaveAndReturn(WidgetTester tester) async {
+    final binding = tester.binding;
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump();
+  }
+
+  /// Most of these tests are about the church card, which only a pin opens —
+  /// below [MiserendMap.pinMinZoom] a tap zooms in instead (spec 0006). The
+  /// tests about the country view ask for the map's own opening zoom.
   Future<MapController> pumpPage(
     WidgetTester tester,
     _MapLoader loader, {
     LocationProvider? location,
+    double zoom = MiserendMap.pinMinZoom,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
@@ -106,22 +146,27 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+    if (zoom != MiserendMap.defaultInitialZoom) {
+      controller.move(MiserendMap.defaultInitialCenter, zoom);
+      await tester.pump();
+    }
     return controller;
   }
 
+  /// The churches' layer is the first one; the user's position gets its own.
+  MarkerLayer churchLayer(WidgetTester tester) =>
+      tester.widgetList<MarkerLayer>(find.byType(MarkerLayer)).first;
+
   List<Object?> markerIds(WidgetTester tester) =>
-      tester
-          .widget<MarkerLayer>(find.byType(MarkerLayer))
-          .markers
-          .map((marker) => (marker.key as ValueKey).value)
-          .toList();
+      churchLayer(
+        tester,
+      ).markers.map((marker) => (marker.key as ValueKey).value).toList();
 
   /// Taps the marker the way a finger on its pin would.
   Future<void> tapMarker(WidgetTester tester, int id) async {
-    final marker = tester
-        .widget<MarkerLayer>(find.byType(MarkerLayer))
-        .markers
-        .singleWhere((marker) => (marker.key as ValueKey).value == id);
+    final marker = churchLayer(
+      tester,
+    ).markers.singleWhere((marker) => (marker.key as ValueKey).value == id);
     (marker.child as GestureDetector).onTap!();
     await tester.pump();
     await tester.pump();
@@ -346,9 +391,11 @@ void main() {
       final controller = await pumpPage(
         tester,
         _MapLoader([<ChurchListEntry>[]]),
+        zoom: MiserendMap.defaultInitialZoom,
       );
 
       expect(controller.camera.center, MiserendMap.defaultInitialCenter);
+      expect(controller.camera.zoom, MiserendMap.defaultInitialZoom);
       expect(
         find.byType(PositionUnavailableBanner),
         findsNothing,
@@ -361,9 +408,77 @@ void main() {
         tester,
         _MapLoader([<ChurchListEntry>[]]),
         location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: MiserendMap.defaultInitialZoom,
       );
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('a position found marks the map with the blue dot', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+      );
+
+      final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
+      expect(layers, hasLength(2), reason: 'the churches, then the position');
+      expect(layers.last.markers.single.point, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('the dot goes with the position: a failed try takes the mark '
+        'away', (tester) async {
+      await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([
+          PositionFound(_position(47.5, 19.04)),
+          noFix,
+        ]),
+      );
+      expect(find.byType(MarkerLayer), findsNWidgets(2));
+
+      await tapMyPosition(tester);
+
+      expect(
+        find.byType(MarkerLayer),
+        findsOneWidget,
+        reason: 'a dot next to the "no position" strip would contradict it',
+      );
+      expect(find.byType(PositionUnavailableBanner), findsOneWidget);
+    });
+
+    testWidgets('the my-position button does not take away a closer zoom', (
+      tester,
+    ) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: 16,
+      );
+
+      await tapMyPosition(tester);
+
+      expect(controller.camera.center, const LatLng(47.5, 19.04));
+      expect(controller.camera.zoom, 16);
+    });
+
+    testWidgets('the my-position button brings a far-out map in', (
+      tester,
+    ) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
+        zoom: MiserendMap.defaultInitialZoom,
+      );
+
+      await tapMyPosition(tester);
+
+      expect(controller.camera.zoom, 14);
     });
 
     const cases = {
@@ -559,6 +674,150 @@ void main() {
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
       expect(find.byType(PositionUnavailableBanner), findsNothing);
+    });
+  });
+
+  group('coming back to the map', () {
+    testWidgets('the position allowed from another tab is picked up on the way '
+        'back into the app', (tester) async {
+      // Nobody pressed the map's own settings button: the user allowed the
+      // position from the churches tab, which is where the bug was.
+      final location = FakeLocationProvider([
+        noFix,
+        noFix,
+        PositionFound(_position(47.5, 19.04)),
+      ]);
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: location,
+      );
+      await tapMyPosition(tester);
+      expect(find.byType(PositionUnavailableBanner), findsOneWidget);
+
+      await leaveAndReturn(tester);
+
+      expect(find.byType(PositionUnavailableBanner), findsNothing);
+      expect(find.byType(MarkerLayer), findsNWidgets(2));
+      expect(controller.camera.center, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('coming back to the tab checks the position again', (
+      tester,
+    ) async {
+      final loader = _MapLoader([<ChurchListEntry>[]]);
+      final location = FakeLocationProvider([
+        noFix,
+        PositionFound(_position(47.5, 19.04)),
+      ]);
+      final controller = MapController();
+
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(MarkerLayer), findsOneWidget);
+
+      // Away to another tab, then back.
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: false,
+        ),
+      );
+      await tester.pump();
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(MarkerLayer), findsNWidgets(2));
+      expect(controller.camera.center, const LatLng(47.5, 19.04));
+    });
+
+    testWidgets('a check that fails again raises no strip on its own', (
+      tester,
+    ) async {
+      await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
+
+      await leaveAndReturn(tester);
+
+      expect(
+        find.byType(PositionUnavailableBanner),
+        findsNothing,
+        reason: 'the strip answers a question the user asked, not every return',
+      );
+    });
+
+    testWidgets('the camera stays where it was left once the mark is on '
+        'screen', (tester) async {
+      final loader = _MapLoader([<ChurchListEntry>[]]);
+      final location = FakeLocationProvider([
+        PositionFound(_position(47.5, 19.04)),
+        PositionFound(_position(47.6, 19.10)),
+      ]);
+      final controller = MapController();
+
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(controller.camera.center, const LatLng(47.5, 19.04));
+
+      // The user pans somewhere else, then leaves the tab and comes back.
+      controller.move(const LatLng(46.0, 18.0), 16);
+      await tester.pump();
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: false,
+        ),
+      );
+      await tester.pump();
+      await tester.pumpWidget(
+        mapTab(
+          loader: loader,
+          location: location,
+          controller: controller,
+          isActive: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        controller.camera.center,
+        const LatLng(46.0, 18.0),
+        reason: 'coming back must not drag the map off where the user left it',
+      );
+      final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
+      expect(
+        layers.last.markers.single.point,
+        const LatLng(47.6, 19.10),
+        reason: 'the mark itself still follows the new position',
+      );
     });
   });
 }

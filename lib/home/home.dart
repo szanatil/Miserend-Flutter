@@ -126,10 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const int _tabCount = 3;
   static const int _massesTab = 1;
+  static const int _mapTab = 2;
 
-  /// The Misék tab is told whether it is the one on screen, because the
-  /// IndexedStack keeps it alive underneath the others and it refreshes when
-  /// it comes back into view.
+  /// The Misék and the Térkép tab are told whether they are the one on
+  /// screen, because the IndexedStack keeps them alive underneath the others
+  /// and they refresh when they come back into view.
   Widget _tab(int index) {
     switch (index) {
       case 0:
@@ -137,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case _massesTab:
         return NearMassesPage(isActive: _selectedIndex == _massesTab);
       default:
-        return const MapPage();
+        return MapPage(isActive: _selectedIndex == _mapTab);
     }
   }
 
