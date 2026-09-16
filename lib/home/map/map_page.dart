@@ -13,7 +13,19 @@ import 'package:provider/provider.dart';
 /// Every church of the cache on the map. Tapping one shows its card from the
 /// cache at once and refreshes it in full in the background (ADR-0003).
 class MapPage extends StatefulWidget {
-  const MapPage({super.key, this.loader, this.location, this.mapController});
+  const MapPage({
+    super.key,
+    this.isActive = true,
+    this.loader,
+    this.location,
+    this.mapController,
+  });
+
+  /// Whether the tab is the one on screen. The home screen keeps every opened
+  /// tab alive in an IndexedStack, so the page cannot tell by itself — and it
+  /// has to know, because the position may have been allowed in the phone's
+  /// settings while another tab was in front.
+  final bool isActive;
 
   /// Injected by tests; the page builds its own otherwise.
   final ChurchListLoader? loader;
@@ -61,9 +73,9 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   /// up, going away and being closed all follow from [build].
   PositionUnavailableReason? _positionUnavailableReason;
 
-  /// Set when the user was sent to the settings from the position strip,
-  /// so that coming back tries the position again.
-  bool _retryPositionOnResume = false;
+  /// Set when the app actually left the screen, so that the brief
+  /// inactive/resumed flicker of a system dialog does not count as coming
+  /// back.
   bool _wasInBackground = false;
 
   @override
@@ -76,7 +88,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     _loadMarkers();
     // Quietly: a strip the moment the tab opens would answer a question
     // nobody asked. Without a position the map stays on the country.
-    _goToMyPosition(announce: false);
+    _refreshPosition();
   }
 
   @override
@@ -86,14 +98,22 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  /// Coming back to the tab is a chance for the position to have changed
+  /// behind the map's back: the user may have allowed it in the phone's
+  /// settings from another tab's button.
+  @override
+  void didUpdateWidget(MapPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) _refreshPosition();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        if (_wasInBackground && _retryPositionOnResume) {
-          _retryPositionOnResume = false;
-          _goToMyPosition(announce: true);
-        }
+        // Whoever sent the user to the settings, the map checks again — the
+        // position-bound lists do the same (near_churches_page.dart).
+        if (_wasInBackground && widget.isActive) _refreshPosition();
         _wasInBackground = false;
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
@@ -142,7 +162,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 right: 8,
                 bottom: entry != null ? 192 : 8,
                 child: FloatingActionButton(
-                  onPressed: () => _goToMyPosition(announce: true),
+                  onPressed: _goToMyPosition,
                   child: const Icon(Icons.my_location),
                 ),
               ),
@@ -155,8 +175,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
           PositionUnavailableBanner(
             reason: noPosition,
             location: _location,
-            onRetry: () => _goToMyPosition(announce: true),
-            onSentToSettings: () => _retryPositionOnResume = true,
+            onRetry: _goToMyPosition,
             onClose: () => setState(() => _positionUnavailableReason = null),
           ),
       ],
@@ -181,16 +200,31 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     });
   }
 
-  /// Moves to the user's position. When there is none and [announce] is set,
-  /// the strip at the foot of the map says why, with the way out as its
-  /// button.
-  Future<void> _goToMyPosition({required bool announce}) async {
+  /// The my-position button: brings the camera along whatever is on screen,
+  /// and says why when there is no position.
+  Future<void> _goToMyPosition() =>
+      _updatePosition(announce: true, follow: true);
+
+  /// Opening the tab, coming back to it, and returning to the app: checks the
+  /// position without asking the user anything. The camera only follows while
+  /// the user cannot see themselves — the first fix, or the first after the
+  /// position was lost — so that coming back does not drag the map away from
+  /// wherever it was left.
+  Future<void> _refreshPosition() =>
+      _updatePosition(announce: false, follow: _userPosition == null);
+
+  /// [announce] raises the strip when there is no position; without it the
+  /// screen stays quiet, and a strip already up stays up.
+  Future<void> _updatePosition({
+    required bool announce,
+    required bool follow,
+  }) async {
     final result = await _location.currentPosition();
     if (!mounted) return;
     switch (result) {
       case PositionFound(:final position):
         final point = LatLng(position.latitude, position.longitude);
-        _controller.move(point, _zoomForPosition());
+        if (follow) _controller.move(point, _zoomForPosition());
         setState(() {
           _userPosition = point;
           // Whatever the strip was asking for has been settled.

@@ -8,13 +8,11 @@ import '../../../fake_location_provider.dart';
 void main() {
   late FakeLocationProvider location;
   late int retries;
-  late int sentToSettings;
   late int closes;
 
   setUp(() {
     location = FakeLocationProvider();
     retries = 0;
-    sentToSettings = 0;
     closes = 0;
   });
 
@@ -29,7 +27,6 @@ void main() {
             reason: reason,
             location: location,
             onRetry: () => retries++,
-            onSentToSettings: () => sentToSettings++,
             onClose: () => closes++,
           ),
         ),
@@ -50,11 +47,6 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, 'Engedélyezés'));
 
       expect(retries, 1);
-      expect(
-        sentToSettings,
-        0,
-        reason: 'the prompt is in the app, so there is no coming back to',
-      );
     });
 
     testWidgets('a permission denied for good opens the app settings', (
@@ -77,7 +69,6 @@ void main() {
       );
 
       expect(location.appSettingsOpened, 1);
-      expect(sentToSettings, 1);
       expect(retries, 0);
     });
 
@@ -95,7 +86,6 @@ void main() {
       );
 
       expect(location.locationSettingsOpened, 1);
-      expect(sentToSettings, 1);
     });
 
     testWidgets('no fix in time has nothing to press', (tester) async {

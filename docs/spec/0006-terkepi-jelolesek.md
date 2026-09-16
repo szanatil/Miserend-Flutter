@@ -56,7 +56,23 @@ Ettől a térkép arra a kérdésre válaszol, amiért megnyitják: „hol vagyo
 - A templomok **fölötti** rétegben rajzolódik: külön `MarkerLayer`, a templomoké után.
 - **Pontossági kör nincs.** A `Position.accuracy` rendelkezésre áll, de egy nagy, szürke korong a 8-as zoomú országnézetben inkább zavar, mint tájékoztat.
 - **Csak a Térkép fülön.** A helykártya 17-es zoomú, a templomra centrált kivágat; a felhasználó helyzete onnan a legtöbbször kilóg, a kivágat tágítása pedig pont azt venné el, amiért a kártya ott van (hol áll a templom az utcában). A távolságot ott szöveg adja meg (#25).
-- **Pillanatkép, nem élő követés** (CONTEXT.md, „Helyzet"): a pötty a meglévő `currentPosition()` hívásokból frissül — fül megnyitása, „helyzetem" gomb, háttérből visszatérés. Nincs `getPositionStream`, nincs új állapotgép, nincs folyamatos akkumulátor-fogyasztás.
+- **Pillanatkép, nem élő követés** (CONTEXT.md, „Helyzet"): a pötty a meglévő `currentPosition()` hívásokból frissül. Nincs `getPositionStream`, nincs új állapotgép, nincs folyamatos akkumulátor-fogyasztás.
+
+### Mikor ellenőrizzük újra a helyzetet
+
+A helyzet a térkép háta mögött is megváltozhat: a felhasználó a telefon beállításaiban engedélyezi, miközben egy másik fül van elöl. A térkép ezért **négy** alkalommal kérdez:
+
+| Alkalom | Sáv hibánál | Kamera |
+|---|---|---|
+| A fül első megnyitása (`initState`) | nem | követ |
+| „helyzetem" gomb | **igen** | **mindig követ** |
+| Visszalépés a Térkép fülre (`isActive` false → true) | nem | csak ha nincs még pötty |
+| Visszatérés az appba (`resumed`), ha a Térkép az aktív fül | nem | csak ha nincs még pötty |
+
+- A kamera-szabály egyetlen mondatban: **a kamera akkor követ, amíg a felhasználó nem látja magát** — az első helymeghatározásnál, vagy az elsőnél azután, hogy a helyzet elveszett. Ha a pötty már a képernyőn van, egy fül-váltás nem ránthatja el a térképet onnan, ahova a felhasználó navigált. A gomb kivétel: az mindig követ.
+- A sáv **magától soha nem jön fel**; csak akkor, ha a felhasználó a gombbal kérte. Egy már fent lévő sáv fent marad, amíg egy sikeres helymeghatározás el nem tünteti.
+- A feltétel **állapot-alapú, nem „ki küldte" alapú**: a `resumed` ág nem azt nézi, hogy a felhasználót a térkép saját sávja küldte-e a beállításokba. Ugyanez a szabály él a `near_churches_page.dart`-ban is. (Az eredeti hiba pont ez volt: a térkép csak a saját sávjából indított útra reagált, ezért a Templomok fül gombjáról engedélyezett helyadatot nem vette észre.)
+- A `MapPage` ezért kap `isActive`-ot a `home.dart`-tól, ahogy a `NearMassesPage` — az `IndexedStack` életben tartja a fület, a lap magától nem tudja, hogy elöl van-e.
 - **Sikertelen lekérés után eltűnik**, amíg egy sikeres vissza nem hozza. Egy megmaradó pötty a `PositionUnavailableBanner` mellett a képernyőn mondana ellent önmagának, és a „Helyzet" szócikknek is („Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült").
 
 ### `MiserendMap` API
@@ -74,7 +90,9 @@ Ettől a térkép arra a kérdésre válaszol, amiért megnyitják: „hol vagyo
 ### Fájlok, amik érintettek
 
 - `lib/widgets/miserend_map.dart` — pin, pötty, küszöb, `userPosition`, `selectedMarkerId`
-- `lib/home/map/map_page.dart` — helyzet eltárolása és továbbadása, kiválasztás, gomb-zoom, pötty-koppintás
+- `lib/home/map/map_page.dart` — helyzet eltárolása és továbbadása, kiválasztás, gomb-zoom, pötty-koppintás, `isActive` és az újraellenőrzés
+- `lib/home/home.dart` — `isActive` a Térkép fülnek
+- `lib/home/map/widgets/position_unavailable_banner.dart` — az `onSentToSettings` visszahívás elhagyása (feleslegessé vált)
 - `CONTEXT.md` — „Helyzet" szócikk
 - `test/widgets/miserend_map_test.dart`, `test/home/map/map_page_test.dart`
 
@@ -84,6 +102,7 @@ Ettől a térkép arra a kérdésre válaszol, amiért megnyitják: „hol vagyo
 - A zoom-küszöböt `MapController.move`-val állítjuk be a teszt előtt, és a marker-gyerekek típusát ellenőrizzük a két oldalon.
 - A helyzet-pötty tesztje a meglévő `_FakeLocation` mintát használja (T3), sikeres és sikertelen lekéréssel is.
 - A „helyzetem" gomb zoom-viselkedését a `MapController.camera.zoom` értékéből olvassuk, két kiindulási zoomról.
+- Az újraellenőrzés négy esetét külön csoport fedi (`coming back to the map`): visszatérés az appba a sávval a képernyőn, visszalépés a fülre, sikertelen ellenőrzés (nem jön fel sáv), és hogy a kamera a helyén marad, ha már van pötty. A fül-váltást a lap `isActive`-cal való újrapumpálása modellezi.
 
 ## Out of Scope
 

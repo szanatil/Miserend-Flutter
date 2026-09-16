@@ -18,7 +18,6 @@ class PositionUnavailableBanner extends StatelessWidget {
     required this.reason,
     required this.location,
     required this.onRetry,
-    required this.onSentToSettings,
     required this.onClose,
   });
 
@@ -29,10 +28,6 @@ class PositionUnavailableBanner extends StatelessWidget {
 
   /// Asks for the position again, and with it the permission.
   final VoidCallback onRetry;
-
-  /// Told when the button hands the user over to the phone's settings, so the
-  /// page can ask for the position again when the user comes back.
-  final VoidCallback onSentToSettings;
 
   /// Puts the strip away without settling anything: the map works without a
   /// position, so the user may dismiss the question rather than answer it.
@@ -52,10 +47,9 @@ class PositionUnavailableBanner extends StatelessWidget {
       actions: [
         if (button != null)
           TextButton(
-            onPressed: () {
-              if (button.sendsToSettings) onSentToSettings();
-              button.onPressed();
-            },
+            // Nothing to tell the page: it checks the position again
+            // whenever it comes back into view (map_page.dart).
+            onPressed: button.onPressed,
             child: Text(button.label),
           ),
         IconButton(
