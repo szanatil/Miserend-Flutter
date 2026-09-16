@@ -80,11 +80,7 @@ class ChurchCard extends StatelessWidget {
                             ),
                           ),
                           if (failure != null)
-                            OfflineInfoButton(
-                              failure: failure,
-                              asOf: dataAsOf,
-                              hint: RetryHint.reopenChurch,
-                            ),
+                            OfflineInfoButton(failure: failure, asOf: dataAsOf),
                         ],
                       ),
                       Expanded(

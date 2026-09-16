@@ -16,6 +16,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
+import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -123,8 +124,15 @@ class _FakeLoader extends ChurchScheduleLoader {
   _FakeLoader({required this.cached, required this.refreshed});
 
   final ChurchPageData cached;
-  final ChurchPageData refreshed;
+
+  /// Not final: a test moves it on, to stand for the connection coming back
+  /// between one retry and the next.
+  ChurchPageData refreshed;
+
   final Completer<void> _apiAnswered = Completer<void>();
+
+  /// How many times the API has been asked.
+  int refreshes = 0;
 
   void answerApi() => _apiAnswered.complete();
 
@@ -134,6 +142,7 @@ class _FakeLoader extends ChurchScheduleLoader {
 
   @override
   Future<ChurchPageData> refresh(Church church, DateTime today) async {
+    refreshes++;
     await _apiAnswered.future;
     return refreshed;
   }
@@ -451,6 +460,53 @@ void main() {
       expect(find.byType(OfflineBanner), findsNothing);
     });
 
+    testWidgets('the banner goes away by itself once the connection is back, '
+        'without the user touching anything', (tester) async {
+      final loader = _FakeLoader(
+        cached: _page(_scheduleWith(_todayAt(9, 0))),
+        refreshed: _page(
+          _scheduleWith(_todayAt(9, 0)),
+          failure: ApiFailure.noConnection,
+        ),
+      );
+      await pumpPage(tester, loader);
+      loader.answerApi();
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(OfflineBanner), findsOneWidget);
+      final asked = loader.refreshes;
+
+      // The phone comes back online between one retry and the next.
+      loader.refreshed = _page(_scheduleWith(_todayAt(18, 30)));
+      await tester.pump(StaleDataRetry.retryEvery);
+      await tester.pump();
+
+      expect(loader.refreshes, asked + 1, reason: 'it asked again on its own');
+      expect(find.byType(OfflineBanner), findsNothing);
+      expect(find.text('18:30'), findsWidgets);
+    });
+
+    testWidgets('a retry that fails again leaves the banner where it is', (
+      tester,
+    ) async {
+      final loader = _FakeLoader(
+        cached: _page(_scheduleWith(_todayAt(9, 0))),
+        refreshed: _page(
+          _scheduleWith(_todayAt(9, 0)),
+          failure: ApiFailure.noConnection,
+        ),
+      );
+      await pumpPage(tester, loader);
+      loader.answerApi();
+      await tester.pump();
+      await tester.pump();
+
+      await tester.pump(StaleDataRetry.retryEvery);
+      await tester.pump();
+
+      expect(find.byType(OfflineBanner), findsOneWidget);
+    });
+
     testWidgets('no connection puts the lists\' banner above the page, '
         'untinted', (tester) async {
       await refreshWith(
@@ -500,10 +556,10 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot '
-          'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
-          'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
-          'beállításaiban, majd nyisd meg újra a templomot.',
+          'Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot mutatják. '
+          'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
+          'Miserend használhat-e mobilnetet a telefon beállításaiban — '
+          'amint újra van kapcsolat, a képernyő magától frissül.',
         ),
         findsOneWidget,
       );

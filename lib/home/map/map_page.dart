@@ -8,6 +8,7 @@ import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/miserend_map.dart';
+import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:provider/provider.dart';
 
 /// Every church of the cache on the map. Tapping one shows its card from the
@@ -150,11 +151,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                     Expanded(child: Container()),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: ChurchCard(
-                        entry: entry,
-                        failure: card!.failure,
-                        dataAsOf: card.dataAsOf,
-                      ),
+                      child: _cardWithRetry(entry, card!),
                     ),
                   ],
                 ),
@@ -180,6 +177,19 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
           ),
       ],
     );
+  }
+
+  /// The card has no **Nincs kapcsolat** strip of its own, only the (i), so
+  /// the retry that the strip drives elsewhere hangs off the card itself —
+  /// and only while the card is actually marked as stale.
+  Widget _cardWithRetry(ChurchListEntry entry, ChurchList card) {
+    final child = ChurchCard(
+      entry: entry,
+      failure: card.failure,
+      dataAsOf: card.dataAsOf,
+    );
+    if (card.failure == null) return child;
+    return StaleDataRetry(onRetry: _refreshCard, child: child);
   }
 
   Future<void> _loadMarkers() async {
@@ -269,7 +279,19 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     if (!mounted || _cardChurchId != churchId) return;
     setState(() => _card = cached);
 
-    final refreshed = await _loader.refresh(query, cached.churches);
+    await _refreshCard();
+  }
+
+  /// Asks the API for the open card again. Not through [_showChurchCard]: that
+  /// drops back to the cache first, which would blink the card's (i) off and
+  /// on at every retry.
+  Future<void> _refreshCard() async {
+    final card = _card;
+    final churchId = _cardChurchId;
+    if (card == null || churchId == null) return;
+    final query = ChurchCardQuery(churchId);
+
+    final refreshed = await _loader.refresh(query, card.churches);
     if (!mounted || _cardChurchId != churchId) return;
     if (refreshed.removed.contains(churchId)) {
       setState(() {

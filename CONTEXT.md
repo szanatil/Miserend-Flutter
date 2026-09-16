@@ -29,11 +29,11 @@ Az első indításkor lezajló egyszeri művelet: a **SQLite export** letöltés
 _Avoid_: "adatbázis-frissítés" / "sync" erre a lépésre — az a folyamatos, API-alapú frissítést jelenti, nem az egyszeri importot.
 
 **Nincs kapcsolat (no connection)**:
-Az API-kérés el sem jutott a szerverig: a felhasználó nem engedélyezte az appnak az adatkapcsolatot, nincs lefedettség, repülőgép-üzemmód van, vagy a kérés időtúllépéssel leállt. Ezeket az app nem különbözteti meg egymástól (Androidon nem is tudná megbízhatóan). A képernyő a **helyi gyorsítótárból** dolgozik, a misék mellett (i) jelzés áll, amely koppintásra elmondja, mikori az adat, és mit tehet a felhasználó.
-_Avoid_: "offline mód" (nem a felhasználó kapcsolja be); "nincs internet" (a tiltás nem a hálózat hiánya).
+Az API-kérés el sem jutott a szerverig: a felhasználó nem engedélyezte az appnak az adatkapcsolatot, nincs lefedettség, repülőgép-üzemmód van, vagy a kérés időtúllépéssel leállt. Ezeket az app nem különbözteti meg egymástól (Androidon nem is tudná megbízhatóan). A képernyő a **helyi gyorsítótárból** dolgozik, a misék mellett (i) jelzés áll, amely koppintásra elmondja, mikori az adat, és mit tehet a felhasználó. Az állapot **átmeneti**: amíg a jelzés áll, a képernyő magától kérdez újra, és az első sikeres válasszal a jelzés eltűnik — a felhasználónak nincs teendője azon túl, hogy a kapcsolatot helyreállítja.
+_Avoid_: "offline mód" (nem a felhasználó kapcsolja be); "nincs internet" (a tiltás nem a hálózat hiánya); a jelzést állandó állapotnak tekinteni, amelyből csak kézi frissítés vezet ki.
 
 **Szerverhiba (server error)**:
-A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótár** állapotát mutatja, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel.
+A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótár** állapotát mutatja, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel. A **Nincs kapcsolat**-hoz hasonlóan ez is átmeneti: a képernyő magától kérdez újra, amíg a jelzés áll.
 _Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
 
 **Helyzet (position)**:

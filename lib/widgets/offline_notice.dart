@@ -3,10 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/widgets/notice_strip.dart';
-
-/// What the user can do to get live data again, which depends on the screen:
-/// a list is pulled down, a single church is opened again.
-enum RetryHint { pullList, reopenChurch }
+import 'package:miserend/widgets/stale_data_retry.dart';
 
 /// The wording and colours shared by every place that marks data as not live
 /// (CONTEXT.md, „Nincs kapcsolat", „Szerverhiba"): the lists' banner, the map's
@@ -16,22 +13,17 @@ class OfflineNotice {
 
   /// The explanation the (i) opens. [asOf] is how old the data is; null only
   /// when not even the bootstrap import recorded a date.
-  static String explanation(
-    ApiFailure failure,
-    DateTime? asOf,
-    RetryHint hint,
-  ) {
+  static String explanation(ApiFailure failure, DateTime? asOf) {
     final state = asOf == null ? '' : ', ${_date.format(asOf)}-i';
     switch (failure) {
       case ApiFailure.noConnection:
-        final retry = switch (hint) {
-          RetryHint.pullList => 'húzd le a listát',
-          RetryHint.reopenChurch => 'nyisd meg újra a templomot',
-        };
+        // No instruction to pull or reopen: the screen retries by itself
+        // (StaleDataRetry), so the only thing left for the user to do is to
+        // restore the connection.
         return 'Az adatok a telefonon tárolt$state állapotot mutatják. '
-            'Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, '
-            'hogy a Miserend használhat-e mobilnetet a telefon '
-            'beállításaiban, majd $retry.';
+            'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
+            'Miserend használhat-e mobilnetet a telefon beállításaiban — '
+            'amint újra van kapcsolat, a képernyő magától frissül.';
       case ApiFailure.serverError:
         return asOf == null
             ? 'A miserend.hu jelenleg nem elérhető, az adatok a telefonon '
@@ -45,13 +37,12 @@ class OfflineNotice {
     BuildContext context,
     ApiFailure failure,
     DateTime? asOf,
-    RetryHint hint,
   ) {
     return showDialog<void>(
       context: context,
       builder:
           (context) => AlertDialog(
-            content: Text(explanation(failure, asOf, hint)),
+            content: Text(explanation(failure, asOf)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -69,12 +60,10 @@ class OfflineInfoButton extends StatelessWidget {
     super.key,
     required this.failure,
     required this.asOf,
-    required this.hint,
   });
 
   final ApiFailure failure;
   final DateTime? asOf;
-  final RetryHint hint;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +75,7 @@ class OfflineInfoButton extends StatelessWidget {
               : Colors.black54,
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,
-      onPressed: () => OfflineNotice.show(context, failure, asOf, hint),
+      onPressed: () => OfflineNotice.show(context, failure, asOf),
     );
   }
 }
@@ -94,31 +83,42 @@ class OfflineInfoButton extends StatelessWidget {
 /// The strip above a list or the details page that shows it is not live,
 /// once, rather than on every row. There is no closing it: someone who never
 /// goes online sees it for good, as information rather than as an error.
+///
+/// While it is up, it keeps asking the screen to fetch again, so that a phone
+/// coming back online heals the screen without the user doing anything.
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({
     super.key,
     required this.failure,
     required this.asOf,
-    this.hint = RetryHint.pullList,
+    required this.onRetry,
   });
 
   final ApiFailure failure;
   final DateTime? asOf;
-  final RetryHint hint;
+
+  /// Fetches again, for as long as this strip is on screen.
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
     final serverError = failure == ApiFailure.serverError;
-    return NoticeStrip(
-      color:
-          serverError ? CustomColors.serverErrorTint : CustomColors.noticeTint,
-      icon: serverError ? Icons.cloud_off : Icons.signal_wifi_off,
-      iconColor: serverError ? CustomColors.serverErrorAccent : Colors.black54,
-      text:
-          serverError
-              ? 'A miserend.hu nem elérhető, tárolt adatok'
-              : 'Nincs kapcsolat, tárolt adatok',
-      actions: [OfflineInfoButton(failure: failure, asOf: asOf, hint: hint)],
+    return StaleDataRetry(
+      onRetry: onRetry,
+      child: NoticeStrip(
+        color:
+            serverError
+                ? CustomColors.serverErrorTint
+                : CustomColors.noticeTint,
+        icon: serverError ? Icons.cloud_off : Icons.signal_wifi_off,
+        iconColor:
+            serverError ? CustomColors.serverErrorAccent : Colors.black54,
+        text:
+            serverError
+                ? 'A miserend.hu nem elérhető, tárolt adatok'
+                : 'Nincs kapcsolat, tárolt adatok',
+        actions: [OfflineInfoButton(failure: failure, asOf: asOf)],
+      ),
     );
   }
 }

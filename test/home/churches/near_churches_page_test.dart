@@ -477,10 +477,10 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 09. 10-i állapotot '
-          'mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy '
-          'ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon '
-          'beállításaiban, majd húzd le a listát.',
+          'Az adatok a telefonon tárolt, 2026. 09. 10-i állapotot mutatják. '
+          'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
+          'Miserend használhat-e mobilnetet a telefon beállításaiban — '
+          'amint újra van kapcsolat, a képernyő magától frissül.',
         ),
         findsOneWidget,
       );

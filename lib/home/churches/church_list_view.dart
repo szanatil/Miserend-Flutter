@@ -25,7 +25,11 @@ class ChurchListView extends StatelessWidget {
     return Column(
       children: [
         if (failure != null)
-          OfflineBanner(failure: failure, asOf: list.dataAsOf),
+          OfflineBanner(
+            failure: failure,
+            asOf: list.dataAsOf,
+            onRetry: onRefresh,
+          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: onRefresh,

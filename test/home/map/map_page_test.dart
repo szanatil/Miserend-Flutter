@@ -309,7 +309,7 @@ void main() {
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
       expect(find.textContaining('2026. 09. 01-i állapotot'), findsOneWidget);
-      expect(find.textContaining('nyisd meg újra a templomot'), findsOneWidget);
+      expect(find.textContaining('a képernyő magától frissül'), findsOneWidget);
     });
 
     testWidgets('a server error tints the card and marks it', (tester) async {
