@@ -13,6 +13,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -126,10 +127,12 @@ void main() {
     await tester.pump();
   }
 
-  /// Lets the SnackBar slide in, so that its action can be tapped.
-  Future<void> showSnackBar(WidgetTester tester) async {
+  /// Asks for the position the way the my-position button does, and lets the
+  /// answer come back.
+  Future<void> tapMyPosition(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.my_location));
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
   }
 
   group('markers', () {
@@ -347,7 +350,7 @@ void main() {
 
       expect(controller.camera.center, MiserendMap.defaultInitialCenter);
       expect(
-        find.byType(SnackBar),
+        find.byType(PositionUnavailableBanner),
         findsNothing,
         reason: 'the automatic attempt at opening stays quiet',
       );
@@ -384,7 +387,7 @@ void main() {
     };
 
     for (final MapEntry(key: reason, value: (text, action)) in cases.entries) {
-      testWidgets('my-position button, ${reason.name}: a SnackBar with the '
+      testWidgets('my-position button, ${reason.name}: a strip with the '
           'reason and its way out', (tester) async {
         await pumpPage(
           tester,
@@ -392,23 +395,58 @@ void main() {
           location: FakeLocationProvider([PositionUnavailable(reason)]),
         );
 
-        await tester.tap(find.byIcon(Icons.my_location));
-        await tester.pump();
-        await tester.pump();
+        await tapMyPosition(tester);
 
         expect(tester.takeException(), isNull);
         expect(find.text(text), findsOneWidget);
+        expect(
+          find.byType(SnackBar),
+          findsNothing,
+          reason: 'a SnackBar with an action never goes away (issue #23)',
+        );
         if (action == null) {
-          expect(find.byType(SnackBarAction), findsNothing);
+          expect(
+            find.descendant(
+              of: find.byType(PositionUnavailableBanner),
+              matching: find.byType(TextButton),
+            ),
+            findsNothing,
+          );
         } else {
-          expect(find.widgetWithText(SnackBarAction, action), findsOneWidget);
+          expect(find.widgetWithText(TextButton, action), findsOneWidget);
         }
       });
     }
 
-    testWidgets('allowing the permission from the SnackBar moves the map', (
-      tester,
-    ) async {
+    testWidgets('the church card and the my-position button stay whole next '
+        'to the strip', (tester) async {
+      await pumpPage(
+        tester,
+        _MapLoader([
+          [_entry(1, 'Tárolt templom')],
+        ]),
+        location: FakeLocationProvider([
+          const PositionUnavailable(
+            PositionUnavailableReason.permissionDeniedForever,
+          ),
+        ]),
+      );
+      await tapMyPosition(tester);
+      await tapMarker(tester, 1);
+
+      final strip = tester.getRect(find.byType(PositionUnavailableBanner));
+      expect(
+        tester.getRect(find.byType(ChurchCard)).bottom,
+        lessThanOrEqualTo(strip.top),
+      );
+      expect(
+        tester.getRect(find.byType(FloatingActionButton)).bottom,
+        lessThanOrEqualTo(strip.top),
+      );
+    });
+
+    testWidgets('allowing the permission from the strip moves the map and '
+        'puts the strip away', (tester) async {
       final location = FakeLocationProvider([
         noFix,
         const PositionUnavailable(PositionUnavailableReason.permissionDenied),
@@ -420,16 +458,76 @@ void main() {
         location: location,
       );
 
-      await tester.tap(find.byIcon(Icons.my_location));
-      await showSnackBar(tester);
-      await tester.tap(find.widgetWithText(SnackBarAction, 'Engedélyezés'));
+      await tapMyPosition(tester);
+      await tester.tap(find.widgetWithText(TextButton, 'Engedélyezés'));
       await tester.pump();
       await tester.pump();
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
+      expect(find.byType(PositionUnavailableBanner), findsNothing);
     });
 
-    testWidgets('the settings action opens the location settings, and coming '
+    testWidgets('the strip can be closed by hand, and the my-position button '
+        'brings it back', (tester) async {
+      await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+        location: FakeLocationProvider([
+          const PositionUnavailable(PositionUnavailableReason.serviceDisabled),
+        ]),
+      );
+
+      await tapMyPosition(tester);
+      expect(find.byType(PositionUnavailableBanner), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Bezárás'));
+      await tester.pump();
+      expect(find.byType(PositionUnavailableBanner), findsNothing);
+
+      await tapMyPosition(tester);
+      expect(find.byType(PositionUnavailableBanner), findsOneWidget);
+    });
+
+    testWidgets('the strip belongs to the map tab, and another tab does not '
+        'show it', (tester) async {
+      final semantics = tester.ensureSemantics();
+      const text = 'A helyzeted mutatásához kapcsold be a helymeghatározást.';
+      await tester.pumpWidget(
+        ChangeNotifierProvider<FavoritesService>.value(
+          value: favorites,
+          child: MaterialApp(
+            home: _TabsHost(
+              map: MapPage(
+                loader: _MapLoader([<ChurchListEntry>[]]),
+                location: FakeLocationProvider([
+                  const PositionUnavailable(
+                    PositionUnavailableReason.serviceDisabled,
+                  ),
+                ]),
+                mapController: MapController(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tapMyPosition(tester);
+      expect(find.bySemanticsLabel(text), findsOneWidget);
+
+      await tester.tap(find.text('Templomok'));
+      await tester.pump();
+
+      // The IndexedStack keeps the map alive but stops showing it, semantics
+      // included. A SnackBar would have hung above the stack instead, on
+      // every tab and for good (issue #23).
+      expect(find.bySemanticsLabel(text), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+      semantics.dispose();
+    });
+
+    testWidgets('the settings button opens the location settings, and coming '
         'back tries again', (tester) async {
       final location = FakeLocationProvider([
         noFix,
@@ -442,10 +540,9 @@ void main() {
         location: location,
       );
 
-      await tester.tap(find.byIcon(Icons.my_location));
-      await showSnackBar(tester);
+      await tapMyPosition(tester);
       await tester.tap(
-        find.widgetWithText(SnackBarAction, 'Beállítások megnyitása'),
+        find.widgetWithText(TextButton, 'Beállítások megnyitása'),
       );
       await tester.pump();
       expect(location.locationSettingsOpened, 1);
@@ -461,6 +558,43 @@ void main() {
       await tester.pump();
 
       expect(controller.camera.center, const LatLng(47.5, 19.04));
+      expect(find.byType(PositionUnavailableBanner), findsNothing);
     });
   });
+}
+
+/// The shape home.dart gives the tabs: one ScaffoldMessenger above an
+/// IndexedStack that keeps every tab it has built alive. HomeScreen itself
+/// builds `const MapPage()` with nothing to inject, and its other tabs reach
+/// for the real database and API, so the shape is rebuilt here instead.
+class _TabsHost extends StatefulWidget {
+  const _TabsHost({required this.map});
+
+  final Widget map;
+
+  @override
+  State<_TabsHost> createState() => _TabsHostState();
+}
+
+class _TabsHostState extends State<_TabsHost> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        sizing: StackFit.expand,
+        children: [widget.map, const Center(child: Text('Másik fül'))],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
+          BottomNavigationBarItem(icon: Icon(Icons.church), label: 'Templomok'),
+        ],
+        currentIndex: _index,
+        onTap: (index) => setState(() => _index = index),
+      ),
+    );
+  }
 }

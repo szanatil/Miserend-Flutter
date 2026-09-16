@@ -26,4 +26,9 @@ class CustomColors {
 
   /// The server error's icons, readable on [serverErrorTint].
   static const Color serverErrorAccent = Color(0xFFB45309);
+
+  /// Behind the strips that inform rather than warn: the lists' no-connection
+  /// banner and the map's **Helyzet nem elérhető** strip. Quieter than
+  /// [serverErrorTint], which marks something the user did not expect.
+  static const Color noticeTint = Color(0xFFEEEEEE);
 }

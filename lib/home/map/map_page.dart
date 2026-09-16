@@ -5,9 +5,9 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
+import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/miserend_map.dart';
-import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 
 /// Every church of the cache on the map. Tapping one shows its card from the
@@ -51,7 +51,12 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   ChurchList? _card;
   int? _cardChurchId;
 
-  /// Set when the user was sent to the settings from the position SnackBar,
+  /// Why there is no position, while the strip says so. Part of the page's
+  /// state rather than a message fired and forgotten, so that the strip going
+  /// up, going away and being closed all follow from [build].
+  PositionUnavailableReason? _positionUnavailableReason;
+
+  /// Set when the user was sent to the settings from the position strip,
   /// so that coming back tries the position again.
   bool _retryPositionOnResume = false;
   bool _wasInBackground = false;
@@ -64,7 +69,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     // answer written to the cache, not only the ones this page asked for.
     _loader.churchesWritten.addListener(_loadMarkers);
     _loadMarkers();
-    // Quietly: a SnackBar the moment the tab opens would answer a question
+    // Quietly: a strip the moment the tab opens would answer a question
     // nobody asked. Without a position the map stays on the country.
     _goToMyPosition(announce: false);
   }
@@ -99,37 +104,54 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     final card = _card;
     final ChurchListEntry? entry =
         card == null || card.churches.isEmpty ? null : card.churches.first;
-    return Stack(
+    final noPosition = _positionUnavailableReason;
+    return Column(
       children: [
-        MiserendMap(
-          interactive: true,
-          mapController: _controller,
-          markers: _markers,
-          apiKey: const String.fromEnvironment('CARTO_API_KEY'),
-          onTap: _closeCard,
-        ),
-        if (entry != null)
-          Column(
+        Expanded(
+          child: Stack(
             children: [
-              Expanded(child: Container()),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ChurchCard(
-                  entry: entry,
-                  failure: card!.failure,
-                  dataAsOf: card.dataAsOf,
+              MiserendMap(
+                interactive: true,
+                mapController: _controller,
+                markers: _markers,
+                apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+                onTap: _closeCard,
+              ),
+              if (entry != null)
+                Column(
+                  children: [
+                    Expanded(child: Container()),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ChurchCard(
+                        entry: entry,
+                        failure: card!.failure,
+                        dataAsOf: card.dataAsOf,
+                      ),
+                    ),
+                  ],
+                ),
+              Positioned(
+                right: 8,
+                bottom: entry != null ? 192 : 8,
+                child: FloatingActionButton(
+                  onPressed: () => _goToMyPosition(announce: true),
+                  child: const Icon(Icons.my_location),
                 ),
               ),
             ],
           ),
-        Positioned(
-          right: 8,
-          bottom: entry != null ? 192 : 8,
-          child: FloatingActionButton(
-            onPressed: () => _goToMyPosition(announce: true),
-            child: const Icon(Icons.my_location),
-          ),
         ),
+        // The strip takes its own room under the map rather than lying over
+        // it, so the church card and the my-position button stay whole.
+        if (noPosition != null)
+          PositionUnavailableBanner(
+            reason: noPosition,
+            location: _location,
+            onRetry: () => _goToMyPosition(announce: true),
+            onSentToSettings: () => _retryPositionOnResume = true,
+            onClose: () => setState(() => _positionUnavailableReason = null),
+          ),
       ],
     );
   }
@@ -153,7 +175,8 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   }
 
   /// Moves to the user's position. When there is none and [announce] is set,
-  /// says why in a SnackBar, with the way out as its action.
+  /// the strip at the foot of the map says why, with the way out as its
+  /// button.
   Future<void> _goToMyPosition({required bool announce}) async {
     final result = await _location.currentPosition();
     if (!mounted) return;
@@ -163,37 +186,13 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
           LatLng(position.latitude, position.longitude),
           _positionZoom,
         );
+        // Whatever the strip was asking for has been settled.
+        if (_positionUnavailableReason != null) {
+          setState(() => _positionUnavailableReason = null);
+        }
       case PositionUnavailable(:final reason):
         if (!announce) return;
-        final action = PositionUnavailableView.action(
-          reason,
-          _location,
-          () => _goToMyPosition(announce: true),
-        );
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              PositionUnavailableView.message(
-                reason,
-                'A helyzeted mutatásához',
-              ),
-            ),
-            action:
-                action == null
-                    ? null
-                    : SnackBarAction(
-                      label: action.$1,
-                      onPressed: () {
-                        _retryPositionOnResume =
-                            reason !=
-                            PositionUnavailableReason.permissionDenied;
-                        action.$2();
-                      },
-                    ),
-          ),
-        );
+        setState(() => _positionUnavailableReason = reason);
     }
   }
 

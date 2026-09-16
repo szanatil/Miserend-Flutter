@@ -144,7 +144,7 @@ Közös állapot (szöveg + gomb) a **Közeli templomokon**, a **Térképen** é
 
 - A gombok a `geolocator` meglévő hívásai, új függőség nem kell.
 - Amikor a felhasználó a beállításokból visszatér az appba, a képernyő újrapróbálja a helymeghatározást.
-- **Térkép**: a „helyzetem" gomb helyzet nélkül SnackBarban adja az okhoz tartozó szöveget és gombot (időtúllépésnél gomb nélkül). A kezeletlen hiba megszűnik.
+- **Térkép**: a „helyzetem" gomb helyzet nélkül SnackBarban adja az okhoz tartozó szöveget és gombot (időtúllépésnél gomb nélkül). A kezeletlen hiba megszűnik. **Felülírva** (kézi teszt, 2026-09-16): a SnackBar nem jó hordozó ennek. A Flutter a gombbal rendelkező SnackBart alapból véglegesre állítja (`SnackBar.persist` alapértéke `action != null`), így a csík magától soha nem tűnt el; a gyökér `ScaffoldMessenger` tartotta, ezért a tabváltást is túlélte, és a Közeli templomok fülön a saját, teljes képernyős Helyzet nem elérhető állapota mellett duplán látszott. Helyette a térkép **saját, a lap alján ülő sávja** áll, az offline-sáv vizuális mintájára — a térkép része, tehát más fülön nem látszik, és magától eltűnik, amint van helyzet.
 - **Misék fül**: a mai egyetlen helymeghatározási szöveg (`near_masses_page.dart:188-191`) helyére ugyanez az okonkénti állapot kerül; minden más változatlan (spec 0004).
 
 ### Kedvencek előfrissítése
@@ -177,7 +177,7 @@ A négy képernyő átállása után a `MiserendDatabase` egyetlen olvasója a `
 - **Mise-szűrő** (tiszta függvény): a három forrás példáival — kezdeti feltöltés „gitáros" → mise; `NearbyMasses` „Gyóntatás" → nem; listaválasz „Római katolikus Szentmise, Csendes" → mise; „Római katolikus Gyóntatás" → nem; ismeretlen fajta → nem.
 - **Lista-betöltő** (hamis API + in-memory gyorsítótár): a gyorsítótár tartalma a háttérhívás előtt megérkezik; siker → write-through és egy újraolvasás, jelölés nélkül; Nincs kapcsolat → a gyorsítótár-állapot marad + (i); Szerverhiba → + szín; a találati lista legfeljebb 100 azonosítót küld; 0 helyi találat → `Search`; megszűnt kedvenc eltűnik a kedvencek közül.
 - **Helyzet**: a `LocationProvider` az engedély/beállítás négy esetét okként adja vissza (hamis geolocator-platformmal); 5 percnél régebbi utolsó ismert pozíció nem helyzet.
-- **Lapok**: könnyű widget tesztek hamis betöltővel: betöltés, üres, a négy Helyzet nem elérhető ok a szövegével és gombjával, a két offline-jelölés, az (i) tájékoztató megnyitása, lehúzásos frissítés; a térképi „helyzetem" gomb SnackBarja.
+- **Lapok**: könnyű widget tesztek hamis betöltővel: betöltés, üres, a négy Helyzet nem elérhető ok a szövegével és gombjával, a két offline-jelölés, az (i) tájékoztató megnyitása, lehúzásos frissítés; a térképi „helyzetem" gomb sávja, beleértve, hogy helyzet nélkül megjelenik, helyzettel eltűnik, és más fülre nem szivárog át.
 - **Kedvencek előfrissítése**: hívásszám (egy `ids` köteg + kedvencenként egy miserend-hívás); 24 órán belül másodszor nem fut; hiba esetén csendes kimaradás.
 
 ## Out of Scope

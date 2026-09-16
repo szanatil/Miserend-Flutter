@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/colors.dart';
+import 'package:miserend/widgets/notice_strip.dart';
 
 /// What the user can do to get live data again, which depends on the screen:
 /// a list is pulled down, a single church is opened again.
@@ -108,32 +109,16 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final serverError = failure == ApiFailure.serverError;
-    return Material(
+    return NoticeStrip(
       color:
-          serverError ? CustomColors.serverErrorTint : const Color(0xFFEEEEEE),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 16),
-        child: Row(
-          children: [
-            Icon(
-              serverError ? Icons.cloud_off : Icons.signal_wifi_off,
-              size: 18,
-              color:
-                  serverError ? CustomColors.serverErrorAccent : Colors.black54,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                serverError
-                    ? 'A miserend.hu nem elérhető, tárolt adatok'
-                    : 'Nincs kapcsolat, tárolt adatok',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            OfflineInfoButton(failure: failure, asOf: asOf, hint: hint),
-          ],
-        ),
-      ),
+          serverError ? CustomColors.serverErrorTint : CustomColors.noticeTint,
+      icon: serverError ? Icons.cloud_off : Icons.signal_wifi_off,
+      iconColor: serverError ? CustomColors.serverErrorAccent : Colors.black54,
+      text:
+          serverError
+              ? 'A miserend.hu nem elérhető, tárolt adatok'
+              : 'Nincs kapcsolat, tárolt adatok',
+      actions: [OfflineInfoButton(failure: failure, asOf: asOf, hint: hint)],
     );
   }
 }
