@@ -65,7 +65,8 @@ The export is only downloaded when it is missing or of the wrong version — the
 **File:** `lib/home/masses/near_masses_page.dart`
 
 - Shows the **nearest masses** (see `CONTEXT.md`, spec 0004): live from API v4 `nearbymasses` around the user's position (a last known position older than 5 minutes is replaced by a fresh fix with a timeout), no cache or legacy-export fallback.
-- `selectNearestMasses` (`nearest_masses.dart`) picks at most 10 nearest churches, one row each with its earliest mass still reachable (started ≤ 10 minutes ago, up to tomorrow 00:00), masses only, in time order.
+- `selectNearestMasses` (`nearest_masses.dart`) picks at most 10 nearest churches and lists every mass of theirs still reachable (started ≤ 10 minutes ago, up to tomorrow 00:00), one row per mass, masses only, in time order. A church with several masses left today appears several times.
+- The API repeats items (the same mass up to three times); `MiserendApiClient` keeps each once, for this tab, the details page's schedule and the lists' masses of the day alike.
 - Refetches on tab switch, app resume, pull-to-refresh and after midnight; re-selects from the last raw response every minute while visible.
 - Loading, position-unavailable (by reason, with a button), API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
 

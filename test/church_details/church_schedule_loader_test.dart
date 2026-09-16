@@ -186,6 +186,22 @@ void main() {
       expect(stored.single.apiMassId, 129807);
     });
 
+    test('shows and stores a mass once when the API repeats it', () async {
+      final morning = DateTime(2026, 9, 10, 7, 0);
+      final evening = DateTime(2026, 9, 10, 18, 0);
+      final loader = ChurchScheduleLoader(
+        cache: cache,
+        api: _api(
+          massTimes: [morning, morning, morning, evening, evening, evening],
+        ),
+      );
+
+      final days = (await loader.refresh(_church, _today)).massesByDay;
+
+      expect(days[0].map((m) => m.time), [morning, evening]);
+      expect(await cache.getMassesForChurch(38), hasLength(2));
+    });
+
     test('writes the church response into the cache', () async {
       final loader = ChurchScheduleLoader(
         cache: cache,

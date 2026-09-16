@@ -451,6 +451,19 @@ void main() {
       },
     );
 
+    test('keeps a mass of the day once however many times the API repeats '
+        'it', () async {
+      // Recorded live on 2026-09-16: every mass of the day three times over.
+      final response = await fetchWith(
+        _fixtureResponse('church_ids_1155_2026-09-16.json'),
+      );
+
+      expect(response.massesOf(1155).map((m) => (m.time, m.info)), [
+        (DateTime(2026, 9, 16, 7, 0), 'Római katolikus Szentmise'),
+        (DateTime(2026, 9, 16, 18, 0), 'Római katolikus Szentmise'),
+      ]);
+    });
+
     test('asks for a hundred churches around the position, minimal', () async {
       late http.Request sent;
       final client = MiserendApiClient(
@@ -473,12 +486,15 @@ void main() {
   });
 
   group('fetchMassesForChurch', () {
-    Future<List<CachedMass>> fetchWith(http.Response response) async {
+    Future<List<CachedMass>> fetchWith(
+      http.Response response, {
+      int churchId = 38,
+    }) async {
       final client = MiserendApiClient(
         client: MockClient((_) async => response),
       );
       final result = await client.fetchMassesForChurch(
-        churchId: 38,
+        churchId: churchId,
         lat: 47.492233,
         lon: 19.0522943,
         from: DateTime(2026, 9, 10),
@@ -544,6 +560,65 @@ void main() {
 
       expect(masses, hasLength(1));
       expect(masses.single.apiMassId, 1);
+    });
+
+    test('keeps an occurrence once however many times the API repeats it, '
+        'but not the same mass on another day', () async {
+      // Recorded live on 2026-09-16: every occurrence three times over.
+      final masses = await fetchWith(
+        _fixtureResponse('nearbymasses_church1155_2026-09-16.json'),
+        churchId: 1155,
+      );
+
+      expect(masses.map((m) => (m.apiMassId, m.time, m.info)), [
+        (101555, DateTime(2026, 9, 16, 7, 0), 'Szentmise'),
+        (101554, DateTime(2026, 9, 16, 18, 0), 'Szentmise'),
+        (101555, DateTime(2026, 9, 17, 7, 0), 'Szentmise'),
+        (101554, DateTime(2026, 9, 17, 18, 0), 'Szentmise'),
+        (121565, DateTime(2026, 9, 17, 19, 0), 'Szentségimádás'),
+      ]);
+    });
+
+    test('keeps masses that start together but are different, and tells '
+        'id-less items apart by start and title', () async {
+      final body = jsonEncode({
+        'error': 0,
+        'sum': 3,
+        'misek': [
+          {
+            'id': 1,
+            'start_date': '2026-09-16T18:00:00+02:00',
+            'title': 'Szentmise',
+            'church': {'id': 38},
+          },
+          {
+            'id': 2,
+            'start_date': '2026-09-16T18:00:00+02:00',
+            'title': 'Szentmise',
+            'church': {'id': 38},
+          },
+          {
+            'start_date': '2026-09-16T18:00:00+02:00',
+            'title': 'Görögkatolikus liturgia',
+            'church': {'id': 38},
+          },
+          {
+            'start_date': '2026-09-16T18:00:00+02:00',
+            'title': 'Görögkatolikus liturgia',
+            'church': {'id': 38},
+          },
+        ],
+      });
+
+      final masses = await fetchWith(
+        http.Response.bytes(utf8.encode(body), 200),
+      );
+
+      expect(masses.map((m) => (m.apiMassId, m.info)), [
+        (1, 'Szentmise'),
+        (2, 'Szentmise'),
+        (null, 'Görögkatolikus liturgia'),
+      ]);
     });
 
     test('skips an occurrence with no usable time', () async {
@@ -692,6 +767,22 @@ void main() {
         });
       },
     );
+
+    test('keeps an item once however many times the API repeats it', () async {
+      // Recorded live around Szeged on 2026-09-16 at 17:10: church 1155's
+      // 18:00 mass three times over.
+      final masses = await fetchWith(
+        _fixtureResponse('nearbymasses_szeged_2026-09-16_1710.json'),
+      );
+
+      expect(masses, hasLength(98));
+      expect(
+        masses.where(
+          (m) => m.churchId == 1155 && m.start == DateTime(2026, 9, 16, 18, 0),
+        ),
+        hasLength(1),
+      );
+    });
 
     test('an empty response is an empty list', () async {
       final masses = await fetchWith(

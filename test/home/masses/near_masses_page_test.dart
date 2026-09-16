@@ -509,6 +509,41 @@ void main() {
       expect(details.church.lat, 47.5007789);
       expect(details.church.lon, 19.0539695);
     });
+
+    testWidgets('a church with several masses today has a row for each, and '
+        'every row opens that church', (tester) async {
+      await pumpWithDetails(
+        tester,
+        _FakeLoader([
+          [
+            _mass(church: 37, name: 'Ferences', km: 0.5, start: _at(18, 0)),
+            _mass(church: 1, name: 'Dóm', km: 1.0, start: _at(17, 0)),
+            _mass(church: 37, name: 'Ferences', km: 0.5, start: _at(13, 0)),
+          ],
+        ]),
+      );
+
+      final rows = find.byType(MassCard);
+      expect(rows, findsNWidgets(3));
+      expect(
+        tester.widgetList<MassCard>(rows).map((row) => row.mass.start.hour),
+        [13, 17, 18],
+      );
+
+      for (final row in [rows.at(0), rows.at(2)]) {
+        await tester.tap(row);
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<ChurchDetailsPage>(find.byType(ChurchDetailsPage))
+              .church
+              .id,
+          37,
+        );
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
+    });
   });
 
   group('refresh', () {
@@ -662,8 +697,8 @@ void main() {
       expect(find.text('23 perc múlva'), findsOneWidget);
     });
 
-    testWidgets('an expired mass gives way to the same church\'s next one, '
-        'without a network call', (tester) async {
+    testWidgets('an expired mass leaves the list while the same church\'s '
+        'later one stays, without a network call', (tester) async {
       now = _at(14, 5);
       final loader = _FakeLoader([
         [

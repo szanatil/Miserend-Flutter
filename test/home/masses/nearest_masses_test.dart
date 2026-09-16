@@ -101,37 +101,43 @@ void main() {
       },
     );
 
-    group('each church is listed once, with its earliest reachable mass', () {
+    group('a church is listed with every reachable mass of the day', () {
       final items = [
         _mass(church: 1, start: _at(18, 30)),
         _mass(church: 1, start: _at(14, 0)),
         _mass(church: 1, start: _at(9, 0)),
       ];
 
-      test('at 14:05 the 14:00 mass wins over the 18:30 one', () {
+      test('at 14:05 both the 14:00 and the 18:30 mass are listed', () {
         final selected = selectNearestMasses(items, _at(14, 5));
 
-        expect(selected.map((m) => m.start), [_at(14, 0)]);
+        expect(selected.map((m) => m.start), [_at(14, 0), _at(18, 30)]);
       });
 
-      test('at 14:15 the 18:30 mass takes its place', () {
+      test('at 14:15 the 14:00 mass is gone and the 18:30 one stays', () {
         final selected = selectNearestMasses(items, _at(14, 15));
 
         expect(selected.map((m) => m.start), [_at(18, 30)]);
       });
     });
 
-    test(
-      'duplicates of the same church, start and title collapse into one',
-      () {
-        final items = [
-          _mass(church: 37, start: _at(18, 0)),
-          _mass(church: 37, start: _at(18, 0)),
-        ];
+    test('the masses of the churches interleave in time order', () {
+      final items = [
+        _mass(church: 1, km: 0.5, start: _at(18, 0)),
+        _mass(church: 2, km: 1.5, start: _at(17, 0)),
+        _mass(church: 1, km: 0.5, start: _at(13, 0)),
+        _mass(church: 2, km: 1.5, start: _at(19, 0)),
+      ];
 
-        expect(selectNearestMasses(items, _at(12, 0)), hasLength(1));
-      },
-    );
+      final selected = selectNearestMasses(items, _at(12, 0));
+
+      expect(selected.map((m) => (m.churchId, m.start.hour)), [
+        (1, 13),
+        (2, 17),
+        (1, 18),
+        (2, 19),
+      ]);
+    });
 
     test('lists at most the 10 nearest churches, even when the 11th has an '
         'earlier mass', () {
@@ -144,6 +150,21 @@ void main() {
       final selected = selectNearestMasses(items, _at(12, 0));
 
       expect(selected, hasLength(10));
+      expect(selected.map((m) => m.churchId), isNot(contains(11)));
+    });
+
+    test('the limit of 10 counts churches, not masses', () {
+      final items = [
+        for (var church = 1; church <= 11; church++) ...[
+          _mass(church: church, km: church.toDouble(), start: _at(17, 0)),
+          _mass(church: church, km: church.toDouble(), start: _at(19, 0)),
+        ],
+      ];
+
+      final selected = selectNearestMasses(items, _at(12, 0));
+
+      expect(selected, hasLength(20));
+      expect(selected.map((m) => m.churchId).toSet(), hasLength(10));
       expect(selected.map((m) => m.churchId), isNot(contains(11)));
     });
 

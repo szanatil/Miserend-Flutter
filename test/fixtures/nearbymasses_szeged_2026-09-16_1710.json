@@ -1,0 +1,1306 @@
+{
+    "error": 0,
+    "sum": 236,
+    "misek": [
+        {
+            "id": 101889,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0.5,
+            "church": {
+                "id": 1252,
+                "name": "Magyarok Nagyasszonya-székesegyház Dóm",
+                "city": "Szeged",
+                "lat": 46.2489061,
+                "lon": 20.1490912
+            }
+        },
+        {
+            "id": 134610,
+            "start_date": "2026-09-16T17:15:00+02:00",
+            "title": "Rózsafüzér",
+            "distance_km": 0.89,
+            "church": {
+                "id": 1254,
+                "name": "Szent József jezsuita templom",
+                "city": "Szeged",
+                "lat": 46.2519336,
+                "lon": 20.1435728
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0.94,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0.94,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0.94,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 106739,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0.97,
+            "church": {
+                "id": 3673,
+                "name": "Árpád-házi Szent Erzsébet-templom",
+                "city": "Szeged",
+                "lat": 46.248337,
+                "lon": 20.1591142
+            }
+        },
+        {
+            "id": 106989,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szent Liturgia",
+            "distance_km": 1.6,
+            "church": {
+                "id": 3748,
+                "name": "Szent Rozália-kápolna",
+                "city": "Szeged",
+                "lat": 46.258856,
+                "lon": 20.1471001
+            }
+        },
+        {
+            "id": 101277,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 1.82,
+            "church": {
+                "id": 1044,
+                "name": "Szent Miklós-templom",
+                "city": "Szeged",
+                "lat": 46.2589352,
+                "lon": 20.1588585
+            }
+        },
+        {
+            "id": 101266,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 3.65,
+            "church": {
+                "id": 1041,
+                "name": "Szent Gellért-templom",
+                "city": "Szeged",
+                "lat": 46.2760146,
+                "lon": 20.1612256
+            }
+        },
+        {
+            "id": 134929,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 4.71,
+            "church": {
+                "id": 1030,
+                "name": "Alexandriai Szent Katalin-templom",
+                "city": "Szeged",
+                "lat": 46.2190304,
+                "lon": 20.1967399
+            }
+        },
+        {
+            "id": 101568,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 5.61,
+            "church": {
+                "id": 1156,
+                "name": "Szent Mihály-templom",
+                "city": "Szeged",
+                "lat": 46.2214826,
+                "lon": 20.0829178
+            }
+        },
+        {
+            "id": 102813,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 7.81,
+            "church": {
+                "id": 1604,
+                "name": "Páduai Szent Antal-templom",
+                "city": "Tiszasziget",
+                "lat": 46.175019,
+                "lon": 20.1626431
+            }
+        },
+        {
+            "id": 102830,
+            "start_date": "2026-09-16T17:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 11.13,
+            "church": {
+                "id": 1611,
+                "name": "Szent Kereszt Felmagasztalása templom",
+                "city": "Domaszék",
+                "lat": 46.243099,
+                "lon": 20.0031168
+            }
+        },
+        {
+            "id": 102858,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 20.07,
+            "church": {
+                "id": 1617,
+                "name": "Szent László-templom",
+                "city": "Mórahalom",
+                "lat": 46.2166821,
+                "lon": 19.8900357
+            }
+        },
+        {
+            "id": 103015,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 24.12,
+            "church": {
+                "id": 1661,
+                "name": "Szent István király templom",
+                "city": "Hódmezővásárhely",
+                "lat": 46.4210832,
+                "lon": 20.3303012
+            }
+        },
+        {
+            "id": 107105,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szent Liturgia",
+            "distance_km": 26.01,
+            "church": {
+                "id": 3800,
+                "name": "Istenszülő oltalma templom",
+                "city": "Makó",
+                "lat": 46.2169717,
+                "lon": 20.4835373
+            }
+        },
+        {
+            "id": 124985,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 28.16,
+            "church": {
+                "id": 1613,
+                "name": "Szent István király templom",
+                "city": "Kistelek",
+                "lat": 46.4699557,
+                "lon": 19.9805632
+            }
+        },
+        {
+            "id": 102818,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 28.54,
+            "church": {
+                "id": 1607,
+                "name": "Jézus Szíve templom",
+                "city": "Ásotthalom",
+                "lat": 46.1996281,
+                "lon": 19.782483
+            }
+        },
+        {
+            "id": 103035,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 31.61,
+            "church": {
+                "id": 1681,
+                "name": "Mindenszentek-temploma",
+                "city": "Mindszent",
+                "lat": 46.528354,
+                "lon": 20.1703147
+            }
+        },
+        {
+            "id": 116104,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 40.5,
+            "church": {
+                "id": 4572,
+                "name": "Szent Mihály templom",
+                "city": "Szabadka (Subotica) Szabadka",
+                "lat": 46.1014878,
+                "lon": 19.6640232
+            }
+        },
+        {
+            "id": 106743,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 41.01,
+            "church": {
+                "id": 3674,
+                "name": "Szent Teréz-székesegyház",
+                "city": "Észak-bácskai körzet",
+                "lat": 46.0983882,
+                "lon": 19.6588152
+            }
+        },
+        {
+            "id": 102063,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 45.17,
+            "church": {
+                "id": 1305,
+                "name": "Szent Péter és Pál apostolok templom",
+                "city": "Pálmonostora",
+                "lat": 46.6267248,
+                "lon": 19.9480602
+            }
+        },
+        {
+            "id": 134557,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 45.89,
+            "church": {
+                "id": 1693,
+                "name": "Szent Anna-templom",
+                "city": "Szentes",
+                "lat": 46.6506346,
+                "lon": 20.2544143
+            }
+        },
+        {
+            "id": 101469,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 47.49,
+            "church": {
+                "id": 1122,
+                "name": "Kapisztráni Szent János-templom",
+                "city": "Tompa",
+                "lat": 46.2045852,
+                "lon": 19.5332149
+            }
+        },
+        {
+            "id": 98326,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 54.87,
+            "church": {
+                "id": 95,
+                "name": "Szent Péter és Pál apostolok templom",
+                "city": "Kiskunhalas",
+                "lat": 46.4269822,
+                "lon": 19.4836988
+            }
+        },
+        {
+            "id": 98299,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 56.72,
+            "church": {
+                "id": 93,
+                "name": "Sarlós Boldogasszony-templom",
+                "city": "Kiskunfélegyháza",
+                "lat": 46.7122591,
+                "lon": 19.8522228
+            }
+        },
+        {
+            "id": 102711,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 62.34,
+            "church": {
+                "id": 1574,
+                "name": "Kisboldogasszony-templom",
+                "city": "Mezőkovácsháza",
+                "lat": 46.4078541,
+                "lon": 20.9244204
+            }
+        },
+        {
+            "id": 101989,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 64.11,
+            "church": {
+                "id": 1279,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Fülöpjakab",
+                "lat": 46.7412855,
+                "lon": 19.7227149
+            }
+        },
+        {
+            "id": 102582,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 65.66,
+            "church": {
+                "id": 1506,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Csanádapáca",
+                "lat": 46.5437869,
+                "lon": 20.8858267
+            }
+        },
+        {
+            "id": 102089,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 65.68,
+            "church": {
+                "id": 1309,
+                "name": "Jótanács Anyja templom",
+                "city": "Tiszaalpár",
+                "lat": 46.825083,
+                "lon": 19.9895012
+            }
+        },
+        {
+            "id": 102698,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 66.96,
+            "church": {
+                "id": 1567,
+                "name": "Szűz Mária Szent Neve-templom",
+                "city": "Magyarbánhegyes",
+                "lat": 46.4563239,
+                "lon": 20.9644054
+            }
+        },
+        {
+            "id": 101376,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 68.69,
+            "church": {
+                "id": 1097,
+                "name": "Szentlélek-templom",
+                "city": "Soltvadkert",
+                "lat": 46.577427,
+                "lon": 19.3930353
+            }
+        },
+        {
+            "id": 101722,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 71.19,
+            "church": {
+                "id": 1207,
+                "name": "Jézus Szíve katolikus plébániatemplom",
+                "city": "Jakabszállás",
+                "lat": 46.7621697,
+                "lon": 19.6004502
+            }
+        },
+        {
+            "id": 101456,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 71.46,
+            "church": {
+                "id": 1120,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Madaras",
+                "lat": 46.0587221,
+                "lon": 19.2597765
+            }
+        },
+        {
+            "id": 101506,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 74.06,
+            "church": {
+                "id": 1138,
+                "name": "Keresztelő Szent János-templom",
+                "city": "Felsőszentiván",
+                "lat": 46.1957237,
+                "lon": 19.1877901
+            }
+        },
+        {
+            "id": 98250,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 75.11,
+            "church": {
+                "id": 87,
+                "name": "Szentháromság-templom",
+                "city": "Kecel",
+                "lat": 46.522278,
+                "lon": 19.255254
+            }
+        },
+        {
+            "id": 101402,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 78.04,
+            "church": {
+                "id": 1107,
+                "name": "Szent Kereszt feltalálása templom",
+                "city": "Bácsborsód",
+                "lat": 46.0951712,
+                "lon": 19.1576069
+            }
+        },
+        {
+            "id": 101341,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 78.31,
+            "church": {
+                "id": 1080,
+                "name": "Szent József-templom",
+                "city": "Kiskőrös",
+                "lat": 46.6207361,
+                "lon": 19.2840097
+            }
+        },
+        {
+            "id": 101193,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 80.2,
+            "church": {
+                "id": 1022,
+                "name": "Mindenszentek-templom",
+                "city": "Cibakháza",
+                "lat": 46.9648089,
+                "lon": 20.2009258
+            }
+        },
+        {
+            "id": 98263,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 81.56,
+            "church": {
+                "id": 88,
+                "name": "Urunk Mennybemenetele Társszékesegyház",
+                "city": "Kecskemét",
+                "lat": 46.9073036,
+                "lon": 19.6908585
+            }
+        },
+        {
+            "id": 98293,
+            "start_date": "2026-09-16T18:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 81.85,
+            "church": {
+                "id": 92,
+                "name": "Szentháromság-templom",
+                "city": "Kecskemét",
+                "lat": 46.9107114,
+                "lon": 19.6922726
+            }
+        },
+        {
+            "id": 102233,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 84.71,
+            "church": {
+                "id": 1372,
+                "name": "Jézus Szíve templom",
+                "city": "Békéscsaba",
+                "lat": 46.6682981,
+                "lon": 21.0667171
+            }
+        },
+        {
+            "id": 101173,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 86.91,
+            "church": {
+                "id": 1006,
+                "name": "Szent Adalbert-templom",
+                "city": "Homokmégy",
+                "lat": 46.4901466,
+                "lon": 19.0724816
+            }
+        },
+        {
+            "id": 101302,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 87.96,
+            "church": {
+                "id": 1060,
+                "name": "Akasztói Kisboldogasszony-templom",
+                "city": "Akasztó",
+                "lat": 46.6946976,
+                "lon": 19.2033699
+            }
+        },
+        {
+            "id": 100900,
+            "start_date": "2026-09-16T17:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 88.68,
+            "church": {
+                "id": 913,
+                "name": "Szent László király templom",
+                "city": "Gara",
+                "lat": 46.0329251,
+                "lon": 19.0381281
+            }
+        },
+        {
+            "id": 101674,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 88.84,
+            "church": {
+                "id": 1186,
+                "name": "Mindszentek-templom",
+                "city": "Sükösd",
+                "lat": 46.2835276,
+                "lon": 18.9935558
+            }
+        },
+        {
+            "id": 101654,
+            "start_date": "2026-09-16T18:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 89.85,
+            "church": {
+                "id": 1179,
+                "name": "Keresztelő Szent János-templom",
+                "city": "Érsekcsanád",
+                "lat": 46.2535123,
+                "lon": 18.9793103
+            }
+        },
+        {
+            "id": 101938,
+            "start_date": "2026-09-16T18:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 90.26,
+            "church": {
+                "id": 1265,
+                "name": "Szent Imre-templom",
+                "city": "Gyomaendrőd",
+                "lat": 46.9326689,
+                "lon": 20.7743124
+            }
+        },
+        {
+            "id": 100973,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 90.6,
+            "church": {
+                "id": 927,
+                "name": "Szentháromság-templom",
+                "city": "Vaskút",
+                "lat": 46.1031217,
+                "lon": 18.9889707
+            }
+        },
+        {
+            "id": 102034,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 91.71,
+            "church": {
+                "id": 1292,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Mezőtúr",
+                "lat": 47.002037,
+                "lon": 20.6225672
+            }
+        },
+        {
+            "id": 98211,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 92.34,
+            "church": {
+                "id": 76,
+                "name": "Belvárosi Szent Péter és Szent Pál-templom",
+                "city": "Baja",
+                "lat": 46.1797622,
+                "lon": 18.9514383
+            }
+        },
+        {
+            "id": 134987,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 93.51,
+            "church": {
+                "id": 1428,
+                "name": "Szűz Mária Szent Neve- és Szent József-templom",
+                "city": "Mezőberény",
+                "lat": 46.826825,
+                "lon": 21.0298273
+            }
+        },
+        {
+            "id": 101634,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 95.31,
+            "church": {
+                "id": 1172,
+                "name": "Kisboldogasszony-templom",
+                "city": "Bátya",
+                "lat": 46.4888499,
+                "lon": 18.9571101
+            }
+        },
+        {
+            "id": 98246,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 95.54,
+            "church": {
+                "id": 85,
+                "name": "Szent József-templom",
+                "city": "Kalocsa",
+                "lat": 46.5312676,
+                "lon": 18.9735005
+            }
+        },
+        {
+            "id": 101661,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 95.97,
+            "church": {
+                "id": 1181,
+                "name": "Szent István király templom",
+                "city": "Fajsz",
+                "lat": 46.4185228,
+                "lon": 18.9234484
+            }
+        },
+        {
+            "id": 98347,
+            "start_date": "2026-09-16T18:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 97.98,
+            "church": {
+                "id": 98,
+                "name": "Szent Lajos-templom",
+                "city": "Lajosmizse",
+                "lat": 47.0270103,
+                "lon": 19.5578191
+            }
+        },
+        {
+            "id": 104934,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 98.97,
+            "church": {
+                "id": 2564,
+                "name": "Szűz Mária szíve templom",
+                "city": "Gerjen",
+                "lat": 46.4885598,
+                "lon": 18.9073313
+            }
+        },
+        {
+            "id": 100921,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 99.72,
+            "church": {
+                "id": 919,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Hercegszántó",
+                "lat": 45.9486029,
+                "lon": 18.9269635
+            }
+        },
+        {
+            "id": 101474,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 105.53,
+            "church": {
+                "id": 1124,
+                "name": "Szent István király templom",
+                "city": "Abony",
+                "lat": 47.1885873,
+                "lon": 20.0060751
+            }
+        },
+        {
+            "id": 107244,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szent Liturgia",
+            "distance_km": 105.59,
+            "church": {
+                "id": 3881,
+                "name": "Szent György nagyvértanú templom",
+                "city": "Szolnok",
+                "lat": 47.193577,
+                "lon": 20.1921921
+            }
+        },
+        {
+            "id": 105060,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 106.13,
+            "church": {
+                "id": 2659,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Tolna",
+                "lat": 46.421925,
+                "lon": 18.7895506
+            }
+        },
+        {
+            "id": 105271,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 109.57,
+            "church": {
+                "id": 2799,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Bátaszék",
+                "lat": 46.1877674,
+                "lon": 18.7260194
+            }
+        },
+        {
+            "id": 104160,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 111.96,
+            "church": {
+                "id": 2247,
+                "name": "Urunk mennybemenetele templom",
+                "city": "Szekszárd",
+                "lat": 46.3498146,
+                "lon": 18.6985148
+            }
+        },
+        {
+            "id": 101481,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 114.78,
+            "church": {
+                "id": 1125,
+                "name": "Nepomuki Szent János-templom",
+                "city": "Ceglédbercel",
+                "lat": 47.2231154,
+                "lon": 19.6685285
+            }
+        },
+        {
+            "id": 101547,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 118.96,
+            "church": {
+                "id": 1154,
+                "name": "Kisboldogasszony-templom",
+                "city": "Szászberek",
+                "lat": 47.3138702,
+                "lon": 20.1000443
+            }
+        },
+        {
+            "id": 108798,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 119.92,
+            "church": {
+                "id": 5265,
+                "name": "Szent Anna-kápolna",
+                "city": "Kakasd",
+                "lat": 46.3469922,
+                "lon": 18.5939385
+            }
+        },
+        {
+            "id": 99733,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 122.81,
+            "church": {
+                "id": 517,
+                "name": "Krisztus király templom",
+                "city": "Dunaújváros",
+                "lat": 46.9678696,
+                "lon": 18.9329427
+            }
+        },
+        {
+            "id": 101879,
+            "start_date": "2026-09-16T17:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 123.25,
+            "church": {
+                "id": 1250,
+                "name": "Szent Borbála-templom",
+                "city": "Újhartyán",
+                "lat": 47.2210846,
+                "lon": 19.3829425
+            }
+        },
+        {
+            "id": 105950,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 124.44,
+            "church": {
+                "id": 3239,
+                "name": "Krisztus király templom",
+                "city": "Pilis",
+                "lat": 47.2845504,
+                "lon": 19.544503
+            }
+        },
+        {
+            "id": 115976,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 124.48,
+            "church": {
+                "id": 2803,
+                "name": "Szeplőtelen Fogantatás templom",
+                "city": "Bonyhád",
+                "lat": 46.2987505,
+                "lon": 18.5302181
+            }
+        },
+        {
+            "id": 120330,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 125.47,
+            "church": {
+                "id": 1740,
+                "name": "Szentháromság-templom",
+                "city": "Jászalsószentgyörgy",
+                "lat": 47.372226,
+                "lon": 20.0914746
+            }
+        },
+        {
+            "id": 101601,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 134.11,
+            "church": {
+                "id": 1167,
+                "name": "Szent György-templom",
+                "city": "Nagykáta",
+                "lat": 47.4183711,
+                "lon": 19.7429473
+            }
+        },
+        {
+            "id": 108412,
+            "start_date": "2026-09-16T17:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 138.13,
+            "church": {
+                "id": 4855,
+                "name": "Kápolna a Szűz Mária Gondozóházban",
+                "city": "Adony",
+                "lat": 47.1213593,
+                "lon": 18.8650875
+            }
+        },
+        {
+            "id": 132521,
+            "start_date": "2026-09-16T18:30:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 138.31,
+            "church": {
+                "id": 1213,
+                "name": "Szent Imre-templom",
+                "city": "Úri",
+                "lat": 47.4125939,
+                "lon": 19.5228439
+            }
+        },
+        {
+            "id": 103870,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 139.88,
+            "church": {
+                "id": 2116,
+                "name": "Szentháromság-templom",
+                "city": "Pécs",
+                "lat": 46.1187566,
+                "lon": 18.339923
+            }
+        },
+        {
+            "id": 103050,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 141.17,
+            "church": {
+                "id": 1684,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Jászberény",
+                "lat": 47.5036722,
+                "lon": 19.9110363
+            }
+        },
+        {
+            "id": 108039,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 145.29,
+            "church": {
+                "id": 4592,
+                "name": "Flüe-i Szent Miklós-templom",
+                "city": "Kozármisleny",
+                "lat": 46.0445263,
+                "lon": 18.2841168
+            }
+        },
+        {
+            "id": 108349,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 145.3,
+            "church": {
+                "id": 4814,
+                "name": "Szent László király-templom",
+                "city": "Gyapju",
+                "lat": 46.9054345,
+                "lon": 21.7877768
+            }
+        },
+        {
+            "id": 107116,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 146.17,
+            "church": {
+                "id": 3802,
+                "name": "Szent Erzsébet-kápolna",
+                "city": "Vecsés",
+                "lat": 47.4063916,
+                "lon": 19.249083
+            }
+        },
+        {
+            "id": 99445,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 146.42,
+            "church": {
+                "id": 415,
+                "name": "Rózsafüzér királynője templom",
+                "city": "Maglód",
+                "lat": 47.442995,
+                "lon": 19.3503554
+            }
+        },
+        {
+            "id": 99398,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 147.61,
+            "church": {
+                "id": 404,
+                "name": "Páduai Szent Antal-templom",
+                "city": "Ecser",
+                "lat": 47.4449018,
+                "lon": 19.3190118
+            }
+        },
+        {
+            "id": 108445,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 148.41,
+            "church": {
+                "id": 4880,
+                "name": "Szeplőtelen fogantatás-templom",
+                "city": "Tenke",
+                "lat": 46.7405141,
+                "lon": 21.9476778
+            }
+        },
+        {
+            "id": 108360,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 148.45,
+            "church": {
+                "id": 4818,
+                "name": "Jézus Szent Szíve-templom",
+                "city": "Tenke",
+                "lat": 46.7738892,
+                "lon": 21.9285698
+            }
+        },
+        {
+            "id": 108085,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 148.61,
+            "church": {
+                "id": 4634,
+                "name": "Szent Miklós-templom",
+                "city": "Szigetszentmiklós",
+                "lat": 47.3453052,
+                "lon": 19.0407691
+            }
+        },
+        {
+            "id": 99758,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 148.97,
+            "church": {
+                "id": 532,
+                "name": "Antiochiai Szent Ignác-templom",
+                "city": "Sárkeresztúr",
+                "lat": 47.0066114,
+                "lon": 18.5433699
+            }
+        },
+        {
+            "id": 107237,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 149.09,
+            "church": {
+                "id": 3870,
+                "name": "Pálos templom",
+                "city": "Pécs",
+                "lat": 46.0864835,
+                "lon": 18.2253525
+            }
+        },
+        {
+            "id": 99778,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 149.33,
+            "church": {
+                "id": 539,
+                "name": "Pécsi Szent Péter és Szent Pál Székesegyház",
+                "city": "Pécs",
+                "lat": 46.0785966,
+                "lon": 18.2236655
+            }
+        },
+        {
+            "id": 104017,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 149.42,
+            "church": {
+                "id": 2187,
+                "name": "Szentháromság-templom",
+                "city": "Siklós",
+                "lat": 45.850464,
+                "lon": 18.2967247
+            }
+        },
+        {
+            "id": 108898,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 149.99,
+            "church": {
+                "id": 5416,
+                "name": "Szent II. János Pál-kápolna",
+                "city": "Pécs",
+                "lat": 46.0386984,
+                "lon": 18.2236961
+            }
+        },
+        {
+            "id": 104996,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 150.24,
+            "church": {
+                "id": 2597,
+                "name": "Sarlós Boldogasszony-kegytemplom",
+                "city": "Siklós",
+                "lat": 45.8784304,
+                "lon": 18.2733412
+            }
+        },
+        {
+            "id": 131484,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 150.44,
+            "church": {
+                "id": 2498,
+                "name": "Szent István király templom",
+                "city": "Budapest XVIII. kerület",
+                "lat": 47.4358408,
+                "lon": 19.2104327
+            }
+        },
+        {
+            "id": 104818,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 151.66,
+            "church": {
+                "id": 2495,
+                "name": "Szűz Mária szeplőtelen szíve templom",
+                "city": "Budapest XVIII. kerület",
+                "lat": 47.4383292,
+                "lon": 19.1833534
+            }
+        },
+        {
+            "id": 115894,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 153.76,
+            "church": {
+                "id": 2486,
+                "name": "Szent Lajos-templom",
+                "city": "Budapest XX. kerület",
+                "lat": 47.4346118,
+                "lon": 19.1184603
+            }
+        },
+        {
+            "id": 104813,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 153.9,
+            "church": {
+                "id": 2493,
+                "name": "Árpád-házi Szent Erzsébet-templom",
+                "city": "Budapest XVIII. kerület",
+                "lat": 47.4615606,
+                "lon": 19.1839068
+            }
+        },
+        {
+            "id": 107635,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 153.99,
+            "church": {
+                "id": 4234,
+                "name": "Szent Pál-templom",
+                "city": "Budapest XVII. kerület",
+                "lat": 47.4791689,
+                "lon": 19.2304334
+            }
+        },
+        {
+            "id": 115885,
+            "start_date": "2026-09-16T19:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 154.07,
+            "church": {
+                "id": 2474,
+                "name": "Magyarok Nagyasszonya-templom",
+                "city": "Budapest XVII. kerület",
+                "lat": 47.4900959,
+                "lon": 19.2601834
+            }
+        },
+        {
+            "id": 121514,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Vecsernye",
+            "distance_km": 154.25,
+            "church": {
+                "id": 3745,
+                "name": "Urunk színeváltozása templom",
+                "city": "Budapest XX. kerület",
+                "lat": 47.4342882,
+                "lon": 19.1048924
+            }
+        },
+        {
+            "id": 100712,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 154.63,
+            "church": {
+                "id": 846,
+                "name": "Nagyboldogasszony-templom",
+                "city": "Budapest XIX. kerület",
+                "lat": 47.4533203,
+                "lon": 19.1424815
+            }
+        },
+        {
+            "id": 104788,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 154.72,
+            "church": {
+                "id": 2481,
+                "name": "Árpád-házi Szent Erzsébet-templom",
+                "city": "Budapest XX. kerület",
+                "lat": 47.4399731,
+                "lon": 19.106847
+            }
+        },
+        {
+            "id": 99175,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 154.81,
+            "church": {
+                "id": 314,
+                "name": "Oltáriszentség-templom",
+                "city": "Soponya",
+                "lat": 47.0108525,
+                "lon": 18.455123
+            }
+        }
+    ]
+}

@@ -1,0 +1,201 @@
+{
+    "error": 0,
+    "sum": 15,
+    "misek": [
+        {
+            "id": 101555,
+            "start_date": "2026-09-16T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101555,
+            "start_date": "2026-09-16T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101555,
+            "start_date": "2026-09-16T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-16T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101555,
+            "start_date": "2026-09-17T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101555,
+            "start_date": "2026-09-17T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101555,
+            "start_date": "2026-09-17T07:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-17T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-17T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 101554,
+            "start_date": "2026-09-17T18:00:00+02:00",
+            "title": "Szentmise",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 121565,
+            "start_date": "2026-09-17T19:00:00+02:00",
+            "title": "Szentségimádás",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 121565,
+            "start_date": "2026-09-17T19:00:00+02:00",
+            "title": "Szentségimádás",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        },
+        {
+            "id": 121565,
+            "start_date": "2026-09-17T19:00:00+02:00",
+            "title": "Szentségimádás",
+            "distance_km": 0,
+            "church": {
+                "id": 1155,
+                "name": "Havas Boldogasszony templom",
+                "city": "Szeged",
+                "lat": 46.2407191,
+                "lon": 20.1368757
+            }
+        }
+    ]
+}

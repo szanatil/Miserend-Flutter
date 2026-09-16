@@ -26,35 +26,39 @@ List<NearbyMassesItem> selectNearestMasses(
 ) {
   final from = reachableFrom(now);
   final until = nearestMassesUntil(now);
-  final masses = items
-      .where((m) => massTitles.contains(m.title))
-      .where((m) => !m.start.isBefore(from) && !m.start.isAfter(until));
+  final masses =
+      items
+          .where((m) => massTitles.contains(m.title))
+          .where((m) => !m.start.isBefore(from) && !m.start.isAfter(until))
+          .toList();
 
-  // Keeping one item per church also collapses the duplicates the API sends
-  // (same church, start and title twice), so they need no step of their own.
-  final earliestByChurch = <int, NearbyMassesItem>{};
-  for (final mass in masses) {
-    final kept = earliestByChurch[mass.churchId];
-    if (kept == null || mass.start.isBefore(kept.start)) {
-      earliestByChurch[mass.churchId] = mass;
-    }
-  }
+  // "Nearest" picks the churches, and every one of their masses goes on the
+  // list, which reads in time order.
+  final nearestChurches = _nearestChurchIds(masses);
+  return masses.where((m) => nearestChurches.contains(m.churchId)).toList()
+    ..sort((a, b) {
+      final byStart = a.start.compareTo(b.start);
+      if (byStart != 0) return byStart;
+      final byDistance = a.distanceKm.compareTo(b.distanceKm);
+      return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
+    });
+}
 
-  // "Nearest" picks the churches; the list itself reads in time order. The
-  // church id breaks the remaining ties, because List.sort is not stable and
-  // distances come rounded to two decimals, so which church makes the cut
-  // would otherwise change from one minute's re-selection to the next.
-  final nearest =
-      earliestByChurch.values.toList()..sort((a, b) {
-        final byDistance = a.distanceKm.compareTo(b.distanceKm);
-        return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
+/// The [nearestChurchLimit] churches nearest the position among those holding
+/// one of [masses]. The church id breaks ties, because distances come rounded
+/// to two decimals, and which church makes the cut must not change from one
+/// minute's re-selection to the next.
+Set<int> _nearestChurchIds(List<NearbyMassesItem> masses) {
+  // Every item of a church carries the same distance.
+  final distanceOf = {
+    for (final mass in masses) mass.churchId: mass.distanceKm,
+  };
+  final byDistance =
+      distanceOf.keys.toList()..sort((a, b) {
+        final byKm = distanceOf[a]!.compareTo(distanceOf[b]!);
+        return byKm != 0 ? byKm : a.compareTo(b);
       });
-  return nearest.take(nearestChurchLimit).toList()..sort((a, b) {
-    final byStart = a.start.compareTo(b.start);
-    if (byStart != 0) return byStart;
-    final byDistance = a.distanceKm.compareTo(b.distanceKm);
-    return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
-  });
+  return byDistance.take(nearestChurchLimit).toSet();
 }
 
 /// An ongoing mass has already started but is still reachable.

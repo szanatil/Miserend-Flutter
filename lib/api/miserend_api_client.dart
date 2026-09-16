@@ -40,6 +40,9 @@ class ChurchesResponse {
       _masses[churchId] ?? const <CachedMass>[];
 }
 
+/// A `NearbyMasses` item's id, church, start and title.
+typedef _Occurrence = (Object?, int?, DateTime, String?);
+
 /// Reads the miserend.hu v4 JSON API. Every call tells a successful answer —
 /// an empty one included — apart from the two ways of getting none (see
 /// [ApiFailure]), because the screens word those differently.
@@ -164,19 +167,24 @@ class MiserendApiClient {
   }
 
   /// A church's `misek`: `idopont`/`informacio` pairs with no id of their own.
+  /// The API sends one mass several times over; with no id, the same time and
+  /// text is what makes two of them the same mass.
   List<CachedMass> _dailyMasses(int churchId, dynamic value) {
     if (value is! List) return const <CachedMass>[];
     final masses = <CachedMass>[];
+    final seen = <(DateTime, String?)>{};
     for (final item in value.whereType<Map>()) {
       final time = parseApiDateTime(_text(item['idopont']));
       if (time == null) continue;
+      final info = _text(item['informacio']);
+      if (!seen.add((time, info))) continue;
       masses.add(
         CachedMass(
           id: null,
           apiMassId: null,
           churchId: churchId,
           time: time,
-          info: _text(item['informacio']),
+          info: info,
           source: MassSource.dailyList,
         ),
       );
@@ -187,6 +195,9 @@ class MiserendApiClient {
   /// The masses [churchId] holds between [from] and [until]. The response can
   /// carry a second church that shares the coordinates, so it is filtered by
   /// church id here as well.
+  ///
+  /// The API sends one occurrence several times over; it is kept once (see
+  /// [_sameOccurrence]).
   Future<ApiResult<List<CachedMass>>> fetchMassesForChurch({
     required int churchId,
     required double lat,
@@ -207,10 +218,12 @@ class MiserendApiClient {
       if (masses is! List) return null;
 
       final occurrences = <CachedMass>[];
+      final seen = <_Occurrence>{};
       for (final item in masses.whereType<Map>()) {
         if (_churchIdOf(item) != churchId) continue;
         final time = parseApiDateTime(_text(item['start_date']));
         if (time == null) continue;
+        if (!seen.add(_sameOccurrence(item, time))) continue;
         occurrences.add(
           CachedMass(
             id: null,
@@ -228,7 +241,8 @@ class MiserendApiClient {
 
   /// Everything the API holds within [_nearbyRadiusKm] of the position,
   /// starting between [from] and [until], nearest first — masses and other
-  /// liturgical events alike.
+  /// liturgical events alike. An item the API repeats is kept once (see
+  /// [_sameOccurrence]).
   Future<ApiResult<List<NearbyMassesItem>>> fetchNearbyMasses({
     required double lat,
     required double lon,
@@ -248,15 +262,18 @@ class MiserendApiClient {
       if (items is! List) return null;
 
       final parsed = <NearbyMassesItem>[];
+      final seen = <_Occurrence>{};
       for (final item in items.whereType<Map>()) {
         final church = item['church'];
         if (church is! Map || church['id'] is! int) continue;
+        final churchId = church['id'] as int;
         final start = parseApiDateTime(_text(item['start_date']));
         final distance = _number(item['distance_km']);
         if (start == null || distance == null) continue;
+        if (!seen.add(_sameOccurrence(item, start))) continue;
         parsed.add(
           NearbyMassesItem(
-            churchId: church['id'] as int,
+            churchId: churchId,
             churchName: _text(church['name']),
             city: _text(church['city']),
             lat: _number(church['lat']),
@@ -287,6 +304,16 @@ class MiserendApiClient {
             : ApiSuccess(mapped);
     }
   }
+
+  /// What makes two `NearbyMasses` items one occurrence (spec 0004,
+  /// „Adatforrás"). The id alone does not: it belongs to the recurring mass,
+  /// and every day's occurrence carries the same one.
+  _Occurrence _sameOccurrence(Map item, DateTime start) => (
+    item['id'],
+    _churchIdOf(item),
+    start,
+    _text(item['title']),
+  );
 
   int? _churchIdOf(Map item) {
     final church = item['church'];
