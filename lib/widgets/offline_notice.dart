@@ -5,9 +5,10 @@ import 'package:miserend/colors.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 
-/// The wording and colours shared by every place that marks data as not live
+/// The explanation shared by every place that marks data as not live
 /// (CONTEXT.md, „Nincs kapcsolat", „Szerverhiba"): the lists' banner, the map's
-/// church card and the details page.
+/// church card and the details page. Their colours and icons are
+/// [OfflineLook]'s.
 class OfflineNotice {
   static final DateFormat _date = DateFormat('yyyy. MM. dd');
 
@@ -54,6 +55,36 @@ class OfflineNotice {
   }
 }
 
+/// How each failure looks, wherever data is marked as not live. A server
+/// error stands out more than no connection: a user with signal does not
+/// expect stale data (CONTEXT.md, „Szerverhiba"). Kept in one place so that
+/// the banners, the (i) buttons and the map's card cannot drift apart.
+extension OfflineLook on ApiFailure {
+  /// The background of a strip that marks the data.
+  Color get tint => switch (this) {
+    ApiFailure.noConnection => CustomColors.noticeTint,
+    ApiFailure.serverError => CustomColors.serverErrorTint,
+  };
+
+  /// The background of the map's church card, which keeps its own colour
+  /// unless the server failed.
+  Color? get cardTint => switch (this) {
+    ApiFailure.noConnection => null,
+    ApiFailure.serverError => CustomColors.serverErrorTint,
+  };
+
+  IconData get icon => switch (this) {
+    ApiFailure.noConnection => Icons.signal_wifi_off,
+    ApiFailure.serverError => Icons.cloud_off,
+  };
+
+  /// The colour of the icons, readable on [tint].
+  Color get iconColor => switch (this) {
+    ApiFailure.noConnection => Colors.black54,
+    ApiFailure.serverError => CustomColors.serverErrorAccent,
+  };
+}
+
 /// The (i) that marks data as not live and opens [OfflineNotice.explanation].
 class OfflineInfoButton extends StatelessWidget {
   const OfflineInfoButton({
@@ -69,10 +100,7 @@ class OfflineInfoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.info_outline),
-      color:
-          failure == ApiFailure.serverError
-              ? CustomColors.serverErrorAccent
-              : Colors.black54,
+      color: failure.iconColor,
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,
       onPressed: () => OfflineNotice.show(context, failure, asOf),
@@ -102,21 +130,16 @@ class OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final serverError = failure == ApiFailure.serverError;
     return StaleDataRetry(
       onRetry: onRetry,
       child: NoticeStrip(
-        color:
-            serverError
-                ? CustomColors.serverErrorTint
-                : CustomColors.noticeTint,
-        icon: serverError ? Icons.cloud_off : Icons.signal_wifi_off,
-        iconColor:
-            serverError ? CustomColors.serverErrorAccent : Colors.black54,
-        text:
-            serverError
-                ? 'A miserend.hu nem elérhető, tárolt adatok'
-                : 'Nincs kapcsolat, tárolt adatok',
+        color: failure.tint,
+        icon: failure.icon,
+        iconColor: failure.iconColor,
+        text: switch (failure) {
+          ApiFailure.noConnection => 'Nincs kapcsolat, tárolt adatok',
+          ApiFailure.serverError => 'A miserend.hu nem elérhető, tárolt adatok',
+        },
         actions: [OfflineInfoButton(failure: failure, asOf: asOf)],
       ),
     );

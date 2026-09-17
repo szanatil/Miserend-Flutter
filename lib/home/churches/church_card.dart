@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
@@ -63,10 +62,7 @@ class ChurchCard extends StatelessWidget {
 
     return Center(
       child: Card(
-        color:
-            failure == ApiFailure.serverError
-                ? CustomColors.serverErrorTint
-                : null,
+        color: failure?.cardTint,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
