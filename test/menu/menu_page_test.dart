@@ -15,6 +15,7 @@ final ChurchDetails _cached = BootstrapImporter.churchFromLegacyRow({
   'nev': 'Belvárosi Nagyboldogasszony-templom',
   'varos': 'Budapest V. kerület',
   'cim': 'Március 15. tér',
+  'kep': 'https://miserend.hu/kepek/templomok/38/a.jpg',
 });
 
 /// Church 38 as a full API answer leaves it, with [description].
@@ -42,7 +43,7 @@ ChurchDetails _withDescription(String description) => ChurchDetails(
   communities: const [],
   lat: null,
   lon: null,
-  photos: const [],
+  photos: const ['https://miserend.hu/kepek/templomok/38/a.jpg'],
   updatedAt: null,
   localSyncedAt: null,
   isGreek: null,
@@ -64,8 +65,7 @@ class _FakeChurchOfTheDay extends ChurchOfTheDayLoader {
   }
 
   @override
-  Future<ChurchDetails> refresh(ChurchDetails church, DateTime today) async =>
-      fresh ?? church;
+  Future<ChurchDetails?> refresh(DateTime today) async => fresh ?? cached;
 }
 
 void main() {
@@ -133,13 +133,20 @@ void main() {
   });
 
   group('the church of the day', () {
-    testWidgets('shows the cached church with its address at once', (
-      tester,
-    ) async {
+    testWidgets('shows the photo, name and address at once', (tester) async {
       final loader = _FakeChurchOfTheDay(cached: _cached);
       await pumpPage(tester, churchOfTheDay: loader);
 
       expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+      final photo = tester.widget<FadeInImage>(find.byType(FadeInImage));
+      expect(
+        (photo.image as ResizeImage).imageProvider,
+        isA<NetworkImage>().having(
+          (image) => image.url,
+          'url',
+          'https://miserend.hu/kepek/templomok/38/a.jpg',
+        ),
+      );
       expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);
       expect(find.text('Budapest V. kerület, Március 15. tér'), findsOneWidget);
       expect(loader.days.single, DateTime(2026, 9, 17, 10, 0));

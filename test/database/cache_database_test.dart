@@ -685,20 +685,25 @@ void main() {
     });
   });
 
-  group('church by position', () {
+  group('photographed churches by position', () {
     test(
-      'counts the churches and finds each by its place in id order',
+      'counts the churches with a photo and finds each in id order',
       () async {
         await cache.importChurches([
           _at(30, 47.5, 19.0),
           _at(10, 47.5, 19.0),
+          BootstrapImporter.churchFromLegacyRow({
+            'tid': 15,
+            'nev': 'Kép nélkül',
+          }),
           _at(20, 47.5, 19.0),
         ], const []);
 
-        expect(await cache.churchCount(), 3);
-        expect((await cache.churchAt(0))?.id, 10);
-        expect((await cache.churchAt(2))?.id, 30);
-        expect(await cache.churchAt(3), isNull);
+        expect(await cache.photographedChurchCount(), 3);
+        expect((await cache.photographedChurchAt(0))?.id, 10);
+        expect((await cache.photographedChurchAt(1))?.id, 20);
+        expect((await cache.photographedChurchAt(2))?.id, 30);
+        expect(await cache.photographedChurchAt(3), isNull);
       },
     );
   });

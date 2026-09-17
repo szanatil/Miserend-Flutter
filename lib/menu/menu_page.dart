@@ -7,6 +7,7 @@ import 'package:miserend/menu/church_of_the_day_loader.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
+import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -63,14 +64,14 @@ class _MenuPageState extends State<MenuPage> {
     _loadChurch();
   }
 
-  /// The cached church at once, then again with what the API adds, the
-  /// description above all (ADR-0003).
+  /// The cached church at once, then again once the API has answered: the
+  /// description may come with it, or pick another candidate (ADR-0003).
   Future<void> _loadChurch() async {
     final today = widget.clock();
     final cached = await _churchLoader.loadCached(today);
-    if (!mounted || cached == null) return;
+    if (!mounted) return;
     setState(() => _church = cached);
-    final fresh = await _churchLoader.refresh(cached, today);
+    final fresh = await _churchLoader.refresh(today);
     if (!mounted) return;
     setState(() => _church = fresh);
   }
@@ -151,6 +152,15 @@ class _MenuPageState extends State<MenuPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 4,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: _photoHeight,
+                width: double.infinity,
+                child: _photo(church),
+              ),
+            ),
+            const SizedBox(height: 4),
             Text(church.name ?? '', style: textTheme.titleMedium),
             if (address.isNotEmpty)
               Text(
@@ -169,6 +179,29 @@ class _MenuPageState extends State<MenuPage> {
           ],
         ),
       ),
+    );
+  }
+
+  static const double _photoHeight = 180;
+
+  static const String _placeholder = 'assets/images/church_blurred.png';
+
+  /// The first photo; the loader only picks churches that have one.
+  Widget _photo(ChurchDetails church) {
+    final decodeHeight = PhotoDecode.forSlot(context, _photoHeight);
+    final placeholder = Image.asset(
+      _placeholder,
+      fit: BoxFit.cover,
+      cacheHeight: decodeHeight,
+    );
+    if (church.photos.isEmpty) return placeholder;
+    return FadeInImage.assetNetwork(
+      image: church.photos.first,
+      placeholder: _placeholder,
+      fit: BoxFit.cover,
+      imageErrorBuilder: (context, error, stackTrace) => placeholder,
+      imageCacheHeight: decodeHeight,
+      placeholderCacheHeight: decodeHeight,
     );
   }
 

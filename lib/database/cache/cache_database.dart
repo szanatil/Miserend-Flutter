@@ -196,18 +196,25 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
-  /// How many churches the cache holds; with [churchAt], picks one without
-  /// reading them all.
-  Future<int> churchCount() async {
-    final rows = await db.rawQuery('SELECT COUNT(*) AS n FROM $churchesTable');
+  /// Churches with at least one photo; the Menü page's recommendation shows
+  /// one, so a church without is never picked.
+  static const String _photographed = "photos IS NOT NULL AND photos <> '[]'";
+
+  /// How many churches have a photo; with [photographedChurchAt], picks one
+  /// without reading them all.
+  Future<int> photographedChurchCount() async {
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) AS n FROM $churchesTable WHERE $_photographed',
+    );
     return rows.first['n'] as int;
   }
 
-  /// The church at [index] in id order, which stays put while the cache only
-  /// gains rows; null past the end.
-  Future<ChurchDetails?> churchAt(int index) async {
+  /// The photographed church at [index] in id order, which stays put while
+  /// the cache only gains rows; null past the end.
+  Future<ChurchDetails?> photographedChurchAt(int index) async {
     final rows = await db.query(
       churchesTable,
+      where: _photographed,
       orderBy: 'id',
       limit: 1,
       offset: index,

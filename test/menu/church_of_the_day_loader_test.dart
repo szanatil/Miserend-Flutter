@@ -10,25 +10,32 @@ import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/menu/church_of_the_day_loader.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-/// A church as the bootstrap import leaves it: no description.
-Future<void> _importChurches(CacheDatabase cache, List<int> ids) =>
-    cache.importChurches([
-      for (final id in ids)
-        BootstrapImporter.churchFromLegacyRow({
-          'tid': id,
-          'nev': 'Templom $id',
-          'varos': 'Budapest',
-        }),
-    ], const []);
+/// Churches as the bootstrap import leaves them: no description, and a photo
+/// unless [photo] is false.
+Future<void> _importChurches(
+  CacheDatabase cache,
+  List<int> ids, {
+  bool photo = true,
+}) => cache.importChurches([
+  for (final id in ids)
+    BootstrapImporter.churchFromLegacyRow({
+      'tid': id,
+      'nev': 'Templom $id',
+      'varos': 'Budapest',
+      if (photo) 'kep': 'https://miserend.hu/kepek/templomok/$id/a.jpg',
+    }),
+], const []);
 
-/// Answers the church call with the recorded church 38 and counts the calls.
+/// Answers the church call with the recorded church 38, whatever was asked,
+/// and records the ids of each call.
 class _Api {
-  int calls = 0;
+  final List<List<String>> calls = [];
   bool offline = false;
 
   MiserendApiClient get client => MiserendApiClient(
     client: MockClient((request) async {
-      calls++;
+      final body = jsonDecode(request.body) as Map<String, dynamic>;
+      calls.add([for (final id in body['ids'] as List) '$id']);
       if (offline) throw const SocketException('offline');
       final church =
           jsonDecode(File('test/fixtures/church_38.json').readAsStringSync())
@@ -84,7 +91,18 @@ void main() {
       expect(ids.length, greaterThan(1));
     });
 
-    test('is null with an empty cache', () async {
+    test('never picks a church without a photo', () async {
+      await _importChurches(cache, [1, 2, 3], photo: false);
+      await _importChurches(cache, [4]);
+      final loader = ChurchOfTheDayLoader(cache: cache, api: _Api().client);
+
+      for (var day = 1; day <= 5; day++) {
+        expect((await loader.loadCached(DateTime(2026, 9, day)))?.id, 4);
+      }
+    });
+
+    test('is null without a photographed church', () async {
+      await _importChurches(cache, [1], photo: false);
       final loader = ChurchOfTheDayLoader(cache: cache, api: _Api().client);
 
       expect(await loader.loadCached(DateTime(2026, 9, 17)), isNull);
@@ -92,31 +110,40 @@ void main() {
   });
 
   group('refresh', () {
-    test('writes the full answer through and reads the description', () async {
-      await _importChurches(cache, [38]);
+    test('asks for the candidates in one call and picks the one with a '
+        'description', () async {
+      await _importChurches(cache, [1, 2, 38]);
       final api = _Api();
       final loader = ChurchOfTheDayLoader(cache: cache, api: api.client);
-      final cached = await loader.loadCached(DateTime(2026, 9, 17));
-      expect(cached?.description, isNull);
 
-      final fresh = await loader.refresh(cached!, DateTime(2026, 9, 17));
+      final fresh = await loader.refresh(DateTime(2026, 9, 17));
 
-      expect(api.calls, 1);
-      expect(fresh.description, contains('Főpl'));
-      expect(fresh.street, 'Március 15. tér');
-      expect((await cache.getChurch(38))?.description, fresh.description);
+      expect(api.calls.single, unorderedEquals(['1', '2', '38']));
+      expect(fresh?.id, 38);
+      expect(fresh?.description, contains('Főpl'));
+      expect(fresh?.street, 'Március 15. tér');
     });
 
-    test('keeps the cached church when the call fails', () async {
+    test('the cache then shows the same church at once', () async {
+      await _importChurches(cache, [1, 2, 38]);
+      final loader = ChurchOfTheDayLoader(cache: cache, api: _Api().client);
+      await loader.refresh(DateTime(2026, 9, 17));
+
+      final cached = await loader.loadCached(DateTime(2026, 9, 17, 20, 0));
+
+      expect(cached?.id, 38);
+      expect(cached?.description, isNotNull);
+    });
+
+    test('a failed call leaves the cached pick', () async {
       await _importChurches(cache, [38]);
       final api = _Api()..offline = true;
       final loader = ChurchOfTheDayLoader(cache: cache, api: api.client);
-      final cached = await loader.loadCached(DateTime(2026, 9, 17));
 
-      final fresh = await loader.refresh(cached!, DateTime(2026, 9, 17));
+      final fresh = await loader.refresh(DateTime(2026, 9, 17));
 
-      expect(fresh.name, 'Templom 38');
-      expect(fresh.description, isNull);
+      expect(fresh?.name, 'Templom 38');
+      expect(fresh?.description, isNull);
     });
   });
 }

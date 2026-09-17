@@ -123,7 +123,10 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, ugyanazzal a szürke háttérrel, mint a Templomok és a Misék listái (`Colors.black12` a fehéren), a részletező kártyáinak margójával. Tartalma, fentről lefelé:
 
 - **miserend.hu** csempe („A miserend webes változata”): a `https://miserend.hu` a böngészőben nyílik meg (`launchExternal`, injektálható).
-- **„Mai templom ajánlatunk”** kártya (`SectionCard`): egy véletlenszerű templom neve, címe (város, utca) és leírásának első négy sora; koppintásra megnyílik a részletezője. A templomot a `ChurchOfTheDayLoader` választja a gyorsítótárból, a napból képzett véletlen maggal, így egész nap ugyanaz marad. A kezdeti feltöltés nem hoz leírást, ezért a kártya a gyorsítótárból azonnal megjelenik, majd egy teljes `Church {"ids"}` hívás után a válasz a gyorsítótárba íródik, és onnan a leírással együtt újraolvasódik (ADR-0003). Sikertelen hívásnál a kártya leírás nélkül marad, hibajelzés nélkül. Üres gyorsítótárnál a kártya nem jelenik meg.
+- **„Mai templom ajánlatunk”** kártya (`SectionCard`), fentről lefelé: a templom **képe** (az első fotó), **neve**, **címe** (város, utca) és **leírásának** első négy sora; koppintásra megnyílik a részletezője.
+  - Csak fotóval rendelkező templom jöhet szóba (`CacheDatabase.photographedChurchCount` / `photographedChurchAt`).
+  - A `ChurchOfTheDayLoader` a napból képzett véletlen maggal 10 jelöltet választ, így egész nap ugyanaz a sor. Közülük az első leírással rendelkező nyer, ha egyiknek sincs, az első.
+  - A kezdeti feltöltés nem hoz leírást. A kártya a gyorsítótárból azonnal megjelenik, majd egyetlen teljes `Church {"ids"}` hívás mind a 10 jelöltet a gyorsítótárba írja, és a választás onnan ismétlődik (ADR-0003); a nap későbbi megnyitásain így rögtön a leírásos templom látszik. Sikertelen hívásnál a gyorsítótárbeli választás marad, hibajelzés nélkül. Fotós templom nélkül a kártya nem jelenik meg.
 - **Verzió** csempe: „1.0.0 (1)” (`package_info_plus`).
 - **„Visszajelzés”** gomb (`FilledButton`): a fenti levelet nyitja meg.
 
@@ -171,8 +174,8 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
   - sikertelen indításnál a „Nincs levelezőprogram…” SnackBar látszik (hamis indító).
 - **Menü oldal:**
   - a verzió a saját csempéjén látszik (`PackageInfo.setMockInitialValues`);
-  - a „Mai templom ajánlatunk” kártya a gyorsítótárból azonnal a nevet és a címet mutatja, a frissítés után a leírást is; üres gyorsítótárnál nincs kártya (hamis loader);
-  - a `ChurchOfTheDayLoader` egy napon belül ugyanazt a templomot adja, más napokon mást; a teljes válasz leírását a gyorsítótárba írja; sikertelen hívásnál a gyorsítótárbelit adja vissza;
+  - a „Mai templom ajánlatunk” kártya azonnal a képet, a nevet és a címet mutatja, a frissítés után a leírást is; választott templom nélkül nincs kártya (hamis loader);
+  - a `ChurchOfTheDayLoader` egy napon belül ugyanazt a templomot adja, más napokon mást, fotó nélkülit soha; a jelölteket egy hívással kéri, és a leírásosat választja, amelyet utána a gyorsítótárból is ad; sikertelen hívásnál a gyorsítótárbelit adja vissza;
   - a miserend.hu csempe a `https://miserend.hu`-t nyitja meg (hamis indító);
   - a „Visszajelzés” gomb a visszajelző levelet nyitja meg (hamis indító).
 - **Főképernyő:** az alsó navigáció „Menü” pontját widget teszt nem fedi le, mert a `HomeScreen` fülei a valódi adatbázist és API-t érik el.
