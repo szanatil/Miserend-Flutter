@@ -613,7 +613,26 @@ void main() {
       expect(await cache.getMassesForChurch(38), isEmpty);
     });
 
-    test('leave a day the details schedule has filled untouched', () async {
+    test(
+      'an empty day empties a day the details schedule has filled',
+      () async {
+        await cache.replaceMassesForChurch(38, [
+          _mass(
+            38,
+            DateTime(2026, 9, 15, 9, 0),
+            info: 'Szentmise',
+            source: MassSource.nearbyMasses,
+          ),
+        ]);
+
+        await cache.replaceDailyMasses(38, today, const []);
+
+        expect(await cache.getMassesForChurch(38), isEmpty);
+      },
+    );
+
+    test('replace a day the details schedule has filled, and only that '
+        'day', () async {
       await cache.replaceMassesForChurch(38, [
         _mass(
           38,
@@ -621,13 +640,28 @@ void main() {
           info: 'Szentmise',
           source: MassSource.nearbyMasses,
         ),
+        _mass(
+          38,
+          DateTime(2026, 9, 16, 9, 0),
+          info: 'Szentmise',
+          source: MassSource.nearbyMasses,
+        ),
+        _mass(
+          38,
+          DateTime(2026, 9, 20, 10, 0),
+          info: 'Szentmise',
+          source: MassSource.nearbyMasses,
+        ),
       ]);
 
-      await cache.replaceDailyMasses(38, today, [listed(7)]);
+      await cache.replaceDailyMasses(38, today, [listed(7), listed(9)]);
 
       final stored = await cache.getMassesForChurch(38);
       expect(stored.map((m) => (m.time, m.source)), [
-        (DateTime(2026, 9, 15, 9, 0), MassSource.nearbyMasses),
+        (DateTime(2026, 9, 15, 7, 0), MassSource.dailyList),
+        (DateTime(2026, 9, 15, 9, 0), MassSource.dailyList),
+        (DateTime(2026, 9, 16, 9, 0), MassSource.nearbyMasses),
+        (DateTime(2026, 9, 20, 10, 0), MassSource.nearbyMasses),
       ]);
     });
   });

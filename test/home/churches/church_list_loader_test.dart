@@ -96,6 +96,24 @@ void main() {
   ChurchListLoader loaderWith(_Api api) =>
       ChurchListLoader(cache: cache, api: api.client, clock: () => _now);
 
+  /// What the details page leaves behind for church 1: today's and tomorrow's
+  /// masses from its 20-day schedule.
+  Future<void> seedDetailsScheduleOfChurch1() =>
+      cache.replaceMassesForChurch(1, [
+        for (final time in [
+          DateTime(2026, 9, 15, 8, 0),
+          DateTime(2026, 9, 16, 8, 0),
+        ])
+          CachedMass(
+            id: null,
+            apiMassId: time.day,
+            churchId: 1,
+            time: time,
+            info: 'Szentmise',
+            source: MassSource.nearbyMasses,
+          ),
+      ]);
+
   const near = NearChurchesQuery(lat: 47.50, lon: 19.04);
 
   group('load', () {
@@ -156,6 +174,41 @@ void main() {
       expect(
         list.churches.first.photo,
         'https://miserend.hu/kepek/templomok/1/a.jpg',
+      );
+    });
+
+    test('a new mass of today shows after the details page has filled the '
+        'schedule', () async {
+      await seedDetailsScheduleOfChurch1();
+      final api = _Api(
+        (_) async => _json({
+          'templomok': [
+            _listed(
+              1,
+              'Régi név',
+              masses: [
+                (8, 'Római katolikus Szentmise'),
+                (19, 'Római katolikus Szentmise'),
+              ],
+            ),
+          ],
+          'error': 0,
+        }),
+      );
+
+      final list = await loaderWith(api).refresh(near, const []);
+
+      expect(list.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 15, 8, 0),
+        DateTime(2026, 9, 15, 19, 0),
+      ]);
+      // Tomorrow is still the details page's.
+      expect(
+        (await cache.getMassesForChurch(
+          1,
+          from: DateTime(2026, 9, 16),
+        )).map((m) => (m.time, m.source)),
+        [(DateTime(2026, 9, 16, 8, 0), MassSource.nearbyMasses)],
       );
     });
 
@@ -249,6 +302,28 @@ void main() {
         'ids': [1, 2],
         'response_length': 'minimal',
       });
+    });
+
+    test('a new mass of today shows after the details page has filled the '
+        'schedule', () async {
+      await seedDetailsScheduleOfChurch1();
+      final api = _Api(
+        (_) async => _json({
+          'templomok': [
+            _listed(1, 'Régi név', masses: [(19, 'Római katolikus Szentmise')]),
+          ],
+          'hianyzo': [],
+          'error': 0,
+        }),
+      );
+
+      final list = await loaderWith(
+        api,
+      ).refresh(const FavoritesQuery([1]), const []);
+
+      expect(list.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 15, 19, 0),
+      ]);
     });
 
     test(

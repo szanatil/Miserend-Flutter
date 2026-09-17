@@ -278,36 +278,27 @@ class CacheDatabase {
     await batch.commit(noResult: true);
   }
 
-  /// Puts a list answer's rows for [day] in place of the day's cached rows —
-  /// unless the details page's schedule already covers the day, which is the
-  /// more precise source and is left as it is.
+  /// Puts a list answer's rows for [day] in place of the day's cached rows,
+  /// whichever source those came from. miserend.hu builds a list answer's
+  /// `misek` and the details page's schedule from the same index, so the list
+  /// answer is just as fresh; the other days are left alone (spec 0005,
+  /// „Gyorsítótár-írás").
   Future<void> replaceDailyMasses(
     int churchId,
     DateTime day,
     List<CachedMass> masses,
   ) async {
     final (from, until) = _dayBounds(day);
-    await db.transaction((txn) async {
-      final detailed = await txn.query(
-        massesTable,
-        columns: ['id'],
-        where: 'church_id = ? AND idopont >= ? AND idopont < ? AND forras = ?',
-        whereArgs: [churchId, from, until, MassSource.nearbyMasses.name],
-        limit: 1,
-      );
-      if (detailed.isNotEmpty) return;
-
-      final batch = txn.batch();
-      batch.delete(
-        massesTable,
-        where: 'church_id = ? AND idopont >= ? AND idopont < ?',
-        whereArgs: [churchId, from, until],
-      );
-      for (final mass in masses) {
-        batch.insert(massesTable, _massRow(mass));
-      }
-      await batch.commit(noResult: true);
-    });
+    final batch = db.batch();
+    batch.delete(
+      massesTable,
+      where: 'church_id = ? AND idopont >= ? AND idopont < ?',
+      whereArgs: [churchId, from, until],
+    );
+    for (final mass in masses) {
+      batch.insert(massesTable, _massRow(mass));
+    }
+    await batch.commit(noResult: true);
   }
 
   /// The stored text of [day]'s midnight and of the next one.

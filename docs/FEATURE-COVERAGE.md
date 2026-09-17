@@ -22,7 +22,7 @@ Miserend ("Mass Finder") is a Hungarian-language mobile app for finding Catholic
 
 The export is only downloaded when it is missing or of the wrong version — there is no periodic re-download (ADR-0003).
 
-**Cache-first lists:** Search results, Nearby, Favorites and the Map card draw from the cache at once, start one API call in the background, write its answer through to the cache and read it again (`ChurchListLoader`). Calls time out after 15 s (10 s to connect). A failed call keeps what is shown and marks it: **no connection** with an (i), **server error** with a tinted background and an (i); the (i) explains how old the data is and what to do. A church the `Church` endpoint reports in `hianyzo` is deleted from the cache and the favorites.
+**Cache-first lists:** Search results, Nearby, Favorites and the Map card draw from the cache at once, start one API call in the background, write its answer through to the cache and read it again (`ChurchListLoader`). An answer's `misek` replaces the church's cached rows for today, whatever their source — the details page's schedule included — and leaves the other days alone. Calls time out after 15 s (10 s to connect). A failed call keeps what is shown and marks it: **no connection** with an (i), **server error** with a tinted background and an (i); the (i) explains how old the data is and what to do. A church the `Church` endpoint reports in `hianyzo` is deleted from the cache and the favorites.
 
 ## Home shell
 
