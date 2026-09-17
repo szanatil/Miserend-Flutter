@@ -49,13 +49,16 @@ dependencies:
   http: ^1.3.0
   shared_preferences: ^2.5.3
   flutter_map: ^8.3.2
-  latlong2: ^0.10.1
+  # 0.9 rather than 0.10: flutter_map_marker_cluster asks for it (spec 0012).
+  latlong2: ^0.9.1
   # Renders the liturgical-language flags, which ship as SVG. Flutter has no
   # native SVG support and the set uses gradients, <use> and clipPath.
   flutter_svg: ^2.3.0
   # The app's version and build number, for the feedback mail's diagnostics
   # and the about page.
   package_info_plus: ^10.2.1
+  # Groups the churches on the map while their pins would overlap (spec 0012).
+  flutter_map_marker_cluster: ^8.2.2
 
 dev_dependencies:
   flutter_test:

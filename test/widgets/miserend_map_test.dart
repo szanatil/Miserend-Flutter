@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/widgets/miserend_map.dart';
@@ -88,191 +89,259 @@ void main() {
   });
 
   group('MiserendMap markers', () {
-    /// The churches' layer is the first one; the user's position gets its own.
-    MarkerLayer churchLayer(WidgetTester tester) =>
-        tester.widgetList<MarkerLayer>(find.byType(MarkerLayer)).first;
+    /// Around the Parliament, a few hundred metres apart: one clump at the
+    /// country zoom, separate pins up close.
+    const nearby = [
+      LatLng(47.5070, 19.0450),
+      LatLng(47.5090, 19.0470),
+      LatLng(47.5050, 19.0430),
+      LatLng(47.5080, 19.0420),
+      LatLng(47.5060, 19.0480),
+    ];
+    final nearbyCentre = LatLng(47.5070, 19.0450);
 
-    Marker markerFor(WidgetTester tester, Object id) => churchLayer(
-      tester,
-    ).markers.singleWhere((marker) => (marker.key as ValueKey).value == id);
+    List<MiserendMapMarker> markersAt(
+      List<LatLng> points, {
+      void Function(int id)? onTap,
+    }) => [
+      for (var i = 0; i < points.length; i++)
+        MiserendMapMarker(
+          id: i + 1,
+          point: points[i],
+          onTap: onTap == null ? null : () => onTap(i + 1),
+        ),
+    ];
 
-    /// A pin hangs above its point by its tip; a dot sits centred on it.
-    bool isPin(Marker marker) => marker.alignment == Alignment.topCenter;
+    /// The group layer keys both the pin's box and the pin inside it.
+    Finder pin(Object id) {
+      final keyed = find.byKey(MiserendMap.markerKey(id));
+      return keyed.evaluate().isEmpty ? keyed : keyed.first;
+    }
 
-    testWidgets(
-      'renders one Marker per entry in markers, at the given points',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: MiserendMap(
-              interactive: true,
-              markers: [
-                MiserendMapMarker(id: 1, point: budapest),
-                MiserendMapMarker(id: 2, point: debrecen),
-              ],
-            ),
-          ),
-        );
-
-        final markerLayer = churchLayer(tester);
-        expect(markerLayer.markers, hasLength(2));
-        expect(markerLayer.markers[0].point, budapest);
-        expect(markerLayer.markers[1].point, debrecen);
-      },
+    Finder pinImages() => find.byWidgetPredicate(
+      (w) =>
+          w is Image &&
+          w.image is AssetImage &&
+          (w.image as AssetImage).assetName == MiserendMap.pinAsset,
     );
 
-    testWidgets('draws the miserend.hu pin from pinMinZoom up', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            initialCenter: budapest,
-            initialZoom: MiserendMap.pinMinZoom,
-            markers: [MiserendMapMarker(id: 1, point: budapest)],
-          ),
-        ),
-      );
-
-      expect(isPin(markerFor(tester, 1)), isTrue);
-      final image = tester.widget<Image>(find.byType(Image));
-      expect((image.image as AssetImage).assetName, MiserendMap.pinAsset);
-    });
-
-    testWidgets('shrinks the churches to dots below pinMinZoom', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            initialCenter: budapest,
-            initialZoom: MiserendMap.pinMinZoom - 1,
-            markers: [MiserendMapMarker(id: 1, point: budapest)],
-          ),
-        ),
-      );
-
-      expect(isPin(markerFor(tester, 1)), isFalse);
-      expect(find.byType(Image), findsNothing);
-    });
-
-    testWidgets('swaps dots for pins when the camera crosses pinMinZoom', (
-      WidgetTester tester,
-    ) async {
-      final controller = MapController();
+    Future<void> pumpMap(
+      WidgetTester tester, {
+      required List<MiserendMapMarker> markers,
+      required double zoom,
+      LatLng? center,
+      Object? selectedMarkerId,
+      LatLng? userPosition,
+      MapController? controller,
+      VoidCallback? onTap,
+    }) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MiserendMap(
             interactive: true,
             mapController: controller,
-            initialCenter: budapest,
-            initialZoom: MiserendMap.pinMinZoom - 1,
-            markers: [MiserendMapMarker(id: 1, point: budapest)],
+            initialCenter: center ?? nearbyCentre,
+            initialZoom: zoom,
+            markers: markers,
+            selectedMarkerId: selectedMarkerId,
+            userPosition: userPosition,
+            onTap: onTap,
           ),
         ),
       );
-      expect(isPin(markerFor(tester, 1)), isFalse);
+      await tester.pumpAndSettle();
+    }
 
-      controller.move(budapest, MiserendMap.pinMinZoom);
-      await tester.pump();
+    testWidgets('close churches at a far zoom are one group that says how '
+        'many', (tester) async {
+      await pumpMap(tester, markers: markersAt(nearby), zoom: 8);
 
-      expect(isPin(markerFor(tester, 1)), isTrue);
+      expect(find.text('5'), findsOneWidget);
+      expect(pinImages(), findsNothing);
     });
 
-    testWidgets('invokes onTap when a pin is tapped', (
-      WidgetTester tester,
+    testWidgets('up close the same churches are separate pins, no group', (
+      tester,
     ) async {
-      var tapped = false;
+      await pumpMap(tester, markers: markersAt(nearby), zoom: 16);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            initialCenter: budapest,
-            initialZoom: 14,
-            markers: [
-              MiserendMapMarker(
-                id: 1,
-                point: budapest,
-                onTap: () => tapped = true,
-              ),
-            ],
-          ),
-        ),
-      );
-
-      (markerFor(tester, 1).child as GestureDetector).onTap!();
-      expect(tapped, isTrue);
+      for (var id = 1; id <= nearby.length; id++) {
+        expect(pin(id), findsOneWidget);
+      }
+      expect(pinImages(), findsNWidgets(nearby.length));
+      expect(find.text('5'), findsNothing);
     });
 
-    testWidgets('a tap on a dot zooms in to pinMinZoom instead of opening the '
-        'church', (WidgetTester tester) async {
-      var tapped = false;
+    testWidgets('a lone church is a pin at every zoom, never a dot', (
+      tester,
+    ) async {
+      await pumpMap(
+        tester,
+        markers: [MiserendMapMarker(id: 1, point: debrecen)],
+        center: debrecen,
+        zoom: 6,
+      );
+
+      expect(pin(1), findsOneWidget);
+      expect(pinImages(), findsOneWidget);
+    });
+
+    testWidgets('tapping a group zooms in on it', (tester) async {
       final controller = MapController();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            mapController: controller,
-            initialCenter: budapest,
-            initialZoom: MiserendMap.pinMinZoom - 2,
-            markers: [
-              MiserendMapMarker(
-                id: 1,
-                point: debrecen,
-                onTap: () => tapped = true,
-              ),
-            ],
-          ),
-        ),
+      await pumpMap(
+        tester,
+        markers: markersAt(nearby),
+        zoom: 8,
+        controller: controller,
       );
 
-      (markerFor(tester, 1).child as GestureDetector).onTap!();
-      await tester.pump();
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
 
-      expect(tapped, isFalse, reason: 'the card would be a guess at this zoom');
-      expect(controller.camera.zoom, MiserendMap.pinMinZoom);
-      expect(controller.camera.center, debrecen);
+      expect(controller.camera.zoom, greaterThan(8));
     });
 
-    testWidgets('the selected church stays an enlarged pin below pinMinZoom, '
-        'above the others', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiserendMap(
-            interactive: true,
-            initialCenter: budapest,
-            initialZoom: MiserendMap.pinMinZoom - 1,
-            selectedMarkerId: 2,
-            markers: [
-              MiserendMapMarker(id: 1, point: budapest),
-              MiserendMapMarker(id: 2, point: debrecen),
-            ],
-          ),
-        ),
+    testWidgets('invokes onTap when a pin is tapped', (tester) async {
+      Object? tapped;
+      await pumpMap(
+        tester,
+        markers: markersAt(nearby, onTap: (id) => tapped = id),
+        zoom: 16,
       );
 
-      final markers = churchLayer(tester).markers;
-      expect(
-        (markers.last.key as ValueKey).value,
-        2,
-        reason: 'drawn last, so it paints above the rest',
+      await tester.tap(pin(2));
+      await tester.pumpAndSettle();
+
+      expect(tapped, 2);
+    });
+
+    group('two churches on one spot', () {
+      final sameSpot = [budapest, budapest];
+
+      testWidgets('open up in a circle at the closest zoom, and either can be '
+          'picked', (tester) async {
+        Object? tapped;
+        await pumpMap(
+          tester,
+          markers: markersAt(sameSpot, onTap: (id) => tapped = id),
+          center: budapest,
+          zoom: 19,
+        );
+        expect(find.text('2'), findsOneWidget);
+
+        await tester.tap(find.text('2'));
+        await tester.pumpAndSettle();
+
+        expect(pin(1), findsOneWidget);
+        expect(pin(2), findsOneWidget);
+        expect(
+          tester.getCenter(pin(1)),
+          isNot(tester.getCenter(pin(2))),
+          reason: 'spread apart, so that each can be aimed at',
+        );
+
+        await tester.tap(pin(2));
+        await tester.pumpAndSettle();
+        expect(tapped, 2);
+      });
+
+      testWidgets('close up again when the map is tapped', (tester) async {
+        await pumpMap(
+          tester,
+          markers: markersAt(sameSpot),
+          center: budapest,
+          zoom: 19,
+          onTap: () {},
+        );
+        await tester.tap(find.text('2'));
+        await tester.pumpAndSettle();
+        expect(pin(1), findsOneWidget);
+
+        await tester.tapAt(const Offset(40, 40));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+
+        expect(pin(1), findsNothing);
+        expect(find.text('2'), findsOneWidget);
+      });
+
+      testWidgets('close up on a map tap also from a zoom between steps', (
+        tester,
+      ) async {
+        // A pinch leaves the zoom between steps; the group moves the camera to
+        // a whole step before it opens out.
+        await pumpMap(
+          tester,
+          markers: markersAt(sameSpot),
+          center: budapest,
+          zoom: 18.5,
+          onTap: () {},
+        );
+        await tester.tap(find.text('2'));
+        await tester.pumpAndSettle();
+        expect(pin(1), findsOneWidget);
+
+        await tester.tapAt(const Offset(40, 40));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+
+        expect(pin(1), findsNothing);
+      });
+    });
+
+    testWidgets('the selected church stays an enlarged pin at a far zoom, '
+        'outside the group', (tester) async {
+      await pumpMap(
+        tester,
+        markers: markersAt(nearby),
+        zoom: 8,
+        selectedMarkerId: 3,
       );
-      expect(isPin(markers.last), isTrue);
-      expect(isPin(markers.first), isFalse);
+
       expect(
-        markers.last.height,
-        greaterThan(markerFor(tester, 1).height),
+        find.text('4'),
+        findsOneWidget,
+        reason: 'the group counts the others only',
+      );
+      expect(pin(3), findsOneWidget);
+      expect(pinImages(), findsOneWidget);
+      expect(
+        tester.getSize(pin(3)).height,
+        greaterThan(40),
         reason: 'enlarged next to an ordinary pin',
+      );
+    });
+
+    testWidgets('the selected church is drawn above the other churches', (
+      tester,
+    ) async {
+      await pumpMap(
+        tester,
+        markers: markersAt(nearby),
+        zoom: 16,
+        selectedMarkerId: 3,
+      );
+
+      final children =
+          tester.widget<FlutterMap>(find.byType(FlutterMap)).children;
+      final selectedLayer = children.indexWhere(
+        (layer) =>
+            layer is MarkerLayer &&
+            layer.markers.single.key == MiserendMap.markerKey(3),
+      );
+      expect(
+        selectedLayer,
+        greaterThan(
+          children.indexWhere((layer) => layer is MarkerClusterLayerWidget),
+        ),
       );
     });
   });
 
   group('MiserendMap user position', () {
-    testWidgets('has no layer of its own while the position is unknown', (
+    Finder userMark() => find.byKey(MiserendMap.userPositionKey);
+
+    testWidgets('is not marked while the position is unknown', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -284,10 +353,10 @@ void main() {
         ),
       );
 
-      expect(find.byType(MarkerLayer), findsOneWidget);
+      expect(userMark(), findsNothing);
     });
 
-    testWidgets('marks the position in a layer above the churches', (
+    testWidgets('is marked on its own, never folded into a group of churches', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -295,15 +364,20 @@ void main() {
           home: MiserendMap(
             interactive: true,
             initialCenter: budapest,
-            initialZoom: 14,
-            markers: [MiserendMapMarker(id: 1, point: debrecen)],
+            initialZoom: 8,
+            markers: [
+              MiserendMapMarker(id: 1, point: budapest),
+              MiserendMapMarker(id: 2, point: budapest),
+            ],
             userPosition: budapest,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
+      expect(userMark(), findsOneWidget);
+      expect(find.text('2'), findsOneWidget, reason: 'the churches only');
       final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
-      expect(layers, hasLength(2));
       expect(layers.last.markers.single.point, budapest);
     });
   });

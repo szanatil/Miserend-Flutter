@@ -76,7 +76,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 **File:** `lib/home/map/map_page.dart`
 
 - CARTO Voyager tiles (`MiserendMap`, ADR-0001), default camera centered on Hungary, moved to the user's position when one is available at opening.
-- A marker for **every** church of the cache (no clustering, no viewport-based lazy loading).
+- A marker for **every** church of the cache (no viewport-based lazy loading), grouped while the pins would overlap: a purple circle with the count, which zooms in on a tap; churches on one spot open out in a circle. The selected church and the user's position are never grouped (spec 0012).
 - Tapping a marker shows that church's card from the cache at once and refreshes it with `Church {"ids": [tid]}` in full (photos and description too), marking the card after a failed call. A church removed from miserend.hu closes the card, loses its marker and is announced in a SnackBar.
 - The my-position button explains a missing position in a SnackBar, with the matching action.
 

@@ -44,6 +44,8 @@ Ettől a térkép arra a kérdésre válaszol, amiért megnyitják: „hol vagyo
 
 ### Sűrűség-küszöb
 
+> **Felülírva** a spec 0012 által ([Csoportosítás a térképen](0012-csoportositas-a-terkepen.md)): a pöttyös nézet és a 12-es küszöb megszűnt, a térkép minden zoomon csoportosít. A kiválasztott templom kiemelt tűje megmaradt.
+
 - **`_pinMinZoom = 12`**, inkluzív: zoom **≥ 12** → teljes pin; zoom **< 12** → **8 px** átmérőjű, `#5C27AE` pötty, gyűrű nélkül.
 - A pötty **nem nyit kártyát**: koppintásra a térkép a pötty koordinátájára **zoom 12-re közelít**. Országos zoomon tucatnyi pötty fedi egymást, és egy 8 px-es cél a 44 px-es minimális érintési terület töredéke — egy kártya itt találomra kiválasztott templomot mutatna. A koppintás valódi jelentése ilyenkor „ez a környék érdekel".
 - A **kiválasztott** templom (amelyiknek nyitva a kártyája) **minden zoomon teljes pin**, **1,3×**-esre nagyítva, és a többi marker **fölé** rajzolva. Enélkül egy kizoomolás után a kártya és a térkép elveszítik egymást. A kiválasztott pinre koppintás nem nyit új kártyát — az övé már nyitva van.
@@ -108,7 +110,7 @@ A helyzet a térkép háta mögött is megváltozhat: a felhasználó a telefon 
 
 - **Távolság szöveges kiírása** a templomkártyán — #25. Három képernyőt érintene ugyanazon a widgeten át, saját kérdésekkel (kell-e a kedvenceknél, mi legyen helyzet nélkül, m/km váltás).
 - **Rajzolt távolság-jelzés** (vonal a pöttytől a pinig, 1/5/10 km-es körök) — elvetve: mindkettő vizuális zaj 5000 pin fölött, és a légvonal-távolság rajzban félrevezetőbb, mint számban. Az app nem tervez útvonalat (ugyanaz a korlát, mint az „Elérhető mise" fogalmánál).
-- **Marker-klaszterezés** (számozott, szétnyíló buborékok) — elvetve a zoom-küszöb javára. Új függőséget hozna (`flutter_map_marker_cluster`) vagy saját rács-alapú összevonást, cserébe elveszne az, amit a mostani térkép jól csinál: hogy országos nézetben ránézésre látszik a templomok **eloszlása**. Egy klaszter-buborék ezt számokká alakítja. Az apró pötty ugyanazt a sűrűség-információt adja, kevesebb kóddal és takarás nélkül.
+- **Marker-klaszterezés** (számozott, szétnyíló buborékok) — itt elvetve a zoom-küszöb javára; a spec 0012 később bevezette. Új függőséget hozna (`flutter_map_marker_cluster`) vagy saját rács-alapú összevonást, cserébe elveszne az, amit a mostani térkép jól csinál: hogy országos nézetben ránézésre látszik a templomok **eloszlása**. Egy klaszter-buborék ezt számokká alakítja. Az apró pötty ugyanazt a sűrűség-információt adja, kevesebb kóddal és takarás nélkül.
 - **Felekezet/aktív szerinti színezés** — ADR-0001 szerint a `Church` modell hiányának feloldásáig áll.
 - **Pontossági kör** a saját helyzet körül — ld. fent.
 - **Élő helyzet-követés** (`getPositionStream`) — a „Helyzet" fogalma pillanatkép; egy folyam új állapotgépet és akkumulátor-költséget hozna olyan képernyőre, ahol a felhasználó tájékozódik, nem navigál.

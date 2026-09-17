@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
@@ -738,7 +737,11 @@ void main() {
 
       final map = tester.widget<MiserendMap>(find.byType(MiserendMap));
       expect(map.markers.single.point.latitude, _church.lat);
-      expect(map.initialZoom, greaterThanOrEqualTo(MiserendMap.pinMinZoom));
+      final pin = find.descendant(
+        of: find.byType(MiserendMap),
+        matching: find.byKey(MiserendMap.markerKey(_church.id)),
+      );
+      expect(pin, findsWidgets);
     });
 
     testWidgets('carries no blue dot: at this zoom the user is off the card', (
@@ -750,7 +753,7 @@ void main() {
 
       final map = tester.widget<MiserendMap>(find.byType(MiserendMap));
       expect(map.userPosition, isNull);
-      expect(find.byType(MarkerLayer), findsOneWidget);
+      expect(find.byKey(MiserendMap.userPositionKey), findsNothing);
     });
   });
 }

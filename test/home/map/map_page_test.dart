@@ -41,6 +41,9 @@ ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   masses: const [],
 );
 
+/// Close enough for [_locations] to be separate pins, both on screen.
+const double _pinsZoom = 15;
+
 Position _position(double lat, double lon) => Position(
   latitude: lat,
   longitude: lon,
@@ -122,13 +125,14 @@ void main() {
   }
 
   /// Most of these tests are about the church card, which only a pin opens —
-  /// below [MiserendMap.pinMinZoom] a tap zooms in instead (spec 0006). The
-  /// tests about the country view ask for the map's own opening zoom.
+  /// at a far zoom the two churches are one group, and a tap zooms in instead
+  /// (spec 0012). The tests about the country view ask for the map's own
+  /// opening zoom.
   Future<MapController> pumpPage(
     WidgetTester tester,
     _MapLoader loader, {
     LocationProvider? location,
-    double zoom = MiserendMap.pinMinZoom,
+    double zoom = _pinsZoom,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
@@ -154,24 +158,34 @@ void main() {
     return controller;
   }
 
-  /// The churches' layer is the first one; the user's position gets its own.
-  MarkerLayer churchLayer(WidgetTester tester) =>
-      tester.widgetList<MarkerLayer>(find.byType(MarkerLayer)).first;
-
+  /// The churches drawn as pins, each once. The group layer puts a pin's key
+  /// on both its box and the pin inside it.
   List<Object?> markerIds(WidgetTester tester) =>
-      churchLayer(
-        tester,
-      ).markers.map((marker) => (marker.key as ValueKey).value).toList();
+      tester
+          .widgetList(
+            find.byWidgetPredicate(
+              (w) => w.key.runtimeType == MiserendMap.markerKey(0).runtimeType,
+            ),
+          )
+          .map((w) => (w.key! as ValueKey<Object>).value)
+          .whereType<int>()
+          .toSet()
+          .toList()
+        ..sort();
 
   /// Taps the marker the way a finger on its pin would.
   Future<void> tapMarker(WidgetTester tester, int id) async {
-    final marker = churchLayer(
-      tester,
-    ).markers.singleWhere((marker) => (marker.key as ValueKey).value == id);
-    (marker.child as GestureDetector).onTap!();
+    await tester.tap(find.byKey(MiserendMap.markerKey(id)).first);
     await tester.pump();
     await tester.pump();
   }
+
+  /// The user's mark, in the layer the map keeps for it — found there rather
+  /// than on screen, where a position away from the camera is left out.
+  Iterable<Marker> userMarks(WidgetTester tester) => tester
+      .widgetList<MarkerLayer>(find.byType(MarkerLayer))
+      .expand((layer) => layer.markers)
+      .where((marker) => marker.key == MiserendMap.userPositionKey);
 
   /// Asks for the position the way the my-position button does, and lets the
   /// answer come back.
@@ -196,7 +210,7 @@ void main() {
 
       loader.locations = [
         ..._locations,
-        const ChurchLocation(id: 3, lat: 47.2650, lon: 19.7650),
+        const ChurchLocation(id: 3, lat: 47.2560, lon: 19.7450),
       ];
       loader.written.value++;
       await tester.pump();
@@ -468,9 +482,7 @@ void main() {
         location: FakeLocationProvider([PositionFound(_position(47.5, 19.04))]),
       );
 
-      final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
-      expect(layers, hasLength(2), reason: 'the churches, then the position');
-      expect(layers.last.markers.single.point, const LatLng(47.5, 19.04));
+      expect(userMarks(tester).single.point, const LatLng(47.5, 19.04));
     });
 
     testWidgets('the dot goes with the position: a failed try takes the mark '
@@ -483,13 +495,13 @@ void main() {
           noFix,
         ]),
       );
-      expect(find.byType(MarkerLayer), findsNWidgets(2));
+      expect(userMarks(tester), hasLength(1));
 
       await tapMyPosition(tester);
 
       expect(
-        find.byType(MarkerLayer),
-        findsOneWidget,
+        userMarks(tester),
+        isEmpty,
         reason: 'a dot next to the "no position" strip would contradict it',
       );
       expect(find.byType(PositionUnavailableBanner), findsOneWidget);
@@ -743,7 +755,7 @@ void main() {
       await leaveAndReturn(tester);
 
       expect(find.byType(PositionUnavailableBanner), findsNothing);
-      expect(find.byType(MarkerLayer), findsNWidgets(2));
+      expect(userMarks(tester), hasLength(1));
       expect(controller.camera.center, const LatLng(47.5, 19.04));
     });
 
@@ -767,7 +779,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump();
-      expect(find.byType(MarkerLayer), findsOneWidget);
+      expect(userMarks(tester), isEmpty);
 
       // Away to another tab, then back.
       await tester.pumpWidget(
@@ -790,7 +802,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(MarkerLayer), findsNWidgets(2));
+      expect(userMarks(tester), hasLength(1));
       expect(controller.camera.center, const LatLng(47.5, 19.04));
     });
 
@@ -857,9 +869,8 @@ void main() {
         const LatLng(46.0, 18.0),
         reason: 'coming back must not drag the map off where the user left it',
       );
-      final layers = tester.widgetList<MarkerLayer>(find.byType(MarkerLayer));
       expect(
-        layers.last.markers.single.point,
+        userMarks(tester).single.point,
         const LatLng(47.6, 19.10),
         reason: 'the mark itself still follows the new position',
       );
