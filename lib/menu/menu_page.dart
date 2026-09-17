@@ -31,50 +31,57 @@ class _MenuPageState extends State<MenuPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Menü')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          _card(
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.black54),
-              title: const Text('miserend.hu'),
-              subtitle: const Text('A miserend webes változata'),
-              trailing: const Icon(Icons.open_in_new, color: Colors.black54),
-              onTap:
-                  () => launchExternal(
-                    context,
-                    _webVersion,
-                    launch: widget.openLink,
-                  ),
+      // The grey the Templomok and Misék tabs draw their lists on, so the
+      // menu looks like the same app.
+      body: Container(
+        color: Colors.black12,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            _card(
+              ListTile(
+                leading: const Icon(Icons.language, color: Colors.black54),
+                title: const Text('miserend.hu'),
+                subtitle: const Text('A miserend webes változata'),
+                trailing: const Icon(Icons.open_in_new, color: Colors.black54),
+                onTap:
+                    () => launchExternal(
+                      context,
+                      _webVersion,
+                      launch: widget.openLink,
+                    ),
+              ),
             ),
-          ),
-          _card(
-            FutureBuilder<PackageInfo>(
-              future: _packageInfo,
-              builder: (context, snapshot) {
-                final info = snapshot.data;
-                return ListTile(
-                  leading: const Icon(
-                    Icons.info_outline,
-                    color: Colors.black54,
-                  ),
-                  title: const Text('Verzió'),
-                  subtitle: Text(
-                    info == null ? '' : '${info.version} (${info.buildNumber})',
-                  ),
-                );
-              },
+            _card(
+              FutureBuilder<PackageInfo>(
+                future: _packageInfo,
+                builder: (context, snapshot) {
+                  final info = snapshot.data;
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.info_outline,
+                      color: Colors.black54,
+                    ),
+                    title: const Text('Verzió'),
+                    subtitle: Text(
+                      info == null
+                          ? ''
+                          : '${info.version} (${info.buildNumber})',
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: FilledButton.icon(
-              onPressed: () => _feedback.send(context),
-              icon: const Icon(Icons.mail_outline),
-              label: const Text('Visszajelzés'),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: FilledButton.icon(
+                onPressed: () => _feedback.send(context),
+                icon: const Icon(Icons.mail_outline),
+                label: const Text('Visszajelzés'),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

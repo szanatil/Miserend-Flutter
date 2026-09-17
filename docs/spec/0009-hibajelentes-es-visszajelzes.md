@@ -120,7 +120,7 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 ### Menü oldal
 
-Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, fehér háttér, a részletező kártyáinak margójával. Tartalma, fentről lefelé:
+Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, ugyanazzal a szürke háttérrel, mint a Templomok és a Misék listái (`Colors.black12` a fehéren), a részletező kártyáinak margójával. Tartalma, fentről lefelé:
 
 - **miserend.hu** csempe („A miserend webes változata”): a `https://miserend.hu` a böngészőben nyílik meg (`launchExternal`, injektálható).
 - **Verzió** csempe: „1.0.0 (1)” (`package_info_plus`).

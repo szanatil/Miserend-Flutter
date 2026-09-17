@@ -108,7 +108,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 **Files:** `lib/widgets/feedback_mail.dart`, `lib/menu/menu_page.dart`; spec 0009
 
 - **Feedback** is about the app, not a church's data, and goes by mail to `szentjozsefhackathon@jezsuita.hu` — no API endpoint takes it. It opens the mail app directly, no in-app form: subject "Miserend app – visszajelzés", an empty space for the user, then `---` and the app version, build number and OS with its version (`package_info_plus`, `dart:io` `Platform`). No device model, location or identifier. The `mailto:` query is encoded by hand, spaces as `%20`. Without a mail app a snackbar gives the address instead.
-- **Menü page** (purple AppBar "Menü"): a **miserend.hu** tile that opens the web version in the browser, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
+- **Menü page** (purple AppBar "Menü", on the same grey as the Templomok and Misék lists): a **miserend.hu** tile that opens the web version in the browser, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
 
 ## Favorites (cross-cutting)
 
