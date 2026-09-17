@@ -10,8 +10,8 @@ import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/search_suggestions.dart';
-import 'package:miserend/home/widgets/home_menu_button.dart';
 import 'package:miserend/home/widgets/search_suggestion_list.dart';
+import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
@@ -130,6 +130,10 @@ class _HomeScreenState extends State<HomeScreen> {
   static const int _massesTab = 1;
   static const int _mapTab = 2;
 
+  /// The navigation item after the tabs. It opens the menu as a page of its
+  /// own rather than a tab, so the tab on screen stays selected.
+  static const int _menuItem = _tabCount;
+
   /// The Misék and the Térkép tab are told whether they are the one on
   /// screen, because the IndexedStack keeps them alive underneath the others
   /// and they refresh when they come back into view.
@@ -160,6 +164,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
+    if (index == _menuItem) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MenuPage()),
+      );
+      return;
+    }
     setState(() {
       _builtTabs.add(index);
       _selectedIndex = index;
@@ -211,7 +222,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        actions: const [HomeMenuButton()],
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -233,7 +243,11 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Misék',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu), label: 'Menü'),
         ],
+        // From four items Flutter switches to the shifting style, which would
+        // drop the purple background and hide the inactive labels.
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         backgroundColor: Theme.of(context).primaryColor,
         selectedItemColor: Colors.white,

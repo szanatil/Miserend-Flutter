@@ -1,6 +1,6 @@
 # Hibajelentés és visszajelzés
 
-> Tracker: [szanatil/Miserend-Flutter#33](https://github.com/szanatil/Miserend-Flutter/issues/33) (hibajelentés), [szanatil/Miserend-Flutter#34](https://github.com/szanatil/Miserend-Flutter/issues/34) (visszajelzés, Az appról)
+> Tracker: [szanatil/Miserend-Flutter#33](https://github.com/szanatil/Miserend-Flutter/issues/33) (hibajelentés), [szanatil/Miserend-Flutter#34](https://github.com/szanatil/Miserend-Flutter/issues/34) (visszajelzés, Menü oldal)
 
 ## Problem Statement
 
@@ -19,8 +19,8 @@ Két hiányosság van:
 Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, „Visszajelzés”):
 
 - A **Hibajelentés** a templom adatairól szól, és továbbra is a miserend.hu `Report` végpontjára megy, de egy teljes képernyős oldalon, a fenti hibák nélkül. Csak kapcsolat mellett indítható.
-- A **Visszajelzés** az appról szól (hiba, vélemény, funkciókérés), és e-mailben megy a Szent József Hackathon csapatához: **szentjozsefhackathon@jezsuita.hu**. A Visszajelzés az AppBar új ⋮ menüjéből indul, és közvetlenül a telefon levelezőprogramját nyitja meg egy előre kitöltött levéllel.
-- Ugyanebben a menüben új **„Az appról”** oldal is lesz.
+- A **Visszajelzés** az appról szól (hiba, vélemény, funkciókérés), és e-mailben megy a Szent József Hackathon csapatához: **szentjozsefhackathon@jezsuita.hu**. A Visszajelzés az alsó navigáció új „Menü” pontjából nyíló oldalról indul, és közvetlenül a telefon levelezőprogramját nyitja meg egy előre kitöltött levéllel.
+- Ugyanezen az oldalon látszik a miserend.hu webes változatának linkje és az app verziója.
 
 ## User Stories
 
@@ -92,7 +92,8 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 ### Visszajelzés: belépési pont
 
-- A főképernyő AppBarjába ([home.dart](../../lib/home/home.dart)) `actions`-ként egy ⋮ `PopupMenuButton` kerül, az AppBar meglévő `black54` ikonszínével, a keresősáv mellé. Menüpontjai: **„Visszajelzés”** és **„Az appról”**. A menü mindhárom fülön látszik.
+- A főképernyő alsó navigációjába ([home.dart](../../lib/home/home.dart)) negyedik pontként egy **„Menü”** kerül, hamburger ikonnal (`Icons.menu`). Nem fül: koppintásra `Navigator.push`-sal teljes új oldalt nyit (Menü oldal), a kiválasztott fül nem változik. Négy ponttól a navigáció `BottomNavigationBarType.fixed`, hogy megmaradjon a lila háttér és a feliratok.
+- Az AppBarba nem kerül menü: a korábbi ⋮ `PopupMenuButton` nem illett az app elrendezésébe.
 - A Visszajelzés nem utal a templomadat-hibákra, és nem irányít a részletezőre. A hibajelentés helye a részletező.
 
 ### Visszajelzés: a levél
@@ -115,17 +116,15 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 - A levél összeállítása tiszta függvény (`(PackageInfo-szerű verzióadat, platform) → Uri`), hogy tesztelhető legyen.
 - **Nincs levelezőprogram:** ha a `launchUrl` `false`-t ad vagy kivételt dob, SnackBar jelenik meg: „Nincs levelezőprogram a telefonon. Írj nekünk: szentjozsefhackathon@jezsuita.hu”. Az indítás injektálható (K1).
 - Android 11+ alatt ellenőrizni kell, hogy a `launchUrl` megnyitja-e a `mailto:` linket a manifest `<queries>` bővítése nélkül. Ha nem, a `<queries>` blokkba egy `SENDTO`/`mailto` intent kerül. Ezt valódi eszközön kell kipróbálni. A `SENDTO`/`mailto` intent a megvalósításkor (#34) megelőzésként bekerült, mert a `url_launcher` dokumentációja Android 11+ alatt ezt ajánlja, és ártalmatlan; a valódi eszközös próba még hátravan.
-- A Visszajelzés indítása közös helyre kerül (`lib/widgets/`, K5), mert a menü és az „Az appról” oldal is hívja.
+- A Visszajelzés indítása közös helyre kerül (`lib/widgets/`, K5), hogy a Menü oldal widgetje ne maga építse a levelet.
 
-### Az appról oldal
+### Menü oldal
 
-Új oldal (`lib/about/about_page.dart`), `Navigator.push`-sal nyílik a ⋮ menüből. Lila AppBar, cím: „Az appról”. Tartalma:
+Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, fehér háttér, a részletező kártyáinak margójával. Tartalma, fentről lefelé:
 
-- **Miserend** és a verzió: „Verzió: 1.0.0 (1)” (`package_info_plus`).
-- „Az adatokat a miserend.hu szolgáltatja.” A miserend.hu link a böngészőben nyílik meg.
-- „Készítette: Szent József Hackathon”.
-- „Visszajelzés küldése” gomb, ugyanazzal a művelettel, mint a menüpont.
-- „Nyílt forrású licencek” gomb: Flutter `showLicensePage`, az app nevével és verziójával.
+- **miserend.hu** csempe („A miserend webes változata”): a `https://miserend.hu` a böngészőben nyílik meg (`launchExternal`, injektálható).
+- **Verzió** csempe: „1.0.0 (1)” (`package_info_plus`).
+- **„Visszajelzés”** gomb (`FilledButton`): a fenti levelet nyitja meg.
 
 A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel (`MiserendMap`: „© OpenStreetMap contributors © CARTO”).
 
@@ -136,8 +135,8 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
 - `lib/church_details/church_details_page.dart`: a gomb aktív/tiltott állapota, a `dataAsOf` átadása, a popup megnyitásának törlése
 - `lib/api/miserend_api_client.dart`: `report()`
 - új: `lib/widgets/` alatt a Visszajelzés indítása és a levél összeállítása
-- új: `lib/about/about_page.dart`
-- `lib/home/home.dart`: ⋮ menü
+- új: `lib/menu/menu_page.dart`
+- `lib/home/home.dart`: „Menü” pont az alsó navigációban
 - `pubspec.yaml`: `package_info_plus`
 - esetleg `android/app/src/main/AndroidManifest.xml`: `mailto` a `<queries>`-ben
 - `CONTEXT.md`: „Hibajelentés”, „Visszajelzés” (kész)
@@ -169,10 +168,11 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
 - **Visszajelzés:**
   - a levél URI-ja: a címzett, a tárgy és a szöveg `%20`-szal kódolva, `+` nélkül; a verzió, a build szám és a platform benne van;
   - sikertelen indításnál a „Nincs levelezőprogram…” SnackBar látszik (hamis indító).
-- **Az appról:**
-  - megjelenik a verzió (`PackageInfo.setMockInitialValues`);
-  - a „Nyílt forrású licencek” gomb megnyitja a `LicensePage`-et.
-- **Főképernyő:** a ⋮ menüben ott a „Visszajelzés” és az „Az appról”, és az utóbbi megnyitja az oldalt.
+- **Menü oldal:**
+  - a verzió a saját csempéjén látszik (`PackageInfo.setMockInitialValues`);
+  - a miserend.hu csempe a `https://miserend.hu`-t nyitja meg (hamis indító);
+  - a „Visszajelzés” gomb a visszajelző levelet nyitja meg (hamis indító).
+- **Főképernyő:** az alsó navigáció „Menü” pontját widget teszt nem fedi le, mert a `HomeScreen` fülei a valódi adatbázist és API-t érik el.
 
 ## Out of Scope
 
@@ -182,7 +182,7 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
 - **Bejelentkezett felhasználó `token`-je** a `Report` kérésben (fiók nincs az appban).
 - **Új hibatípusok** (pl. gyóntatás-kapcsoló). Az API csak a három `pid`-et ismeri, a többi az „Egyéb”-be tartozik.
 - **Képcsatolás** a hibajelentéshez vagy a visszajelzéshez.
-- **Adatvédelmi tájékoztató és GitHub-link** az „Az appról” oldalon, amíg nincs ilyen oldal.
+- **Adatvédelmi tájékoztató és GitHub-link** a Menü oldalon, amíg nincs ilyen oldal.
 
 ## Further Notes
 

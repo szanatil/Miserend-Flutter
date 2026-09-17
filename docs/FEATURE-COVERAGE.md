@@ -30,12 +30,12 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 | Feature | Behavior |
 |---|---|
-| Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing. |
+| Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing — and a fourth item, **Menü** (below). |
 | Search bar | A `SearchAnchor.bar` in the app bar. Live-updates suggestions as the user types, but only once the query is **longer than 2 characters** (`_onSearchChanged`). |
 | Search suggestions | Combines up to 20 matching **churches** (by name, common name, alternative name or city) and any matching **cities** (distinct `varos` values), both ignoring case and accents (`searchText`), from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
-| ⋮ menu | Beside the search bar on every tab (`HomeMenuButton`): **Visszajelzés** (see Feedback) and **Az appról** (opens `AboutPage`). |
+| Menü | A fourth bottom navigation item with a hamburger icon. Not a tab: it pushes `MenuPage` and the selected tab stays. |
 
 ## Churches tab
 
@@ -103,12 +103,12 @@ The export is only downloaded when it is missing or of the wrong version — the
 - Sends `MiserendApiClient.report` → `POST https://miserend.hu/api/v4/report` with `tid`, `pid` (0/1/2), the trimmed `text`, `email` only when given, and `dbdate` = the day of the details page's `dataAsOf`. Success is read off the body: `error: 1` is a server error, not a sent report.
 - While sending, the button shows a spinner and cannot be tapped again. A sent report closes the page with "Hibajelentés elküldve" and remembers the email (`shared_preferences`) for the next report. A failed one keeps the page and what was typed, with a message for **no connection** or for **server error**; the server's own text is not shown. No offline queue.
 
-## Feedback and About
+## Menu and feedback
 
-**Files:** `lib/widgets/feedback_mail.dart`, `lib/about/about_page.dart`, `lib/home/widgets/home_menu_button.dart`; spec 0009
+**Files:** `lib/widgets/feedback_mail.dart`, `lib/menu/menu_page.dart`; spec 0009
 
 - **Feedback** is about the app, not a church's data, and goes by mail to `szentjozsefhackathon@jezsuita.hu` — no API endpoint takes it. It opens the mail app directly, no in-app form: subject "Miserend app – visszajelzés", an empty space for the user, then `---` and the app version, build number and OS with its version (`package_info_plus`, `dart:io` `Platform`). No device model, location or identifier. The `mailto:` query is encoded by hand, spaces as `%20`. Without a mail app a snackbar gives the address instead.
-- **Az appról** (purple AppBar): "Miserend", "Verzió: x.y.z (build)", "Az adatokat a miserend.hu szolgáltatja." (opens the site), "Készítette: Szent József Hackathon", a "Visszajelzés küldése" button and "Nyílt forrású licencek" (Flutter's `showLicensePage`).
+- **Menü page** (purple AppBar "Menü"): a **miserend.hu** tile that opens the web version in the browser, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
 
 ## Favorites (cross-cutting)
 

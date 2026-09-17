@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miserend/about/about_page.dart';
+import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -20,37 +20,40 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester, {
     FeedbackLauncher? feedback,
+    Future<bool> Function(Uri uri)? openLink,
   }) async {
-    await tester.pumpWidget(MaterialApp(home: AboutPage(feedback: feedback)));
+    await tester.pumpWidget(
+      MaterialApp(home: MenuPage(feedback: feedback, openLink: openLink)),
+    );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('shows the version, the data source and the makers', (
-    tester,
-  ) async {
+  testWidgets('shows the version on its own tile', (tester) async {
     await pumpPage(tester);
-    expect(find.text('Az appról'), findsOneWidget);
-    expect(find.text('Miserend'), findsOneWidget);
-    expect(find.text('Verzió: 1.2.3 (45)'), findsOneWidget);
-    expect(
-      find.textContaining('Az adatokat a miserend.hu szolgáltatja.'),
-      findsOneWidget,
+    expect(find.text('Menü'), findsOneWidget);
+    expect(find.text('Verzió'), findsOneWidget);
+    expect(find.text('1.2.3 (45)'), findsOneWidget);
+  });
+
+  testWidgets('the miserend.hu tile opens the web version', (tester) async {
+    final opened = <Uri>[];
+    await pumpPage(
+      tester,
+      openLink: (uri) async {
+        opened.add(uri);
+        return true;
+      },
     );
-    expect(find.text('Készítette: Szent József Hackathon'), findsOneWidget);
+    await tester.tap(find.text('miserend.hu'));
+    await tester.pumpAndSettle();
+    expect(opened.single, Uri.parse('https://miserend.hu'));
   });
 
   testWidgets('the feedback button opens the feedback mail', (tester) async {
     final feedback = FakeFeedbackLauncher();
     await pumpPage(tester, feedback: feedback);
-    await tester.tap(find.text('Visszajelzés küldése'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Visszajelzés'));
     await tester.pumpAndSettle();
     expect(feedback.launched.single.path, feedbackAddress);
-  });
-
-  testWidgets('the licenses button opens the license page', (tester) async {
-    await pumpPage(tester);
-    await tester.tap(find.text('Nyílt forrású licencek'));
-    await tester.pumpAndSettle();
-    expect(find.byType(LicensePage), findsOneWidget);
   });
 }
