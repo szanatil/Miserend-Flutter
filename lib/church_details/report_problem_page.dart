@@ -127,7 +127,7 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
               autocorrect: false,
               decoration: const InputDecoration(
                 labelText: 'E-mail cím (nem kötelező)',
-                helperText: 'Ha kérdésük van, ide írhatnak.',
+                helperText: 'Kérdés esetén ide írhatunk neked.',
               ),
               validator: (value) {
                 final email = (value ?? '').trim();
