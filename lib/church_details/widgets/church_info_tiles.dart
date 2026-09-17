@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:miserend/church_details/widgets/section_card.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/community.dart';
 import 'package:miserend/widgets/launch_external.dart';
+import 'package:miserend/widgets/section_card.dart';
 
 /// Wheelchair access, stated either way.
 ///

@@ -105,10 +105,11 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 ## Menu and feedback
 
-**Files:** `lib/widgets/feedback_mail.dart`, `lib/menu/menu_page.dart`; spec 0009
+**Files:** `lib/widgets/feedback_mail.dart`, `lib/menu/menu_page.dart`, `lib/menu/church_of_the_day_loader.dart`; spec 0009
 
 - **Feedback** is about the app, not a church's data, and goes by mail to `szentjozsefhackathon@jezsuita.hu` — no API endpoint takes it. It opens the mail app directly, no in-app form: subject "Miserend app – visszajelzés", an empty space for the user, then `---` and the app version, build number and OS with its version (`package_info_plus`, `dart:io` `Platform`). No device model, location or identifier. The `mailto:` query is encoded by hand, spaces as `%20`. Without a mail app a snackbar gives the address instead.
-- **Menü page** (purple AppBar "Menü", on the same grey as the Templomok and Misék lists): a **miserend.hu** tile that opens the web version in the browser, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
+- **Menü page** (purple AppBar "Menü", on the same grey as the Templomok and Misék lists): a **miserend.hu** tile that opens the web version in the browser, a **Mai templom ajánlatunk** card, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
+- **Mai templom ajánlatunk:** a random church of the cache, the same one all day (seeded by the date; `CacheDatabase.churchCount` / `churchAt`), with its name, address and the first four lines of its description; a tap opens its details page. It shows from the cache at once, then a full `Church {"ids"}` call writes the church through and it is read again — the bootstrap import carries no description. A failed call leaves it without one, unmarked.
 
 ## Favorites (cross-cutting)
 

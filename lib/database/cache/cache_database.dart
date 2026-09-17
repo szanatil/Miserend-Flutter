@@ -196,6 +196,26 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
+  /// How many churches the cache holds; with [churchAt], picks one without
+  /// reading them all.
+  Future<int> churchCount() async {
+    final rows = await db.rawQuery('SELECT COUNT(*) AS n FROM $churchesTable');
+    return rows.first['n'] as int;
+  }
+
+  /// The church at [index] in id order, which stays put while the cache only
+  /// gains rows; null past the end.
+  Future<ChurchDetails?> churchAt(int index) async {
+    final rows = await db.query(
+      churchesTable,
+      orderBy: 'id',
+      limit: 1,
+      offset: index,
+    );
+    if (rows.isEmpty) return null;
+    return _toChurch(rows.first);
+  }
+
   /// The columns a `minimal` API response carries. The others — photos,
   /// description, names, address and the rest — are absent from it, not
   /// empty, so they must not overwrite what the cache already holds. The

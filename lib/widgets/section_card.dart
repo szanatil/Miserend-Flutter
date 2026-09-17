@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// One block of the church details page.
+/// One block of the church details page and the Menü page.
 ///
 /// The page used to alternate hand-rolled `Colors.black12` bands with bare
 /// `Card`s, which is why no two sections lined up. Every section now goes

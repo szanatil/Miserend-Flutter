@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/database/cache/church_details.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
+import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/menu/church_of_the_day_loader.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
+import 'package:miserend/widgets/miserend_text.dart';
+import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 
-/// Opened from the bottom navigation's Menü item: the web version, the app's
-/// version and the way to send feedback (spec 0009, „Menü oldal").
+/// Opened from the bottom navigation's Menü item: the web version, a church
+/// to discover, the app's version and the way to send feedback (spec 0009,
+/// „Menü oldal").
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key, this.feedback, this.openLink});
+  const MenuPage({
+    super.key,
+    this.feedback,
+    this.openLink,
+    this.churchOfTheDay,
+    this.clock = DateTime.now,
+  });
 
   /// Injected by tests; the page builds its own otherwise.
   final FeedbackLauncher? feedback;
 
   /// Injected by tests; the page hands links to the device otherwise.
   final Future<bool> Function(Uri uri)? openLink;
+
+  /// Injected by tests; the page builds its own otherwise.
+  final ChurchOfTheDayLoader? churchOfTheDay;
+
+  /// Which day's church is shown.
+  final DateTime Function() clock;
 
   @override
   State<MenuPage> createState() => _MenuPageState();
@@ -25,6 +46,34 @@ class _MenuPageState extends State<MenuPage> {
   late final FeedbackLauncher _feedback = widget.feedback ?? FeedbackLauncher();
 
   late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
+
+  late final ChurchOfTheDayLoader _churchLoader =
+      widget.churchOfTheDay ??
+      ChurchOfTheDayLoader(
+        onChurchesGone:
+            Provider.of<FavoritesService>(context, listen: false).removeAll,
+      );
+
+  /// Null until the cache has answered, and when it holds no church.
+  ChurchDetails? _church;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChurch();
+  }
+
+  /// The cached church at once, then again with what the API adds, the
+  /// description above all (ADR-0003).
+  Future<void> _loadChurch() async {
+    final today = widget.clock();
+    final cached = await _churchLoader.loadCached(today);
+    if (!mounted || cached == null) return;
+    setState(() => _church = cached);
+    final fresh = await _churchLoader.refresh(cached, today);
+    if (!mounted) return;
+    setState(() => _church = fresh);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +101,7 @@ class _MenuPageState extends State<MenuPage> {
                     ),
               ),
             ),
+            if (_church case final church?) _churchOfTheDay(church),
             _card(
               FutureBuilder<PackageInfo>(
                 future: _packageInfo,
@@ -85,6 +135,56 @@ class _MenuPageState extends State<MenuPage> {
       ),
     );
   }
+
+  Widget _churchOfTheDay(ChurchDetails church) {
+    final textTheme = Theme.of(context).textTheme;
+    final address = [church.city, church.street]
+        .map((part) => (part ?? '').trim())
+        .where((part) => part.isNotEmpty)
+        .join(', ');
+    final description = MiserendText.normalize(church.description);
+    return SectionCard(
+      title: 'Mai templom ajánlatunk',
+      child: InkWell(
+        onTap: () => openChurchDetails(context, _listEntry(church)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 4,
+          children: [
+            Text(church.name ?? '', style: textTheme.titleMedium),
+            if (address.isNotEmpty)
+              Text(
+                address,
+                style: textTheme.bodyMedium?.apply(color: Colors.black54),
+              ),
+            if (description.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  description,
+                  maxLines: _descriptionLines,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A taste of the description; the whole of it is on the details page.
+  static const int _descriptionLines = 4;
+
+  static ChurchListEntry _listEntry(ChurchDetails church) => ChurchListEntry(
+    id: church.id,
+    name: church.name,
+    commonName: church.commonName,
+    city: church.city,
+    lat: church.lat,
+    lon: church.lon,
+    photo: church.photos.isEmpty ? null : church.photos.first,
+    masses: const [],
+  );
 
   /// The details page's card margins, so the menu reads as the same app.
   Widget _card(Widget child) {

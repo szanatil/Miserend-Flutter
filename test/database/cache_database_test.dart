@@ -685,6 +685,24 @@ void main() {
     });
   });
 
+  group('church by position', () {
+    test(
+      'counts the churches and finds each by its place in id order',
+      () async {
+        await cache.importChurches([
+          _at(30, 47.5, 19.0),
+          _at(10, 47.5, 19.0),
+          _at(20, 47.5, 19.0),
+        ], const []);
+
+        expect(await cache.churchCount(), 3);
+        expect((await cache.churchAt(0))?.id, 10);
+        expect((await cache.churchAt(2))?.id, 30);
+        expect(await cache.churchAt(3), isNull);
+      },
+    );
+  });
+
   group('churches by id', () {
     test(
       'lists the ones the cache holds, by name, with the day\'s rows',

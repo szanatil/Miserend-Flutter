@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/day_label.dart';
-import 'package:miserend/church_details/widgets/section_card.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/widgets/section_card.dart';
 
 /// The church's adoration windows, grouped by the day they fall on.
 ///

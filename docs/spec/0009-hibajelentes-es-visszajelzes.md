@@ -123,6 +123,7 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, ugyanazzal a szürke háttérrel, mint a Templomok és a Misék listái (`Colors.black12` a fehéren), a részletező kártyáinak margójával. Tartalma, fentről lefelé:
 
 - **miserend.hu** csempe („A miserend webes változata”): a `https://miserend.hu` a böngészőben nyílik meg (`launchExternal`, injektálható).
+- **„Mai templom ajánlatunk”** kártya (`SectionCard`): egy véletlenszerű templom neve, címe (város, utca) és leírásának első négy sora; koppintásra megnyílik a részletezője. A templomot a `ChurchOfTheDayLoader` választja a gyorsítótárból, a napból képzett véletlen maggal, így egész nap ugyanaz marad. A kezdeti feltöltés nem hoz leírást, ezért a kártya a gyorsítótárból azonnal megjelenik, majd egy teljes `Church {"ids"}` hívás után a válasz a gyorsítótárba íródik, és onnan a leírással együtt újraolvasódik (ADR-0003). Sikertelen hívásnál a kártya leírás nélkül marad, hibajelzés nélkül. Üres gyorsítótárnál a kártya nem jelenik meg.
 - **Verzió** csempe: „1.0.0 (1)” (`package_info_plus`).
 - **„Visszajelzés”** gomb (`FilledButton`): a fenti levelet nyitja meg.
 
@@ -135,7 +136,7 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
 - `lib/church_details/church_details_page.dart`: a gomb aktív/tiltott állapota, a `dataAsOf` átadása, a popup megnyitásának törlése
 - `lib/api/miserend_api_client.dart`: `report()`
 - új: `lib/widgets/` alatt a Visszajelzés indítása és a levél összeállítása
-- új: `lib/menu/menu_page.dart`
+- új: `lib/menu/menu_page.dart`, `lib/menu/church_of_the_day_loader.dart`; a `SectionCard` a `lib/widgets/`-be költözik (K5)
 - `lib/home/home.dart`: „Menü” pont az alsó navigációban
 - `pubspec.yaml`: `package_info_plus`
 - esetleg `android/app/src/main/AndroidManifest.xml`: `mailto` a `<queries>`-ben
@@ -170,6 +171,8 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
   - sikertelen indításnál a „Nincs levelezőprogram…” SnackBar látszik (hamis indító).
 - **Menü oldal:**
   - a verzió a saját csempéjén látszik (`PackageInfo.setMockInitialValues`);
+  - a „Mai templom ajánlatunk” kártya a gyorsítótárból azonnal a nevet és a címet mutatja, a frissítés után a leírást is; üres gyorsítótárnál nincs kártya (hamis loader);
+  - a `ChurchOfTheDayLoader` egy napon belül ugyanazt a templomot adja, más napokon mást; a teljes válasz leírását a gyorsítótárba írja; sikertelen hívásnál a gyorsítótárbelit adja vissza;
   - a miserend.hu csempe a `https://miserend.hu`-t nyitja meg (hamis indító);
   - a „Visszajelzés” gomb a visszajelző levelet nyitja meg (hamis indító).
 - **Főképernyő:** az alsó navigáció „Menü” pontját widget teszt nem fedi le, mert a `HomeScreen` fülei a valódi adatbázist és API-t érik el.

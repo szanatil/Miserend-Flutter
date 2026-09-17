@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
-import 'package:miserend/church_details/widgets/section_card.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
+import 'package:miserend/widgets/section_card.dart';
 
 /// Email, the church's own links, and the parish block.
 ///

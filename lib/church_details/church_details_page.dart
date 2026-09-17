@@ -14,7 +14,6 @@ import 'package:miserend/church_details/widgets/day_label.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
 import 'package:miserend/church_details/widgets/mass_info.dart';
 import 'package:miserend/church_details/widgets/photo_header.dart';
-import 'package:miserend/church_details/widgets/section_card.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -23,6 +22,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/offline_notice.dart';
+import 'package:miserend/widgets/section_card.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
