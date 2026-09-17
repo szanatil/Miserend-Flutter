@@ -1,0 +1,1306 @@
+{
+  "error": 0,
+  "sum": 822,
+  "misek": [
+    {
+      "id": 102621,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.64,
+      "church": {
+        "id": 1515,
+        "name": "Budavári Nagyboldogasszony-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.5020112,
+        "lon": 19.0342625
+      }
+    },
+    {
+      "id": 102622,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.64,
+      "church": {
+        "id": 1515,
+        "name": "Budavári Nagyboldogasszony-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.5020112,
+        "lon": 19.0342625
+      }
+    },
+    {
+      "id": 126450,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.67,
+      "church": {
+        "id": 1652,
+        "name": "Havas Boldogasszony-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.496827,
+        "lon": 19.031369
+      }
+    },
+    {
+      "id": 102603,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.69,
+      "church": {
+        "id": 1514,
+        "name": "Alexandriai Szent Katalin-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.4922435,
+        "lon": 19.0438842
+      }
+    },
+    {
+      "id": 102454,
+      "start_date": "2026-09-17T06:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.86,
+      "church": {
+        "id": 1450,
+        "name": "Szent Anna-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.5055806,
+        "lon": 19.0383772
+      }
+    },
+    {
+      "id": 102455,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 0.86,
+      "church": {
+        "id": 1450,
+        "name": "Szent Anna-templom",
+        "city": "Budapest I. kerület",
+        "lat": 47.5055806,
+        "lon": 19.0383772
+      }
+    },
+    {
+      "id": 98071,
+      "start_date": "2026-09-17T12:15:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.05,
+      "church": {
+        "id": 39,
+        "name": "Szent Anna-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4952607,
+        "lon": 19.0536322
+      }
+    },
+    {
+      "id": 98072,
+      "start_date": "2026-09-17T16:00:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 1.05,
+      "church": {
+        "id": 39,
+        "name": "Szent Anna-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4952607,
+        "lon": 19.0536322
+      }
+    },
+    {
+      "id": 98070,
+      "start_date": "2026-09-17T17:15:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.05,
+      "church": {
+        "id": 39,
+        "name": "Szent Anna-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4952607,
+        "lon": 19.0536322
+      }
+    },
+    {
+      "id": 98060,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.08,
+      "church": {
+        "id": 37,
+        "name": "Szent István-bazilika",
+        "city": "Budapest V. kerület",
+        "lat": 47.5007789,
+        "lon": 19.0539695
+      }
+    },
+    {
+      "id": 98061,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.08,
+      "church": {
+        "id": 37,
+        "name": "Szent István-bazilika",
+        "city": "Budapest V. kerület",
+        "lat": 47.5007789,
+        "lon": 19.0539695
+      }
+    },
+    {
+      "id": 129807,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.11,
+      "church": {
+        "id": 38,
+        "name": "Belvárosi Nagyboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.492233,
+        "lon": 19.0522943
+      }
+    },
+    {
+      "id": 104060,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.27,
+      "church": {
+        "id": 2197,
+        "name": "Szent Kereszt-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.4905269,
+        "lon": 19.0272457
+      }
+    },
+    {
+      "id": 98049,
+      "start_date": "2026-09-17T06:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134747,
+      "start_date": "2026-09-17T06:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98054,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98050,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98059,
+      "start_date": "2026-09-17T09:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98051,
+      "start_date": "2026-09-17T10:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98052,
+      "start_date": "2026-09-17T11:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134748,
+      "start_date": "2026-09-17T16:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134754,
+      "start_date": "2026-09-17T17:40:00+02:00",
+      "title": "Rózsafüzér",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134771,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134758,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134760,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134762,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 134756,
+      "start_date": "2026-09-17T18:15:00+02:00",
+      "title": "Litánia",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98053,
+      "start_date": "2026-09-17T18:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 116156,
+      "start_date": "2026-09-17T20:00:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 1.33,
+      "church": {
+        "id": 36,
+        "name": "Belvárosi Ferences templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4931962,
+        "lon": 19.0564677
+      }
+    },
+    {
+      "id": 98103,
+      "start_date": "2026-09-17T16:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.36,
+      "church": {
+        "id": 41,
+        "name": "Belvárosi Szent Mihály-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4904239,
+        "lon": 19.0544863
+      }
+    },
+    {
+      "id": 106935,
+      "start_date": "2026-09-17T17:30:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 1.49,
+      "church": {
+        "id": 3732,
+        "name": "Szent Flórián-templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5112622,
+        "lon": 19.0379806
+      }
+    },
+    {
+      "id": 98093,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.56,
+      "church": {
+        "id": 40,
+        "name": "Egyetemi Kisboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4907252,
+        "lon": 19.0580426
+      }
+    },
+    {
+      "id": 98094,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.56,
+      "church": {
+        "id": 40,
+        "name": "Egyetemi Kisboldogasszony-templom",
+        "city": "Budapest V. kerület",
+        "lat": 47.4907252,
+        "lon": 19.0580426
+      }
+    },
+    {
+      "id": 97954,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.69,
+      "church": {
+        "id": 16,
+        "name": "Városmajori Jézus Szíve-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.5060512,
+        "lon": 19.0211521
+      }
+    },
+    {
+      "id": 97955,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.69,
+      "church": {
+        "id": 16,
+        "name": "Városmajori Jézus Szíve-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.5060512,
+        "lon": 19.0211521
+      }
+    },
+    {
+      "id": 97956,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.69,
+      "church": {
+        "id": 16,
+        "name": "Városmajori Jézus Szíve-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.5060512,
+        "lon": 19.0211521
+      }
+    },
+    {
+      "id": 134905,
+      "start_date": "2026-09-17T07:20:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2725,
+        "name": "Budapest Országúti Szent István első vértanú templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5126174,
+        "lon": 19.0343109
+      }
+    },
+    {
+      "id": 105160,
+      "start_date": "2026-09-17T07:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2725,
+        "name": "Budapest Országúti Szent István első vértanú templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5126174,
+        "lon": 19.0343109
+      }
+    },
+    {
+      "id": 134912,
+      "start_date": "2026-09-17T17:30:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2725,
+        "name": "Budapest Országúti Szent István első vértanú templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5126174,
+        "lon": 19.0343109
+      }
+    },
+    {
+      "id": 134906,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2725,
+        "name": "Budapest Országúti Szent István első vértanú templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5126174,
+        "lon": 19.0343109
+      }
+    },
+    {
+      "id": 105206,
+      "start_date": "2026-09-17T08:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2740,
+        "name": "Magyarok Nagyasszonya Sziklatemplom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4849249,
+        "lon": 19.0521678
+      }
+    },
+    {
+      "id": 105207,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2740,
+        "name": "Magyarok Nagyasszonya Sziklatemplom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4849249,
+        "lon": 19.0521678
+      }
+    },
+    {
+      "id": 105208,
+      "start_date": "2026-09-17T20:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 1.7,
+      "church": {
+        "id": 2740,
+        "name": "Magyarok Nagyasszonya Sziklatemplom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4849249,
+        "lon": 19.0521678
+      }
+    },
+    {
+      "id": 118838,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.05,
+      "church": {
+        "id": 2430,
+        "name": "Szent Rókus-kápolna",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4960437,
+        "lon": 19.0673425
+      }
+    },
+    {
+      "id": 97902,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.12,
+      "church": {
+        "id": 2,
+        "name": "Budai Ciszterci Szent Imre-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4788595,
+        "lon": 19.0422691
+      }
+    },
+    {
+      "id": 106700,
+      "start_date": "2026-09-17T07:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.17,
+      "church": {
+        "id": 3668,
+        "name": "Krisztus Király Plébánia kápolnája",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4895489,
+        "lon": 19.0662432
+      }
+    },
+    {
+      "id": 102772,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.25,
+      "church": {
+        "id": 1599,
+        "name": "Keresztelő Szent János-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.490652,
+        "lon": 19.0122163
+      }
+    },
+    {
+      "id": 106723,
+      "start_date": "2026-09-17T12:00:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 2.28,
+      "church": {
+        "id": 3669,
+        "name": "Jézus Szíve templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4905306,
+        "lon": 19.0685174
+      }
+    },
+    {
+      "id": 106716,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.28,
+      "church": {
+        "id": 3669,
+        "name": "Jézus Szíve templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4905306,
+        "lon": 19.0685174
+      }
+    },
+    {
+      "id": 104433,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.33,
+      "church": {
+        "id": 2386,
+        "name": "Gyümölcsoltó Boldogasszony-kápolna",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4777357,
+        "lon": 19.0316439
+      }
+    },
+    {
+      "id": 135127,
+      "start_date": "2026-09-17T17:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.39,
+      "church": {
+        "id": 17,
+        "name": "Császárfürdői Szent István király kápolna",
+        "city": "Budapest II. kerület",
+        "lat": 47.5191779,
+        "lon": 19.0361395
+      }
+    },
+    {
+      "id": 104037,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.44,
+      "church": {
+        "id": 2190,
+        "name": "Szent Tádé-kápolna",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4780246,
+        "lon": 19.0539357
+      }
+    },
+    {
+      "id": 106693,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.59,
+      "church": {
+        "id": 3667,
+        "name": "Assisi Szent Ferenc-templom",
+        "city": "Budapest IX. kerület",
+        "lat": 47.4833716,
+        "lon": 19.0671232
+      }
+    },
+    {
+      "id": 117227,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.61,
+      "church": {
+        "id": 2413,
+        "name": "Szent Margit-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5168433,
+        "lon": 19.0606108
+      }
+    },
+    {
+      "id": 117235,
+      "start_date": "2026-09-17T07:30:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 2.61,
+      "church": {
+        "id": 2413,
+        "name": "Szent Margit-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5168433,
+        "lon": 19.0606108
+      }
+    },
+    {
+      "id": 117228,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.61,
+      "church": {
+        "id": 2413,
+        "name": "Szent Margit-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5168433,
+        "lon": 19.0606108
+      }
+    },
+    {
+      "id": 102810,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.73,
+      "church": {
+        "id": 1603,
+        "name": "Árpád-házi Szent Erzsébet-templom",
+        "city": "Budapest VII. kerület",
+        "lat": 47.5011417,
+        "lon": 19.0762367
+      }
+    },
+    {
+      "id": 287636,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.75,
+      "church": {
+        "id": 2442,
+        "name": "Szent Család-templom",
+        "city": "Budapest VI. kerület",
+        "lat": 47.5129567,
+        "lon": 19.0691989
+      }
+    },
+    {
+      "id": 287641,
+      "start_date": "2026-09-17T18:45:00+02:00",
+      "title": "Gyóntatás",
+      "distance_km": 2.75,
+      "church": {
+        "id": 2442,
+        "name": "Szent Család-templom",
+        "city": "Budapest VI. kerület",
+        "lat": 47.5129567,
+        "lon": 19.0691989
+      }
+    },
+    {
+      "id": 287642,
+      "start_date": "2026-09-17T18:45:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 2.75,
+      "church": {
+        "id": 2442,
+        "name": "Szent Család-templom",
+        "city": "Budapest VI. kerület",
+        "lat": 47.5129567,
+        "lon": 19.0691989
+      }
+    },
+    {
+      "id": 133932,
+      "start_date": "2026-09-17T07:30:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 2.76,
+      "church": {
+        "id": 3736,
+        "name": "Istenszülő oltalma templom",
+        "city": "Budapest VII. kerület",
+        "lat": 47.5017934,
+        "lon": 19.0764793
+      }
+    },
+    {
+      "id": 133542,
+      "start_date": "2026-09-17T17:30:00+02:00",
+      "title": "Szent Liturgia",
+      "distance_km": 2.76,
+      "church": {
+        "id": 3736,
+        "name": "Istenszülő oltalma templom",
+        "city": "Budapest VII. kerület",
+        "lat": 47.5017934,
+        "lon": 19.0764793
+      }
+    },
+    {
+      "id": 104176,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.81,
+      "church": {
+        "id": 2253,
+        "name": "Szent József-templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.489823,
+        "lon": 19.0756056
+      }
+    },
+    {
+      "id": 126931,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.88,
+      "church": {
+        "id": 2727,
+        "name": "Kapisztrán Szent János-templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.5203857,
+        "lon": 19.021135
+      }
+    },
+    {
+      "id": 104025,
+      "start_date": "2026-09-17T17:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.92,
+      "church": {
+        "id": 2188,
+        "name": "Magyar Szentek Temploma",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4750406,
+        "lon": 19.0592188
+      }
+    },
+    {
+      "id": 121606,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 2.99,
+      "church": {
+        "id": 2185,
+        "name": "Mindszentek-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.4839526,
+        "lon": 19.0062543
+      }
+    },
+    {
+      "id": 104474,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.05,
+      "church": {
+        "id": 2401,
+        "name": "Szent Rita-templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.495029,
+        "lon": 19.0805342
+      }
+    },
+    {
+      "id": 104473,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.05,
+      "church": {
+        "id": 2401,
+        "name": "Szent Rita-templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.495029,
+        "lon": 19.0805342
+      }
+    },
+    {
+      "id": 117201,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.17,
+      "church": {
+        "id": 2403,
+        "name": "Örökimádás-templom",
+        "city": "Budapest IX. kerület",
+        "lat": 47.483167,
+        "lon": 19.0763113
+      }
+    },
+    {
+      "id": 103708,
+      "start_date": "2026-09-17T06:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.29,
+      "church": {
+        "id": 2028,
+        "name": "Sarlós Boldogasszony-templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.527435,
+        "lon": 19.0370926
+      }
+    },
+    {
+      "id": 103709,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.29,
+      "church": {
+        "id": 2028,
+        "name": "Sarlós Boldogasszony-templom",
+        "city": "Budapest II. kerület",
+        "lat": 47.527435,
+        "lon": 19.0370926
+      }
+    },
+    {
+      "id": 104463,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.48,
+      "church": {
+        "id": 2399,
+        "name": "Jó Pásztor-kápolna",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4893362,
+        "lon": 19.0848169
+      }
+    },
+    {
+      "id": 128979,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.5,
+      "church": {
+        "id": 1654,
+        "name": "Szent Gellért-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4687024,
+        "lon": 19.0228716
+      }
+    },
+    {
+      "id": 128980,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.5,
+      "church": {
+        "id": 1654,
+        "name": "Szent Gellért-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4687024,
+        "lon": 19.0228716
+      }
+    },
+    {
+      "id": 105148,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.62,
+      "church": {
+        "id": 2722,
+        "name": "Szent László-templom",
+        "city": "Budapest XII. kerület",
+        "lat": 47.5001189,
+        "lon": 18.992063
+      }
+    },
+    {
+      "id": 108789,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.88,
+      "church": {
+        "id": 5247,
+        "name": "Boldog Meszlényi Zoltán Plébániatemplom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4630434,
+        "lon": 19.0408271
+      }
+    },
+    {
+      "id": 106872,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 3.91,
+      "church": {
+        "id": 3711,
+        "name": "Rózsafüzér királynéja templom",
+        "city": "Budapest XIV. kerület",
+        "lat": 47.5059846,
+        "lon": 19.0908933
+      }
+    },
+    {
+      "id": 135547,
+      "start_date": "2026-09-17T17:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.06,
+      "church": {
+        "id": 2724,
+        "name": "Szűz Mária-kápolna",
+        "city": "Budapest XII. kerület",
+        "lat": 47.5071442,
+        "lon": 18.9879816
+      }
+    },
+    {
+      "id": 108626,
+      "start_date": "2026-09-17T06:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.38,
+      "church": {
+        "id": 5052,
+        "name": "Szeplőtelen Fogantatás templom",
+        "city": "Budapest XIV. kerület",
+        "lat": 47.5136548,
+        "lon": 19.0936228
+      }
+    },
+    {
+      "id": 102468,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.48,
+      "church": {
+        "id": 1456,
+        "name": "Óbudai Jó Pásztor templom",
+        "city": "Budapest III. kerület",
+        "lat": 47.538157,
+        "lon": 19.0378363
+      }
+    },
+    {
+      "id": 97966,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.54,
+      "church": {
+        "id": 18,
+        "name": "Szent Péter és Pál-templom",
+        "city": "Budapest III. kerület",
+        "lat": 47.5386462,
+        "lon": 19.0445444
+      }
+    },
+    {
+      "id": 131447,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.64,
+      "church": {
+        "id": 2046,
+        "name": "Segítő Szűz Mária-kápolna",
+        "city": "Budapest III. kerület",
+        "lat": 47.5391988,
+        "lon": 19.0317201
+      }
+    },
+    {
+      "id": 133452,
+      "start_date": "2026-09-17T19:00:00+02:00",
+      "title": "Szentségimádás",
+      "distance_km": 4.64,
+      "church": {
+        "id": 2046,
+        "name": "Segítő Szűz Mária-kápolna",
+        "city": "Budapest III. kerület",
+        "lat": 47.5391988,
+        "lon": 19.0317201
+      }
+    },
+    {
+      "id": 104043,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.65,
+      "church": {
+        "id": 2193,
+        "name": "Szent Angyalok temploma",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4687976,
+        "lon": 18.9957012
+      }
+    },
+    {
+      "id": 104477,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.69,
+      "church": {
+        "id": 2402,
+        "name": "Magyarok Nagyasszonya-templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4790852,
+        "lon": 19.0960263
+      }
+    },
+    {
+      "id": 104514,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.9,
+      "church": {
+        "id": 2409,
+        "name": "Lisieux-i Szent Teréz-templom",
+        "city": "Budapest VIII. kerület",
+        "lat": 47.4995088,
+        "lon": 19.1053418
+      }
+    },
+    {
+      "id": 104164,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 4.93,
+      "church": {
+        "id": 2248,
+        "name": "Tours-i Szent Márton-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5376455,
+        "lon": 19.0694083
+      }
+    },
+    {
+      "id": 98000,
+      "start_date": "2026-09-17T18:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.11,
+      "church": {
+        "id": 23,
+        "name": "Szentlélek-templom",
+        "city": "Budapest XIV. kerület",
+        "lat": 47.5234471,
+        "lon": 19.0967139
+      }
+    },
+    {
+      "id": 103656,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.38,
+      "church": {
+        "id": 2011,
+        "name": "Szentháromság-templom",
+        "city": "Budapest III. kerület",
+        "lat": 47.5460157,
+        "lon": 19.0324158
+      }
+    },
+    {
+      "id": 102440,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.57,
+      "church": {
+        "id": 1442,
+        "name": "Szent Mihály-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4479008,
+        "lon": 19.0353813
+      }
+    },
+    {
+      "id": 134846,
+      "start_date": "2026-09-17T07:15:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.73,
+      "church": {
+        "id": 2767,
+        "name": "Szentháromság-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.4481156,
+        "lon": 19.0205707
+      }
+    },
+    {
+      "id": 105193,
+      "start_date": "2026-09-17T16:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.75,
+      "church": {
+        "id": 2735,
+        "name": "Assisi Szent Ferenc-kórházkápolna",
+        "city": "Budapest II. kerület",
+        "lat": 47.5265159,
+        "lon": 18.9763984
+      }
+    },
+    {
+      "id": 104459,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 5.94,
+      "church": {
+        "id": 2398,
+        "name": "Szent Kereszt-templom",
+        "city": "Budapest IX. kerület",
+        "lat": 47.4712986,
+        "lon": 19.1087966
+      }
+    },
+    {
+      "id": 104509,
+      "start_date": "2026-09-17T08:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6,
+      "church": {
+        "id": 2407,
+        "name": "Páduai Szent Antal-templom",
+        "city": "Budapest XIV. kerület",
+        "lat": 47.5195922,
+        "lon": 19.1132835
+      }
+    },
+    {
+      "id": 104510,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6,
+      "church": {
+        "id": 2407,
+        "name": "Páduai Szent Antal-templom",
+        "city": "Budapest XIV. kerület",
+        "lat": 47.5195922,
+        "lon": 19.1132835
+      }
+    },
+    {
+      "id": 104054,
+      "start_date": "2026-09-17T06:00:00+02:00",
+      "title": "Zsolozsma",
+      "distance_km": 6.01,
+      "church": {
+        "id": 2194,
+        "name": "Szent Szabina-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.446894,
+        "lon": 19.0137753
+      }
+    },
+    {
+      "id": 104053,
+      "start_date": "2026-09-17T18:30:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6.01,
+      "church": {
+        "id": 2194,
+        "name": "Szent Szabina-templom",
+        "city": "Budapest XI. kerület",
+        "lat": 47.446894,
+        "lon": 19.0137753
+      }
+    },
+    {
+      "id": 104620,
+      "start_date": "2026-09-17T18:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6.14,
+      "church": {
+        "id": 2440,
+        "name": "Szent Mihály-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5472244,
+        "lon": 19.0770387
+      }
+    },
+    {
+      "id": 104646,
+      "start_date": "2026-09-17T07:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6.21,
+      "church": {
+        "id": 2443,
+        "name": "Mária Keresztények Segítsége-templom",
+        "city": "Budapest XIII. kerület",
+        "lat": 47.5421324,
+        "lon": 19.0906882
+      }
+    },
+    {
+      "id": 97928,
+      "start_date": "2026-09-17T19:00:00+02:00",
+      "title": "Szentmise",
+      "distance_km": 6.5,
+      "church": {
+        "id": 14,
+        "name": "Kövi Szűz Mária-templom",
+        "city": "Budapest III. kerület",
+        "lat": 47.5562445,
+        "lon": 19.0453272
+      }
+    }
+  ]
+}

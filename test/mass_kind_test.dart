@@ -85,4 +85,46 @@ void main() {
       expect(isMass(_row(MassSource.dailyList, null)), isFalse);
     });
   });
+
+  group('a mass description', () {
+    // Live descriptions from the Church answer for central Budapest,
+    // 2026-09-17.
+    const described = {
+      'Római katolikus Szentmise': ('Szentmise', null),
+      'Római katolikus Szentmise, Csendes': ('Szentmise', 'Csendes'),
+      'Római katolikus Szentmise, Csendes (Mária-kápolnában)': (
+        'Szentmise',
+        'Csendes (Mária-kápolnában)',
+      ),
+      'Római katolikus Szentmise latin nyelven': ('Szentmise', 'latin nyelven'),
+      'Római katolikus Szentmise (adventben 6:00)': (
+        'Szentmise',
+        '(adventben 6:00)',
+      ),
+      'Görögkatolikus Szent Liturgia': ('Szent Liturgia', null),
+      'Görögkatolikus Szent Liturgia, Csendes': ('Szent Liturgia', 'Csendes'),
+      'Római katolikus Régi rítusú szentmise': ('Régi rítusú szentmise', null),
+    };
+
+    for (final MapEntry(key: info, value: (title, detail))
+        in described.entries) {
+      test('"$info" is a $title with ${detail ?? 'no detail'}', () {
+        final description = describeMass(info);
+
+        expect(description?.title, title);
+        expect(description?.detail, detail);
+      });
+    }
+
+    for (final info in [
+      'Római katolikus Gyóntatás tagalog/filippínó nyelven',
+      'Római katolikus Szentségimádás, Csendes',
+      'Római katolikus Szentmisék',
+      null,
+    ]) {
+      test('"$info" describes no mass', () {
+        expect(describeMass(info), isNull);
+      });
+    }
+  });
 }

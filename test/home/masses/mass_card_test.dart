@@ -38,6 +38,7 @@ void main() {
   Future<void> pumpCard(
     WidgetTester tester,
     NearbyMassesItem mass, {
+    String? detail,
     DateTime? now,
     double width = 400,
     double textScale = 1,
@@ -53,6 +54,7 @@ void main() {
                 width: width,
                 child: MassCard(
                   mass: mass,
+                  detail: detail,
                   now: now ?? _at(12, 0),
                   thumbnailUrl: Future.value(null),
                 ),
@@ -151,6 +153,69 @@ void main() {
 
       expect(find.text('Szent Liturgia'), findsOneWidget);
     });
+
+    testWidgets('puts the detail after the title', (tester) async {
+      await pumpCard(tester, _mass(title: 'Szent Liturgia'), detail: 'Csendes');
+
+      expect(
+        find.text('Nyíregyháza · Szent Liturgia · Csendes'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('puts the detail right after the city for plain Szentmise', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        _mass(title: 'Szentmise'),
+        detail: 'Csendes (Mária-kápolnában)',
+      );
+
+      expect(
+        find.text('Nyíregyháza · Csendes (Mária-kápolnában)'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a long detail is cut off at the end of its one line', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        _mass(),
+        detail:
+            'Csendes (a Mária-kápolnában, adventben hajnali 6:00-kor, '
+            'utána reggeli a plébánián)',
+        width: 360,
+      );
+
+      final line = tester.widget<Text>(find.textContaining('Nyíregyháza · '));
+      expect(line.data, startsWith('Nyíregyháza · Csendes'));
+      expect(line.maxLines, 1);
+      expect(line.overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
+    });
+
+    for (final textScale in [1.0, 2.0]) {
+      testWidgets('a detail leaves the card as tall as none at text scale '
+          '$textScale', (tester) async {
+        await pumpCard(tester, _mass(), width: 360, textScale: textScale);
+        final without = tester.getSize(find.byType(MassCard)).height;
+
+        await pumpCard(
+          tester,
+          _mass(title: 'Szent Liturgia'),
+          detail: 'Csendes (Mária-kápolnában), latin nyelven, gitáros',
+          width: 360,
+          textScale: textScale,
+        );
+        final withDetail = tester.getSize(find.byType(MassCard)).height;
+
+        expect(tester.takeException(), isNull);
+        expect(withDetail, without);
+      });
+    }
 
     testWidgets('the line under the name stands at the same height for a short '
         'and a long name', (tester) async {

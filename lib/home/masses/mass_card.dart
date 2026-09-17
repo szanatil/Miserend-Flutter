@@ -21,6 +21,7 @@ class MassCard extends StatelessWidget {
   const MassCard({
     super.key,
     required this.mass,
+    this.detail,
     required this.now,
     required this.thumbnailUrl,
     this.onTap,
@@ -50,6 +51,10 @@ class MassCard extends StatelessWidget {
   static const double _timeColumnMaxShare = 0.3;
 
   final NearbyMassesItem mass;
+
+  /// The mass detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
+  /// the list is drawn without it rather than wait (spec 0011).
+  final String? detail;
 
   /// The moment the list was selected at, for the time until start and the
   /// ongoing mark.
@@ -196,6 +201,7 @@ class MassCard extends StatelessWidget {
     final place = [
       mass.city,
       if (title != _plainMassTitle) title,
+      detail,
     ].whereType<String>().join(' · ');
 
     return Column(
@@ -214,9 +220,9 @@ class MassCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // One line for both: a title is rare, and a line of its own would be
-        // empty on almost every card. A long city cuts the title off.
-        // An empty text still takes its line.
+        // One line for all three: a title or a detail is rare, and a line of
+        // its own would be empty on almost every card. The city leads, so a
+        // long one cuts the rest off. An empty text still takes its line.
         Text(
           place,
           style: textTheme.bodyMedium,

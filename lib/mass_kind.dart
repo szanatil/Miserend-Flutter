@@ -19,31 +19,39 @@ bool isMass(CachedMass row) {
     case MassSource.nearbyMasses:
       return massTitles.contains(row.info);
     case MassSource.dailyList:
-      return _isMassDescription(row.info);
+      return describeMass(row.info) != null;
   }
 }
 
 /// The denominations a list answer puts in front of the event's kind.
 const List<String> _denominations = ['Római katolikus ', 'Görögkatolikus '];
 
-/// Whether a list answer's `informacio` — "Római katolikus Szentmise,
-/// Csendes" — describes a mass. The kind sits after the denomination and
-/// before the details, which follow a comma or, as live answers show, a
-/// space or a parenthesis: "Szentmise latin nyelven", "Szentmise (adventben
-/// 6:00)".
-bool _isMassDescription(String? info) {
-  if (info == null) return false;
-  var kind = info.split(',').first.trim();
+/// What may follow the kind in a list answer's `informacio`: a comma or, as
+/// live answers show, a space or a parenthesis.
+const List<String> _afterKind = [',', ' ', '('];
+
+/// A list answer's `informacio` — "Római katolikus Szentmise, Csendes" — read
+/// as a mass: its [title] among [massTitles], and the mass detail after it
+/// (CONTEXT.md, „Mise jellemzője"), as the data stewards wrote it: "Csendes",
+/// "latin nyelven", "(adventben 6:00)". Null when it describes no mass.
+///
+/// The denomination is left out of both: nearly every mass is Roman Catholic,
+/// and the card shows the Greek Catholic one by its title.
+({String title, String? detail})? describeMass(String? info) {
+  if (info == null) return null;
+  var text = info.trim();
   for (final denomination in _denominations) {
-    if (kind.startsWith(denomination)) {
-      kind = kind.substring(denomination.length);
+    if (text.startsWith(denomination)) {
+      text = text.substring(denomination.length);
       break;
     }
   }
-  return massTitles.any(
-    (title) =>
-        kind == title ||
-        kind.startsWith('$title ') ||
-        kind.startsWith('$title('),
-  );
+  for (final title in massTitles) {
+    if (!text.startsWith(title)) continue;
+    final rest = text.substring(title.length);
+    if (rest.isNotEmpty && !_afterKind.any(rest.startsWith)) continue;
+    final detail = rest.replaceFirst(RegExp(r'^[,\s]+'), '');
+    return (title: title, detail: detail.isEmpty ? null : detail);
+  }
+  return null;
 }

@@ -1,4 +1,5 @@
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/mass_kind.dart';
 
 /// How long after its start a mass is still reachable. Someone who misses more
@@ -59,6 +60,39 @@ Set<int> _nearestChurchIds(List<NearbyMassesItem> masses) {
         return byKm != 0 ? byKm : a.compareTo(b);
       });
   return byDistance.take(nearestChurchLimit).toSet();
+}
+
+/// The mass details (CONTEXT.md, „Mise jellemzője") of the nearest masses.
+/// `NearbyMasses` does not carry them, so they are read off the churches'
+/// schedules for today and matched to a mass by church and start (spec 0011,
+/// „Párosítás").
+class MassDetails {
+  const MassDetails([this._dailyMasses = const {}]);
+
+  /// Today's schedule rows of each church asked about.
+  final Map<int, List<CachedMass>> _dailyMasses;
+
+  /// The detail of [mass], or null: when it has none, when its church was not
+  /// asked about, or when the schedule does not say which description is its
+  /// own. Of several masses starting together, the one of the same kind as
+  /// the title is taken.
+  String? of(NearbyMassesItem mass) {
+    final described = [
+      for (final row in _dailyMasses[mass.churchId] ?? const <CachedMass>[])
+        if (row.time == mass.start)
+          if (describeMass(row.info) case final description?) description,
+    ];
+    final candidates =
+        described.length > 1
+            ? described.where((d) => d.title == mass.title).toList()
+            : described;
+    return candidates.length == 1 ? candidates.single.detail : null;
+  }
+
+  /// These details together with [other]'s, [other] winning for a church
+  /// both hold: a newer schedule replaces an older one.
+  MassDetails merged(MassDetails other) =>
+      MassDetails({..._dailyMasses, ...other._dailyMasses});
 }
 
 /// An ongoing mass has already started but is still reachable.

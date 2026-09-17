@@ -12,6 +12,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/distance_chip.dart';
@@ -75,6 +76,19 @@ class _FakeLoader extends NearestMassesLoader {
 
   Completer<String?>? thumbnail;
   final List<int> thumbnailsAskedFor = [];
+
+  /// Answers every details call; none arrive until it completes.
+  Completer<MassDetails> details = Completer<MassDetails>();
+  final List<List<int>> detailsAskedFor = [];
+
+  @override
+  Future<MassDetails> fetchMassDetails(
+    List<NearbyMassesItem> masses,
+    DateTime now,
+  ) {
+    detailsAskedFor.add([for (final mass in masses) mass.churchId]);
+    return details.future;
+  }
 
   @override
   Future<String?> thumbnailUrl(int churchId) {
@@ -469,6 +483,83 @@ void main() {
       expect(find.text('Szent István-bazilika'), findsOneWidget);
       expect(loader.thumbnailsAskedFor, [37]);
       expect(_placeholderImage(), findsOneWidget);
+    });
+
+    testWidgets('shows the list before the mass details arrive, then adds '
+        'them to the line under the name', (tester) async {
+      final loader = _FakeLoader([
+        [_mass(church: 37, start: _at(18, 0))],
+      ]);
+
+      await pumpPage(tester, loader);
+
+      expect(find.text('Szent István-bazilika'), findsOneWidget);
+      expect(find.text('Budapest V. kerület'), findsOneWidget);
+
+      loader.details.complete(
+        MassDetails({
+          37: [
+            CachedMass(
+              id: null,
+              apiMassId: null,
+              churchId: 37,
+              time: _at(18, 0),
+              info: 'Római katolikus Szentmise, Csendes',
+              source: MassSource.dailyList,
+            ),
+          ],
+        }),
+      );
+      await tester.pump();
+
+      expect(find.text('Budapest V. kerület · Csendes'), findsOneWidget);
+    });
+
+    testWidgets('keeps the mass details on the cards while a refetch waits '
+        'for new ones', (tester) async {
+      final loader = _FakeLoader([
+        [_mass(church: 37, start: _at(18, 0))],
+      ]);
+      loader.details.complete(
+        MassDetails({
+          37: [
+            CachedMass(
+              id: null,
+              apiMassId: null,
+              churchId: 37,
+              time: _at(18, 0),
+              info: 'Római katolikus Szentmise latin nyelven',
+              source: MassSource.dailyList,
+            ),
+          ],
+        }),
+      );
+      await pumpPage(tester, loader);
+      await tester.pump();
+      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
+
+      loader.details = Completer<MassDetails>();
+      await pullToRefresh(tester);
+
+      expect(loader.fetchCount, 2);
+      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
+    });
+
+    testWidgets('asks for the mass details of the churches on the list only', (
+      tester,
+    ) async {
+      final loader = _FakeLoader([
+        [
+          for (var church = 1; church <= 11; church++)
+            _mass(church: church, km: church.toDouble(), start: _at(18, 0)),
+        ],
+      ]);
+
+      await pumpPage(tester, loader);
+
+      expect(loader.detailsAskedFor, [
+        [for (var church = 1; church <= 10; church++) church],
+      ]);
     });
 
     testWidgets('keeps the placeholder when the cache has no photo', (

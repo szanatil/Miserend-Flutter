@@ -5,12 +5,14 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/church.dart';
+import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
+import 'package:provider/provider.dart';
 
 /// The Misék tab: the nearest masses, live from the API.
 ///
@@ -67,12 +69,25 @@ class _NearMassesPageState extends State<NearMassesPage>
 
   late final LocationProvider _location = widget.location ?? LocationProvider();
   late final NearestMassesLoader _loader =
-      widget.loader ?? NearestMassesLoader(location: _location);
+      widget.loader ??
+      NearestMassesLoader(
+        location: _location,
+        onChurchesGone:
+            Provider.of<FavoritesService>(context, listen: false).removeAll,
+      );
 
   /// The whole last response, not the ten rows drawn from it: when a mass
   /// expires, its place goes to the church's next mass or to the next nearest
   /// church, and both are only in the full response.
   List<NearbyMassesItem> _items = const [];
+
+  /// The details of the masses listed when a response arrived, kept across
+  /// fetches so that a refetch does not blink them off the cards; they are
+  /// matched by church and start, so an older one never lands on another
+  /// mass. A church that only comes onto the list on a later re-selection
+  /// goes without them until the next fetch: re-selection makes no network
+  /// call.
+  MassDetails _details = const MassDetails();
   PositionUnavailableReason? _noPosition;
   bool _apiFailed = false;
   bool _loaded = false;
@@ -203,6 +218,19 @@ class _NearMassesPageState extends State<NearMassesPage>
       _apiFailed = apiFailed;
       _loaded = true;
     });
+    unawaited(_fetchDetails(selectNearestMasses(items, now), requestId));
+  }
+
+  /// Not awaited by [_fetch], so that the list is drawn without waiting for
+  /// the details (spec 0011, „Forrás").
+  Future<void> _fetchDetails(
+    List<NearbyMassesItem> masses,
+    int requestId,
+  ) async {
+    if (masses.isEmpty) return;
+    final details = await _loader.fetchMassDetails(masses, widget.clock());
+    if (!mounted || requestId != _requestId) return;
+    setState(() => _details = _details.merged(details));
   }
 
   @override
@@ -260,6 +288,7 @@ class _NearMassesPageState extends State<NearMassesPage>
           final mass = masses[index];
           return MassCard(
             mass: mass,
+            detail: _details.of(mass),
             now: now,
             thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
             onTap: () => _openChurch(mass),
