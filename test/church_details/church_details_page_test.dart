@@ -259,13 +259,16 @@ void main() {
   });
 
   testWidgets('the day strip skips days with no masses', (tester) async {
+    // Not this Sunday: the "Most vasárnap" row would show the mass a second
+    // time.
+    final day = DateTime.sunday - DateTime.now().weekday == 3 ? 2 : 3;
     final masses = _emptyDays();
-    masses[3].add(
+    masses[day].add(
       CachedMass(
         id: null,
         apiMassId: null,
         churchId: 38,
-        time: _todayAt(7, 30).add(const Duration(days: 3)),
+        time: _todayAt(7, 30).add(Duration(days: day)),
         info: null,
         source: MassSource.nearbyMasses,
       ),
