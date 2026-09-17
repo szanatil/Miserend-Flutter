@@ -12,6 +12,7 @@ Az app Flutterrel készült, és ugyanazt a templom-adatbázist jeleníti meg, m
 - **Keresés:** templomnév vagy település alapján, már gépelés közben is kínál találatokat.
 - **Templom adatlapja:** a mai és a vasárnapi misék, a következő napok miserendje, a templom helye a térképen, útvonaltervezés, és hibabejelentés a miserend.hu-nak.
 - **Kedvencek:** csak a készüléken tárolódnak, fiók nincs.
+- **Visszajelzés és Az appról:** a ⋮ menüből e-mailben lehet írni az app fejlesztőinek, és megnézni a verziót, az adatforrást és a licenceket.
 - **Offline működés:** ha nincs kapcsolat, a képernyők a helyi gyorsítótárból dolgoznak, és jelzik, hogy az adat nem friss.
 
 ## Futtatás

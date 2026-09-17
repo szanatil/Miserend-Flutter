@@ -114,7 +114,7 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 - A `mailto:` URI-t kézzel kell kódolni (`Uri.encodeComponent` a `subject`-re és a `body`-ra). A `Uri(queryParameters:)` a szóközt `+`-ként kódolja, amit több levelezőprogram szó szerint mutat.
 - A levél összeállítása tiszta függvény (`(PackageInfo-szerű verzióadat, platform) → Uri`), hogy tesztelhető legyen.
 - **Nincs levelezőprogram:** ha a `launchUrl` `false`-t ad vagy kivételt dob, SnackBar jelenik meg: „Nincs levelezőprogram a telefonon. Írj nekünk: szentjozsefhackathon@jezsuita.hu”. Az indítás injektálható (K1).
-- Android 11+ alatt ellenőrizni kell, hogy a `launchUrl` megnyitja-e a `mailto:` linket a manifest `<queries>` bővítése nélkül. Ha nem, a `<queries>` blokkba egy `SENDTO`/`mailto` intent kerül. Ezt valódi eszközön kell kipróbálni.
+- Android 11+ alatt ellenőrizni kell, hogy a `launchUrl` megnyitja-e a `mailto:` linket a manifest `<queries>` bővítése nélkül. Ha nem, a `<queries>` blokkba egy `SENDTO`/`mailto` intent kerül. Ezt valódi eszközön kell kipróbálni. A `SENDTO`/`mailto` intent a megvalósításkor (#34) megelőzésként bekerült, mert a `url_launcher` dokumentációja Android 11+ alatt ezt ajánlja, és ártalmatlan; a valódi eszközös próba még hátravan.
 - A Visszajelzés indítása közös helyre kerül (`lib/widgets/`, K5), mert a menü és az „Az appról” oldal is hívja.
 
 ### Az appról oldal

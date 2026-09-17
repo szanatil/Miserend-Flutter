@@ -53,6 +53,9 @@ dependencies:
   # Renders the liturgical-language flags, which ship as SVG. Flutter has no
   # native SVG support and the set uses gradients, <use> and clipPath.
   flutter_svg: ^2.3.0
+  # The app's version and build number, for the feedback mail's diagnostics
+  # and the about page.
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   flutter_test:
