@@ -57,6 +57,36 @@ void main() {
       );
     });
 
+    testWidgets('draws a text field\'s outline dark enough to see on white', (
+      tester,
+    ) async {
+      // The purple swatch leaves the colour scheme's outline white, which is
+      // what made the problem report's fields invisible.
+      late ThemeData theme;
+      await tester.pumpWidget(
+        Builder(
+          builder: (context) {
+            theme = miserendTheme(context);
+            return const SizedBox();
+          },
+        ),
+      );
+
+      final decoration = const InputDecoration().applyDefaults(
+        theme.inputDecorationTheme,
+      );
+      for (final border in [
+        decoration.enabledBorder,
+        decoration.focusedBorder,
+      ]) {
+        expect(border, isA<OutlineInputBorder>());
+        expect(
+          (border! as OutlineInputBorder).borderSide.color.computeLuminance(),
+          lessThan(0.5),
+        );
+      }
+    });
+
     testWidgets('is the one MyApp hands to MaterialApp', (tester) async {
       // The theme is worth nothing if MyApp stops passing it on. Only the
       // first frame is pumped: the splash behind it talks to the database.

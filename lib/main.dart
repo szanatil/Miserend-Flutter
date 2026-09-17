@@ -25,6 +25,18 @@ ThemeData miserendTheme(BuildContext context) {
       iconTheme: IconThemeData(color: Colors.white),
       backgroundColor: CustomColors.purple,
     ),
+    // Text fields are outlined and the outline has to show: the purple swatch
+    // leaves the scheme's `outline` white, so Material's default border was
+    // drawn white on white and the problem report's fields had to be guessed.
+    inputDecorationTheme: const InputDecorationTheme(
+      border: OutlineInputBorder(),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black38),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: CustomColors.purple, width: 2),
+      ),
+    ),
     // The remaining SnackBars — the splash, the problem report, a church gone
     // from miserend.hu, an external app — used to wear Material's black,
     // which belongs to no other screen of the app (issue #23).

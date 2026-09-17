@@ -51,6 +51,13 @@ void main() {
 
   /// The page, opened from a plain screen so that closing it can be seen.
   Future<void> openPage(WidgetTester tester, _FakeSender sender) async {
+    // Tall enough for the whole form, so an error text is found whether or
+    // not the list has scrolled to it.
+    tester.view.physicalSize = const Size(440, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(

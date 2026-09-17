@@ -94,9 +94,10 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
           padding: const EdgeInsets.all(16),
           children: [
             Text(widget.churchName, style: textTheme.titleMedium),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+            Text('Milyen hibát jelentesz?', style: textTheme.titleSmall),
             _typeField(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             TextFormField(
               key: ReportProblemPage.textKey,
               controller: _textController,
@@ -106,8 +107,9 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 labelText: 'Leírás',
+                hintText:
+                    'Például: vasárnap 10-kor kezdődik a mise, nem 9-kor.',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(),
               ),
               // Required for every type, not only where the API asks for it:
               // the stewards cannot tell what to fix without it.
@@ -125,7 +127,7 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
               autocorrect: false,
               decoration: const InputDecoration(
                 labelText: 'E-mail cím (nem kötelező)',
-                border: OutlineInputBorder(),
+                helperText: 'Ha kérdésük van, ide írhatnak.',
               ),
               validator: (value) {
                 final email = (value ?? '').trim();
