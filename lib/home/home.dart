@@ -225,7 +225,11 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.church), label: 'Templomok'),
-          BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Misék'),
+          // The app icon's chalice; tinted like the Material icons beside it.
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/images/chalice.png')),
+            label: 'Misék',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
         ],
         currentIndex: _selectedIndex,

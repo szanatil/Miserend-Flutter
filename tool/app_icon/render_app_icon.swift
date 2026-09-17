@@ -1,4 +1,5 @@
-// Renders the app icon source images into assets/icon/.
+// Renders the app icon source images into assets/icon/, and the Misék tab
+// icon (assets/images/chalice.png with its 2x–4x variants).
 //
 // The chalice is drawn from geometry measured on the original 480 px
 // mise.png, so the icon can be regenerated at any size. The generated PNGs
@@ -18,13 +19,12 @@ import UniformTypeIdentifiers
 let purple = CGColor(srgbRed: 91 / 255, green: 39 / 255, blue: 173 / 255, alpha: 1)
 let white = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
 
-/// Edge length of every generated image; the App Store icon needs 1024 px.
-let outputSize = 1024
-
 /// Design space: the original 480×480 image, whose purple circle has its
 /// centre at (240, 240) and a radius of 220. The chalice fits inside it.
 let designCentre = CGPoint(x: 240, y: 240)
 let designCircleRadius: CGFloat = 220
+/// From the top of the host to the base of the foot.
+let chaliceHeight: CGFloat = 380 - 102
 
 func chalicePath() -> CGPath {
   let path = CGMutablePath()
@@ -49,14 +49,15 @@ func chalicePath() -> CGPath {
   return path
 }
 
-/// Draws one image. [circleDiameter] is the size, in output pixels, that the
-/// original purple circle maps to; the chalice scales with it.
+/// Draws one [pixels]×[pixels] image to [path], relative to the repository
+/// root. [circleRatio] is the share of the edge that the original purple
+/// circle's diameter maps to; the chalice scales with it.
 func render(
-  _ fileName: String, circleDiameter: CGFloat, background: Bool, circle: Bool
+  _ path: String, pixels: Int, circleRatio: CGFloat, background: Bool, circle: Bool
 ) {
-  let size = CGFloat(outputSize)
+  let size = CGFloat(pixels)
   let context = CGContext(
-    data: nil, width: outputSize, height: outputSize, bitsPerComponent: 8,
+    data: nil, width: pixels, height: pixels, bitsPerComponent: 8,
     bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
 
@@ -66,7 +67,7 @@ func render(
   }
 
   // Design space is y-down; CoreGraphics is y-up.
-  let scale = circleDiameter / (2 * designCircleRadius)
+  let scale = size * circleRatio / (2 * designCircleRadius)
   context.translateBy(x: size / 2, y: size / 2)
   context.scaleBy(x: scale, y: -scale)
   context.translateBy(x: -designCentre.x, y: -designCentre.y)
@@ -83,7 +84,7 @@ func render(
   context.addPath(chalicePath())
   context.fillPath(using: .winding)
 
-  let url = URL(fileURLWithPath: "assets/icon/\(fileName)")
+  let url = URL(fileURLWithPath: path)
   let destination = CGImageDestinationCreateWithURL(
     url as CFURL, UTType.png.identifier as CFString, 1, nil)!
   CGImageDestinationAddImage(destination, context.makeImage()!, nil)
@@ -93,21 +94,36 @@ func render(
   print("Wrote \(url.path)")
 }
 
-let size = CGFloat(outputSize)
+/// Edge length of the launcher icon sources; the App Store icon needs 1024 px.
+let launcherIconPixels = 1024
 
 // iOS masks the square itself, so the purple fills it and the circle's
 // diameter is the full edge.
-render("app_icon.png", circleDiameter: size, background: true, circle: false)
+render(
+  "assets/icon/app_icon.png", pixels: launcherIconPixels, circleRatio: 1,
+  background: true, circle: false)
 
 // Android adaptive foreground: a 108 dp layer of which the launcher shows the
 // middle 72 dp, so the circle's diameter maps to 72/108 of the edge. The
 // launcher mask replaces the circle; the background is a colour.
 render(
-  "app_icon_foreground.png", circleDiameter: size * 72 / 108, background: false,
-  circle: false)
+  "assets/icon/app_icon_foreground.png", pixels: launcherIconPixels,
+  circleRatio: 72 / 108, background: false, circle: false)
 
 // Android before API 26 shows the image unmasked: keep the round icon with the
 // original margin.
 render(
-  "app_icon_android_legacy.png", circleDiameter: size * 440 / 480, background: false,
-  circle: true)
+  "assets/icon/app_icon_android_legacy.png", pixels: launcherIconPixels,
+  circleRatio: 440 / 480, background: false, circle: true)
+
+// Misék tab icon: a white silhouette the navigation bar tints, on a 24 dp
+// canvas like the Material icons beside it. Their glyphs are about 20 dp tall.
+let tabIconDp = 24
+let tabGlyphRatio: CGFloat = 20 / 24
+for density in 1...4 {
+  let variant = density == 1 ? "" : "\(density).0x/"
+  render(
+    "assets/images/\(variant)chalice.png", pixels: tabIconDp * density,
+    circleRatio: tabGlyphRatio * 2 * designCircleRadius / chaliceHeight,
+    background: false, circle: false)
+}
