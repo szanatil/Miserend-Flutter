@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
-import 'package:miserend/church_details/report_problem_popup.dart';
+import 'package:miserend/church_details/report_problem_page.dart';
 import 'package:miserend/church_details/widgets/adoration_card.dart';
 import 'package:miserend/church_details/widgets/church_info_tiles.dart';
 import 'package:miserend/church_details/widgets/confession_tile.dart';
@@ -211,17 +211,60 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _showReportPopup,
-            child: Column(
-              spacing: 8,
-              children: [
-                Icon(Icons.error, size: 32, color: Colors.black54),
-                Text('Hibajelentés'),
-              ],
-            ),
+          _reportButton(),
+        ],
+      ),
+    );
+  }
+
+  /// Greyed out while the page marks its data as not live: a report could not
+  /// get through then either (CONTEXT.md, „Hibajelentés"). Only a known
+  /// failure blocks it, the one the user sees, so it comes back by itself
+  /// once a retry succeeds.
+  Widget _reportButton() {
+    final blocked = _data?.failure != null;
+    final color = blocked ? Colors.black26 : Colors.black54;
+    return GestureDetector(
+      onTap: blocked ? _explainReportBlocked : _openReport,
+      child: Column(
+        spacing: 8,
+        children: [
+          Icon(Icons.error, size: 32, color: color),
+          Text(
+            'Hibajelentés',
+            style: blocked ? const TextStyle(color: Colors.black38) : null,
           ),
         ],
+      ),
+    );
+  }
+
+  void _explainReportBlocked() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Hibát jelenteni csak kapcsolat mellett lehet. Amint a miserend.hu '
+          'újra elérhető, a gomb magától visszajön.',
+        ),
+      ),
+    );
+  }
+
+  void _openReport() {
+    final data = _data;
+    // Not before the cache read has answered: until then there is no date
+    // for the data the report would be about.
+    if (data == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder:
+            (_) => ReportProblemPage(
+              churchId: widget.church.id,
+              churchName: _details?.name ?? widget.church.name ?? '',
+              // Null only when not even the bootstrap import recorded a date;
+              // the API requires one, and today is the nearest truth.
+              dataAsOf: data.dataAsOf ?? _today,
+            ),
       ),
     );
   }
@@ -551,22 +594,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   DateTime _midnightToday() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
-  }
-
-  void _showReportPopup() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: StatefulBuilder(
-            // You need this, notice the parameters below:
-            builder: (BuildContext context, StateSetter setState) {
-              return ReportPopup(church: widget.church);
-            },
-          ),
-        );
-      },
-    );
   }
 
   void _showLocationOnMap() async {

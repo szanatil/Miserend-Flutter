@@ -8,6 +8,7 @@ import 'package:http/testing.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 
@@ -239,7 +240,7 @@ void main() {
   group('outcomes', () {
     /// Every call of the client, each run against the same fake transport.
     final calls =
-        <String, Future<ApiResult<Object>> Function(MiserendApiClient)>{
+        <String, Future<ApiResult<Object?>> Function(MiserendApiClient)>{
           'church': (api) => api.fetchChurches([38]),
           'masses for a church':
               (api) => api.fetchMassesForChurch(
@@ -259,10 +260,17 @@ void main() {
                 from: DateTime(2026, 9, 14, 15, 45),
                 until: DateTime(2026, 9, 15),
               ),
+          'report':
+              (api) => api.report(
+                churchId: 38,
+                type: ProblemType.other,
+                text: 'Leírás',
+                dataAsOf: DateTime(2026, 9, 1),
+              ),
         };
 
     Future<ApiFailure?> failureOf(
-      Future<ApiResult<Object>> Function(MiserendApiClient) call,
+      Future<ApiResult<Object?>> Function(MiserendApiClient) call,
       Future<http.Response> Function(http.Request) transport,
     ) async {
       final result = await call(
@@ -359,6 +367,97 @@ void main() {
       addTearDown(client.close);
 
       expect(client.connectionTimeout, const Duration(seconds: 10));
+    });
+  });
+
+  group('report', () {
+    http.Response answer(Object error) => http.Response.bytes(
+      utf8.encode(jsonEncode({'error': error, 'text': 'Köszönjük!'})),
+      200,
+    );
+
+    Future<ApiResult<void>> send(
+      Future<http.Response> Function(http.Request) transport, {
+      String? email,
+      ProblemType type = ProblemType.wrongMassTime,
+    }) {
+      return MiserendApiClient(client: MockClient(transport)).report(
+        churchId: 38,
+        type: type,
+        text: '  A vasárnapi mise 10-kor van.  ',
+        email: email,
+        dataAsOf: DateTime(2026, 9, 3, 17, 45),
+      );
+    }
+
+    test('sends the church, the type, the trimmed text and the day of the '
+        'data', () async {
+      late http.Request sent;
+      await send((request) async {
+        sent = request;
+        return answer(0);
+      }, email: 'anna@example.com');
+
+      expect(sent.method, 'POST');
+      expect(sent.url.toString(), 'https://miserend.hu/api/v4/report');
+      expect(jsonDecode(sent.body), {
+        'tid': 38,
+        'pid': 1,
+        'text': 'A vasárnapi mise 10-kor van.',
+        'email': 'anna@example.com',
+        'dbdate': '2026-09-03',
+      });
+    });
+
+    test('numbers the types as the API does', () async {
+      final pids = <int>[];
+      for (final type in ProblemType.values) {
+        await send((request) async {
+          pids.add((jsonDecode(request.body) as Map)['pid'] as int);
+          return answer(0);
+        }, type: type);
+      }
+
+      expect(pids, [0, 1, 2]);
+    });
+
+    test('leaves the email out when there is none', () async {
+      final bodies = <Map<String, dynamic>>[];
+      for (final email in [null, '', '   ']) {
+        await send((request) async {
+          bodies.add(jsonDecode(request.body) as Map<String, dynamic>);
+          return answer(0);
+        }, email: email);
+      }
+
+      for (final body in bodies) {
+        expect(body.containsKey('email'), isFalse);
+        expect(body.keys, containsAll(['tid', 'pid', 'text', 'dbdate']));
+      }
+    });
+
+    test('error 0 is a success', () async {
+      expect(await send((_) async => answer(0)), isA<ApiSuccess<void>>());
+    });
+
+    test('error 1 is a server error, not a success', () async {
+      final result = await send((_) async => answer(1));
+
+      expect((result as ApiFailed).failure, ApiFailure.serverError);
+    });
+
+    test('an HTTP 500 is a server error', () async {
+      final result = await send((_) async => http.Response('', 500));
+
+      expect((result as ApiFailed).failure, ApiFailure.serverError);
+    });
+
+    test('an exception before the answer is no connection', () async {
+      final result = await send(
+        (_) async => throw const SocketException('offline'),
+      );
+
+      expect((result as ApiFailed).failure, ApiFailure.noConnection);
     });
   });
 

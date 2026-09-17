@@ -87,7 +87,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 |---|---|
 | Header | Collapsing `SliverAppBar` with the church photo (or blurred placeholder), name, and common name. |
 | Favorite toggle | Heart icon button, delegates to `FavoritesService.toggle`. |
-| Report a problem | Opens `ReportPopup` (see below). |
+| Report a problem | Opens `ReportProblemPage` (see below). Greyed out while the page shows a **no connection** or **server error** mark; a tap then only explains why, and the button comes back by itself once a retry succeeds. |
 | "Today" / "This Sunday" Mass chips | Two labeled rows of time chips inside a card, from the cached 20-day schedule. The page draws from the cache at once, then asks the API for the church (`Church {"ids": [tid]}`, full) and its 20-day schedule (`NearbyMasses`) and writes both through (`ChurchScheduleLoader`, spec 0003). A failed call marks the card: (i) for no connection, a tinted card and (i) for a server error. A church reported removed shows "Ez a templom már nem szerepel a miserend.hu-n." in place of the schedule. |
 | Next 19 days schedule | A horizontally-scrolling row of day cards ("Holnap" for tomorrow, otherwise the Hungarian weekday name + date), one per day that has masses. |
 | Location card | A non-interactive CARTO Voyager map (`MiserendMap`) centered on the church, with a pin; tapping it opens the location in the device's installed map app (`map_launcher`, always the **first** installed app — no chooser). |
@@ -96,10 +96,11 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 ## Report a problem
 
-**File:** `lib/church_details/report_problem_popup.dart`
+**Files:** `lib/church_details/report_problem_page.dart`, `lib/church_details/problem_report_sender.dart`; spec 0009
 
-- Modal with a problem-type dropdown (Rossz pozíció / Rossz miseidőpont / Egyéb), free-text description, and an optional email field.
-- `POST`s to `https://miserend.hu/api/v4/report` as JSON (`tid`, `pid`, `text`, `email`, plus a hardcoded `dbdate` literal — `'2025-04-18'`, not derived from the actual downloaded database version). Shows a success/failure snackbar; no retry or offline queue.
+- A full-screen page (purple AppBar "Hibajelentés") headed by the church's name. Three radio buttons (Rossz pozíció / Rossz miseidőpont / Egyéb), none chosen at first; a description that is always required; an optional email address, checked for shape when given.
+- Sends `MiserendApiClient.report` → `POST https://miserend.hu/api/v4/report` with `tid`, `pid` (0/1/2), the trimmed `text`, `email` only when given, and `dbdate` = the day of the details page's `dataAsOf`. Success is read off the body: `error: 1` is a server error, not a sent report.
+- While sending, the button shows a spinner and cannot be tapped again. A sent report closes the page with "Hibajelentés elküldve" and remembers the email (`shared_preferences`) for the next report. A failed one keeps the page and what was typed, with a message for **no connection** or for **server error**; the server's own text is not shown. No offline queue.
 
 ## Favorites (cross-cutting)
 

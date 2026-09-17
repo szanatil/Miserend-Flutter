@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -287,6 +288,42 @@ class MiserendApiClient {
       return parsed;
     });
   }
+
+  /// Sends a problem report about [churchId] to miserend.hu's data stewards
+  /// (CONTEXT.md, „Hibajelentés"). miserend.hu answers a rejected report with
+  /// `error: 1` and HTTP 200, so success is read off the body, not the status.
+  ///
+  /// [dataAsOf] is the day of the data the user was looking at: v4 requires
+  /// it, so the stewards can tell a mistake from one already fixed. A blank
+  /// [email] is left out of the request rather than sent empty.
+  Future<ApiResult<void>> report({
+    required int churchId,
+    required ProblemType type,
+    required String text,
+    String? email,
+    required DateTime dataAsOf,
+  }) async {
+    final address = email?.trim() ?? '';
+    final result = await _post('report', {
+      'tid': churchId,
+      'pid': _problemId(type),
+      'text': text.trim(),
+      if (address.isNotEmpty) 'email': address,
+      'dbdate': _formatDate(dataAsOf),
+    });
+    return _map<void>(result, (_) => _accepted);
+  }
+
+  /// What [_map] needs back from a body that carries nothing to read: any
+  /// non-null value, so an answer without an error flag counts as accepted.
+  static const Object _accepted = true;
+
+  /// The `pid` the API numbers the report's types with.
+  int _problemId(ProblemType type) => switch (type) {
+    ProblemType.wrongPosition => 0,
+    ProblemType.wrongMassTime => 1,
+    ProblemType.other => 2,
+  };
 
   /// Reads a successful body with [read]; a body [read] cannot make sense of
   /// (it returns null) is a server error like any other malformed answer.

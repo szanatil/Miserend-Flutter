@@ -8,6 +8,7 @@ import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
+import 'package:miserend/church_details/report_problem_page.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
@@ -18,6 +19,7 @@ import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 final Church _church = Church(
@@ -590,6 +592,111 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+  });
+
+  group('problem report', () {
+    const blocked =
+        'Hibát jelenteni csak kapcsolat mellett lehet. Amint a miserend.hu '
+        'újra elérhető, a gomb magától visszajön.';
+
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    Future<_FakeLoader> answered(
+      WidgetTester tester,
+      ChurchPageData refreshed,
+    ) async {
+      final loader = _FakeLoader(
+        cached: _page(_scheduleWith(_todayAt(9, 0))),
+        refreshed: refreshed,
+      );
+      await pumpPage(tester, loader);
+      loader.answerApi();
+      await tester.pump();
+      await tester.pump();
+      return loader;
+    }
+
+    Future<void> tapReport(WidgetTester tester) async {
+      await tester.tap(find.text('Hibajelentés'));
+      await tester.pumpAndSettle();
+    }
+
+    for (final failure in ApiFailure.values) {
+      testWidgets('with ${failure.name} marked, the button explains itself '
+          'instead of opening the page', (tester) async {
+        await answered(
+          tester,
+          _page(_scheduleWith(_todayAt(9, 0)), failure: failure),
+        );
+
+        await tapReport(tester);
+
+        expect(find.text(blocked), findsOneWidget);
+        expect(find.byType(ReportProblemPage), findsNothing);
+      });
+    }
+
+    testWidgets('with nothing marked, the button opens the page for the '
+        'church and the day of its data', (tester) async {
+      await answered(
+        tester,
+        _page(
+          _scheduleWith(_todayAt(9, 0)),
+          church: _details(),
+          scheduleIsFresh: true,
+          dataAsOf: DateTime(2026, 9, 3, 17, 45),
+        ),
+      );
+
+      await tapReport(tester);
+
+      final page = tester.widget<ReportProblemPage>(
+        find.byType(ReportProblemPage),
+      );
+      expect(page.churchId, 38);
+      expect(page.churchName, 'Belvárosi Nagyboldogasszony-templom');
+      expect(page.dataAsOf, DateTime(2026, 9, 3, 17, 45));
+      expect(find.text(blocked), findsNothing);
+    });
+
+    testWidgets(
+      'while the API call is outstanding, the button opens the page',
+      (tester) async {
+        final loader = _FakeLoader(
+          cached: _page(_scheduleWith(_todayAt(9, 0))),
+          refreshed: _page(
+            _scheduleWith(_todayAt(9, 0)),
+            failure: ApiFailure.noConnection,
+          ),
+        );
+        await pumpPage(tester, loader);
+
+        await tapReport(tester);
+
+        expect(find.byType(ReportProblemPage), findsOneWidget);
+
+        // Let the outstanding refresh finish before the test ends.
+        loader.answerApi();
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets('a successful retry brings the button back by itself', (
+      tester,
+    ) async {
+      final loader = await answered(
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.noConnection),
+      );
+
+      loader.refreshed = _page(_scheduleWith(_todayAt(9, 0)));
+      await tester.pump(StaleDataRetry.retryEvery);
+      await tester.pump();
+      await tapReport(tester);
+
+      expect(find.byType(ReportProblemPage), findsOneWidget);
+      expect(find.text(blocked), findsNothing);
     });
   });
 
