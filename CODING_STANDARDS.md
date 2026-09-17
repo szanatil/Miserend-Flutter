@@ -9,6 +9,8 @@ Ami nem ide tartozik, annak megvan a saját forrása:
 - **Fogalmak** (Nincs kapcsolat, Helyi gyorsítótár, Elérhető mise…): [CONTEXT.md](CONTEXT.md).
 - **Döntések és indokaik**: [docs/adr/](docs/adr/), képernyőnként a [docs/spec/](docs/spec/).
 
+Ha jó okkal térsz el egy szabálytól, ugyanabban a PR-ben módosítsd a szabályt.
+
 ## A. Adatáramlás
 
 **A1 — A képernyő loaderen át kap adatot.** Egy lap vagy képernyő (`lib/home/**`, `lib/church_details/*_page.dart`) egy loadert hív; a `MiserendApiClient`-et és a `CacheDatabase`-t a loader használja. Minták: [ChurchListLoader](lib/home/churches/church_list_loader.dart), [ChurchScheduleLoader](lib/church_details/church_schedule_loader.dart), [NearestMassesLoader](lib/home/masses/nearest_masses_loader.dart).
@@ -27,13 +29,13 @@ Ami nem ide tartozik, annak megvan a saját forrása:
 
 **B2 — Az API-kliens minden hívása `ApiResult`-ot ad.** Ami a válasz megérkezése előtt romlik el, az `noConnection`; ami a válasszal, az `serverError`; az üres válasz `ApiSuccess`. Új végpont a `_post` és a `_map` segédfüggvényen át hív, így ezt a felosztást örökli.
 
-**B3 — Mindent elkapó `catch` csak a peremen.** Ott, ahol a felhasználó újrapróbálhat, vagy a művelet csendes háttérmunka (kezdeti feltöltés, kedvencek előfrissítése, helymeghatározás). Mellette egy komment mondja meg, miért elfogadható a lenyelés, és `debugPrint` naplózza az okot.
+**B3 — Mindent elkapó `catch` csak a peremen.** Ott, ahol a felhasználó újrapróbálhat, vagy a művelet csendes háttérmunka (kezdeti feltöltés, kedvencek előfrissítése, helymeghatározás). Mellette egy komment mondja meg, miért elfogadható a lenyelés, és `debugPrint` naplózza az okot. A napló az okot írja, nem az adatot: koordináta, API-válasz vagy kérés-törzs nem kerül bele, mert a `debugPrint` release buildben is kiír.
 
 ## K. Képernyők és widgetek
 
 **K1 — A függőség konstruktorban cserélhető.** Loader, `LocationProvider`, óra: opcionális konstruktor-paraméter, a State-ben `late final _loader = widget.loader ?? ChurchListLoader();`. A paraméter doc-kommentje: `/// Injected by tests; the page builds its own otherwise.` Provideren át csak az app-szintű `FavoritesService` érkezik.
 
-**K2 — `await` után a State még él?** Minden `await` után `mounted`-ellenőrzés jön a `setState` vagy a `context` előtt. Az újratölthető lapok betöltésenként léptetett azonosítóval (`_loadId`, `current()`) vetik el a lassú, már elavult választ. Minta: `_load` a [near_churches_page.dart](lib/home/churches/near_churches_page.dart)-ban.
+**K2 — `await` után a State még él?** Ha `await` után `setState` vagy `context` jön, előtte `mounted`-ellenőrzés áll. Az újratölthető lapok betöltésenként léptetett azonosítóval (`_loadId`, `current()`) vetik el a lassú, már elavult választ. Minta: `_load` a [near_churches_page.dart](lib/home/churches/near_churches_page.dart)-ban.
 
 **K3 — Az idő injektált óra.** A „most"-ot `DateTime Function() clock = DateTime.now` mező adja, így a teszt tetszőleges időpontra állíthatja.
 
@@ -48,6 +50,10 @@ Ami nem ide tartozik, annak megvan a saját forrása:
 **D2 — Fogalomra és döntésre forrással hivatkozunk.** `(CONTEXT.md, „Nincs kapcsolat")`, `(ADR-0003)`, `(spec 0005, „Végpontok")`.
 
 **D3 — Minden határérték nevesített konstans.** Időkorlát, limit, sugár, életkor: `static const`, doc-kommenttel az okáról. Minta: `callTimeout`, `_massLimit` a [MiserendApiClient](lib/api/miserend_api_client.dart)-ben, `maxPositionAge` a [LocationProvider](lib/location_provider.dart)-ben.
+
+## M. Adatbázis-séma
+
+**M1 — A séma csak előre lép, a meglévő adatot megtartva.** A `CacheDatabase` sémájának változásakor a `version` eggyel nő, az `onCreate` a teljes új sémát hozza létre, az `onUpgrade` pedig új `if (oldVersion < N)` ágat kap. A már kiadott ágakhoz nem nyúlunk: a telepített appok ezeken lépnek át. A frissítést teszt ellenőrzi, amely az előző verzió sémájával létrehozott fájlt nyit meg. Minta: `'upgrading from version 2 keeps the masses and marks their source'` a [cache_database_test.dart](test/database/cache_database_test.dart)-ban.
 
 ## T. Tesztek
 
@@ -73,3 +79,19 @@ A SQLite export korából maradt, ma már csak a kezdeti feltöltést és néhá
 **R1 — Új kód a gyorsítótár modelljeire épül.** Új képernyő, loader vagy modell a `ChurchDetails` / `ChurchListEntry` / `CachedMass` típusokat és a `CacheDatabase`-t használja. Egy meglévő átadási pont, amely régi típust vár (pl. `ChurchDetailsPage(church:)`), használható úgy, ahogy van.
 
 **R2 — Régi kódhoz nyúlni hibajavításért szabad**, és ilyenkor az átköltöztetés nem kötelező. A régi kód stílusa (pl. `_checkDatabase() async` visszatérési típus nélkül) nem minta.
+
+## C. Kész
+
+Egy változás akkor kész, ha mindegyik teljesül:
+
+**C1 — Formázva.** A `dart format --set-exit-if-changed lib test` nem jelez eltérést.
+
+**C2 — Lint tiszta.** A `flutter analyze` hiba és figyelmeztetés nélkül fut le.
+
+**C3 — A tesztek zöldek.** `flutter test`.
+
+**C4 — Az új viselkedésnek van tesztje.** Az új vagy megváltozott viselkedést a T1–T6 szerinti teszt rögzíti. Hibajavításnál olyan teszt, amely a javítás előtt elbukott volna.
+
+**C5 — A sémaváltozás az M1-et követi.**
+
+**C6 — A dokumentáció követi a kódot.** Ha változott egy fogalom, az a [CONTEXT.md](CONTEXT.md)-be kerül; ha egy döntés, egy ADR-be; ha egy képernyő viselkedése, a [docs/spec/](docs/spec/)-be; ha a funkciólefedettség, a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md)-be.
