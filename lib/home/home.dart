@@ -10,6 +10,7 @@ import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/search_suggestions.dart';
+import 'package:miserend/home/widgets/search_suggestion_list.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
@@ -192,6 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxHeight: _searchViewMaxHeight,
               ),
               shrinkWrap: true,
+              viewBuilder:
+                  (suggestions) =>
+                      SearchSuggestionList(suggestions: suggestions),
               onChanged: _onSearchChanged,
               onSubmitted: _onSearchSubmitted,
               searchController: _searchController,
