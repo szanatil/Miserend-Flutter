@@ -65,6 +65,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   sqflite_common_ffi: ^2.4.2+1
+  # Generates the per-platform launcher icon sizes from assets/icon/; see
+  # flutter_launcher_icons.yaml.
+  flutter_launcher_icons: ^0.14.4
 flutter:
 
   # The following line ensures that the Material Icons font is

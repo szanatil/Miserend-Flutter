@@ -1,0 +1,24 @@
+# App icon for Android and iOS. The source images in assets/icon/ are
+# rendered by tool/app_icon/render_app_icon.swift. After changing them:
+#   dart run flutter_launcher_icons
+#   git checkout ios/Runner.xcodeproj/project.pbxproj
+# The package rewrites every ASSETCATALOG_* build setting in the Xcode project
+# to "AppIcon", including ones that are not the icon name; the checkout undoes
+# that (the project already uses AppIcon).
+flutter_launcher_icons:
+  android: true
+  image_path_android: "assets/icon/app_icon_android_legacy.png"
+  # Android 8+ masks the icon itself: the chalice is the foreground, the
+  # purple of the original icon is the background.
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  # The foreground image already leaves the 108 dp layer's outer margin empty.
+  adaptive_icon_foreground_inset: 0
+  adaptive_icon_background: "#5B27AD"
+  # Android 13+ themed icon: the launcher tints the chalice silhouette.
+  adaptive_icon_monochrome: "assets/icon/app_icon_foreground.png"
+  min_sdk_android: 24
+
+  ios: true
+  image_path_ios: "assets/icon/app_icon.png"
+  # The App Store rejects icons with an alpha channel.
+  remove_alpha_ios: true

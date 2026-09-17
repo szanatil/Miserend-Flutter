@@ -43,6 +43,10 @@ flutter analyze
 
 A Dart-kód írásának szabályai a [CODING_STANDARDS.md](CODING_STANDARDS.md)-ben vannak.
 
+### App-ikon
+
+Az ikon forrásképeit (`assets/icon/`) a [tool/app_icon/render_app_icon.swift](tool/app_icon/render_app_icon.swift) rajzolja, a platformonkénti méreteket a `flutter_launcher_icons` készíti. A lépések a [flutter_launcher_icons.yaml](flutter_launcher_icons.yaml) elején vannak.
+
 ## Hogyan épül fel?
 
 **Adatforrások.** Két forrásból dolgozik az app, mindkettő a miserend.hu API v4-e:
