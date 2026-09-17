@@ -5,6 +5,7 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/extentions.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
+import 'package:miserend/mass_detail.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/reserved_room.dart';
@@ -53,7 +54,8 @@ class MassCard extends StatelessWidget {
   final NearbyMassesItem mass;
 
   /// The mass detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
-  /// the list is drawn without it rather than wait (spec 0011).
+  /// the list is drawn without it rather than wait (spec 0011). Its types are
+  /// drawn as icons, which say their word when tapped.
   final String? detail;
 
   /// The moment the list was selected at, for the time until start and the
@@ -201,8 +203,14 @@ class MassCard extends StatelessWidget {
     final place = [
       mass.city,
       if (title != _plainMassTitle) title,
-      detail,
     ].whereType<String>().join(' · ');
+    final detail = this.detail;
+    final detailParts =
+        detail == null ? const <MassDetailPart>[] : massDetailParts(detail);
+    final lineStyle = textTheme.bodyMedium;
+    // As tall as the letters, so that an icon leaves the line as tall as
+    // text does. Unscaled: the text scales its inline widgets itself.
+    final iconSize = lineStyle?.fontSize ?? 14;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -223,9 +231,38 @@ class MassCard extends StatelessWidget {
         // One line for all three: a title or a detail is rare, and a line of
         // its own would be empty on almost every card. The city leads, so a
         // long one cuts the rest off. An empty text still takes its line.
-        Text(
-          place,
-          style: textTheme.bodyMedium,
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: place),
+              if (place.isNotEmpty && detailParts.isNotEmpty)
+                const TextSpan(text: ' · '),
+              for (final (index, part) in detailParts.indexed) ...[
+                // The commas stay between words, where they separate
+                // phrases; an icon stands apart by itself.
+                if (index > 0)
+                  TextSpan(
+                    text:
+                        part is MassDetailText &&
+                                detailParts[index - 1] is MassDetailText
+                            ? ', '
+                            : ' ',
+                  ),
+                switch (part) {
+                  MassDetailText(:final text) => TextSpan(text: text),
+                  MassTypePart(:final type) => WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: _MassTypeIcon(
+                      type: type,
+                      size: iconSize,
+                      color: lineStyle?.color,
+                    ),
+                  ),
+                },
+              ],
+            ],
+          ),
+          style: lineStyle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -265,6 +302,39 @@ class MassCard extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// A mass type in place of its word, to keep the line short. The word is one
+/// tap away, above the icon, and a tap there does not open the church; a
+/// screen reader reads it as the word.
+class _MassTypeIcon extends StatelessWidget {
+  const _MassTypeIcon({
+    required this.type,
+    required this.size,
+    required this.color,
+  });
+
+  final MassType type;
+  final double size;
+
+  /// The line's text color: the icons are black drawings, tinted to match.
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: type.label,
+      triggerMode: TooltipTriggerMode.tap,
+      preferBelow: false,
+      child: Image.asset(
+        type.iconAsset,
+        width: size,
+        height: size,
+        color: color,
+        excludeFromSemantics: true,
+      ),
     );
   }
 }

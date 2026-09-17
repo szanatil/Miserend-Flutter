@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/home/masses/mass_card.dart';
+import 'package:miserend/mass_detail.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 
 NearbyMassesItem _mass({
@@ -32,6 +33,15 @@ Finder _photo() => find.byWidgetPredicate((widget) {
   if (provider is ResizeImage) provider = provider.imageProvider;
   return provider is AssetImage &&
       provider.assetName == 'assets/images/church_blurred.png';
+});
+
+/// The icon of a mass type, looking through the resize wrapper as [_photo]
+/// does.
+Finder _typeIcon(MassType type) => find.byWidgetPredicate((widget) {
+  if (widget is! Image) return false;
+  var provider = widget.image;
+  if (provider is ResizeImage) provider = provider.imageProvider;
+  return provider is AssetImage && provider.assetName == type.iconAsset;
 });
 
 void main() {
@@ -155,10 +165,14 @@ void main() {
     });
 
     testWidgets('puts the detail after the title', (tester) async {
-      await pumpCard(tester, _mass(title: 'Szent Liturgia'), detail: 'Csendes');
+      await pumpCard(
+        tester,
+        _mass(title: 'Szent Liturgia'),
+        detail: 'latin nyelven',
+      );
 
       expect(
-        find.text('Nyíregyháza · Szent Liturgia · Csendes'),
+        find.text('Nyíregyháza · Szent Liturgia · latin nyelven'),
         findsOneWidget,
       );
     });
@@ -169,13 +183,104 @@ void main() {
       await pumpCard(
         tester,
         _mass(title: 'Szentmise'),
-        detail: 'Csendes (Mária-kápolnában)',
+        detail: '(adventben 6:00)',
+      );
+
+      expect(find.text('Nyíregyháza · (adventben 6:00)'), findsOneWidget);
+    });
+
+    testWidgets('draws the types as icons in place of their words, the rest '
+        'as text', (tester) async {
+      await pumpCard(
+        tester,
+        _mass(),
+        detail: 'latin nyelven, Csendes, Gitáros (Mária-kápolnában)',
+      );
+
+      expect(_typeIcon(MassType.silent), findsOneWidget);
+      expect(_typeIcon(MassType.guitar), findsOneWidget);
+      expect(find.textContaining('Csendes'), findsNothing);
+      expect(find.textContaining('Gitáros'), findsNothing);
+      expect(find.textContaining('latin nyelven'), findsOneWidget);
+      expect(find.textContaining('(Mária-kápolnában)'), findsOneWidget);
+    });
+
+    testWidgets('keeps the commas between words the detail holds', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        _mass(),
+        detail: 'latin nyelven, Ismeretlen, Csendes',
       );
 
       expect(
-        find.text('Nyíregyháza · Csendes (Mária-kápolnában)'),
+        find.textContaining('Nyíregyháza · latin nyelven, Ismeretlen '),
         findsOneWidget,
       );
+    });
+
+    testWidgets('a type icon is as tall as the letters at a large text size', (
+      tester,
+    ) async {
+      // Wide enough for the icon to fit before the line is cut off.
+      await pumpCard(
+        tester,
+        _mass(),
+        detail: 'Csendes',
+        width: 800,
+        textScale: 2,
+      );
+
+      final fontSize =
+          Theme.of(
+            tester.element(find.byType(MassCard)),
+          ).textTheme.bodyMedium!.fontSize!;
+      expect(tester.getRect(_typeIcon(MassType.silent)).height, fontSize * 2);
+    });
+
+    testWidgets('a screen reader reads a type icon as its word', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await pumpCard(tester, _mass(), detail: 'Csendes');
+
+      // The card reads as one node, so the word is its tooltip.
+      expect(
+        tester.getSemantics(find.byType(MassCard)).getSemanticsData().tooltip,
+        'Csendes',
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('tapping a type icon shows its word above it, and does not '
+        'open the church', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: MassCard(
+                mass: _mass(),
+                detail: 'Csendes',
+                now: _at(12, 0),
+                thumbnailUrl: Future.value(null),
+                onTap: () => taps++,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(_typeIcon(MassType.silent));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Csendes'), findsOneWidget);
+      expect(
+        tester.getBottomLeft(find.text('Csendes')).dy,
+        lessThanOrEqualTo(tester.getTopLeft(_typeIcon(MassType.silent)).dy),
+      );
+      expect(taps, 0);
     });
 
     testWidgets('a long detail is cut off at the end of its one line', (
@@ -185,13 +290,13 @@ void main() {
         tester,
         _mass(),
         detail:
-            'Csendes (a Mária-kápolnában, adventben hajnali 6:00-kor, '
+            'latin nyelven, Csendes (a Mária-kápolnában, adventben hajnali 6:00-kor, '
             'utána reggeli a plébánián)',
         width: 360,
       );
 
       final line = tester.widget<Text>(find.textContaining('Nyíregyháza · '));
-      expect(line.data, startsWith('Nyíregyháza · Csendes'));
+      expect(line.textSpan?.toPlainText(), contains('adventben hajnali'));
       expect(line.maxLines, 1);
       expect(line.overflow, TextOverflow.ellipsis);
       expect(tester.takeException(), isNull);
@@ -206,7 +311,9 @@ void main() {
         await pumpCard(
           tester,
           _mass(title: 'Szent Liturgia'),
-          detail: 'Csendes (Mária-kápolnában), latin nyelven, gitáros',
+          detail:
+              'latin nyelven, Csendes, Gitáros, Diák, Énekes '
+              '(Mária-kápolnában)',
           width: 360,
           textScale: textScale,
         );

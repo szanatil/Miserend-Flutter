@@ -504,7 +504,7 @@ void main() {
               apiMassId: null,
               churchId: 37,
               time: _at(18, 0),
-              info: 'Római katolikus Szentmise, Csendes',
+              info: 'Római katolikus Szentmise latin nyelven',
               source: MassSource.dailyList,
             ),
           ],
@@ -512,7 +512,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Budapest V. kerület · Csendes'), findsOneWidget);
+      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
     });
 
     testWidgets('keeps the mass details on the cards while a refetch waits '

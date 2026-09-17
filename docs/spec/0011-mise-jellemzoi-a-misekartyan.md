@@ -10,7 +10,7 @@ A régi Android app a mise-chipekről egy dialógusban megmutatta ezeket a rész
 
 ## Solution
 
-A misekártya „település · mise címe" sora kiegészül a **mise jellemzőjével**, úgy, ahogy a miserend.hu adatgondozói leírták: „Pécs · Szentmise · Csendes (Mária-kápolnában)". A jellemző szabad szöveg, nem címkekészlet; ha nem fér ki, a sor végén ellipszissel levágódik. Ha a jellemzőt nem sikerül lekérni, a kártya úgy jelenik meg, mint ma — hibajelzés nélkül.
+A misekártya „település · mise címe" sora kiegészül a **mise jellemzőjével**, úgy, ahogy a miserend.hu adatgondozói leírták: „Pécs · latin nyelven (Mária-kápolnában)". A jellemző szabad szöveg, de a benne szereplő **misetípusok** (Csendes, Gitáros, Diák…) a szó helyett ikonként jelennek meg, és az ikonra bökve a szó az ikon fölött kiíródik; ha a sor nem fér ki, a végén ellipszissel levágódik. Ha a jellemzőt nem sikerül lekérni, a kártya úgy jelenik meg, mint ma — hibajelzés nélkül.
 
 ## User Stories
 
@@ -35,6 +35,7 @@ A misekártya „település · mise címe" sora kiegészül a **mise jellemzőj
 - A `Church` válasz a meglévő szabály szerint a gyorsítótárba is íródik (write-through).
 - **Szétbontás**: egy tiszta függvény az esemény fajtáját eldöntő szabály mellett a leírásból kiadja a **jellemzőt**: a felekezeti előtag és a fajta levágása után maradó szöveg, a vezető vesszővel és szóközzel együtt eltávolítva („Római katolikus Szentmise, Csendes" → „Csendes"; „Római katolikus Szentmise latin nyelven" → „latin nyelven"; „Római katolikus Szentmise (adventben 6:00)" → „(adventben 6:00)"; „Római katolikus Szentmise" → nincs). Ugyanazokat a határolókat ismeri (vessző, szóköz, zárójel), mint a fajta szabálya.
 - **Megjelenés**: a misekártya középső sávjának alsó sora „település · mise címe · jellemző". A spec 0008 szabálya a címre változatlan (ha a cím „Szentmise", nem íródik ki); ekkor „település · jellemző". Egy sor, ellipszissel. A kártya fix magassága nem változik.
+- **Misetípus-ikonok** (döntés 2026-09-17, a felhasználó kérésére): a jellemzőt a miserend.hu így rakja össze: „[nyelv nyelven][, típus, típus][ (megjegyzés)]" (miserend.hu forrás: `webapp/classes/eloquent/church.php`, `toAPIArray`). A típusok **zárt készletből** jönnek, a miserend.hu `webapp/i18n/hu.json` szerinti szóval: Családos/mocorgós, Diák, Egyetemista/ifjúsági, Gitáros, Orgonás, Csendes, Énekes — mindegyiknek van ikonja az `assets/types/`-ban. A kártyán a típus a szó **helyett** ikon (a sor szövegszínére színezve, betűméretnyi); bökésre a szó az ikon **fölött** buborékban jelenik meg, és a bökés nem nyitja meg a templomot; képernyőolvasó a szót olvassa. A nyelv, a zárójeles megjegyzés (akkor is, ha típusnév van benne) és az ismeretlen szó szövegként marad. Egy tiszta függvény bontja részekre a jellemzőt: a megjegyzés az első zárójelnél kezdődik, előtte vesszőnként típus vagy szöveg.
 - **Párosítás**: templom + kezdési időpont egyezés. Ha egy templomnál ugyanarra az időpontra több `informacio` érkezik, az a jellemző kerül a kártyára, amelynek fajtája megegyezik a listaelem címével; ha így sem egyértelmű, nincs jellemző.
 
 ## Testing Decisions
@@ -42,14 +43,16 @@ A misekártya „település · mise címe" sora kiegészül a **mise jellemzőj
 - Jó teszt a külső viselkedést nézi: milyen elemeket ad a betöltő, milyen jellemzővel, és mit ír ki a kártya — nem a párosítás belső lépéseit.
 - **A legközelebbi misék betöltője**: hamis HTTP klienssel és élő API-ból mentett fixture-ökkel (`NearbyMasses` + `Church`). Esetek: jellemző párosítása időpont szerint; két mise ugyanabban a templomban; nincs jellemző; a `Church` hívás hibája → elemek jellemző nélkül, hiba nélkül; a lista megjelenése nem vár a jellemzőkre.
 - **Szétbontó függvény**: táblázatos teszt az élő mintából vett leírásokkal (vessző, szóköz, zárójel, görögkatolikus előtag, jellemző nélküli).
-- **Misekártya widget-teszt**: a sor tartalma címmel és cím nélkül, jellemzővel és anélkül; hosszú szöveg ellipszissel, a kártya magassága nem változik nagyobb betűmérettel sem.
+- **Misekártya widget-teszt**: a sor tartalma címmel és cím nélkül, jellemzővel és anélkül; hosszú szöveg ellipszissel, a kártya magassága nem változik nagyobb betűmérettel és ikonokkal sem; a típus ikonként jelenik meg a szó helyett, és az ikonra bökve a szó fölötte látszik, a kártya bökése nélkül.
+- **Jellemző szétbontása részekre**: táblázatos teszt (típusok, nyelv, megjegyzés, típusnév a megjegyzésben, ismeretlen szó).
 - Előzmény: a legközelebbi misék betöltőjének, a mise fajtáját eldöntő szabálynak és a misekártyának a meglévő tesztjei.
 
 ## Out of Scope
 
 - Jellemzők a **templomkártya** chipjein (Templomok fül, térképi kártya): nincs rájuk hely.
 - A templom-részletező chipjei: azok alsó lapja már ma is a teljes leírást mutatja.
-- Zárt címkekészlet, ikonok a jellemzőkhöz (Gitáros, Diák), szűrés jellemzőre.
+- Szűrés jellemzőre vagy misetípusra.
+- Felekezet- és rítusikonok (`greek_catholic`, `roman_catholic`, `traditional`): a cím már mondja.
 - Mise-szintű nyelv, periódus („csak páros heteken"), időszak: az API v4 ezeket nem adja.
 - Jellemző a Részletes kereső találatain (spec 0010).
 

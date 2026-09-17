@@ -70,7 +70,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 - The API repeats items (the same mass up to three times); `MiserendApiClient` keeps each once, for this tab, the details page's schedule and the lists' masses of the day alike.
 - Refetches on tab switch, app resume, pull-to-refresh and after midnight; re-selects from the last raw response every minute while visible.
 - Loading, position-unavailable (by reason, with a button), API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
-- **Mass details** (spec 0011): once the list is shown, one `Church {"ids"}` call (`minimal`, written through) for the churches on it; each card's city line gains the detail after the kind in today's `informacio` of the mass starting at the same time ("Pécs · Csendes (Mária-kápolnában)"). A failed call shows the cards without details, unmarked.
+- **Mass details** (spec 0011): once the list is shown, one `Church {"ids"}` call (`minimal`, written through) for the churches on it; each card's city line gains the detail after the kind in today's `informacio` of the mass starting at the same time ("Pécs · latin nyelven (Mária-kápolnában)"). The seven mass types (Csendes, Gitáros, Diák…) are drawn as icons from `assets/types/` in place of their words (`mass_detail.dart`); tapping an icon shows the word above it. A failed call shows the cards without details, unmarked.
 
 ## Map tab
 
