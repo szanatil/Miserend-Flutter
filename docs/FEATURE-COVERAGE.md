@@ -32,7 +32,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 |---|---|
 | Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing. |
 | Search bar | A `SearchAnchor.bar` in the app bar. Live-updates suggestions as the user types, but only once the query is **longer than 2 characters** (`_onSearchChanged`). |
-| Search suggestions | Combines up to 20 matching **churches** (by name or common name, `LIKE` match) and any matching **cities** (distinct `varos` values) from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
+| Search suggestions | Combines up to 20 matching **churches** (by name, common name, alternative name or city) and any matching **cities** (distinct `varos` values), both ignoring case and accents (`searchText`), from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
 
@@ -51,7 +51,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 ### Search results (`search_results.dart`)
 - Pushed from Home's search bar or a city suggestion.
-- Two query modes: churches whose name/common name contains a free-text term, or churches located in an exact city — never both at once (`SearchParams` is either-or).
+- Two query modes: churches whose name, common name, alternative name or city contains a free-text term — case and accents ignored, by the same rule as the suggestions — or churches located in an exact city — never both at once (`SearchParams` is either-or).
 - Background call: `Church {"ids"}` for the first 100 results; with no result in the cache, the API's `Search` instead, whose finds are written to the cache and read back by the local rule.
 - States: loading, "Nincs találat", list.
 

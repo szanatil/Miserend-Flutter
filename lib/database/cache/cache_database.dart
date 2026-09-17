@@ -7,6 +7,7 @@ import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/cache/community.dart';
+import 'package:miserend/database/cache/search_text.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -61,7 +62,10 @@ class CacheDatabase {
           'photos TEXT, '
           'frissitve TEXT, '
           'local_synced_at TEXT, '
-          'gorog INTEGER)',
+          'gorog INTEGER, '
+          'kereses_nev TEXT, '
+          'kereses_alt_nevek TEXT, '
+          'kereses_varos TEXT)',
         );
         await db.execute(
           'CREATE TABLE $massesTable('
@@ -94,10 +98,60 @@ class CacheDatabase {
             "'${MassSource.nearbyMasses.name}' WHERE api_mass_id IS NOT NULL",
           );
         }
+        if (oldVersion < 4) {
+          for (final column in _searchColumns) {
+            await db.execute(
+              'ALTER TABLE $churchesTable ADD COLUMN $column TEXT',
+            );
+          }
+          final rows = await db.query(
+            churchesTable,
+            columns: ['id', 'nev', 'ismertnev', 'alternative_names', 'varos'],
+          );
+          final batch = db.batch();
+          for (final row in rows) {
+            batch.update(
+              churchesTable,
+              _searchRow(
+                name: row['nev'] as String?,
+                commonName: row['ismertnev'] as String?,
+                alternativeNames: _stringList(row['alternative_names']),
+                city: row['varos'] as String?,
+              ),
+              where: 'id = ?',
+              whereArgs: [row['id']],
+            );
+          }
+          await batch.commit(noResult: true);
+        }
       },
-      version: 3,
+      version: 4,
     );
   }
+
+  /// The church columns folded by [searchText], which the local search
+  /// compares against: SQLite cannot fold accents itself, and sqflite cannot
+  /// teach it (#12). Written with every church row.
+  static const List<String> _searchColumns = [
+    'kereses_nev',
+    'kereses_alt_nevek',
+    'kereses_varos',
+  ];
+
+  /// The name and common name share a column because a response carries
+  /// either both or neither; the alternative names have their own, because a
+  /// `minimal` response leaves them out. A newline separates the parts, so a
+  /// term typed into the search bar cannot match across two of them.
+  static Map<String, Object?> _searchRow({
+    required String? name,
+    required String? commonName,
+    required List<String> alternativeNames,
+    required String? city,
+  }) => {
+    'kereses_nev': searchText([name, commonName].nonNulls.join('\n')),
+    'kereses_alt_nevek': searchText(alternativeNames.join('\n')),
+    'kereses_varos': city == null ? null : searchText(city),
+  };
 
   /// When things happened to the cache as a whole, as opposed to one church:
   /// the bootstrap import, a list's last successful refresh.
@@ -144,7 +198,8 @@ class CacheDatabase {
 
   /// The columns a `minimal` API response carries. The others — photos,
   /// description, names, address and the rest — are absent from it, not
-  /// empty, so they must not overwrite what the cache already holds.
+  /// empty, so they must not overwrite what the cache already holds. The
+  /// folded alternative names stay for the same reason.
   static const Set<String> _minimalColumns = {
     'nev',
     'ismertnev',
@@ -156,6 +211,8 @@ class CacheDatabase {
     'adoraciok',
     'gyontatas',
     'frissitve',
+    'kereses_nev',
+    'kereses_varos',
   };
 
   /// Writes an API response over the cached row. A column the API does not
@@ -315,21 +372,36 @@ class CacheDatabase {
     return _listEntries(rows, day);
   }
 
-  /// Churches whose name or common name contains [term], by name, with their
-  /// rows of [day] — none when [day] is null, as for the suggestions typed
-  /// out a key at a time. The term is taken literally.
+  /// Churches whose name, common name, one of the alternative names or city
+  /// contains [term], with their rows of [day] — none when [day] is null, as
+  /// for the suggestions typed out a key at a time. The term is taken
+  /// literally, but case and accents do not count (#12). The city is searched
+  /// too, as the API's `Search` does, which the results page falls back to.
+  ///
+  /// The churches found by a name come first, each part by name: a city
+  /// matches many churches at once, and would otherwise push the one typed
+  /// out of the suggestions' first few.
   Future<List<ChurchListEntry>> searchChurches(
     String term,
     DateTime? day,
   ) async {
-    final pattern = '%${_escapeLike(term)}%';
-    final rows = await db.query(
-      churchesTable,
-      columns: _listColumns.split(', '),
-      where: "nev LIKE ? ESCAPE '\\' OR ismertnev LIKE ? ESCAPE '\\'",
-      whereArgs: [pattern, pattern],
+    final folded = searchText(term);
+    final rows = await db.rawQuery(
+      'SELECT $_listColumns, '
+      'instr(kereses_nev, ?) > 0 OR instr(kereses_alt_nevek, ?) > 0 '
+      'AS nevben FROM $churchesTable '
+      'WHERE nevben OR instr(kereses_varos, ?) > 0',
+      [folded, folded, folded],
     );
-    return _byName(await _listEntries(rows, day));
+    final nameMatchIds = {
+      for (final row in rows)
+        if (row['nevben'] == 1) row['id'] as int,
+    };
+    final sorted = _byName(await _listEntries(rows, day));
+    return [
+      ...sorted.where((church) => nameMatchIds.contains(church.id)),
+      ...sorted.where((church) => !nameMatchIds.contains(church.id)),
+    ];
   }
 
   /// The churches of [city], by name, with their rows of [day].
@@ -346,22 +418,18 @@ class CacheDatabase {
     return _byName(await _listEntries(rows, day));
   }
 
-  /// Cities whose name contains [term], each once.
+  /// Cities whose name contains [term], each once; case and accents do not
+  /// count, as in [searchChurches].
   Future<List<String>> searchCities(String term) async {
     final rows = await db.query(
       churchesTable,
       distinct: true,
       columns: ['varos'],
-      where: "varos LIKE ? ESCAPE '\\'",
-      whereArgs: ['%${_escapeLike(term)}%'],
+      where: 'instr(kereses_varos, ?) > 0',
+      whereArgs: [searchText(term)],
     );
     return rows.map((row) => row['varos'] as String).toList();
   }
-
-  static String _escapeLike(String term) => term
-      .replaceAll('\\', '\\\\')
-      .replaceAll('%', '\\%')
-      .replaceAll('_', '\\_');
 
   /// The churches with these ids that the cache holds, by name, with their
   /// rows of [day].
@@ -380,32 +448,15 @@ class CacheDatabase {
   }
 
   /// SQLite's NOCASE only folds ASCII, which would put "Ágota" after "Zirci".
+  /// The folded name orders the way a reader expects closely enough for a
+  /// short list.
   static List<ChurchListEntry> _byName(List<ChurchListEntry> entries) =>
       entries..sort((a, b) {
-        final byName = _sortKey(a.name).compareTo(_sortKey(b.name));
+        final byName = searchText(
+          a.name ?? '',
+        ).compareTo(searchText(b.name ?? ''));
         return byName != 0 ? byName : a.id.compareTo(b.id);
       });
-
-  static const Map<String, String> _accents = {
-    'á': 'a',
-    'é': 'e',
-    'í': 'i',
-    'ó': 'o',
-    'ö': 'o',
-    'ő': 'o',
-    'ú': 'u',
-    'ü': 'u',
-    'ű': 'u',
-  };
-
-  /// A name folded to lower case and to unaccented Hungarian letters, which
-  /// orders the way a reader expects closely enough for a short list.
-  static String _sortKey(String? name) =>
-      (name ?? '')
-          .toLowerCase()
-          .split('')
-          .map((char) => _accents[char] ?? char)
-          .join();
 
   /// Forgets churches miserend.hu no longer has, with their masses.
   Future<void> deleteChurches(List<int> ids) async {
@@ -547,6 +598,12 @@ class CacheDatabase {
       'photos': jsonEncode(church.photos),
       'frissitve': _formatDateTime(church.updatedAt),
       if (church.isGreek != null) 'gorog': church.isGreek! ? 1 : 0,
+      ..._searchRow(
+        name: church.name,
+        commonName: church.commonName,
+        alternativeNames: church.alternativeNames,
+        city: church.city,
+      ),
     };
   }
 

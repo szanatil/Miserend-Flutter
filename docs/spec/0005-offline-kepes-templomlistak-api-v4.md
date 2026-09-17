@@ -49,7 +49,7 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
   | Kedvencek | `Church {"ids": [...]}`, 100-as kötegekben, `minimal` | javított adat, megszűnés, napi miserend |
   | Térkép — templomkártya | `Church {"ids": [tid]}`, `full` | a teljes templom, fotókkal (a részletezőt is előmelegíti) |
 
-- **A helyi keresés a mai viselkedést viszi át** a gyorsítótárra: `nev`/`ismertnev` részszó, település szerint a település. A kis-nagybetű- és ékezetfüggetlen keresés: #12.
+- **A helyi keresés a mai viselkedést viszi át** a gyorsítótárra: `nev`/`ismertnev` részszó, település szerint a település. A kis-nagybetű- és ékezetfüggetlen, alternatív nevekben és a településben is kereső helyi keresés azóta elkészült (#12): a gyorsítótár íráskor kitölti a normalizált `kereses_*` oszlopokat.
 - **A Közeli templomok helyi listája korlátlan** (az összes templom távolság szerint), ahogy ma; a `NearBy` 100-as korlátja csak a frissítésre vonatkozik.
 - **Időkorlát**: minden API-hívás legfeljebb 15 s, a kapcsolódás legfeljebb 10 s. Az időtúllépés **Nincs kapcsolat** (CONTEXT.md). Ma a kliensnek nincs időkorlátja.
 - **Újrapróbálás**: a Keresés találati listáján, a Közeli templomokon és a Kedvenceken lehúzásos frissítés (`RefreshIndicator`, a Misék fül mintájára); a háttérhívást újraindítja. A Térképen a kártya újranyitása frissít.

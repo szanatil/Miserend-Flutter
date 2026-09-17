@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
@@ -70,6 +72,11 @@ ChurchDetails _at(int id, double? lat, double? lon, {String? name}) =>
       'kep': 'https://miserend.hu/kepek/templomok/$id/a.jpg',
     });
 
+/// The ids [cache]'s search finds for [term], in the order it lists them.
+Future<List<int>> _foundIds(CacheDatabase cache, String term) async => [
+  for (final church in await cache.searchChurches(term, null)) church.id,
+];
+
 void main() {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
@@ -100,6 +107,121 @@ void main() {
 
       expect(indexes, isNotEmpty);
     });
+
+    test(
+      'upgrading from version 2 keeps the masses and marks their source',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('cache_upgrade_test');
+        addTearDown(() => dir.delete(recursive: true));
+        final path = '${dir.path}/cache.sqlite3';
+
+        // Version 2 had no `forras` column; only the details page's schedule
+        // carried an API mass id.
+        final old = await openDatabase(
+          path,
+          version: 2,
+          onCreate: (db, version) async {
+            await db.execute(
+              'CREATE TABLE churches_cache(id INTEGER PRIMARY KEY, nev TEXT, '
+              'ismertnev TEXT, alternative_names TEXT, varos TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE masses_cache('
+              'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+              'api_mass_id INTEGER, '
+              'church_id INTEGER NOT NULL, '
+              'idopont TEXT NOT NULL, '
+              'informacio TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE sync_state(kulcs TEXT PRIMARY KEY, '
+              'idopont TEXT NOT NULL)',
+            );
+          },
+        );
+        await old.insert('masses_cache', {
+          'api_mass_id': 7,
+          'church_id': 38,
+          'idopont': '2026-09-20 09:00:00',
+          'informacio': 'Szentmise',
+        });
+        await old.insert('masses_cache', {
+          'api_mass_id': null,
+          'church_id': 38,
+          'idopont': '2026-09-20 18:00:00',
+          'informacio': null,
+        });
+        await old.close();
+
+        final upgraded = await CacheDatabase.create(path: path);
+        addTearDown(() => upgraded.db.close());
+        final masses = await upgraded.getMassesForChurch(38);
+
+        expect(masses.map((mass) => (mass.time, mass.source)), [
+          (DateTime(2026, 9, 20, 9), MassSource.nearbyMasses),
+          (DateTime(2026, 9, 20, 18), MassSource.bootstrap),
+        ]);
+      },
+    );
+
+    test(
+      'upgrading from version 3 makes the cached churches searchable',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('cache_upgrade_test');
+        addTearDown(() => dir.delete(recursive: true));
+        final path = '${dir.path}/cache.sqlite3';
+
+        // Version 3 searched `nev` and `ismertnev` with LIKE, and had no
+        // folded search columns.
+        final old = await openDatabase(
+          path,
+          version: 3,
+          onCreate: (db, version) async {
+            await db.execute(
+              'CREATE TABLE churches_cache(id INTEGER PRIMARY KEY, nev TEXT, '
+              'ismertnev TEXT, names TEXT, alternative_names TEXT, '
+              'varos TEXT, lat REAL, lon REAL, photos TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE masses_cache('
+              'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+              'api_mass_id INTEGER, '
+              'church_id INTEGER NOT NULL, '
+              'idopont TEXT NOT NULL, '
+              'informacio TEXT, '
+              'forras TEXT NOT NULL)',
+            );
+            await db.execute(
+              'CREATE TABLE sync_state(kulcs TEXT PRIMARY KEY, '
+              'idopont TEXT NOT NULL)',
+            );
+          },
+        );
+        await old.insert('churches_cache', {
+          'id': 1515,
+          'nev': 'Budavári Nagyboldogasszony-templom',
+          'ismertnev': 'Mátyás-templom',
+          'alternative_names': '["Koronázó főtemplom"]',
+          'varos': 'Budapest I. kerület',
+        });
+        await old.insert('churches_cache', {
+          'id': 7,
+          'nev': null,
+          'ismertnev': null,
+          'alternative_names': null,
+          'varos': null,
+        });
+        await old.close();
+
+        final upgraded = await CacheDatabase.create(path: path);
+        addTearDown(() => upgraded.db.close());
+
+        expect(await _foundIds(upgraded, 'MATYAS'), [1515]);
+        expect(await _foundIds(upgraded, 'koronazo'), [1515]);
+        expect(await _foundIds(upgraded, 'kerulet'), [1515]);
+        expect(await upgraded.searchCities('KERÜLET'), ['Budapest I. kerület']);
+      },
+    );
   });
 
   group('churches', () {
@@ -424,6 +546,19 @@ void main() {
       expect(stored.isGreek, isTrue);
     });
 
+    test('is searched by its new name and city, and its kept alternative '
+        'names', () async {
+      await cache.upsertChurch(_church(38, name: 'Belvárosi templom'));
+
+      await cache.upsertChurch(minimal(38, name: 'Új név'), minimal: true);
+
+      expect(await _foundIds(cache, 'uj nev'), [38]);
+      expect(await _foundIds(cache, 'api varos'), [38]);
+      expect(await _foundIds(cache, 'alt'), [38]);
+      expect(await _foundIds(cache, 'belvarosi'), isEmpty);
+      expect(await cache.searchCities('api varos'), ['API város']);
+    });
+
     test('adds a church the cache has never seen', () async {
       await cache.upsertChurch(
         minimal(4242, name: 'Új templom'),
@@ -646,6 +781,45 @@ void main() {
 
       expect(found.single.name, 'Havas Boldogasszony templom');
       expect(found.single.masses, isEmpty);
+    });
+
+    test('by name ignores case and accents', () async {
+      for (final term in ['matyas', 'MÁTYÁS', 'Mátyás', 'MATYAS']) {
+        final found = await cache.searchChurches(term, today);
+
+        expect(found.map((c) => c.id), [1515], reason: term);
+      }
+    });
+
+    test('by name finds a part of an alternative name', () async {
+      await cache.upsertChurch(_church(38, name: 'Belvárosi templom'));
+
+      final found = await cache.searchChurches('alt', today);
+
+      expect(found.map((c) => c.id), [38]);
+    });
+
+    test('by name finds the churches of a matching city', () async {
+      final found = await cache.searchChurches('szeged', today);
+
+      expect(found.map((c) => c.id), unorderedEquals([1155, 1160, 7]));
+    });
+
+    test('by name lists name matches before city-only matches', () async {
+      await cache.importChurches([
+        BootstrapImporter.churchFromLegacyRow({
+          'tid': 9,
+          'nev': 'Szegedi Szent Mihály',
+          'ismertnev': null,
+          'varos': 'Tápé',
+        }),
+      ], const []);
+
+      expect(await _foundIds(cache, 'szeged'), [9, 7, 1155, 1160]);
+    });
+
+    test('suggests cities ignoring case and accents, each once', () async {
+      expect(await cache.searchCities('KERULET'), ['Budapest I. kerület']);
     });
   });
 
