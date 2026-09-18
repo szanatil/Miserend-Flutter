@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/community.dart';
+import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/section_card.dart';
 
@@ -90,31 +90,6 @@ class LanguagesTile extends StatelessWidget {
 
   final List<String> languages;
 
-  /// Every code with a flag in `assets/flags/`, mapped to the language it
-  /// marks — not to the country whose flag is borrowed. A code outside this
-  /// map has no asset, so membership doubles as "is there a flag for it".
-  static const Map<String, String> _names = {
-    'cu': 'ószláv',
-    'de': 'német',
-    'en': 'angol',
-    'es': 'spanyol',
-    'fr': 'francia',
-    'gr': 'görög',
-    'hr': 'horvát',
-    'hu': 'magyar',
-    'it': 'olasz',
-    'pl': 'lengyel',
-    'pt': 'portugál',
-    'ro': 'román',
-    'ru': 'orosz',
-    'rue': 'ruszin',
-    'si': 'szlovén',
-    'sk': 'szlovák',
-    'tl': 'tagalog',
-    'ua': 'ukrán',
-    'va': 'latin',
-  };
-
   /// A Hungarian-only church in Hungary tells the reader nothing — 395 of 435
   /// sampled churches are exactly that — so the tile only appears where there
   /// is something unexpected to say.
@@ -136,38 +111,7 @@ class LanguagesTile extends StatelessWidget {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: [for (final code in _clean(languages)) _flag(code)],
-      ),
-    );
-  }
-
-  Widget _flag(String code) {
-    final name = _names[code];
-    if (name == null) {
-      // An unrecognised code has no asset. Showing it as text keeps the fact
-      // that the church serves in some further language, rather than dropping
-      // it silently.
-      return Chip(
-        label: Text(code.toUpperCase()),
-        visualDensity: VisualDensity.compact,
-      );
-    }
-
-    return Semantics(
-      label: name,
-      image: true,
-      child: Container(
-        width: 24,
-        height: 18,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          // Several of these flags run to white at the edge — the English one
-          // is white with a red cross — and would otherwise bleed into the
-          // card behind them.
-          border: Border.all(color: Colors.black12),
-          borderRadius: BorderRadius.circular(2),
-        ),
-        child: SvgPicture.asset('assets/flags/$code.svg', fit: BoxFit.contain),
+        children: [for (final code in _clean(languages)) LanguageFlag(code)],
       ),
     );
   }

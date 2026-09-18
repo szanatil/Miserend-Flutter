@@ -55,7 +55,7 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 | Keresősáv javaslatokkal (3. karaktertől) | ✅ | ✅ | Eltérő tartalommal, lásd 3.3 |
 | Templom- és településjavaslat | ✅ | ✅ | |
 | Korábbi keresések javaslatként | ❌ | ◐ | Android: van rá tábla és lekérdezés, de a mentés a kód alapján nem fut le, lásd 3.1 |
-| „Részletes kereső” (név + település + dátum + időablak, miséket listáz) | ❌ | ✅ | Android-only, lásd 3.1 |
+| „Részletes kereső” (név + település + dátum + időablak) | ✅ | ✅ | Flutter: templomokat listáz, nyelvvel is szűr (spec 0010); Android: miséket listáz, lásd 3.1 |
 | Kis- és nagybetű- meg ékezetfüggetlen keresés, alternatív nevekben is | ✅ | ❌ | Flutter: `lib/database/cache/search_text.dart:10-18`, `lib/database/cache/cache_database.dart:402-423`. Android: SQL `LIKE` a `nev`/`ismertnev` oszlopon ([ChurchDao L23-L27][a-churchdao]) |
 | API-os keresés, ha a gyorsítótárban nincs találat | ✅ | ❌ | `lib/home/churches/church_list_loader.dart:134` |
 

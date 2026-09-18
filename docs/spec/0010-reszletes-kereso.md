@@ -111,6 +111,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 - Ha egy lap után a megjelenített találatok nem töltik meg a képernyőt, a lista magától kéri a következő lapot, amíg meg nem telik, vagy el nem fogynak a jelöltek.
 - **Hiba esetén** (Nincs kapcsolat, Szerverhiba) a betöltő a gyorsítótár miseadataiból szűr, és a lap jelzést kap; a lista fölött ugyanaz a jelölés áll, ugyanazzal az (i) magyarázattal és önjavító újrapróbálással, mint a Templomok fül listáin. Egy templom, amelynek a keresett napra nincs gyorsítótárazott miseadata, hiba esetén nem találat.
 - Ha az API egy jelöltet **hiányzónak** jelez, az a meglévő szabály szerint kikerül a gyorsítótárból és a kedvencek közül, és nem találat.
+- A hiányzó templomot csak a `Church` végpont jelzi, a `NearbyMasses` nem. Ezért nap-feltételnél a betöltő a lap jelöltjeire előbb egy `Church {"ids"}` hívást tesz (`minimal`), és csak utána kéri a jelöltek napi miséit. Pozíció nélküli templom miséit a `NearbyMasses` nem tudja lekérni: ennél a gyorsítótár dönt.
 
 ## Testing Decisions
 
@@ -135,4 +136,5 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 
 - A funkció a régi Android app „Részletes kereső"-jének utódja, de szándékosan eltér tőle: ott a mise-feltétel mise-listát adott, a település pontos kiválasztás nélkül szövegrészre illeszkedett (ezt megtartjuk), és a nap alapból „ez a vasárnap" volt (nálunk nincs alapértelmezett nap). Összehasonlítás: `docs/ANDROID-OSSZEHASONLITAS.md`.
 - A Dátum… választó tartománya nincs megbeszélve; javasolt alapérték: a mai naptól 90 napig.
+- **Nyitott kérdés — nyelvi adat a gyorsítótárban.** A `nyelvek` mezőt sem a kezdeti feltöltés, sem a listák `minimal` válasza nem hozza; csak a teljes (`full`) válasz, vagyis a részletező és a térképi kártya frissítése. Így a nyelvlista és a nyelvszűrés csak a már megnyitott templomokat ismeri. Megoldásához döntés kell (pl. `full` válasz a lapok `Church` hívásához, vagy egyszeri nyelvi feltöltés).
 - Fogalmak: CONTEXT.md, „Részletes kereső", „Helyi gyorsítótár", „Nincs kapcsolat", „Szerverhiba", „Légvonal-távolság", „Mise vs. egyéb liturgikus esemény", „Liturgikus nyelv jelölése".

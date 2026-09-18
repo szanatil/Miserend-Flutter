@@ -51,4 +51,34 @@ void main() {
       );
     },
   );
+
+  testWidgets('the footer stays in sight below many suggestions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: SearchSuggestionList(
+                suggestions: [
+                  for (var i = 0; i < 20; i++)
+                    ListTile(title: Text('Templom $i')),
+                ],
+                footer: const ListTile(title: Text('Részletes kereső')),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getBottomLeft(find.text('Részletes kereső')).dy,
+      lessThan(360),
+    );
+    expect(find.text('Templom 19'), findsNothing);
+  });
 }

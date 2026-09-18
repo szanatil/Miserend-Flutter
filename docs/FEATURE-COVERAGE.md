@@ -35,7 +35,19 @@ The export is only downloaded when it is missing or of the wrong version — the
 | Search suggestions | Combines up to 20 matching **churches** (by name, common name, alternative name or city) and any matching **cities** (distinct `varos` values), both ignoring case and accents (`searchText`), from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
+| Részletes kereső row | The last row of the suggestions, always — also below 3 characters and with no suggestion — pinned under them. Opens the **Részletes kereső** in the tab's place, with the typed text as the name; the search bar and the bottom navigation stay. Any tab, the back arrow and the system back close it; a search or suggestion from the bar closes it too, and the row always opens it afresh. |
 | Menü | A fourth bottom navigation item with a hamburger icon. Not a tab: it pushes `MenuPage` and the selected tab stays. |
+
+## Részletes kereső
+
+**Files:** `lib/home/advanced_search/advanced_search_page.dart`, `advanced_search_loader.dart` (spec 0010)
+
+- Conditions: a part of the name (name, common name, alternative names), a part of the city with suggestions from the cache, one liturgical language (those occurring in the cache, Hungarian left out), a day (Ma / Holnap / Vasárnap / Dátum…, up to 90 days ahead) and, with a day, a closed time window or the whole day. Every condition given has to hold. A name, a city or a known position is required; otherwise the Keresés button is off with an explanation.
+- A day condition matches a church with at least one **mass** (not confession, vespers…) starting in the window.
+- Results are church cards, whose chips show the matching masses of the searched day (today's without a day). Order: by city and name with a city; nearest first, with the distance on the card, with a known position; by name otherwise.
+- After a search the conditions fold into a pinned summary („Pécs · vasárnap 8–12 · latin"); tapping it opens them again, and folding them without a search restores the last search's conditions.
+- Paging by 20 candidates from the cache. Without a day, no API call. With a day, each page asks `Church {"ids"}` (for removed churches) and each located candidate's masses on that day (`NearbyMasses`, 0.1 km), writes them through, and filters. A page that does not fill the screen asks for the next by itself. A count badge („8 / 12+ találat") shows while scrolling.
+- A failed call decides from the cached masses and shows the usual Nincs kapcsolat / Szerverhiba banner, which retries by itself.
 
 ## Churches tab
 

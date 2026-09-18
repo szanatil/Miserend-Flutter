@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/favorites_prefetch.dart';
+import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
+import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/churches_page.dart';
 import 'package:miserend/home/churches/search_results.dart';
@@ -12,18 +14,44 @@ import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/search_suggestions.dart';
 import 'package:miserend/home/widgets/search_suggestion_list.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
+import 'package:miserend/location_provider.dart';
 import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.tabBuilder,
+    this.suggestions,
+    this.advancedSearchLoader,
+    this.location,
+  });
+
+  /// Injected by tests; the screen builds the real tabs otherwise. Told the
+  /// tab's index and whether it is the one on screen.
+  final Widget Function(int index, bool isActive)? tabBuilder;
+
+  /// Injected by tests; the screen builds its own otherwise.
+  final SearchSuggestions? suggestions;
+
+  /// Injected by tests; the Részletes kereső builds its own otherwise.
+  final AdvancedSearchLoader? advancedSearchLoader;
+
+  /// Injected by tests; the Részletes kereső builds its own otherwise.
+  final LocationProvider? location;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 abstract class Suggestion {
+  Suggestion({required this.onChosen});
+
+  /// Told before the suggestion opens what it offers: a search from the bar
+  /// closes the Részletes kereső (spec 0010, „Belépés").
+  final VoidCallback onChosen;
+
   Widget buildWidget(BuildContext context);
 }
 
@@ -32,7 +60,7 @@ class ChurchSuggestion extends Suggestion {
 
   final ChurchListEntry church;
 
-  ChurchSuggestion(this.church);
+  ChurchSuggestion(this.church, {required super.onChosen});
 
   Widget _errorBuilder(
     BuildContext context,
@@ -49,7 +77,10 @@ class ChurchSuggestion extends Suggestion {
   @override
   Widget buildWidget(BuildContext context) {
     return ListTile(
-      onTap: () => openChurchDetails(context, church),
+      onTap: () {
+        onChosen();
+        openChurchDetails(context, church);
+      },
       titleAlignment: ListTileTitleAlignment.center,
       leading: AspectRatio(
         aspectRatio: 1,
@@ -76,12 +107,13 @@ class ChurchSuggestion extends Suggestion {
 class CitySuggestion extends Suggestion {
   String cityName = '';
 
-  CitySuggestion(this.cityName);
+  CitySuggestion(this.cityName, {required super.onChosen});
 
   @override
   Widget buildWidget(BuildContext context) {
     return ListTile(
       onTap: () {
+        onChosen();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -113,7 +145,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Timer? _searchDebounce;
 
-  final SearchSuggestions _suggestions = SearchSuggestions();
+  late final SearchSuggestions _suggestions =
+      widget.suggestions ?? SearchSuggestions();
+
+  /// What the search bar held when the Részletes kereső was opened; null
+  /// while it is closed.
+  String? _advancedSearchName;
+
+  /// Bumped each time the Részletes kereső opens, so that it starts over with
+  /// empty conditions even when it was open already.
+  int _advancedSearchRun = 0;
+
+  bool get _advancedSearchOpen => _advancedSearchName != null;
 
   /// Bumped per search so a slow query cannot overwrite newer suggestions.
   int _searchRequestId = 0;
@@ -129,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const int _tabCount = 3;
   static const int _massesTab = 1;
-  static const int _mapTab = 2;
 
   /// The navigation item after the tabs. It opens the menu as a page of its
   /// own rather than a tab, so the tab on screen stays selected.
@@ -137,21 +179,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// The Misék and the Térkép tab are told whether they are the one on
   /// screen, because the IndexedStack keeps them alive underneath the others
-  /// and they refresh when they come back into view.
+  /// and they refresh when they come back into view. None is while the
+  /// Részletes kereső stands in their place.
   Widget _tab(int index) {
+    final isActive = _selectedIndex == index && !_advancedSearchOpen;
+    final tabBuilder = widget.tabBuilder;
+    if (tabBuilder != null) return tabBuilder(index, isActive);
     switch (index) {
       case 0:
         return const ChurchesPage();
       case _massesTab:
         return _underSectionBar(
           'Mai misék',
-          NearMassesPage(isActive: _selectedIndex == _massesTab),
+          NearMassesPage(isActive: isActive),
         );
       default:
-        return _underSectionBar(
-          'Térkép',
-          MapPage(isActive: _selectedIndex == _mapTab),
-        );
+        return _underSectionBar('Térkép', MapPage(isActive: isActive));
     }
   }
 
@@ -184,10 +227,29 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
+    // Any tab, the selected one too, closes the Részletes kereső: no search
+    // is left behind the tabs half done (spec 0010, „Keret").
     setState(() {
       _builtTabs.add(index);
       _selectedIndex = index;
+      _advancedSearchName = null;
     });
+  }
+
+  /// Opens the Részletes kereső in the tab's place, with what the search bar
+  /// holds as the church's name.
+  void _openAdvancedSearch() {
+    final name = _searchController.text;
+    if (_searchController.isOpen) _searchController.closeView(name);
+    setState(() {
+      _advancedSearchName = name;
+      _advancedSearchRun++;
+    });
+  }
+
+  void _closeAdvancedSearch() {
+    if (!_advancedSearchOpen) return;
+    setState(() => _advancedSearchName = null);
   }
 
   @override
@@ -199,6 +261,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final advancedSearchName = _advancedSearchName;
+    return PopScope(
+      canPop: !_advancedSearchOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _closeAdvancedSearch();
+      },
+      child: _scaffold(advancedSearchName),
+    );
+  }
+
+  Widget _scaffold(String? advancedSearchName) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -214,13 +287,18 @@ class _HomeScreenState extends State<HomeScreen> {
               // the bar's width and height and grows with the suggestions,
               // up to a cap that leaves room for the keyboard.
               viewHeaderHeight: _searchBarHeight,
+              // A minimum height makes the view build its list even with no
+              // suggestions, so that the Részletes kereső row is always there.
               viewConstraints: const BoxConstraints(
+                minHeight: _searchBarHeight,
                 maxHeight: _searchViewMaxHeight,
               ),
               shrinkWrap: true,
               viewBuilder:
-                  (suggestions) =>
-                      SearchSuggestionList(suggestions: suggestions),
+                  (suggestions) => SearchSuggestionList(
+                    suggestions: suggestions,
+                    footer: _advancedSearchRow(),
+                  ),
               onChanged: _onSearchChanged,
               onSubmitted: _onSearchSubmitted,
               searchController: _searchController,
@@ -236,16 +314,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        sizing: StackFit.expand,
-        children: List<Widget>.generate(
-          _tabCount,
-          (int index) =>
-              _builtTabs.contains(index)
-                  ? _tab(index)
-                  : const SizedBox.shrink(),
-        ),
+      // The Részletes kereső stands in the tab's place; the tabs stay alive
+      // underneath, as they are when another tab is on screen.
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Offstage(
+            offstage: advancedSearchName != null,
+            child: TickerMode(
+              enabled: advancedSearchName == null,
+              child: IndexedStack(
+                index: _selectedIndex,
+                sizing: StackFit.expand,
+                children: List<Widget>.generate(
+                  _tabCount,
+                  (int index) =>
+                      _builtTabs.contains(index)
+                          ? _tab(index)
+                          : const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+          if (advancedSearchName != null)
+            AdvancedSearchPage(
+              key: ValueKey(_advancedSearchRun),
+              initialName: advancedSearchName,
+              onClose: _closeAdvancedSearch,
+              loader: widget.advancedSearchLoader,
+              location: widget.location,
+            ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -267,6 +366,21 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.white54,
         onTap: _onItemTapped,
       ),
+    );
+  }
+
+  /// The last row of the suggestions, whatever is typed (spec 0010,
+  /// „Belépés"): the Android app's advanced search stood in the same place,
+  /// under the same name.
+  Widget _advancedSearchRow() {
+    return ListTile(
+      onTap: _openAdvancedSearch,
+      titleAlignment: ListTileTitleAlignment.center,
+      leading: const AspectRatio(
+        aspectRatio: 1,
+        child: Icon(Icons.manage_search, color: Colors.black54, size: 24.0),
+      ),
+      title: const Text('Részletes kereső'),
     );
   }
 
@@ -292,8 +406,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final int requestId = _searchRequestId;
     final found = await _suggestions.suggest(value);
     final combined = <Suggestion>[];
-    combined.addAll(found.churches.map((c) => ChurchSuggestion(c)));
-    combined.addAll(found.cities.map((c) => CitySuggestion(c)));
+    combined.addAll(
+      found.churches.map(
+        (c) => ChurchSuggestion(c, onChosen: _closeAdvancedSearch),
+      ),
+    );
+    combined.addAll(
+      found.cities.map(
+        (c) => CitySuggestion(c, onChosen: _closeAdvancedSearch),
+      ),
+    );
     if (!mounted || requestId != _searchRequestId) {
       return;
     }
@@ -311,6 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSearchSubmitted(String value) {
+    _closeAdvancedSearch();
     Navigator.push(
       context,
       MaterialPageRoute(

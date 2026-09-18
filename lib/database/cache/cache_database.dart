@@ -449,6 +449,56 @@ class CacheDatabase {
     return rows.map((row) => row['varos'] as String).toList();
   }
 
+  /// The Részletes kereső's candidates: the churches meeting every condition
+  /// given, in no particular order and without their masses (spec 0010,
+  /// „Egyezés"). [name] is a part of the name, the common name or an
+  /// alternative name, [city] a part of the city, both folded as in
+  /// [searchChurches]; [language] a `nyelvek` code.
+  Future<List<ChurchListEntry>> advancedSearchCandidates({
+    String? name,
+    String? city,
+    String? language,
+  }) async {
+    final where = <String>[];
+    final args = <Object>[];
+    if (name != null) {
+      final folded = searchText(name);
+      where.add(
+        '(instr(kereses_nev, ?) > 0 OR instr(kereses_alt_nevek, ?) > 0)',
+      );
+      args.addAll([folded, folded]);
+    }
+    if (city != null) {
+      where.add('instr(kereses_varos, ?) > 0');
+      args.add(searchText(city));
+    }
+    if (language != null) {
+      // The codes are stored as a JSON list; the quotes keep „hu" from
+      // matching inside a longer code.
+      where.add('instr(nyelvek, ?) > 0');
+      args.add(jsonEncode(language));
+    }
+    final rows = await db.query(
+      churchesTable,
+      columns: _listColumns.split(', '),
+      where: where.isEmpty ? null : where.join(' AND '),
+      whereArgs: args,
+    );
+    return _listEntries(rows, null);
+  }
+
+  /// Every `nyelvek` code some cached church carries, each once, sorted.
+  Future<List<String>> languages() async {
+    final rows = await db.query(
+      churchesTable,
+      distinct: true,
+      columns: ['nyelvek'],
+      where: "nyelvek IS NOT NULL AND nyelvek <> '[]'",
+    );
+    return {for (final row in rows) ..._stringList(row['nyelvek'])}.toList()
+      ..sort();
+  }
+
   /// The churches with these ids that the cache holds, by name, with their
   /// rows of [day].
   Future<List<ChurchListEntry>> churchesByIds(
@@ -469,12 +519,13 @@ class CacheDatabase {
   /// The folded name orders the way a reader expects closely enough for a
   /// short list.
   static List<ChurchListEntry> _byName(List<ChurchListEntry> entries) =>
-      entries..sort((a, b) {
-        final byName = searchText(
-          a.name ?? '',
-        ).compareTo(searchText(b.name ?? ''));
-        return byName != 0 ? byName : a.id.compareTo(b.id);
-      });
+      entries..sort(compareByName);
+
+  /// [_byName]'s order, for lists sorted elsewhere.
+  static int compareByName(ChurchListEntry a, ChurchListEntry b) {
+    final byName = searchText(a.name ?? '').compareTo(searchText(b.name ?? ''));
+    return byName != 0 ? byName : a.id.compareTo(b.id);
+  }
 
   /// Forgets churches miserend.hu no longer has, with their masses.
   Future<void> deleteChurches(List<int> ids) async {
