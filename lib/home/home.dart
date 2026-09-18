@@ -7,6 +7,7 @@ import 'package:miserend/favorites_prefetch.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
 import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/churches_page.dart';
 import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/map/map_page.dart';
@@ -26,6 +27,7 @@ class HomeScreen extends StatefulWidget {
     this.suggestions,
     this.advancedSearchLoader,
     this.location,
+    this.searchResultsLoader,
   });
 
   /// Injected by tests; the screen builds the real tabs otherwise. Told the
@@ -41,6 +43,9 @@ class HomeScreen extends StatefulWidget {
   /// Injected by tests; the Részletes kereső builds its own otherwise.
   final LocationProvider? location;
 
+  /// Injected by tests; the search results page builds its own otherwise.
+  final ChurchListLoader? searchResultsLoader;
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -49,7 +54,7 @@ abstract class Suggestion {
   Suggestion({required this.onChosen});
 
   /// Told before the suggestion opens what it offers: a search from the bar
-  /// closes the Részletes kereső (spec 0010, „Belépés").
+  /// closes the Részletes kereső and empties the bar (spec 0010, „Belépés").
   final VoidCallback onChosen;
 
   Widget buildWidget(BuildContext context);
@@ -107,7 +112,10 @@ class ChurchSuggestion extends Suggestion {
 class CitySuggestion extends Suggestion {
   String cityName = '';
 
-  CitySuggestion(this.cityName, {required super.onChosen});
+  /// Injected by tests; the results page builds its own otherwise.
+  final ChurchListLoader? resultsLoader;
+
+  CitySuggestion(this.cityName, {required super.onChosen, this.resultsLoader});
 
   @override
   Widget buildWidget(BuildContext context) {
@@ -120,6 +128,7 @@ class CitySuggestion extends Suggestion {
             builder:
                 (context) => SearchResultsPage(
                   searchParams: SearchParams.fromCity(cityName),
+                  loader: resultsLoader,
                 ),
           ),
         );
@@ -240,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// holds as the church's name.
   void _openAdvancedSearch() {
     final name = _searchController.text;
-    if (_searchController.isOpen) _searchController.closeView(name);
+    _clearSearchBar();
     setState(() {
       _advancedSearchName = name;
       _advancedSearchRun++;
@@ -250,6 +259,24 @@ class _HomeScreenState extends State<HomeScreen> {
   void _closeAdvancedSearch() {
     if (!_advancedSearchOpen) return;
     setState(() => _advancedSearchName = null);
+  }
+
+  /// A search is submitted or a suggestion chosen: it stands in the
+  /// Részletes kereső's place.
+  void _onBarSearchStarted() {
+    _closeAdvancedSearch();
+    _clearSearchBar();
+  }
+
+  /// Any search from the bar empties it: it opens empty next time, not with
+  /// the last search's text and suggestions (spec 0010, „Belépés").
+  void _clearSearchBar() {
+    _searchDebounce?.cancel();
+    // A search still running must not bring its suggestions back.
+    _searchRequestId++;
+    if (_searchController.isOpen) _searchController.closeView('');
+    _searchController.clear();
+    setState(suggestions.clear);
   }
 
   @override
@@ -408,12 +435,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final combined = <Suggestion>[];
     combined.addAll(
       found.churches.map(
-        (c) => ChurchSuggestion(c, onChosen: _closeAdvancedSearch),
+        (c) => ChurchSuggestion(c, onChosen: _onBarSearchStarted),
       ),
     );
     combined.addAll(
       found.cities.map(
-        (c) => CitySuggestion(c, onChosen: _closeAdvancedSearch),
+        (c) => CitySuggestion(
+          c,
+          onChosen: _onBarSearchStarted,
+          resultsLoader: widget.searchResultsLoader,
+        ),
       ),
     );
     if (!mounted || requestId != _searchRequestId) {
@@ -433,13 +464,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSearchSubmitted(String value) {
-    _closeAdvancedSearch();
+    _onBarSearchStarted();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => SearchResultsPage(
               searchParams: SearchParams.fromSearchTerm(value),
+              loader: widget.searchResultsLoader,
             ),
       ),
     );

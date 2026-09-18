@@ -67,6 +67,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 - A keresősáv javaslatnézetének alján mindig ott áll a „Részletes kereső" sor, **rögzített láblécként**: fölötte vékony elválasztó, a javaslatok fölötte görögnek, így sok javaslatnál sem kerül ki a látható részből. Akkor is ott áll, ha a beírt szöveg rövidebb a javaslatok 3 karakteres küszöbénél, és akkor is, ha nincs javaslat. Megjelenése a javaslatsoroké: `ListTile`, a kezdő 40 px-es helyen `Icons.manage_search` ikon (ahol a településjavaslat `location_city` ikonja áll). Más belépési pont nincs (a Templomok fülön sincs külön ikon).
 - A sorra koppintva a keresősávba írt szöveg a **név** mezőbe kerül.
 - **Új keresés, üres feltételekkel**: a keresősávból indított **bármelyik** keresés — a Részletes kereső sor, egy templom- vagy településjavaslat, vagy az egyszerű keresés beküldése — törli a Részletes kereső korábbi feltételeit és találatait. A Részletes kereső sor akkor is üres feltételekkel (és a beírt névvel) indul, ha a Részletes kereső már nyitva volt; az egyszerű keresés és a javaslatok a Részletes keresőt bezárják, így a találati oldalról visszalépve a fül jön.
+- **A keresősáv kiürül**: bármelyik keresés indításakor a sáv szövege és a javaslatok törlődnek, a sáv legközelebb üresen nyílik. A Részletes kereső sor a beírt szöveget a törlés előtt veszi át a név mezőbe.
 
 ### Keret
 

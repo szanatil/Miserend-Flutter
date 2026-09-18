@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/home/search_suggestions.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../database/fake_favorites_service.dart';
 import '../fake_location_provider.dart';
 import 'advanced_search/fake_advanced_search_loader.dart';
+import 'churches/fake_church_list_loader.dart';
 
 /// Offers nothing, so that no test reads the device's cache.
 class _NoSuggestions extends SearchSuggestions {
@@ -16,8 +19,19 @@ class _NoSuggestions extends SearchSuggestions {
       const Suggestions(churches: [], cities: []);
 }
 
+/// Offers Szeged as a city for any term.
+class _SzegedSuggested extends SearchSuggestions {
+  @override
+  Future<Suggestions> suggest(String term) async =>
+      const Suggestions(churches: [], cities: ['Szeged']);
+}
+
 void main() {
-  Future<void> pumpHome(WidgetTester tester) async {
+  Future<void> pumpHome(
+    WidgetTester tester, {
+    SearchSuggestions? suggestions,
+    ChurchListLoader? searchResultsLoader,
+  }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         // Never loaded, so that the favorites' prefetch does not start.
@@ -25,7 +39,8 @@ void main() {
         child: MaterialApp(
           home: HomeScreen(
             tabBuilder: (index, isActive) => Text('Fül $index'),
-            suggestions: _NoSuggestions(),
+            suggestions: suggestions ?? _NoSuggestions(),
+            searchResultsLoader: searchResultsLoader,
             advancedSearchLoader: FakeAdvancedSearchLoader(const []),
             location: FakeLocationProvider(),
           ),
@@ -111,5 +126,63 @@ void main() {
 
     expect(fieldText(tester, 'Templom neve'), 'Szent');
     expect(fieldText(tester, 'Település'), isEmpty);
+  });
+
+  group('a search from the bar leaves it empty for the next one', () {
+    Future<void> reopenSearchBar(WidgetTester tester) async {
+      await tester.tap(find.byType(SearchBar));
+      await tester.pumpAndSettle();
+    }
+
+    void expectEmptyBar(WidgetTester tester) {
+      final field = tester.widget<TextField>(find.byType(TextField).last);
+      expect(field.controller!.text, isEmpty);
+      expect(find.widgetWithText(ListTile, 'Szeged'), findsNothing);
+    }
+
+    Future<void> pumpWithSzeged(WidgetTester tester) => pumpHome(
+      tester,
+      suggestions: _SzegedSuggested(),
+      searchResultsLoader: FakeChurchListLoader([const <ChurchListEntry>[]]),
+    );
+
+    testWidgets('after submitting', (tester) async {
+      await pumpWithSzeged(tester);
+      await typeIntoSearchBar(tester, 'Szeged');
+      expect(find.widgetWithText(ListTile, 'Szeged'), findsOneWidget);
+
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await reopenSearchBar(tester);
+
+      expectEmptyBar(tester);
+    });
+
+    testWidgets('after choosing a city', (tester) async {
+      await pumpWithSzeged(tester);
+      await typeIntoSearchBar(tester, 'Szeg');
+
+      await tester.tap(find.widgetWithText(ListTile, 'Szeged'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await reopenSearchBar(tester);
+
+      expectEmptyBar(tester);
+    });
+
+    testWidgets('after the Részletes kereső, which still takes the name', (
+      tester,
+    ) async {
+      await pumpHome(tester, suggestions: _SzegedSuggested());
+      await openAdvancedSearch(tester, 'Mátyás');
+      expect(fieldText(tester, 'Templom neve'), 'Mátyás');
+
+      await reopenSearchBar(tester);
+
+      expectEmptyBar(tester);
+    });
   });
 }
