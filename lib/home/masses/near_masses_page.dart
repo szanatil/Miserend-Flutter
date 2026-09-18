@@ -7,6 +7,7 @@ import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
+import 'package:miserend/home/masses/mass_start_header.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
@@ -279,17 +280,29 @@ class _NearMassesPageState extends State<NearMassesPage>
       );
     }
 
+    // The masses come in time order, so each start's masses follow its
+    // header. The rows are built lazily, as before the headers: a card asks
+    // the cache for its photo only once it is scrolled to.
+    final rows = <NearbyMassesItem?>[];
+    for (final (index, mass) in masses.indexed) {
+      // A null row stands for the header of the mass after it.
+      if (index == 0 || masses[index - 1].start != mass.start) rows.add(null);
+      rows.add(mass);
+    }
+
     return _Ground(
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(8),
-        itemCount: masses.length,
+        itemCount: rows.length,
         itemBuilder: (BuildContext context, int index) {
-          final mass = masses[index];
+          final mass = rows[index];
+          if (mass == null) {
+            return MassStartHeader(mass: rows[index + 1]!, now: now);
+          }
           return MassCard(
             mass: mass,
             detail: _details.of(mass),
-            now: now,
             thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
             onTap: () => _openChurch(mass),
           );

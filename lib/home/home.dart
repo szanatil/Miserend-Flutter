@@ -11,6 +11,7 @@ import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/search_suggestions.dart';
 import 'package:miserend/home/widgets/search_suggestion_list.dart';
+import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
@@ -142,10 +143,22 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return const ChurchesPage();
       case _massesTab:
-        return NearMassesPage(isActive: _selectedIndex == _massesTab);
+        return _underSectionBar(
+          'Mai misék',
+          NearMassesPage(isActive: _selectedIndex == _massesTab),
+        );
       default:
-        return MapPage(isActive: _selectedIndex == _mapTab);
+        return _underSectionBar(
+          'Térkép',
+          MapPage(isActive: _selectedIndex == _mapTab),
+        );
     }
+  }
+
+  /// The Templomok tab's purple strip, with the tab's name in place of its
+  /// Közeli / Kedvencek tabs.
+  Widget _underSectionBar(String title, Widget page) {
+    return Scaffold(appBar: SectionBar.title(title), body: page);
   }
 
   @override

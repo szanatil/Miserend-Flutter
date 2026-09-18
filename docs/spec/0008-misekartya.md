@@ -11,7 +11,7 @@ A Misék fül sorai (`mass_list_item.dart`) két dologban térnek el attól, ami
 
 ## Solution
 
-A sor helyére **misekártya** kerül, a templomkártya testvére: ugyanaz a kártyacsalád, de saját, az időpontra épülő, tömörebb belső elrendezéssel. Három sávja van: balra az **idő** (nagy kezdés, alatta a **hátralévő idő** vagy az „Épp most tart" jelölés), középen a **templom** (név, település · mise címe), jobbra egy keskeny **fotósáv**, rajta a távolsággal.
+*(Módosítva 2026-09-18: az idősáv megszűnt, a kezdés a blokkfejlécbe került, ld. „Elrendezés”.)* A sor helyére **misekártya** kerül, a templomkártya testvére: ugyanaz a kártyacsalád, de saját, az időpontra épülő, tömörebb belső elrendezéssel. Három sávja van: balra az **idő** (nagy kezdés, alatta a **hátralévő idő** vagy az „Épp most tart" jelölés), középen a **templom** (név, település · mise címe), jobbra egy keskeny **fotósáv**, rajta a távolsággal.
 
 A templom képe marad, mert segít gyorsan felismerni, melyik templomról van szó, de az időpontnál kisebb szerepet kap.
 
@@ -44,8 +44,10 @@ A templom képe marad, mert segít gyorsan felismerni, melyik templomról van sz
 
 | Sáv | Tartalom |
 |---|---|
-| **Idő** (bal, fix szélesség) | Kezdés 24 órás formában, nagy (`headlineMedium` körül), **félkövér**, `CustomColors.accent` színnel. Ugyanez a szín jelöli a mise-időpontokat a templomkártyán is. Alatta kisebb (`bodySmall`), szürke szöveggel a **hátralévő idő**, vagy **helyette** az „Épp most tart" jelölés (a mostani `_OngoingBadge`). A két elem kizárja egymást. 2 órán túli misénél a hely üres marad. |
-| **Templom** (közép, `Expanded`) | **Név**: legfeljebb **2 sor**, ellipszissel. A két sor helye rövid névnél is le van foglalva (a templomkártya `_LineSlot` mintája), így ami alatta van, minden kártyán ugyanott áll. **Alatta 1 sor**: település és mise címe, `·`-vel elválasztva („Nyíregyháza · Szent Liturgia"). Ha nincs cím, vagy a cím „Szentmise", csak a település áll. Ha nincs település, csak a cím. Ha nem fér ki, a sor vége ellipszissel levágódik. A sor végére a **mise jellemzője** is felkerül, ha van (spec 0011). |
+> **Módosítva (2026-09-18, a #36 tesztelése után):** a kezdés és a hátralévő idő lekerült a kártyáról. Az azonos időpontban kezdődő misék blokkot alkotnak: a blokk fejléce (`MassStartHeader`) a kezdés, mellette a hátralévő idő vagy az „Épp most tart", alatta egy vonal, alatta a kártyák. A kártyán nincs idősáv; a mise jellemzője a település alatti saját sorba került (spec 0011). A Misék fül a keresősáv alatt a Templomok fül lila sávját kapja „Mai misék" felirattal, a Térkép fül „Térkép" felirattal (`SectionBar`).
+
+| **Idő** (bal, fix szélesség) — *megszűnt, ld. fent* | Kezdés 24 órás formában, nagy (`headlineMedium` körül), **félkövér**, `CustomColors.accent` színnel. Ugyanez a szín jelöli a mise-időpontokat a templomkártyán is. Alatta kisebb (`bodySmall`), szürke szöveggel a **hátralévő idő**, vagy **helyette** az „Épp most tart" jelölés (a mostani `_OngoingBadge`). A két elem kizárja egymást. 2 órán túli misénél a hely üres marad. |
+| **Templom** (közép, `Expanded`) | **Név**: legfeljebb **2 sor**, ellipszissel. A két sor helye rövid névnél is le van foglalva (a templomkártya `_LineSlot` mintája), így ami alatta van, minden kártyán ugyanott áll. **Alatta 1 sor**: település és mise címe, `·`-vel elválasztva („Nyíregyháza · Szent Liturgia"). Ha nincs cím, vagy a cím „Szentmise", csak a település áll. Ha nincs település, csak a cím. Ha nem fér ki, a sor vége ellipszissel levágódik. A **mise jellemzője** ez alatt, saját sorban, sárga buborékokban áll (spec 0011, módosítva 2026-09-18). |
 | **Kép** (jobb) | Keskeny, **teljes magasságú** fotósáv (~96 px széles), a kártya széléig kifuttatva (`Clip.antiAlias` a kártyán, mint a templomkártyán). A `DistanceChip` a kép **jobb alsó sarkában** áll, 8 px-re a szélektől, a templomkártyával egyezően. |
 
 - A fix magasság a legmagasabb tartalomból adódik: kétsoros név + egy sor alatta a középső sávban, illetve kezdés + jelölés az időoszlopban. Nagyobb betűméretnél sem csordulhat túl, ezt teszt ellenőrzi.

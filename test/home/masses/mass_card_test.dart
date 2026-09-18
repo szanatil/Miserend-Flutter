@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/widgets/distance_chip.dart';
@@ -44,12 +45,14 @@ Finder _typeIcon(MassType type) => find.byWidgetPredicate((widget) {
   return provider is AssetImage && provider.assetName == type.iconAsset;
 });
 
+/// A bubble of the mass detail.
+Finder _bubble() => find.byType(MassDetailBubble);
+
 void main() {
   Future<void> pumpCard(
     WidgetTester tester,
     NearbyMassesItem mass, {
     String? detail,
-    DateTime? now,
     double width = 400,
     double textScale = 1,
   }) async {
@@ -58,15 +61,18 @@ void main() {
         home: MediaQuery(
           data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
           child: Scaffold(
-            body: Align(
-              alignment: Alignment.topLeft,
-              child: SizedBox(
-                width: width,
-                child: MassCard(
-                  mass: mass,
-                  detail: detail,
-                  now: now ?? _at(12, 0),
-                  thumbnailUrl: Future.value(null),
+            // Scrollable as the list is, so a card taller than the screen
+            // fits.
+            body: SingleChildScrollView(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: width,
+                  child: MassCard(
+                    mass: mass,
+                    detail: detail,
+                    thumbnailUrl: Future.value(null),
+                  ),
                 ),
               ),
             ),
@@ -77,71 +83,10 @@ void main() {
     await tester.pump();
   }
 
-  group('time', () {
-    testWidgets('shows the start and, within two hours, the time until it', (
-      tester,
-    ) async {
-      await pumpCard(tester, _mass(start: _at(18, 0)), now: _at(17, 35));
+  testWidgets('leaves the start to the header above it', (tester) async {
+    await pumpCard(tester, _mass(start: _at(18, 0)));
 
-      expect(find.text('18:00'), findsOneWidget);
-      expect(find.text('25 perc múlva'), findsOneWidget);
-      expect(find.text('Épp most tart'), findsNothing);
-    });
-
-    testWidgets('an ongoing mass is marked as such, with no time until', (
-      tester,
-    ) async {
-      await pumpCard(tester, _mass(start: _at(18, 0)), now: _at(18, 4));
-
-      expect(find.text('18:00'), findsOneWidget);
-      expect(find.text('Épp most tart'), findsOneWidget);
-      expect(find.textContaining('múlva'), findsNothing);
-    });
-
-    testWidgets('a mass more than two hours away shows the start alone', (
-      tester,
-    ) async {
-      await pumpCard(tester, _mass(start: _at(18, 0)), now: _at(12, 0));
-
-      expect(find.text('18:00'), findsOneWidget);
-      expect(find.textContaining('múlva'), findsNothing);
-      expect(find.text('Épp most tart'), findsNothing);
-    });
-
-    for (final textScale in [1.0, 2.0]) {
-      testWidgets('every card is the same height at text scale $textScale, '
-          'whatever the time column says', (tester) async {
-        final heights = <double>[];
-        for (final now in [_at(18, 4), _at(17, 1), _at(12, 0)]) {
-          await pumpCard(
-            tester,
-            _mass(name: 'Rövid'),
-            now: now,
-            width: 360,
-            textScale: textScale,
-          );
-          heights.add(tester.getSize(find.byType(MassCard)).height);
-        }
-
-        expect(tester.takeException(), isNull);
-        expect(heights.toSet(), hasLength(1));
-      });
-    }
-
-    testWidgets('the church column starts at the same place whatever the time '
-        'column says', (tester) async {
-      await pumpCard(tester, _mass(start: _at(18, 0)), now: _at(18, 4));
-      final besideOngoing = tester.getTopLeft(
-        find.text('Szent Miklós-templom'),
-      );
-
-      await pumpCard(tester, _mass(start: _at(18, 0)), now: _at(12, 0));
-      final besideStartAlone = tester.getTopLeft(
-        find.text('Szent Miklós-templom'),
-      );
-
-      expect(besideStartAlone, besideOngoing);
-    });
+    expect(find.text('18:00'), findsNothing);
   });
 
   group('church', () {
@@ -164,163 +109,143 @@ void main() {
       expect(find.text('Szent Liturgia'), findsOneWidget);
     });
 
-    testWidgets('puts the detail after the title', (tester) async {
+    testWidgets('keeps the detail off the city line', (tester) async {
       await pumpCard(
         tester,
         _mass(title: 'Szent Liturgia'),
         detail: 'latin nyelven',
       );
 
+      expect(find.text('Nyíregyháza · Szent Liturgia'), findsOneWidget);
+      expect(find.text('latin nyelven'), findsOneWidget);
+    });
+
+    testWidgets('puts each part of the detail in a yellow bubble of its own, '
+        'a type as its icon and its word', (tester) async {
+      await pumpCard(
+        tester,
+        _mass(),
+        detail: 'latin nyelven, Csendes (Mária-kápolnában)',
+        width: 600,
+      );
+
+      for (final text in ['latin nyelven', 'Csendes', '(Mária-kápolnában)']) {
+        expect(
+          find.ancestor(of: find.text(text), matching: _bubble()),
+          findsOneWidget,
+          reason: text,
+        );
+      }
       expect(
-        find.text('Nyíregyháza · Szent Liturgia · latin nyelven'),
+        find.ancestor(of: _typeIcon(MassType.silent), matching: _bubble()),
         findsOneWidget,
       );
-    });
-
-    testWidgets('puts the detail right after the city for plain Szentmise', (
-      tester,
-    ) async {
-      await pumpCard(
-        tester,
-        _mass(title: 'Szentmise'),
-        detail: '(adventben 6:00)',
+      expect(_bubble(), findsNWidgets(3));
+      final surface = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: _bubble().first,
+          matching: find.byType(DecoratedBox),
+        ),
       );
-
-      expect(find.text('Nyíregyháza · (adventben 6:00)'), findsOneWidget);
-    });
-
-    testWidgets('draws the types as icons in place of their words, the rest '
-        'as text', (tester) async {
-      await pumpCard(
-        tester,
-        _mass(),
-        detail: 'latin nyelven, Csendes, Gitáros (Mária-kápolnában)',
-      );
-
-      expect(_typeIcon(MassType.silent), findsOneWidget);
-      expect(_typeIcon(MassType.guitar), findsOneWidget);
-      expect(find.textContaining('Csendes'), findsNothing);
-      expect(find.textContaining('Gitáros'), findsNothing);
-      expect(find.textContaining('latin nyelven'), findsOneWidget);
-      expect(find.textContaining('(Mária-kápolnában)'), findsOneWidget);
-    });
-
-    testWidgets('keeps the commas between words the detail holds', (
-      tester,
-    ) async {
-      await pumpCard(
-        tester,
-        _mass(),
-        detail: 'latin nyelven, Ismeretlen, Csendes',
-      );
-
       expect(
-        find.textContaining('Nyíregyháza · latin nyelven, Ismeretlen '),
-        findsOneWidget,
+        (surface.decoration as BoxDecoration).color,
+        CustomColors.massDetailTint,
       );
     });
 
-    testWidgets('a type icon is as tall as the letters at a large text size', (
-      tester,
-    ) async {
-      // Wide enough for the icon to fit before the line is cut off.
-      await pumpCard(
-        tester,
-        _mass(),
-        detail: 'Csendes',
-        width: 800,
-        textScale: 2,
-      );
+    testWidgets('a card without a detail has no bubble', (tester) async {
+      await pumpCard(tester, _mass());
 
-      final fontSize =
-          Theme.of(
-            tester.element(find.byType(MassCard)),
-          ).textTheme.bodyMedium!.fontSize!;
-      expect(tester.getRect(_typeIcon(MassType.silent)).height, fontSize * 2);
+      expect(_bubble(), findsNothing);
     });
 
-    testWidgets('a screen reader reads a type icon as its word', (
-      tester,
-    ) async {
-      final semantics = tester.ensureSemantics();
-      await pumpCard(tester, _mass(), detail: 'Csendes');
-
-      // The card reads as one node, so the word is its tooltip.
-      expect(
-        tester.getSemantics(find.byType(MassCard)).getSemanticsData().tooltip,
-        'Csendes',
-      );
-      semantics.dispose();
-    });
-
-    testWidgets('tapping a type icon shows its word above it, and does not '
-        'open the church', (tester) async {
+    testWidgets('tapping a bubble shows its whole text, and does not open the '
+        'church', (tester) async {
+      const comment =
+          '(Minden hónap első péntekén a szentmise után Jézus Szíve '
+          'litánia.)';
       var taps = 0;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: Center(
-              child: MassCard(
-                mass: _mass(),
-                detail: 'Csendes',
-                now: _at(12, 0),
-                thumbnailUrl: Future.value(null),
-                onTap: () => taps++,
+              child: SizedBox(
+                width: 360,
+                child: MassCard(
+                  mass: _mass(),
+                  detail: comment,
+                  thumbnailUrl: Future.value(null),
+                  onTap: () => taps++,
+                ),
               ),
             ),
           ),
         ),
       );
 
-      await tester.tap(_typeIcon(MassType.silent));
+      await tester.tap(_bubble());
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('Csendes'), findsOneWidget);
-      expect(
-        tester.getBottomLeft(find.text('Csendes')).dy,
-        lessThanOrEqualTo(tester.getTopLeft(_typeIcon(MassType.silent)).dy),
-      );
+      // The bubble's own text, and the tooltip's over it.
+      expect(find.text(comment), findsNWidgets(2));
       expect(taps, 0);
     });
 
-    testWidgets('a long detail is cut off at the end of its one line', (
-      tester,
-    ) async {
+    testWidgets('a long comment is cut off within its bubble, not '
+        'overflowing the card', (tester) async {
       await pumpCard(
         tester,
         _mass(),
         detail:
-            'latin nyelven, Csendes (a Mária-kápolnában, adventben hajnali 6:00-kor, '
-            'utána reggeli a plébánián)',
+            '(a Mária-kápolnában, adventben hajnali 6:00-kor, utána '
+            'reggeli a plébánián)',
         width: 360,
       );
 
-      final line = tester.widget<Text>(find.textContaining('Nyíregyháza · '));
-      expect(line.textSpan?.toPlainText(), contains('adventben hajnali'));
-      expect(line.maxLines, 1);
-      expect(line.overflow, TextOverflow.ellipsis);
       expect(tester.takeException(), isNull);
+      final card = tester.getRect(find.byType(MassCard));
+      expect(tester.getRect(_bubble()).right, lessThanOrEqualTo(card.right));
     });
 
-    for (final textScale in [1.0, 2.0]) {
-      testWidgets('a detail leaves the card as tall as none at text scale '
-          '$textScale', (tester) async {
+    for (final textScale in [1.0, 2.0, 3.0]) {
+      testWidgets('a one-line detail leaves the card as tall as none at text '
+          'scale $textScale', (tester) async {
         await pumpCard(tester, _mass(), width: 360, textScale: textScale);
         final without = tester.getSize(find.byType(MassCard)).height;
 
         await pumpCard(
           tester,
-          _mass(title: 'Szent Liturgia'),
-          detail:
-              'latin nyelven, Csendes, Gitáros, Diák, Énekes '
-              '(Mária-kápolnában)',
+          _mass(),
+          detail: 'Csendes',
           width: 360,
           textScale: textScale,
         );
-        final withDetail = tester.getSize(find.byType(MassCard)).height;
 
         expect(tester.takeException(), isNull);
-        expect(withDetail, without);
+        expect(tester.getSize(find.byType(MassCard)).height, without);
+      });
+
+      testWidgets('bubbles that do not fit on one line all go on, and the card '
+          'grows for them, at text scale $textScale', (tester) async {
+        await pumpCard(tester, _mass(), width: 360, textScale: textScale);
+        final without = tester.getSize(find.byType(MassCard)).height;
+
+        await pumpCard(
+          tester,
+          _mass(),
+          detail:
+              'latin nyelven, Csendes, Gitáros, Diák, Énekes, '
+              'Családos/mocorgós (Mária-kápolnában)',
+          width: 360,
+          textScale: textScale,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(_bubble(), findsNWidgets(7));
+        expect(
+          tester.getSize(find.byType(MassCard)).height,
+          greaterThan(without),
+        );
       });
     }
 
@@ -355,7 +280,6 @@ void main() {
           title: 'Régi rítusú szentmise',
           start: _at(18, 0),
         ),
-        now: _at(18, 4),
         width: 360,
         textScale: 2,
       );
@@ -415,7 +339,6 @@ void main() {
         home: Scaffold(
           body: MassCard(
             mass: _mass(),
-            now: _at(12, 0),
             thumbnailUrl: Future.value(null),
             onTap: () => taps++,
           ),
@@ -423,7 +346,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('18:00'));
+    await tester.tap(find.text('Szent Miklós-templom'));
     await tester.tap(_photo());
 
     expect(taps, 2);

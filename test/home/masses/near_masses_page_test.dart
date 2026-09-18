@@ -120,6 +120,10 @@ class _EmptyDetailsLoader extends ChurchScheduleLoader {
 void main() {
   late DateTime now;
 
+  /// Where [text] stands on the screen, to tell what comes above what.
+  double top(WidgetTester tester, String text) =>
+      tester.getTopLeft(find.text(text)).dy;
+
   setUp(() => now = _at(12, 0));
 
   // The details page reads favorites from its initState, so the factory has to
@@ -431,9 +435,34 @@ void main() {
       );
     });
 
-    testWidgets('marks a mass as ongoing only once it has started', (
-      tester,
-    ) async {
+    testWidgets('masses starting together stand under one header with their '
+        'start', (tester) async {
+      now = _at(17, 35);
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [
+            _mass(church: 1, name: 'Első', km: 1, start: _at(18, 0)),
+            _mass(church: 2, name: 'Második', km: 2, start: _at(18, 0)),
+            _mass(church: 3, name: 'Harmadik', km: 3, start: _at(18, 30)),
+          ],
+        ]),
+      );
+
+      expect(find.text('18:00'), findsOneWidget);
+      expect(find.text('18:30'), findsOneWidget);
+      expect(find.text('25 perc múlva'), findsOneWidget);
+      expect(find.text('55 perc múlva'), findsOneWidget);
+
+      expect(top(tester, '18:00'), lessThan(top(tester, 'Első')));
+      expect(top(tester, 'Első'), lessThan(top(tester, 'Második')));
+      expect(top(tester, 'Második'), lessThan(top(tester, '18:30')));
+      expect(top(tester, '18:30'), lessThan(top(tester, 'Harmadik')));
+      expect(find.byType(Divider), findsNWidgets(2));
+    });
+
+    testWidgets('marks a mass as ongoing only once it has started, in its '
+        'header', (tester) async {
       now = _at(14, 5);
       await pumpPage(
         tester,
@@ -446,14 +475,12 @@ void main() {
       );
 
       expect(find.text('Épp most tart'), findsOneWidget);
-      final ongoingRow = find.ancestor(
-        of: find.text('Elkezdődött'),
-        matching: find.byType(MassCard),
-      );
+      expect(find.text('25 perc múlva'), findsOneWidget);
       expect(
-        find.descendant(of: ongoingRow, matching: find.text('Épp most tart')),
-        findsOneWidget,
+        top(tester, 'Épp most tart'),
+        lessThan(top(tester, 'Elkezdődött')),
       );
+      expect(top(tester, 'Elkezdődött'), lessThan(top(tester, '14:30')));
     });
 
     testWidgets('shows the title after the city only when it is not plain '
@@ -486,7 +513,7 @@ void main() {
     });
 
     testWidgets('shows the list before the mass details arrive, then adds '
-        'them to the line under the name', (tester) async {
+        'them under the city', (tester) async {
       final loader = _FakeLoader([
         [_mass(church: 37, start: _at(18, 0))],
       ]);
@@ -512,7 +539,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
+      expect(find.text('latin nyelven'), findsOneWidget);
     });
 
     testWidgets('keeps the mass details on the cards while a refetch waits '
@@ -536,13 +563,13 @@ void main() {
       );
       await pumpPage(tester, loader);
       await tester.pump();
-      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
+      expect(find.text('latin nyelven'), findsOneWidget);
 
       loader.details = Completer<MassDetails>();
       await pullToRefresh(tester);
 
       expect(loader.fetchCount, 2);
-      expect(find.text('Budapest V. kerület · latin nyelven'), findsOneWidget);
+      expect(find.text('latin nyelven'), findsOneWidget);
     });
 
     testWidgets('asks for the mass details of the churches on the list only', (

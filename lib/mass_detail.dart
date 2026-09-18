@@ -21,6 +21,18 @@ enum MassType {
 /// One part of a mass detail, in the order the detail holds them.
 sealed class MassDetailPart {
   const MassDetailPart();
+
+  /// The part as it reads: a type's word, or the text as written.
+  String get label => switch (this) {
+    MassTypePart(:final type) => type.label,
+    MassDetailText(:final text) => text,
+  };
+
+  /// A type's icon; the other parts have none.
+  String? get iconAsset => switch (this) {
+    MassTypePart(:final type) => type.iconAsset,
+    MassDetailText() => null,
+  };
 }
 
 /// A type from [MassType]'s closed set.

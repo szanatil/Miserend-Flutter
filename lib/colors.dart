@@ -31,4 +31,8 @@ class CustomColors {
   /// banner and the map's **Helyzet nem elérhető** strip. Quieter than
   /// [serverErrorTint], which marks something the user did not expect.
   static const Color noticeTint = Color(0xFFEEEEEE);
+
+  /// Behind each part of a mass detail on the mass card (CONTEXT.md, „Mise
+  /// jellemzője"): it marks what sets the mass apart from the others.
+  static const Color massDetailTint = Color(0xFFFFE082);
 }
