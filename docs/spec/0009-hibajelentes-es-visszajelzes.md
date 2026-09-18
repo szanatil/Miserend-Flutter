@@ -120,7 +120,7 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 ### Menü oldal
 
-> 2026-09-18: a pont neve „Névjegy” lett, ⓘ ikonnal, és az oldalra Impresszum került: lásd [spec 0014](0014-nevjegy-es-impresszum.md). A fájlok `lib/about/` alá költöztek.
+> 2026-09-18: a pont neve „Névjegy” lett, ⓘ ikonnal, az oldal tartalma és sorrendje megváltozott: lásd [spec 0014](0014-nevjegy-es-impresszum.md). A fájlok `lib/about/` alá költöztek.
 
 Új oldal (`lib/menu/menu_page.dart`), az alsó navigáció „Menü” pontjából nyílik. Lila AppBar, cím: „Menü”, ugyanazzal a szürke háttérrel, mint a Templomok és a Misék listái (`Colors.black12` a fehéren), a részletező kártyáinak margójával. Tartalma, fentről lefelé:
 
@@ -190,7 +190,7 @@ A térkép forrásmegjelölése nem kerül ide, mert a térképen már szerepel 
 - **Bejelentkezett felhasználó `token`-je** a `Report` kérésben (fiók nincs az appban).
 - **Új hibatípusok** (pl. gyóntatás-kapcsoló). Az API csak a három `pid`-et ismeri, a többi az „Egyéb”-be tartozik.
 - **Képcsatolás** a hibajelentéshez vagy a visszajelzéshez.
-- **Adatvédelmi tájékoztató és GitHub-link** a Menü oldalon, amíg nincs ilyen oldal. (A GitHub-link azóta az Impresszumba került: spec 0014.)
+- **Adatvédelmi tájékoztató és GitHub-link** a Menü oldalon, amíg nincs ilyen oldal. (A GitHub-link azóta a Névjegyre került: spec 0014.)
 
 ## Further Notes
 

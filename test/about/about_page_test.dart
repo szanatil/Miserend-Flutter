@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/about/about_page.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
-import 'package:miserend/about/impressum_page.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
@@ -87,7 +87,7 @@ void main() {
     ChurchOfTheDayLoader? churchOfTheDay,
   }) async {
     // Tall enough for every card, so none is left unbuilt below the fold.
-    tester.view.physicalSize = const Size(440, 1400);
+    tester.view.physicalSize = const Size(440, 1800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -104,14 +104,30 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('shows the version on its own tile', (tester) async {
+  testWidgets('shows the version beside the developer', (tester) async {
     await pumpPage(tester);
     expect(find.text('Névjegy'), findsOneWidget);
-    expect(find.text('Verzió'), findsOneWidget);
-    expect(find.text('1.2.3 (45)'), findsOneWidget);
+    expect(find.textContaining('Szent József Hackathon'), findsOneWidget);
+    expect(find.text('Verzió: 1.2.3 (45)'), findsOneWidget);
   });
 
-  testWidgets('the miserend.hu tile opens the web version', (tester) async {
+  testWidgets('lists the sections in order, feedback first', (tester) async {
+    await pumpPage(
+      tester,
+      churchOfTheDay: _FakeChurchOfTheDay(cached: _cached),
+    );
+    final tops =
+        [
+          find.widgetWithText(FilledButton, 'Visszajelzés'),
+          find.text('Mai templom ajánlatunk'),
+          find.text('Kiadó'),
+          find.text('Fejlesztő'),
+          find.text('Forráskód'),
+        ].map((finder) => tester.getTopLeft(finder).dy).toList();
+    expect(tops, [...tops]..sort());
+  });
+
+  testWidgets('names the publisher and opens jezsuita.hu', (tester) async {
     final opened = <Uri>[];
     await pumpPage(
       tester,
@@ -120,9 +136,56 @@ void main() {
         return true;
       },
     );
-    await tester.tap(find.text('miserend.hu'));
+    expect(
+      find.text('Jézus Társasága Magyarországi Rendtartománya'),
+      findsOneWidget,
+    );
+    expect(find.text('1085 Budapest, Horánszky u. 20.'), findsOneWidget);
+    await tester.tap(find.text('jezsuita.hu'));
     await tester.pumpAndSettle();
-    expect(opened.single, Uri.parse('https://miserend.hu'));
+    expect(opened.single, Uri.parse('https://jezsuita.hu'));
+  });
+
+  testWidgets('the source code link opens the repository', (tester) async {
+    final opened = <Uri>[];
+    await pumpPage(
+      tester,
+      openLink: (uri) async {
+        opened.add(uri);
+        return true;
+      },
+    );
+    await tester.tap(find.text('A projekt a GitHubon'));
+    await tester.pumpAndSettle();
+    expect(
+      opened.single,
+      Uri.parse('https://github.com/szanatil/Miserend-Flutter'),
+    );
+  });
+
+  testWidgets('the tax number is copied for the 1% offer', (tester) async {
+    final copied = <Object?>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') copied.add(call.arguments);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pumpPage(tester);
+
+    expect(find.textContaining('Jézus Társasága Alapítvány'), findsOneWidget);
+    await tester.tap(find.byTooltip('Adószám másolása'));
+    await tester.pump();
+
+    expect(copied.single, {'text': '18064333-2-42'});
+    expect(find.text('Adószám vágólapra másolva'), findsOneWidget);
   });
 
   testWidgets('the feedback button opens the feedback mail', (tester) async {
@@ -131,13 +194,6 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Visszajelzés'));
     await tester.pumpAndSettle();
     expect(feedback.launched.single.path, feedbackAddress);
-  });
-
-  testWidgets('the Impresszum tile opens the Impresszum', (tester) async {
-    await pumpPage(tester);
-    await tester.tap(find.text('Impresszum'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ImpressumPage), findsOneWidget);
   });
 
   group('the church of the day', () {
@@ -178,7 +234,7 @@ void main() {
       await pumpPage(tester, churchOfTheDay: _FakeChurchOfTheDay());
 
       expect(find.text('Mai templom ajánlatunk'), findsNothing);
-      expect(find.text('Verzió'), findsOneWidget);
+      expect(find.text('Kiadó'), findsOneWidget);
     });
   });
 }

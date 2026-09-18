@@ -109,11 +109,11 @@ Az **appról** szóló üzenet az app fejlesztőinek (Szent József Hackathon): 
 _Avoid_: "funkciókérés" külön fogalomként (a visszajelzés egyik fajtája); "hibajelentés" az app hibájára.
 
 **Névjegy (about page)**:
-Az alsó navigáció negyedik pontjából nyíló oldal: a webes változat, a „Mai templom ajánlatunk”, a verzió, az **Impresszum** és a **visszajelzés**. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
+Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a „Mai templom ajánlatunk” és az app **impresszuma**, egy lapon. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
 _Avoid_: "Menü" (oldalsó menüt sejtet, ami nincs); "Beállítások" (beállítás nincs rajta).
 
 **Impresszum (impressum)**:
-Az app **kiadója** (Jézus Társasága Magyarországi Rendtartománya), **fejlesztője** (Szent József Hackathon), a támogatás módja (1% a Jézus Társasága Alapítványnak), a forráskód helye és a felhasznált licencek. A kiadó és az 1%-os kedvezményezett két külön szervezet, külön adószámmal; az Impresszum csak az Alapítványét mutatja, az 1%-os mondat mellett.
+Az app **kiadója** (Jézus Társasága Magyarországi Rendtartománya), **fejlesztője** (Szent József Hackathon) és verziója, a támogatás módja (1% a Jézus Társasága Alapítványnak) és a forráskód helye. Nem külön oldal: a Névjegy szakaszai. A kiadó és az 1%-os kedvezményezett két külön szervezet, külön adószámmal; a Névjegy csak az Alapítványét mutatja, az 1%-os mondat mellett.
 _Avoid_: a miserend.hu üzemeltetőjével azonosítani (a webet a Szent József Hackathon közössége tartja fenn, az appot a Rendtartomány adja ki).
 
 **Szentségimádás (adoration)**:

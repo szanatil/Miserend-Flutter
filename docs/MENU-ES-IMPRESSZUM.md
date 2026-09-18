@@ -181,7 +181,8 @@ Megjegyzések (ez nem jogi vélemény):
 | Fejlesztő | **Szent József Hackathon**. |
 | Forráskód | [github.com/szanatil/Miserend-Flutter](https://github.com/szanatil/Miserend-Flutter). |
 | Támogatás | 1% a **Jézus Társasága Alapítványnak**, adószám 18064333-2-42, másolás gombbal. |
-| Licencek | A lapon **legyen elérhető a használt licencek listája** (a Flutter `showLicensePage`, §4.1 10. mező). |
+| Licencek | ~~A lapon legyen elérhető a használt licencek listája.~~ Később visszavonva: **nem kell**. |
+| Elrendezés (később) | **Nincs külön Impresszum oldal**: minden a Névjegyen van, fentről lefelé: Visszajelzés gomb, Mai templom ajánlatunk, Kiadó + támogatás, Fejlesztő + verzió, Forráskód. A miserend.hu csempe kimaradt. |
 
 Így a §2.5 buktatója megoldott: kiadóként a Rendtartomány szerepel, az adószám pedig kifejezetten az Alapítványhoz tartozó 1%-os mondat mellett áll.
 

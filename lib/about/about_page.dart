@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
-import 'package:miserend/about/impressum_page.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -13,9 +13,9 @@ import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-/// Opened from the bottom navigation's Névjegy item: the web version, a church
-/// to discover, the app's version, the Impresszum and the way to send feedback
-/// (spec 0009, „Menü oldal"; spec 0014).
+/// Opened from the bottom navigation's Névjegy item: the way to send
+/// feedback, a church to discover, and the app's impressum — publisher and
+/// how to support it, developer and version, source code (spec 0014).
 class AboutPage extends StatefulWidget {
   const AboutPage({
     super.key,
@@ -42,8 +42,17 @@ class AboutPage extends StatefulWidget {
 }
 
 class _AboutPageState extends State<AboutPage> {
-  /// The web version, with the same data as the app.
-  static final Uri _webVersion = Uri.parse('https://miserend.hu');
+  static final Uri _publisherSite = Uri.parse('https://jezsuita.hu');
+
+  static final Uri _sourceCode = Uri.parse(
+    'https://github.com/szanatil/Miserend-Flutter',
+  );
+
+  /// The Jézus Társasága Alapítvány's, for the 1% offer. The publisher (the
+  /// Rendtartomány) has a tax number of its own; only the Alapítvány's is
+  /// shown, beside the sentence that names it (docs/MENU-ES-IMPRESSZUM.md,
+  /// §2.5).
+  static const String _foundationTaxNumber = '18064333-2-42';
 
   late final FeedbackLauncher _feedback = widget.feedback ?? FeedbackLauncher();
 
@@ -79,6 +88,7 @@ class _AboutPageState extends State<AboutPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Névjegy')),
@@ -89,61 +99,6 @@ class _AboutPageState extends State<AboutPage> {
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 8),
           children: [
-            _card(
-              ListTile(
-                leading: const Icon(Icons.language, color: Colors.black54),
-                title: const Text('miserend.hu'),
-                subtitle: const Text('A miserend webes változata'),
-                trailing: const Icon(Icons.open_in_new, color: Colors.black54),
-                onTap:
-                    () => launchExternal(
-                      context,
-                      _webVersion,
-                      launch: widget.openLink,
-                    ),
-              ),
-            ),
-            if (_church case final church?) _churchOfTheDay(church),
-            _card(
-              FutureBuilder<PackageInfo>(
-                future: _packageInfo,
-                builder: (context, snapshot) {
-                  final info = snapshot.data;
-                  return ListTile(
-                    leading: const Icon(
-                      Icons.info_outline,
-                      color: Colors.black54,
-                    ),
-                    title: const Text('Verzió'),
-                    subtitle: Text(
-                      info == null
-                          ? ''
-                          : '${info.version} (${info.buildNumber})',
-                    ),
-                  );
-                },
-              ),
-            ),
-            _card(
-              ListTile(
-                leading: const Icon(Icons.gavel, color: Colors.black54),
-                title: const Text('Impresszum'),
-                subtitle: const Text('Kiadó, fejlesztő, támogatás, licencek'),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: Colors.black54,
-                ),
-                onTap:
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                ImpressumPage(openLink: widget.openLink),
-                      ),
-                    ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: FilledButton.icon(
@@ -152,9 +107,111 @@ class _AboutPageState extends State<AboutPage> {
                 label: const Text('Visszajelzés'),
               ),
             ),
+            if (_church case final church?) _churchOfTheDay(church),
+            SectionCard(
+              title: 'Kiadó',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
+                children: [
+                  Text(
+                    'Jézus Társasága Magyarországi Rendtartománya',
+                    style: textTheme.titleMedium,
+                  ),
+                  const Text('1085 Budapest, Horánszky u. 20.'),
+                  _externalLink('jezsuita.hu', _publisherSite),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Ha támogatni szeretnéd munkánkat, ajánld fel adód '
+                    '1%-át a Jézus Társasága Alapítványnak.',
+                  ),
+                  Row(
+                    children: [
+                      const Text('Adószám: '),
+                      Text(
+                        _foundationTaxNumber,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Adószám másolása',
+                        icon: const Icon(Icons.copy, color: Colors.black54),
+                        onPressed: _copyTaxNumber,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SectionCard(
+              title: 'Fejlesztő',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
+                children: [
+                  const Text(
+                    'Az alkalmazást a Szent József Hackathon fejleszti.',
+                  ),
+                  FutureBuilder<PackageInfo>(
+                    future: _packageInfo,
+                    builder: (context, snapshot) {
+                      final info = snapshot.data;
+                      if (info == null) return const SizedBox.shrink();
+                      return Text(
+                        'Verzió: ${info.version} (${info.buildNumber})',
+                        style: textTheme.bodyMedium?.apply(
+                          color: Colors.black54,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            SectionCard(
+              title: 'Forráskód',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
+                children: [
+                  const Text(
+                    'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
+                    'forráskódját:',
+                  ),
+                  _externalLink('A projekt a GitHubon', _sourceCode),
+                ],
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _externalLink(String label, Uri uri) {
+    final color = Theme.of(context).primaryColor;
+    return InkWell(
+      onTap: () => launchExternal(context, uri, launch: widget.openLink),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 4,
+          children: [
+            Text(label, style: TextStyle(color: color)),
+            Icon(Icons.open_in_new, size: 16, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _copyTaxNumber() async {
+    final messenger = ScaffoldMessenger.of(context);
+    await Clipboard.setData(const ClipboardData(text: _foundationTaxNumber));
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Adószám vágólapra másolva')),
     );
   }
 
@@ -239,12 +296,4 @@ class _AboutPageState extends State<AboutPage> {
     photo: church.photos.isEmpty ? null : church.photos.first,
     masses: const [],
   );
-
-  /// The details page's card margins, so the page reads as the same app.
-  Widget _card(Widget child) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: child,
-    );
-  }
 }
