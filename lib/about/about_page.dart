@@ -13,10 +13,10 @@ import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-/// Opened from the bottom navigation's Névjegy item: the way to send
-/// feedback, a church to discover, and the app's impressum — publisher and
-/// how to support it, developer and version, source code — and the web
-/// version (spec 0014).
+/// Opened from the bottom navigation's Névjegy item: a church to discover,
+/// the app's impressum — publisher and how to support it, developer and
+/// version, source code — and the web version, under a floating button to
+/// send feedback (spec 0014).
 class AboutPage extends StatefulWidget {
   const AboutPage({
     super.key,
@@ -58,6 +58,10 @@ class _AboutPageState extends State<AboutPage> {
   /// §2.5).
   static const String _foundationTaxNumber = '18064333-2-42';
 
+  /// Room below the last tile so it can scroll clear of the floating
+  /// feedback button: the button's 56 plus its 16 margin, and a gap.
+  static const double _feedbackClearance = 88;
+
   late final FeedbackLauncher _feedback = widget.feedback ?? FeedbackLauncher();
 
   late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
@@ -96,21 +100,21 @@ class _AboutPageState extends State<AboutPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Névjegy')),
+      // Floats so it is in view without scrolling on any phone; in the list
+      // it would sit below the fold under the church of the day.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _feedback.send(context),
+        icon: const Icon(Icons.mail_outline),
+        label: const Text('Visszajelzés'),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       // The grey the Templomok and Misék tabs draw their lists on, so the
       // page looks like the same app.
       body: Container(
         color: Colors.black12,
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: FilledButton.icon(
-                onPressed: () => _feedback.send(context),
-                icon: const Icon(Icons.mail_outline),
-                label: const Text('Visszajelzés'),
-              ),
-            ),
             if (_church case final church?) _churchOfTheDay(church),
             SectionCard(
               title: 'Kiadó',
@@ -129,7 +133,10 @@ class _AboutPageState extends State<AboutPage> {
                     'Ha támogatni szeretnéd munkánkat, ajánld fel adód '
                     '1%-át a Jézus Társasága Alapítványnak.',
                   ),
-                  Row(
+                  // Wraps rather than overflows on a narrow phone or with
+                  // large text.
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text('Adószám: '),
                       Text(
@@ -218,7 +225,7 @@ class _AboutPageState extends State<AboutPage> {
           mainAxisSize: MainAxisSize.min,
           spacing: 4,
           children: [
-            Text(label, style: TextStyle(color: color)),
+            Flexible(child: Text(label, style: TextStyle(color: color))),
             Icon(Icons.open_in_new, size: 16, color: color),
           ],
         ),

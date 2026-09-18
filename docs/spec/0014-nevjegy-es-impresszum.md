@@ -9,13 +9,13 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
 ## Solution
 
 - A pont neve **„Névjegy”**, ikonja ⓘ (`Icons.info_outline`). Viselkedése a régi: nem fül, `Navigator.push`-sal saját oldalt nyit, a kiválasztott fül nem változik (spec 0009, „Visszajelzés: belépési pont”).
+- A **„Visszajelzés”** (spec 0009, „Visszajelzés: a levél”) **lebegő gomb** a képernyő alján, középen (`FloatingActionButton.extended`, `centerFloat`): görgetés nélkül, minden telefonon látszik. A lista alján annyi hely marad, hogy az utolsó csempe is kigördülhessen alóla.
 - Az impresszum **nem külön oldal**: a Névjegy szakaszai. A Névjegy oldal fentről lefelé:
-  1. **„Visszajelzés”** gomb (spec 0009, „Visszajelzés: a levél”).
-  2. **„Mai templom ajánlatunk”** kártya (spec 0009, „Menü oldal”), változatlanul.
-  3. **Kiadó:** Jézus Társasága Magyarországi Rendtartománya, 1085 Budapest, Horánszky u. 20., link: jezsuita.hu. Alatta a támogatás: „Ha támogatni szeretnéd munkánkat, ajánld fel adód 1%-át a Jézus Társasága Alapítványnak.” Adószám: **18064333-2-42**, másolás gombbal, „Adószám vágólapra másolva” SnackBarral.
-  4. **Fejlesztő:** „Az alkalmazást a Szent József Hackathon fejleszti.”, alatta „Verzió: x.y.z (build)”.
-  5. **Forráskód:** „Ha fejlesztenél valamit az alkalmazáson, itt találod a forráskódját:”, link a [github.com/szanatil/Miserend-Flutter](https://github.com/szanatil/Miserend-Flutter) repóra.
-  6. **miserend.hu** csempe („A miserend webes változata”), a böngészőben nyílik meg (spec 0009, „Menü oldal”).
+  1. **„Mai templom ajánlatunk”** kártya (spec 0009, „Menü oldal”), változatlanul.
+  2. **Kiadó:** Jézus Társasága Magyarországi Rendtartománya, 1085 Budapest, Horánszky u. 20., link: jezsuita.hu. Alatta a támogatás: „Ha támogatni szeretnéd munkánkat, ajánld fel adód 1%-át a Jézus Társasága Alapítványnak.” Adószám: **18064333-2-42**, másolás gombbal, „Adószám vágólapra másolva” SnackBarral.
+  3. **Fejlesztő:** „Az alkalmazást a Szent József Hackathon fejleszti.”, alatta „Verzió: x.y.z (build)”.
+  4. **Forráskód:** „Ha fejlesztenél valamit az alkalmazáson, itt találod a forráskódját:”, link a [github.com/szanatil/Miserend-Flutter](https://github.com/szanatil/Miserend-Flutter) repóra.
+  5. **miserend.hu** csempe („A miserend webes változata”), a böngészőben nyílik meg (spec 0009, „Menü oldal”).
 - Kimarad a külön Verzió csempe: a verzió a Fejlesztő alá került.
 
 A kiadó (Rendtartomány) és az 1%-os kedvezményezett (Alapítvány) két külön szervezet, két adószámmal. Az oldalon csak az Alapítványé szerepel, és csak az őt megnevező mondat mellett (kutatás, §2.5).
@@ -29,7 +29,9 @@ A kiadó (Rendtartomány) és az 1%-os kedvezményezett (Alapítvány) két kül
 ## Testing Decisions
 
 - **Névjegy oldal** (widget teszt, hamis link-indítóval, T6):
-  - a cím „Névjegy”; a szakaszok sorrendje: Visszajelzés, Mai templom ajánlatunk, Kiadó, Fejlesztő, Forráskód, miserend.hu;
+  - a cím „Névjegy”; a szakaszok sorrendje: Mai templom ajánlatunk, Kiadó, Fejlesztő, Forráskód, miserend.hu;
+  - kis telefonon (320×568) a Visszajelzés gomb görgetés nélkül a képernyő alsó felén látszik, és a lista végére görgetve az utolsó csempe nem marad alatta;
+  - keskeny képernyőn az adószám sora és a linkek nem csordulnak túl;
   - megjelenik a kiadó neve és címe; a jezsuita.hu, a GitHub-link és a miserend.hu csempe a helyes URL-t nyitja;
   - a fejlesztő mellett a verzió látszik;
   - a másolás gomb a vágólapra teszi az adószámot, és SnackBar jelzi;

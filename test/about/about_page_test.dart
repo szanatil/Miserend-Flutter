@@ -82,12 +82,13 @@ void main() {
 
   Future<void> pumpPage(
     WidgetTester tester, {
+    Size size = const Size(440, 1800),
     FeedbackLauncher? feedback,
     Future<bool> Function(Uri uri)? openLink,
     ChurchOfTheDayLoader? churchOfTheDay,
   }) async {
     // Tall enough for every card, so none is left unbuilt below the fold.
-    tester.view.physicalSize = const Size(440, 1800);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -120,7 +121,6 @@ void main() {
     );
     final tops =
         [
-          find.widgetWithText(FilledButton, 'Visszajelzés'),
           find.text('Mai templom ajánlatunk'),
           find.text('Kiadó'),
           find.text('Fejlesztő'),
@@ -205,10 +205,38 @@ void main() {
     expect(find.text('Adószám vágólapra másolva'), findsOneWidget);
   });
 
+  testWidgets('the feedback button floats in view on a small phone', (
+    tester,
+  ) async {
+    await pumpPage(
+      tester,
+      size: const Size(320, 568),
+      churchOfTheDay: _FakeChurchOfTheDay(cached: _cached),
+    );
+    final button = tester.getRect(
+      find.widgetWithText(FloatingActionButton, 'Visszajelzés'),
+    );
+    expect(button.bottom, lessThanOrEqualTo(568));
+    expect(button.top, greaterThan(568 / 2));
+  });
+
+  testWidgets('the last tile can scroll clear of the feedback button', (
+    tester,
+  ) async {
+    await pumpPage(tester, size: const Size(320, 568));
+    await tester.drag(find.byType(ListView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    final tile = tester.getRect(find.text('miserend.hu'));
+    final button = tester.getRect(
+      find.widgetWithText(FloatingActionButton, 'Visszajelzés'),
+    );
+    expect(tile.bottom, lessThanOrEqualTo(button.top));
+  });
+
   testWidgets('the feedback button opens the feedback mail', (tester) async {
     final feedback = FakeFeedbackLauncher();
     await pumpPage(tester, feedback: feedback);
-    await tester.tap(find.widgetWithText(FilledButton, 'Visszajelzés'));
+    await tester.tap(find.widgetWithText(FloatingActionButton, 'Visszajelzés'));
     await tester.pumpAndSettle();
     expect(feedback.launched.single.path, feedbackAddress);
   });

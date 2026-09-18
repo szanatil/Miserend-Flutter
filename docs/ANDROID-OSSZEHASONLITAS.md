@@ -172,8 +172,8 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 
 **Hibajelentés tiltása kapcsolat nélkül.** Amíg a részletező Nincs kapcsolat vagy Szerverhiba jelölést mutat, a „Hibajelentés” gomb szürke. Koppintásra csak egy magyarázó SnackBar jelenik meg (`church_details_page.dart:224-251`).
 
-**Névjegy oldal és visszajelzés.** Az alsó navigáció negyedik eleme a „Névjegy” oldalt nyitja (`lib/home/home.dart:231-238`). Rajta, fentről lefelé (`lib/about/about_page.dart`):
-- „Visszajelzés” gomb: e-mail a `szentjozsefhackathon@jezsuita.hu` címre, az app verziójával és az OS-sel (`lib/widgets/feedback_mail.dart:10`, `:28-32`, `:54-59`);
+**Névjegy oldal és visszajelzés.** Az alsó navigáció negyedik eleme a „Névjegy” oldalt nyitja (`lib/home/home.dart:231-238`). Rajta (`lib/about/about_page.dart`):
+- „Visszajelzés” lebegő gomb a képernyő alján: e-mail a `szentjozsefhackathon@jezsuita.hu` címre, az app verziójával és az OS-sel (`lib/widgets/feedback_mail.dart:10`, `:28-32`, `:54-59`);
 - „Mai templom ajánlatunk” kártya: fényképes templom dátumhoz kötött választással, fotóval, címmel és 4 soros leírással; koppintásra a részletező nyílik (`lib/about/church_of_the_day_loader.dart`);
 - „Kiadó”: a Rendtartomány, jezsuita.hu link, 1% a Jézus Társasága Alapítványnak másolható adószámmal;
 - „Fejlesztő”: Szent József Hackathon, a verzióval;
