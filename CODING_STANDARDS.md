@@ -84,6 +84,8 @@ A SQLite export korából maradt, ma már csak a kezdeti feltöltést és néhá
 
 Egy változás akkor kész, ha mindegyik teljesül:
 
+A C1–C3-at és az Android- meg iOS-buildet a CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és a `main`-re érkező pushon ellenőrzi, az ott rögzített Flutter-verzióval.
+
 **C1 — Formázva.** A `dart format --set-exit-if-changed lib test` nem jelez eltérést.
 
 **C2 — Lint tiszta.** A `flutter analyze` hiba és figyelmeztetés nélkül fut le.

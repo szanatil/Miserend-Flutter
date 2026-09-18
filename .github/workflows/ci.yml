@@ -1,0 +1,70 @@
+# Checks the machine-checkable part of CODING_STANDARDS.md "C. Kész"
+# (C1–C3) and that the app still builds for both platforms.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same PR makes the running check moot. On main every
+# push keeps its own verdict.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Pinned so CI formats and analyzes exactly as the developers' SDK does.
+  # Bump together with the local Flutter.
+  FLUTTER_VERSION: 3.47.1
+
+jobs:
+  format-analyze-test:
+    name: Format, analyze, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: C1 — formatted
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: C2 — lint clean
+        run: flutter analyze
+      - name: C3 — tests green
+        run: flutter test
+
+  # No CARTO_API_KEY here: without it the map uses the keyless tile URL, and
+  # the build only has to compile.
+  build-android:
+    name: Build APK (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # AGP 8.13 needs JDK 17 to run; the app itself still targets Java 11.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter build apk --debug
+
+  # macOS runners are free for public repositories.
+  build-ios:
+    name: Build iOS (no codesign)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter build ios --no-codesign
