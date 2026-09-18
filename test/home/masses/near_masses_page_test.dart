@@ -7,6 +7,7 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
+import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -459,6 +460,22 @@ void main() {
       expect(top(tester, 'Második'), lessThan(top(tester, '18:30')));
       expect(top(tester, '18:30'), lessThan(top(tester, 'Harmadik')));
       expect(find.byType(Divider), findsNWidgets(2));
+    });
+
+    testWidgets('the start leads its block, large, bold and in the accent '
+        'color', (tester) async {
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [_mass(start: _at(18, 0))],
+        ]),
+      );
+
+      final textTheme = Theme.of(tester.element(find.text('18:00'))).textTheme;
+      final style = tester.widget<Text>(find.text('18:00')).style!;
+      expect(style.fontSize, textTheme.headlineMedium!.fontSize);
+      expect(style.fontWeight, FontWeight.bold);
+      expect(style.color, CustomColors.accent);
     });
 
     testWidgets('marks a mass as ongoing only once it has started, in its '

@@ -90,6 +90,19 @@ void main() {
   });
 
   group('church', () {
+    testWidgets('writes the church name as large as the church card does', (
+      tester,
+    ) async {
+      await pumpCard(tester, _mass());
+
+      final textTheme =
+          Theme.of(tester.element(find.byType(MassCard))).textTheme;
+      expect(
+        tester.widget<Text>(find.text('Szent Miklós-templom')).style?.fontSize,
+        textTheme.titleLarge!.fontSize,
+      );
+    });
+
     testWidgets('leaves plain Szentmise out of the city line', (tester) async {
       await pumpCard(tester, _mass(title: 'Szentmise'));
 

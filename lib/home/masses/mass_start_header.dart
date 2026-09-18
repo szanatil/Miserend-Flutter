@@ -35,7 +35,7 @@ class MassStartHeader extends StatelessWidget {
             children: [
               Text(
                 TimeOfDay.fromDateTime(mass.start).to24hours(),
-                style: textTheme.titleLarge?.copyWith(
+                style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: CustomColors.accent,
                 ),
@@ -45,7 +45,7 @@ class MassStartHeader extends StatelessWidget {
               else if (until != null)
                 Text(
                   until,
-                  style: textTheme.bodyMedium?.apply(color: Colors.black54),
+                  style: textTheme.bodyLarge?.apply(color: Colors.black54),
                 ),
             ],
           ),

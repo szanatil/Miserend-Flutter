@@ -95,7 +95,8 @@ class MassCard extends StatelessWidget {
 
   Widget _churchColumn(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final nameStyle = textTheme.titleMedium;
+    // As large as on the church card, its sibling.
+    final nameStyle = textTheme.titleLarge;
     final title = mass.title;
     final place = [
       mass.city,
