@@ -7,9 +7,9 @@ Az app Flutterrel készült, és ugyanazt a templom-adatbázist jeleníti meg, m
 ## Funkciók
 
 - **Templomok fül:** a közeli templomok távolság szerint rendezve, a kedvenc templomok, és mindegyiknél a mai misék.
-- **Misék fül:** a legközelebbi, még elérhető misék a környéken, időrendben.
-- **Térkép fül:** az összes templom a térképen, a jelölőre koppintva a templom kártyájával.
-- **Keresés:** templomnév vagy település alapján, már gépelés közben is kínál találatokat.
+- **Misék fül:** a legközelebbi, még elérhető misék a környéken, időrendben, a kezdési időpont szerint csoportosítva, és mindegyiknél a mise jellemzői.
+- **Térkép fül:** az összes templom a térképen, az egymást takaró jelölők csoportba rendezve, a jelölőre koppintva a templom kártyájával.
+- **Keresés:** templomnév (az alternatív nevek is) vagy település alapján, kis-nagybetűtől és ékezettől függetlenül, már gépelés közben is kínál találatokat. A javaslatok aljáról nyílik a **Részletes kereső**, amely több feltétel együttesével keres: név, település, liturgikus nyelv, valamint hogy van-e miséje a templomnak egy adott napon és időablakban.
 - **Templom adatlapja:** a mai és a vasárnapi misék, a következő napok miserendje, a templom helye a térképen, útvonaltervezés, és hibabejelentés a miserend.hu-nak.
 - **Kedvencek:** csak a készüléken tárolódnak, fiók nincs.
 - **Menü:** az alsó navigációból nyíló oldal a miserend.hu webes változatának linkjével, a nap templom-ajánlatával, az app verziójával, és egy gombbal, amellyel e-mailben lehet visszajelzést küldeni az app fejlesztőinek.
@@ -44,6 +44,8 @@ flutter analyze
 
 A Dart-kód írásának szabályai a [CODING_STANDARDS.md](CODING_STANDARDS.md)-ben vannak.
 
+A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és minden main-pushon lefuttatja ezt a három ellenőrzést, és az appot Androidra és iOS-re is lebuildeli. A Flutter-verzió a ci.yml-ben van rögzítve.
+
 ### App-ikon
 
 Az ikon forrásképeit (`assets/icon/`) a [tool/app_icon/render_app_icon.swift](tool/app_icon/render_app_icon.swift) rajzolja, a platformonkénti méreteket a `flutter_launcher_icons` készíti. A lépések a [flutter_launcher_icons.yaml](flutter_launcher_icons.yaml) elején vannak.
@@ -67,11 +69,19 @@ Részletek: [ADR-0002](docs/adr/0002-api-v4-mint-elsodleges-adatforras.md).
 |---|---|
 | `api/` | az API v4 kliense és a gyorsítótárba visszaíró réteg |
 | `database/` | a letöltött export, a helyi gyorsítótár (`cache/`) és a kedvencek |
-| `home/` | a főképernyő és a három fül (`churches/`, `masses/`, `map/`), valamint a keresés |
+| `home/` | a főképernyő és a három fül (`churches/`, `masses/`, `map/`), a keresés és a Részletes kereső (`advanced_search/`) |
 | `church_details/` | a templom adatlapja és a hibabejelentés |
+| `menu/` | a Menü oldal és a „Mai templom ajánlatunk” |
 | `widgets/` | közös widgetek, például a térkép |
 
 Az egyes képernyők pontos működését a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md) írja le.
+
+## Hogyan dolgozunk?
+
+- A feladatok a GitHub Issues-ban vannak. Egy nagyobb funkcióból előbb specifikáció készül a [docs/spec/](docs/spec/)-be, és csak utána a kód.
+- Egy változás akkor kész, ha teljesíti a [CODING_STANDARDS.md](CODING_STANDARDS.md) „C. Kész” részének feltételeit, és a PR-en zöld a CI.
+- A commit-üzenet magyar, és ezt a formát követi: `Terület: mi változott (#issue)`, például `Misék fül: időpont-blokkok (#36)`.
+- Az issue-k kezelését és a címkéket a [docs/agents/](docs/agents/) írja le.
 
 ## További dokumentáció
 

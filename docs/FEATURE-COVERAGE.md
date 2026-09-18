@@ -1,6 +1,6 @@
 # Feature Coverage — Miserend
 
-Reverse-engineered from the current codebase (branch `V0.1`, commit `91ad952`). This is a description of **what the app currently does**, not a plan for what it should do — treat it as a snapshot, not a spec to build against once the code has moved on.
+Reverse-engineered from the codebase and kept up to date with it. This is a description of **what the app currently does**, not a plan for what it should do — treat it as a snapshot, not a spec to build against once the code has moved on.
 
 ## What the app is
 
@@ -36,6 +36,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
 | Részletes kereső row | The last row of the suggestions, always — also below 3 characters and with no suggestion — pinned under them. Opens the **Részletes kereső** in the tab's place, with the typed text as the name; the search bar and the bottom navigation stay. Any tab, the back arrow and the system back close it; a search or suggestion from the bar closes it too, and the row always opens it afresh. |
+| Clearing the bar | After a search, a church or city suggestion, or the Részletes kereső row, the bar's text and suggestions are cleared, so old suggestions do not come back; the Részletes kereső takes the typed name before the clearing. |
 | Menü | A fourth bottom navigation item with a hamburger icon. Not a tab: it pushes `MenuPage` and the selected tab stays. |
 
 ## Részletes kereső
@@ -81,8 +82,10 @@ The export is only downloaded when it is missing or of the wrong version — the
 - `selectNearestMasses` (`nearest_masses.dart`) picks at most 10 nearest churches and lists every mass of theirs still reachable (started ≤ 10 minutes ago, up to tomorrow 00:00), one row per mass, masses only, in time order. A church with several masses left today appears several times.
 - The API repeats items (the same mass up to three times); `MiserendApiClient` keeps each once, for this tab, the details page's schedule and the lists' masses of the day alike.
 - Refetches on tab switch, app resume, pull-to-refresh and after midnight; re-selects from the last raw response every minute while visible.
-- Loading, position-unavailable (by reason, with a button), API-error and empty states. Each `MassListItem` shows the cached thumbnail, church name, city, 24h start, distance ("1,2 km"), an "Épp most tart" badge and a non-"Szentmise" title; tapping opens `ChurchDetailsPage`.
-- **Mass details** (spec 0011): once the list is shown, one `Church {"ids"}` call (`minimal`, written through) for the churches on it; each card's city line gains the detail after the kind in today's `informacio` of the mass starting at the same time ("Pécs · latin nyelven (Mária-kápolnában)"). The seven mass types (Csendes, Gitáros, Diák…) are drawn as icons from `assets/types/` in place of their words (`mass_detail.dart`); tapping an icon shows the word above it. A failed call shows the cards without details, unmarked.
+- Loading, position-unavailable (by reason, with a button), API-error and empty states.
+- Under a purple "Mai misék" section bar (`SectionBar`, shared with the Templomok tab and the Map's "Térkép"). Masses starting at the same time are grouped under one header (`MassStartHeader`, spec 0008): the 24h start, large and bold, then the time until it or "Épp most tart", and a line under them.
+- Each `MassCard` shows the cached thumbnail, church name (the church card's size), city, distance ("1,2 km") and a non-"Szentmise" title; the start is on the header, not the card. Tapping it opens `ChurchDetailsPage`.
+- **Mass details** (spec 0011): once the list is shown, one `Church {"ids"}` call (`minimal`, written through) for the churches on it; the detail after the kind in today's `informacio` of the mass starting at the same time goes into its own row under the city, each part in a yellow bubble, wrapping as needed. The seven mass types (Csendes, Gitáros, Diák…) get their icon from `assets/types/` beside the word (`mass_detail.dart`). Tapping a bubble shows its full text in a tooltip, without opening the church. A failed call shows the cards without details, unmarked.
 
 ## Map tab
 
