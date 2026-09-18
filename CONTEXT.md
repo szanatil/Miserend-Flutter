@@ -109,7 +109,7 @@ Az **appról** szóló üzenet az app fejlesztőinek (Szent József Hackathon): 
 _Avoid_: "funkciókérés" külön fogalomként (a visszajelzés egyik fajtája); "hibajelentés" az app hibájára.
 
 **Névjegy (about page)**:
-Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a „Mai templom ajánlatunk” és az app **impresszuma**, egy lapon. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
+Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a „Mai templom ajánlatunk”, az app **impresszuma** és a webes változat linkje, egy lapon. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
 _Avoid_: "Menü" (oldalsó menüt sejtet, ami nincs); "Beállítások" (beállítás nincs rajta).
 
 **Impresszum (impressum)**:

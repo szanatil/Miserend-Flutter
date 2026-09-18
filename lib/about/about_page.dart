@@ -15,7 +15,8 @@ import 'package:provider/provider.dart';
 
 /// Opened from the bottom navigation's Névjegy item: the way to send
 /// feedback, a church to discover, and the app's impressum — publisher and
-/// how to support it, developer and version, source code (spec 0014).
+/// how to support it, developer and version, source code — and the web
+/// version (spec 0014).
 class AboutPage extends StatefulWidget {
   const AboutPage({
     super.key,
@@ -42,6 +43,9 @@ class AboutPage extends StatefulWidget {
 }
 
 class _AboutPageState extends State<AboutPage> {
+  /// The web version, with the same data as the app.
+  static final Uri _webVersion = Uri.parse('https://miserend.hu');
+
   static final Uri _publisherSite = Uri.parse('https://jezsuita.hu');
 
   static final Uri _sourceCode = Uri.parse(
@@ -181,6 +185,21 @@ class _AboutPageState extends State<AboutPage> {
                   ),
                   _externalLink('A projekt a GitHubon', _sourceCode),
                 ],
+              ),
+            ),
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: ListTile(
+                leading: const Icon(Icons.language, color: Colors.black54),
+                title: const Text('miserend.hu'),
+                subtitle: const Text('A miserend webes változata'),
+                trailing: const Icon(Icons.open_in_new, color: Colors.black54),
+                onTap:
+                    () => launchExternal(
+                      context,
+                      _webVersion,
+                      launch: widget.openLink,
+                    ),
               ),
             ),
           ],

@@ -116,7 +116,7 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 |---|---|---|---|
 | Kedvencek csak helyben (külön SQLite) | ✅ | ✅ | Flutter: `lib/database/local_database.dart:6`. Android: [LocalDatabase L14][a-localdb] |
 | **Visszajelzés** e-mailben | ✅ | ❌ | `lib/widgets/feedback_mail.dart:10`, `:28-32` |
-| Névjegy: „Mai templom ajánlatunk”, kiadó és 1%, fejlesztő és verzió, forráskód | ✅ | ❌ | `lib/about/about_page.dart` |
+| Névjegy: „Mai templom ajánlatunk”, kiadó és 1%, fejlesztő és verzió, forráskód, miserend.hu link | ✅ | ❌ | `lib/about/about_page.dart` |
 | Analitika (képernyőkövetés) | ❌ | ✅ | Firebase Analytics ([Analytics.java L16-L28][a-analytics]) |
 | Összeomlás-jelentés | ❌ | ✅ | Crashlytics, csak release buildben ([AndroidManifest L46-L48][a-manifest-crash], [build.gradle L14-L21][a-gradle-crash]) |
 | Fiók / bejelentkezés | ❌ | ❌ | Egyik kódban sincs ilyen |
@@ -177,7 +177,8 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 - „Mai templom ajánlatunk” kártya: fényképes templom dátumhoz kötött választással, fotóval, címmel és 4 soros leírással; koppintásra a részletező nyílik (`lib/about/church_of_the_day_loader.dart`);
 - „Kiadó”: a Rendtartomány, jezsuita.hu link, 1% a Jézus Társasága Alapítványnak másolható adószámmal;
 - „Fejlesztő”: Szent József Hackathon, a verzióval;
-- „Forráskód”: a GitHub-repó linkje.
+- „Forráskód”: a GitHub-repó linkje;
+- miserend.hu link a böngészőbe.
 
 **iOS-támogatás.** Van `ios/` célplatform helyengedély-szöveggel (`ios/Runner/Info.plist:29-30`).
 

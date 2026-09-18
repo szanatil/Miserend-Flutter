@@ -15,7 +15,8 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
   3. **Kiadó:** Jézus Társasága Magyarországi Rendtartománya, 1085 Budapest, Horánszky u. 20., link: jezsuita.hu. Alatta a támogatás: „Ha támogatni szeretnéd munkánkat, ajánld fel adód 1%-át a Jézus Társasága Alapítványnak.” Adószám: **18064333-2-42**, másolás gombbal, „Adószám vágólapra másolva” SnackBarral.
   4. **Fejlesztő:** „Az alkalmazást a Szent József Hackathon fejleszti.”, alatta „Verzió: x.y.z (build)”.
   5. **Forráskód:** „Ha fejlesztenél valamit az alkalmazáson, itt találod a forráskódját:”, link a [github.com/szanatil/Miserend-Flutter](https://github.com/szanatil/Miserend-Flutter) repóra.
-- Kimarad a korábbi miserend.hu csempe és a külön Verzió csempe (a verzió a Fejlesztő alá került).
+  6. **miserend.hu** csempe („A miserend webes változata”), a böngészőben nyílik meg (spec 0009, „Menü oldal”).
+- Kimarad a külön Verzió csempe: a verzió a Fejlesztő alá került.
 
 A kiadó (Rendtartomány) és az 1%-os kedvezményezett (Alapítvány) két külön szervezet, két adószámmal. Az oldalon csak az Alapítványé szerepel, és csak az őt megnevező mondat mellett (kutatás, §2.5).
 
@@ -28,8 +29,8 @@ A kiadó (Rendtartomány) és az 1%-os kedvezményezett (Alapítvány) két kül
 ## Testing Decisions
 
 - **Névjegy oldal** (widget teszt, hamis link-indítóval, T6):
-  - a cím „Névjegy”; a szakaszok sorrendje: Visszajelzés, Mai templom ajánlatunk, Kiadó, Fejlesztő, Forráskód;
-  - megjelenik a kiadó neve és címe; a jezsuita.hu és a GitHub-link a helyes URL-t nyitja;
+  - a cím „Névjegy”; a szakaszok sorrendje: Visszajelzés, Mai templom ajánlatunk, Kiadó, Fejlesztő, Forráskód, miserend.hu;
+  - megjelenik a kiadó neve és címe; a jezsuita.hu, a GitHub-link és a miserend.hu csempe a helyes URL-t nyitja;
   - a fejlesztő mellett a verzió látszik;
   - a másolás gomb a vágólapra teszi az adószámot, és SnackBar jelzi;
   - a Visszajelzés gomb és a templomajánló a korábbi tesztjeivel.

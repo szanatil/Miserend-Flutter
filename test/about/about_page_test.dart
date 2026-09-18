@@ -111,7 +111,9 @@ void main() {
     expect(find.text('Verzió: 1.2.3 (45)'), findsOneWidget);
   });
 
-  testWidgets('lists the sections in order, feedback first', (tester) async {
+  testWidgets('lists the sections in order, the web version last', (
+    tester,
+  ) async {
     await pumpPage(
       tester,
       churchOfTheDay: _FakeChurchOfTheDay(cached: _cached),
@@ -123,6 +125,7 @@ void main() {
           find.text('Kiadó'),
           find.text('Fejlesztő'),
           find.text('Forráskód'),
+          find.text('miserend.hu'),
         ].map((finder) => tester.getTopLeft(finder).dy).toList();
     expect(tops, [...tops]..sort());
   });
@@ -144,6 +147,20 @@ void main() {
     await tester.tap(find.text('jezsuita.hu'));
     await tester.pumpAndSettle();
     expect(opened.single, Uri.parse('https://jezsuita.hu'));
+  });
+
+  testWidgets('the miserend.hu tile opens the web version', (tester) async {
+    final opened = <Uri>[];
+    await pumpPage(
+      tester,
+      openLink: (uri) async {
+        opened.add(uri);
+        return true;
+      },
+    );
+    await tester.tap(find.text('miserend.hu'));
+    await tester.pumpAndSettle();
+    expect(opened.single, Uri.parse('https://miserend.hu'));
   });
 
   testWidgets('the source code link opens the repository', (tester) async {
