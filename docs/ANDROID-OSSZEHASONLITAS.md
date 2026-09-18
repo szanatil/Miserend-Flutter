@@ -49,8 +49,8 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 
 | Funkció | Flutter | Android | Megjegyzés |
 |---|---|---|---|
-| Alsó navigáció: Templomok / Misék / Térkép | ✅ | ✅ | Flutter: `lib/home/home.dart:237-256`. Android: [home_navigation_menu.xml][a-navmenu] |
-| Negyedik menüpont („Menü” oldal) | ✅ | ❌ | `lib/home/home.dart:166-173`, `lib/menu/menu_page.dart` |
+| Alsó navigáció: Templomok / Misék / Térkép | ✅ | ✅ | Flutter: `lib/home/home.dart:376-397`. Android: [home_navigation_menu.xml][a-navmenu] |
+| Negyedik menüpont („Névjegy” oldal) | ✅ | ❌ | `lib/home/home.dart:231-238`, `lib/about/about_page.dart` |
 | Templomok fül: „Közeli” és „Kedvencek” alfül | ✅ | ✅ | Flutter: `lib/home/churches/churches_page.dart:5`. Android: [ChurchesPagerAdapter L24-L41][a-pager] („Közelben”/„Kedvencek”) |
 | Keresősáv javaslatokkal (3. karaktertől) | ✅ | ✅ | Eltérő tartalommal, lásd 3.3 |
 | Templom- és településjavaslat | ✅ | ✅ | |
@@ -116,7 +116,7 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 |---|---|---|---|
 | Kedvencek csak helyben (külön SQLite) | ✅ | ✅ | Flutter: `lib/database/local_database.dart:6`. Android: [LocalDatabase L14][a-localdb] |
 | **Visszajelzés** e-mailben | ✅ | ❌ | `lib/widgets/feedback_mail.dart:10`, `:28-32` |
-| Menü: miserend.hu link, verziószám, „Mai templom ajánlatunk” | ✅ | ❌ | `lib/menu/menu_page.dart:91-183` |
+| Névjegy: miserend.hu link, verziószám, „Mai templom ajánlatunk”, Impresszum | ✅ | ❌ | `lib/about/about_page.dart`, `lib/about/impressum_page.dart` |
 | Analitika (képernyőkövetés) | ❌ | ✅ | Firebase Analytics ([Analytics.java L16-L28][a-analytics]) |
 | Összeomlás-jelentés | ❌ | ✅ | Crashlytics, csak release buildben ([AndroidManifest L46-L48][a-manifest-crash], [build.gradle L14-L21][a-gradle-crash]) |
 | Fiók / bejelentkezés | ❌ | ❌ | Egyik kódban sincs ilyen |
@@ -172,11 +172,12 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 
 **Hibajelentés tiltása kapcsolat nélkül.** Amíg a részletező Nincs kapcsolat vagy Szerverhiba jelölést mutat, a „Hibajelentés” gomb szürke. Koppintásra csak egy magyarázó SnackBar jelenik meg (`church_details_page.dart:224-251`).
 
-**Menü oldal és visszajelzés.** Az alsó navigáció negyedik eleme a „Menü” oldalt nyitja (`lib/home/home.dart:166-173`). Rajta:
-- miserend.hu link a böngészőbe (`lib/menu/menu_page.dart:45`, `:91-104`);
-- „Mai templom ajánlatunk” kártya: fényképes templom dátumhoz kötött választással, fotóval, címmel és 4 soros leírással; koppintásra a részletező nyílik (`:140-183`, `lib/menu/church_of_the_day_loader.dart`);
-- „Verzió” sor (`:106-125`);
-- „Visszajelzés” gomb: e-mail a `szentjozsefhackathon@jezsuita.hu` címre, az app verziójával és az OS-sel (`:126-133`, `lib/widgets/feedback_mail.dart:10`, `:28-32`, `:54-59`).
+**Névjegy oldal és visszajelzés.** Az alsó navigáció negyedik eleme a „Névjegy” oldalt nyitja (`lib/home/home.dart:231-238`). Rajta:
+- miserend.hu link a böngészőbe (`lib/about/about_page.dart:46`, `:92-105`);
+- „Mai templom ajánlatunk” kártya: fényképes templom dátumhoz kötött választással, fotóval, címmel és 4 soros leírással; koppintásra a részletező nyílik (`:161-204`, `lib/about/church_of_the_day_loader.dart`);
+- „Verzió” sor (`:107-126`);
+- „Impresszum” csempe: kiadó, fejlesztő, 1%, forráskód, licencek (`:127-146`, `lib/about/impressum_page.dart`);
+- „Visszajelzés” gomb: e-mail a `szentjozsefhackathon@jezsuita.hu` címre, az app verziójával és az OS-sel (`:147-154`, `lib/widgets/feedback_mail.dart:10`, `:28-32`, `:54-59`).
 
 **iOS-támogatás.** Van `ios/` célplatform helyengedély-szöveggel (`ios/Runner/Info.plist:29-30`).
 

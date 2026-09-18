@@ -108,6 +108,14 @@ _Avoid_: "visszajelzés" erre (az az appról szól); "hibabejelentés" az app m�
 Az **appról** szóló üzenet az app fejlesztőinek (Szent József Hackathon): az app hibája, vélemény vagy új funkció kérése. Nem kötődik templomhoz, és nem a miserend.hu adatgondozóihoz jut el. Ha a felhasználó egy templom adatait látja hibásnak, az **hibajelentés**, nem visszajelzés — annak a helye a templom részletezője, ahol egyértelmű, melyik templomról van szó; a visszajelzés erre nem utal és nem irányít át.
 _Avoid_: "funkciókérés" külön fogalomként (a visszajelzés egyik fajtája); "hibajelentés" az app hibájára.
 
+**Névjegy (about page)**:
+Az alsó navigáció negyedik pontjából nyíló oldal: a webes változat, a „Mai templom ajánlatunk”, a verzió, az **Impresszum** és a **visszajelzés**. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
+_Avoid_: "Menü" (oldalsó menüt sejtet, ami nincs); "Beállítások" (beállítás nincs rajta).
+
+**Impresszum (impressum)**:
+Az app **kiadója** (Jézus Társasága Magyarországi Rendtartománya), **fejlesztője** (Szent József Hackathon), a támogatás módja (1% a Jézus Társasága Alapítványnak), a forráskód helye és a felhasznált licencek. A kiadó és az 1%-os kedvezményezett két külön szervezet, külön adószámmal; az Impresszum csak az Alapítványét mutatja, az 1%-os mondat mellett.
+_Avoid_: a miserend.hu üzemeltetőjével azonosítani (a webet a Szent József Hackathon közössége tartja fenn, az appot a Rendtartomány adja ki).
+
 **Szentségimádás (adoration)**:
 Dátumozott időablakok listája (`kezdete`/`vege`/`fajta`/opcionális `info`), nem visszatérési szabály és nem mise. Ugyanarra a napra **átfedő** bejegyzések is érkezhetnek (pl. egy `00:00–23:59` és egy `09:00–18:00`); ezek nem hibák, és nem vonhatók össze, mert a teljes napos ablak jelenthet valódi örökimádást is.
 _Avoid_: "adoráció-rend" / "szentségimádás miserendje" (nem menetrendi adat, és nem a `misek` mezőből jön).

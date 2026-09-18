@@ -196,7 +196,7 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
-  /// Churches with at least one photo; the Menü page's recommendation shows
+  /// Churches with at least one photo; the Névjegy page's recommendation shows
   /// one, so a church without is never picked.
   static const String _photographed = "photos IS NOT NULL AND photos <> '[]'";
 

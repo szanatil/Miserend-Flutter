@@ -7,8 +7,8 @@ import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 
-/// Picks the Menü page's „Mai templom ajánlatunk": a random church with a
-/// photo, the same one all day, so reopening the menu does not reshuffle it.
+/// Picks the Névjegy page's „Mai templom ajánlatunk": a random church with a
+/// photo, the same one all day, so reopening the Névjegy does not reshuffle it.
 ///
 /// The bootstrap import carries no description, and not every church has one
 /// on miserend.hu either. So the day has a short, fixed list of candidates,

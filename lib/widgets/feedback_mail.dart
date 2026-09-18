@@ -34,8 +34,8 @@ Uri feedbackMailUri({
   );
 }
 
-/// Opens the mail app with the feedback mail. Shared by the home menu and the
-/// about page (spec 0009).
+/// Opens the mail app with the feedback mail, from the Névjegy page
+/// (spec 0009).
 class FeedbackLauncher {
   /// [launch] is injected by tests; the real one hands the URI to the device.
   FeedbackLauncher({Future<bool> Function(Uri uri)? launch})

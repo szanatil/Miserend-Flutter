@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:miserend/about/church_of_the_day_loader.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
-import 'package:miserend/menu/church_of_the_day_loader.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Churches as the bootstrap import leaves them: no description, and a photo

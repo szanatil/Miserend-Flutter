@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/about/church_of_the_day_loader.dart';
+import 'package:miserend/about/impressum_page.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
-import 'package:miserend/menu/church_of_the_day_loader.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -12,11 +13,11 @@ import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-/// Opened from the bottom navigation's Menü item: the web version, a church
-/// to discover, the app's version and the way to send feedback (spec 0009,
-/// „Menü oldal").
-class MenuPage extends StatefulWidget {
-  const MenuPage({
+/// Opened from the bottom navigation's Névjegy item: the web version, a church
+/// to discover, the app's version, the Impresszum and the way to send feedback
+/// (spec 0009, „Menü oldal"; spec 0014).
+class AboutPage extends StatefulWidget {
+  const AboutPage({
     super.key,
     this.feedback,
     this.openLink,
@@ -37,10 +38,10 @@ class MenuPage extends StatefulWidget {
   final DateTime Function() clock;
 
   @override
-  State<MenuPage> createState() => _MenuPageState();
+  State<AboutPage> createState() => _AboutPageState();
 }
 
-class _MenuPageState extends State<MenuPage> {
+class _AboutPageState extends State<AboutPage> {
   /// The web version, with the same data as the app.
   static final Uri _webVersion = Uri.parse('https://miserend.hu');
 
@@ -80,9 +81,9 @@ class _MenuPageState extends State<MenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Menü')),
+      appBar: AppBar(title: const Text('Névjegy')),
       // The grey the Templomok and Misék tabs draw their lists on, so the
-      // menu looks like the same app.
+      // page looks like the same app.
       body: Container(
         color: Colors.black12,
         child: ListView(
@@ -121,6 +122,26 @@ class _MenuPageState extends State<MenuPage> {
                     ),
                   );
                 },
+              ),
+            ),
+            _card(
+              ListTile(
+                leading: const Icon(Icons.gavel, color: Colors.black54),
+                title: const Text('Impresszum'),
+                subtitle: const Text('Kiadó, fejlesztő, támogatás, licencek'),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Colors.black54,
+                ),
+                onTap:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ImpressumPage(openLink: widget.openLink),
+                      ),
+                    ),
               ),
             ),
             Padding(
@@ -219,7 +240,7 @@ class _MenuPageState extends State<MenuPage> {
     masses: const [],
   );
 
-  /// The details page's card margins, so the menu reads as the same app.
+  /// The details page's card margins, so the page reads as the same app.
   Widget _card(Widget child) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

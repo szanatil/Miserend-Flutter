@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:miserend/about/about_page.dart';
+import 'package:miserend/about/church_of_the_day_loader.dart';
+import 'package:miserend/about/impressum_page.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/church_details.dart';
-import 'package:miserend/menu/church_of_the_day_loader.dart';
-import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -92,7 +93,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        home: MenuPage(
+        home: AboutPage(
           feedback: feedback,
           openLink: openLink,
           churchOfTheDay: churchOfTheDay ?? _FakeChurchOfTheDay(),
@@ -105,7 +106,7 @@ void main() {
 
   testWidgets('shows the version on its own tile', (tester) async {
     await pumpPage(tester);
-    expect(find.text('Menü'), findsOneWidget);
+    expect(find.text('Névjegy'), findsOneWidget);
     expect(find.text('Verzió'), findsOneWidget);
     expect(find.text('1.2.3 (45)'), findsOneWidget);
   });
@@ -130,6 +131,13 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Visszajelzés'));
     await tester.pumpAndSettle();
     expect(feedback.launched.single.path, feedbackAddress);
+  });
+
+  testWidgets('the Impresszum tile opens the Impresszum', (tester) async {
+    await pumpPage(tester);
+    await tester.tap(find.text('Impresszum'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ImpressumPage), findsOneWidget);
   });
 
   group('the church of the day', () {

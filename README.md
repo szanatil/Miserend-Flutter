@@ -12,7 +12,7 @@ Az app Flutterrel készült, és ugyanazt a templom-adatbázist jeleníti meg, m
 - **Keresés:** templomnév (az alternatív nevek is) vagy település alapján, kis-nagybetűtől és ékezettől függetlenül, már gépelés közben is kínál találatokat. A javaslatok aljáról nyílik a **Részletes kereső**, amely több feltétel együttesével keres: név, település, liturgikus nyelv, valamint hogy van-e miséje a templomnak egy adott napon és időablakban.
 - **Templom adatlapja:** a mai és a vasárnapi misék, a következő napok miserendje, a templom helye a térképen, útvonaltervezés, és hibabejelentés a miserend.hu-nak.
 - **Kedvencek:** csak a készüléken tárolódnak, fiók nincs.
-- **Menü:** az alsó navigációból nyíló oldal a miserend.hu webes változatának linkjével, a nap templom-ajánlatával, az app verziójával, és egy gombbal, amellyel e-mailben lehet visszajelzést küldeni az app fejlesztőinek.
+- **Névjegy:** az alsó navigációból nyíló oldal a miserend.hu webes változatának linkjével, a nap templom-ajánlatával, az app verziójával, az Impresszummal (kiadó, fejlesztő, támogatás, forráskód, felhasznált licencek), és egy gombbal, amellyel e-mailben lehet visszajelzést küldeni az app fejlesztőinek.
 - **Offline működés:** ha nincs kapcsolat, a képernyők a helyi gyorsítótárból dolgoznak, és jelzik, hogy az adat nem friss.
 
 ## Futtatás
@@ -71,7 +71,7 @@ Részletek: [ADR-0002](docs/adr/0002-api-v4-mint-elsodleges-adatforras.md).
 | `database/` | a letöltött export, a helyi gyorsítótár (`cache/`) és a kedvencek |
 | `home/` | a főképernyő és a három fül (`churches/`, `masses/`, `map/`), a keresés és a Részletes kereső (`advanced_search/`) |
 | `church_details/` | a templom adatlapja és a hibabejelentés |
-| `menu/` | a Menü oldal és a „Mai templom ajánlatunk” |
+| `about/` | a Névjegy oldal, az Impresszum és a „Mai templom ajánlatunk” |
 | `widgets/` | közös widgetek, például a térkép |
 
 Az egyes képernyők pontos működését a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md) írja le.

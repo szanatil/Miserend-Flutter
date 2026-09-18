@@ -30,14 +30,14 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 | Feature | Behavior |
 |---|---|
-| Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing — and a fourth item, **Menü** (below). |
+| Bottom navigation | Three tabs: **Templomok** (Churches), **Misék** (Masses), **Térkép** (Map) — switches the body widget via local `_selectedIndex` state, no routing — and a fourth item, **Névjegy** (below). |
 | Search bar | A `SearchAnchor.bar` in the app bar. Live-updates suggestions as the user types, but only once the query is **longer than 2 characters** (`_onSearchChanged`). |
 | Search suggestions | Combines up to 20 matching **churches** (by name, common name, alternative name or city) and any matching **cities** (distinct `varos` values), both ignoring case and accents (`searchText`), from the cache into one suggestion list, each rendered with its own tile type (`ChurchSuggestion`, `CitySuggestion`). No API call (`SearchSuggestions`). |
 | Suggestion tap-through | Tapping a church suggestion opens `ChurchDetailsPage` directly; tapping a city suggestion opens `SearchResultsPage` scoped to that city. |
 | Search submit | Pressing enter/search on a raw term (not from a suggestion) opens `SearchResultsPage` scoped to that free-text term. |
 | Részletes kereső row | The last row of the suggestions, always — also below 3 characters and with no suggestion — pinned under them. Opens the **Részletes kereső** in the tab's place, with the typed text as the name; the search bar and the bottom navigation stay. Any tab, the back arrow and the system back close it; a search or suggestion from the bar closes it too, and the row always opens it afresh. |
 | Clearing the bar | After a search, a church or city suggestion, or the Részletes kereső row, the bar's text and suggestions are cleared, so old suggestions do not come back; the Részletes kereső takes the typed name before the clearing. |
-| Menü | A fourth bottom navigation item with a hamburger icon. Not a tab: it pushes `MenuPage` and the selected tab stays. |
+| Névjegy | A fourth bottom navigation item with an ⓘ icon. Not a tab: it pushes `AboutPage` and the selected tab stays. |
 
 ## Részletes kereső
 
@@ -119,12 +119,13 @@ The export is only downloaded when it is missing or of the wrong version — the
 - Sends `MiserendApiClient.report` → `POST https://miserend.hu/api/v4/report` with `tid`, `pid` (0/1/2), the trimmed `text`, `email` only when given, and `dbdate` = the day of the details page's `dataAsOf`. Success is read off the body: `error: 1` is a server error, not a sent report.
 - While sending, the button shows a spinner and cannot be tapped again. A sent report closes the page with "Hibajelentés elküldve" and remembers the email (`shared_preferences`) for the next report. A failed one keeps the page and what was typed, with a message for **no connection** or for **server error**; the server's own text is not shown. No offline queue.
 
-## Menu and feedback
+## Névjegy and feedback
 
-**Files:** `lib/widgets/feedback_mail.dart`, `lib/menu/menu_page.dart`, `lib/menu/church_of_the_day_loader.dart`; spec 0009
+**Files:** `lib/widgets/feedback_mail.dart`, `lib/about/about_page.dart`, `lib/about/impressum_page.dart`, `lib/about/church_of_the_day_loader.dart`; spec 0009, spec 0014
 
 - **Feedback** is about the app, not a church's data, and goes by mail to `szentjozsefhackathon@jezsuita.hu` — no API endpoint takes it. It opens the mail app directly, no in-app form: subject "Miserend app – visszajelzés", an empty space for the user, then `---` and the app version, build number and OS with its version (`package_info_plus`, `dart:io` `Platform`). No device model, location or identifier. The `mailto:` query is encoded by hand, spaces as `%20`. Without a mail app a snackbar gives the address instead.
-- **Menü page** (purple AppBar "Menü", on the same grey as the Templomok and Misék lists): a **miserend.hu** tile that opens the web version in the browser, a **Mai templom ajánlatunk** card, a **Verzió** tile ("x.y.z (build)"), and a **Visszajelzés** button that opens the feedback mail.
+- **Névjegy page** (purple AppBar "Névjegy", on the same grey as the Templomok and Misék lists): a **miserend.hu** tile that opens the web version in the browser, a **Mai templom ajánlatunk** card, a **Verzió** tile ("x.y.z (build)"), an **Impresszum** tile, and a **Visszajelzés** button that opens the feedback mail.
+- **Impresszum page:** the publisher (Jézus Társasága Magyarországi Rendtartománya, 1085 Budapest, Horánszky u. 20., link to jezsuita.hu), the developer (Szent József Hackathon), the 1% offer to the Jézus Társasága Alapítvány with its tax number and a copy button, a link to the GitHub repository, and **Felhasznált licencek**, which opens Flutter's licence page.
 - **Mai templom ajánlatunk:** a card with the church's photo, name, address and the first four lines of its description; a tap opens its details page. Only churches with a photo are picked (`CacheDatabase.photographedChurchCount` / `photographedChurchAt`). Ten candidates are drawn from a date-seeded random sequence, so the day keeps its choice; the first with a description wins. The bootstrap import carries no description, so the card shows from the cache at once, then one full `Church {"ids"}` call writes all ten through and the pick is made again — later openings that day show the described church straight away. A failed call keeps the cached pick, unmarked.
 
 ## Favorites (cross-cutting)

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:miserend/about/about_page.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/favorites_prefetch.dart';
@@ -16,7 +17,6 @@ import 'package:miserend/home/search_suggestions.dart';
 import 'package:miserend/home/widgets/search_suggestion_list.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
-import 'package:miserend/menu/menu_page.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
@@ -182,9 +182,9 @@ class _HomeScreenState extends State<HomeScreen> {
   static const int _tabCount = 3;
   static const int _massesTab = 1;
 
-  /// The navigation item after the tabs. It opens the menu as a page of its
-  /// own rather than a tab, so the tab on screen stays selected.
-  static const int _menuItem = _tabCount;
+  /// The navigation item after the tabs. It opens the Névjegy as a page of
+  /// its own rather than a tab, so the tab on screen stays selected.
+  static const int _aboutItem = _tabCount;
 
   /// The Misék and the Térkép tab are told whether they are the one on
   /// screen, because the IndexedStack keeps them alive underneath the others
@@ -229,10 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == _menuItem) {
+    if (index == _aboutItem) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const MenuPage()),
+        MaterialPageRoute(builder: (context) => const AboutPage()),
       );
       return;
     }
@@ -382,7 +382,10 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Misék',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu), label: 'Menü'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info_outline),
+            label: 'Névjegy',
+          ),
         ],
         // From four items Flutter switches to the shifting style, which would
         // drop the purple background and hide the inactive labels.

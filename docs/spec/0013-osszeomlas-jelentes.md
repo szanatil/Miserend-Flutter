@@ -10,7 +10,7 @@ A régi Android app Firebase Crashlyticsszel jelentette az összeomlásokat. Az 
 
 ## Solution
 
-Az app a **release buildben** a nem kezelt hibákat és az összeomlásokat automatikusan jelenti a Firebase Crashlyticsnek, egy új, a fejlesztők kezelésében lévő Firebase-projektbe, Androidon és iOS-en. A jelentés nem tartalmaz személyes adatot és helyzetet. A felhasználónak nincs teendője, a Menüben nincs kapcsoló; az adatkezelési tájékoztató megemlíti.
+Az app a **release buildben** a nem kezelt hibákat és az összeomlásokat automatikusan jelenti a Firebase Crashlyticsnek, egy új, a fejlesztők kezelésében lévő Firebase-projektbe, Androidon és iOS-en. A jelentés nem tartalmaz személyes adatot és helyzetet. A felhasználónak nincs teendője, a Névjegy oldalon nincs kapcsoló; az adatkezelési tájékoztató megemlíti.
 
 ## User Stories
 
@@ -50,7 +50,7 @@ Az app a **release buildben** a nem kezelt hibákat és az összeomlásokat auto
 ## Out of Scope
 
 - Analitika, képernyőkövetés (Firebase Analytics).
-- Hozzájárulás-kérés, ki-/bekapcsoló a Menüben.
+- Hozzájárulás-kérés, ki-/bekapcsoló a Névjegy oldalon.
 - Teljesítménymérés (Firebase Performance), távoli konfiguráció.
 - A régi Android app Firebase-projektjének átvétele.
 - Az adatkezelési tájékoztató szövegének megírása.
