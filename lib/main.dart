@@ -58,6 +58,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: miserendTheme(context),
       home: const RouteSplash(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
