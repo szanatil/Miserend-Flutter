@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>A közeli templomok és misék megjelenítéséhez szükség van a helyzetedre.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>A közeli templomok és misék megjelenítéséhez szükség van a helyzetedre.</string>
 	<key>UIApplicationSceneManifest</key>
