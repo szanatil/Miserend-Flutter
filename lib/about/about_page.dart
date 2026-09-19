@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
@@ -14,9 +13,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 /// Opened from the bottom navigation's Névjegy item: a church to discover,
-/// the app's impressum — publisher and how to support it, developer and
-/// version, source code — and the web version, under a floating button to
-/// send feedback (spec 0014).
+/// the app's developer and version, its source code and the web version,
+/// under a floating button to send feedback (spec 0014).
 class AboutPage extends StatefulWidget {
   const AboutPage({
     super.key,
@@ -46,17 +44,9 @@ class _AboutPageState extends State<AboutPage> {
   /// The web version, with the same data as the app.
   static final Uri _webVersion = Uri.parse('https://miserend.hu');
 
-  static final Uri _publisherSite = Uri.parse('https://jezsuita.hu');
-
   static final Uri _sourceCode = Uri.parse(
     'https://github.com/szanatil/Miserend-Flutter',
   );
-
-  /// The Jézus Társasága Alapítvány's, for the 1% offer. The publisher (the
-  /// Rendtartomány) has a tax number of its own; only the Alapítvány's is
-  /// shown, beside the sentence that names it (docs/MENU-ES-IMPRESSZUM.md,
-  /// §2.5).
-  static const String _foundationTaxNumber = '18064333-2-42';
 
   /// Room below the last tile so it can scroll clear of the floating
   /// feedback button: the button's 56 plus its 16 margin, and a gap.
@@ -116,45 +106,6 @@ class _AboutPageState extends State<AboutPage> {
           padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
           children: [
             if (_church case final church?) _churchOfTheDay(church),
-            SectionCard(
-              title: 'Kiadó',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  Text(
-                    'Jézus Társasága Magyarországi Rendtartománya',
-                    style: textTheme.titleMedium,
-                  ),
-                  const Text('1085 Budapest, Horánszky u. 20.'),
-                  _externalLink('jezsuita.hu', _publisherSite),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Ha támogatni szeretnéd munkánkat, ajánld fel adód '
-                    '1%-át a Jézus Társasága Alapítványnak.',
-                  ),
-                  // Wraps rather than overflows on a narrow phone or with
-                  // large text.
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      const Text('Adószám: '),
-                      Text(
-                        _foundationTaxNumber,
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Adószám másolása',
-                        icon: const Icon(Icons.copy, color: Colors.black54),
-                        onPressed: _copyTaxNumber,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             SectionCard(
               title: 'Fejlesztő',
               child: Column(
@@ -230,14 +181,6 @@ class _AboutPageState extends State<AboutPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _copyTaxNumber() async {
-    final messenger = ScaffoldMessenger.of(context);
-    await Clipboard.setData(const ClipboardData(text: _foundationTaxNumber));
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Adószám vágólapra másolva')),
     );
   }
 

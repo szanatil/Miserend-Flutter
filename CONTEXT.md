@@ -113,8 +113,8 @@ Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a 
 _Avoid_: "Menü" (oldalsó menüt sejtet, ami nincs); "Beállítások" (beállítás nincs rajta).
 
 **Impresszum (impressum)**:
-Az app **kiadója** (Jézus Társasága Magyarországi Rendtartománya), **fejlesztője** (Szent József Hackathon) és verziója, a támogatás módja (1% a Jézus Társasága Alapítványnak) és a forráskód helye. Nem külön oldal: a Névjegy szakaszai. A kiadó és az 1%-os kedvezményezett két külön szervezet, külön adószámmal; a Névjegy csak az Alapítványét mutatja, az 1%-os mondat mellett.
-_Avoid_: a miserend.hu üzemeltetőjével azonosítani (a webet a Szent József Hackathon közössége tartja fenn, az appot a Rendtartomány adja ki).
+Az app **fejlesztője** (Szent József Hackathon) és verziója, és a forráskód helye. Nem külön oldal: a Névjegy szakaszai. Kiadó és támogatási (1%-os) felhívás nincs rajta.
+_Avoid_: a miserend.hu üzemeltetőjével azonosítani (a webet a Szent József Hackathon közössége tartja fenn).
 
 **Szentségimádás (adoration)**:
 Dátumozott időablakok listája (`kezdete`/`vege`/`fajta`/opcionális `info`), nem visszatérési szabály és nem mise. Ugyanarra a napra **átfedő** bejegyzések is érkezhetnek (pl. egy `00:00–23:59` és egy `09:00–18:00`); ezek nem hibák, és nem vonhatók össze, mert a teljes napos ablak jelenthet valódi örökimádást is.

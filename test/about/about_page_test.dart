@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/about/about_page.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
@@ -122,7 +121,6 @@ void main() {
     final tops =
         [
           find.text('Mai templom ajánlatunk'),
-          find.text('Kiadó'),
           find.text('Fejlesztő'),
           find.text('Forráskód'),
           find.text('miserend.hu'),
@@ -130,23 +128,10 @@ void main() {
     expect(tops, [...tops]..sort());
   });
 
-  testWidgets('names the publisher and opens jezsuita.hu', (tester) async {
-    final opened = <Uri>[];
-    await pumpPage(
-      tester,
-      openLink: (uri) async {
-        opened.add(uri);
-        return true;
-      },
-    );
-    expect(
-      find.text('Jézus Társasága Magyarországi Rendtartománya'),
-      findsOneWidget,
-    );
-    expect(find.text('1085 Budapest, Horánszky u. 20.'), findsOneWidget);
-    await tester.tap(find.text('jezsuita.hu'));
-    await tester.pumpAndSettle();
-    expect(opened.single, Uri.parse('https://jezsuita.hu'));
+  testWidgets('has no publisher tile', (tester) async {
+    await pumpPage(tester);
+    expect(find.text('Kiadó'), findsNothing);
+    expect(find.textContaining('Jézus Társasága'), findsNothing);
   });
 
   testWidgets('the miserend.hu tile opens the web version', (tester) async {
@@ -178,31 +163,6 @@ void main() {
       opened.single,
       Uri.parse('https://github.com/szanatil/Miserend-Flutter'),
     );
-  });
-
-  testWidgets('the tax number is copied for the 1% offer', (tester) async {
-    final copied = <Object?>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') copied.add(call.arguments);
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        null,
-      ),
-    );
-    await pumpPage(tester);
-
-    expect(find.textContaining('Jézus Társasága Alapítvány'), findsOneWidget);
-    await tester.tap(find.byTooltip('Adószám másolása'));
-    await tester.pump();
-
-    expect(copied.single, {'text': '18064333-2-42'});
-    expect(find.text('Adószám vágólapra másolva'), findsOneWidget);
   });
 
   testWidgets('the feedback button floats in view on a small phone', (
@@ -279,7 +239,7 @@ void main() {
       await pumpPage(tester, churchOfTheDay: _FakeChurchOfTheDay());
 
       expect(find.text('Mai templom ajánlatunk'), findsNothing);
-      expect(find.text('Kiadó'), findsOneWidget);
+      expect(find.text('Fejlesztő'), findsOneWidget);
     });
   });
 }

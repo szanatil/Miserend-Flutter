@@ -177,18 +177,18 @@ Megjegyzések (ez nem jogi vélemény):
 |---|---|
 | A pont neve | **„Névjegy”** (javasolt ikon: `Icons.info_outline`). |
 | „Mai templom ajánlatunk” | **Marad** a Névjegy lapon. |
-| Kiadó | **Jézus Társasága Magyarországi Rendtartománya**, link: [jezsuita.hu](https://jezsuita.hu). A cím (1085 Budapest, Horánszky u. 20.) a §2.5 szerint ellenőrzött. |
+| ~~Kiadó~~ | ~~**Jézus Társasága Magyarországi Rendtartománya**, link: [jezsuita.hu](https://jezsuita.hu). A cím (1085 Budapest, Horánszky u. 20.) a §2.5 szerint ellenőrzött.~~ Később (2026-09-19) visszavonva: **nincs Kiadó csempe**. |
 | Fejlesztő | **Szent József Hackathon**. |
 | Forráskód | [github.com/szanatil/Miserend-Flutter](https://github.com/szanatil/Miserend-Flutter). |
-| Támogatás | 1% a **Jézus Társasága Alapítványnak**, adószám 18064333-2-42, másolás gombbal. |
+| ~~Támogatás~~ | ~~1% a **Jézus Társasága Alapítványnak**, adószám 18064333-2-42, másolás gombbal.~~ A Kiadó csempével együtt visszavonva: **nincs**. |
 | Licencek | ~~A lapon legyen elérhető a használt licencek listája.~~ Később visszavonva: **nem kell**. |
-| Elrendezés (később) | **Nincs külön Impresszum oldal**: minden a Névjegyen van, fentről lefelé: Mai templom ajánlatunk, Kiadó + támogatás, Fejlesztő + verzió, Forráskód, miserend.hu csempe. A Visszajelzés lebegő gomb a képernyő alján. |
+| Elrendezés (később) | **Nincs külön Impresszum oldal**: minden a Névjegyen van, fentről lefelé: Mai templom ajánlatunk, Fejlesztő + verzió, Forráskód, miserend.hu csempe. A Visszajelzés lebegő gomb a képernyő alján. |
 
-Így a §2.5 buktatója megoldott: kiadóként a Rendtartomány szerepel, az adószám pedig kifejezetten az Alapítványhoz tartozó 1%-os mondat mellett áll.
+A §2.5 buktatója (a Rendtartomány és az Alapítvány adószámának összekeverése) a Kiadó csempe törlésével tárgytalan: az oldalon nincs kiadó és adószám.
 
 ## Nyitott kérdések
 
-A fenti döntések a 2., 3. és 6. kérdést (a navigáció helyén kívül) és a 4. kérdés repó-részét lezárják.
+A fenti döntések a 2., 3. és 6. kérdést (a navigáció helyén kívül) és a 4. kérdés repó-részét lezárják. A 2. és 3. kérdésre a válasz a Kiadó csempe törlése (2026-09-19) óta: az appban nincs kiadó és 1%-os felhívás.
 
 1. **Mit lát a felhasználó?** A kérés szerint a Menüben „Visszajelzés és Impresszum” van, a kódban viszont miserend.hu link, „Mai templom ajánlatunk”, Verzió és Visszajelzés, Impresszum nélkül (§1.2). Más buildről vagy tervről van szó?
 2. **Ki az app kiadója** a Play Áruházban és az App Store-ban, és ki szerepeljen üzemeltetőként: a JTMR, a Szent József Hackathon közössége, vagy magánszemély? Ettől függ az Impresszum 1. mezője és az Ekertv. szerinti adatok köre.
