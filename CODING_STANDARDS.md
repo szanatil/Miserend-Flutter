@@ -84,7 +84,7 @@ A SQLite export korából maradt, ma már csak a kezdeti feltöltést és néhá
 
 Egy változás akkor kész, ha mindegyik teljesül:
 
-A C1–C3-at és az Android- meg iOS-buildet a CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és a `main`-re érkező pushon ellenőrzi, az ott rögzített Flutter-verzióval.
+A C1–C3-at és az Android- meg iOS-buildet a CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és a `main`-re érkező pushon ellenőrzi, az ott rögzített Flutter-verzióval. Ami nem változásonként, hanem kiadásonként teendő, az a „V. Kiadás" alatt áll.
 
 **C1 — Formázva.** A `dart format --set-exit-if-changed lib test` nem jelez eltérést.
 
@@ -97,3 +97,21 @@ A C1–C3-at és az Android- meg iOS-buildet a CI ([.github/workflows/ci.yml](.g
 **C5 — A sémaváltozás az M1-et követi.**
 
 **C6 — A dokumentáció követi a kódot.** Ha változott egy fogalom, az a [CONTEXT.md](CONTEXT.md)-be kerül; ha egy döntés, egy ADR-be; ha egy képernyő viselkedése, a [docs/spec/](docs/spec/)-be; ha a funkciólefedettség, a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md)-be.
+
+## V. Kiadás
+
+A kiadást a [deploy.yml](.github/workflows/deploy.yml) végzi, a CI-vel azonos Flutter-verzióval.
+
+**V1 — A csatornát az ág vagy a tag választja, a verziót kézzel emeljük.** `*-rc` ágra érkező push béta kiadást indít (TestFlight, Play béta sáv), `v<verzió>` tag (pl. `v1.0.1`) éleset (App Store, Play éles sáv). Kézzel is indítható; éles kiadás így csak a `main`-ről. A `pubspec.yaml` verzióját (`1.0.1`) kézzel, külön commitban emeljük; a build-számot (`+25`) a pipeline emeli és commitolja minden kiadáskor, ahhoz nem nyúlunk.
+
+**V2 — A verzióemelő commit írja meg a kiadási szöveget.** Ugyanaz a commit, amely a verziót emeli, a [release_notes.txt](release-notes/Miserend/hu/release_notes.txt) teljes tartalmát lecseréli az előző `v*` tag óta bekerült, a felhasználónak látható változásokra (az első kiadásnál, tag híján, a `6e10387` commit óta). Refaktor, teszt, CI és dokumentáció nem kap tételt. A fájlt a TestFlight és az App Store változtatás nélkül jeleníti meg; az Android-kiadás nem használja. A következő verzióemelésig az előző kiadás szövege marad benne: a fájl nem ürül, mert üres szöveggel az App Store-feltöltés elbukik.
+
+A formátum sima szöveg, markdown nélkül, legfeljebb 4000 karakter. Két szakasz, soronként egy tétel gondolatjellel; az üres szakasz a fejlécével együtt kimarad. Magyarul, a felhasználó szavaival (K4), issue-szám és belső fogalom nélkül:
+
+```
+Újdonságok
+– A térképen a kedvenc templomok külön jelölést kapnak.
+
+Javítások
+– A miserend kapcsolat nélkül is megnyílik.
+```
