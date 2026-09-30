@@ -151,8 +151,14 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      # The key is compiled in here; deploy-ios only re-signs this artifact.
       - name: Build iOS app without signing
-        run: flutter build ios --release --no-codesign
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: |
+          set -euo pipefail
+          : "${CARTO_API_KEY:?CARTO_API_KEY secret is not set}"
+          flutter build ios --release --no-codesign --dart-define="CARTO_API_KEY=$CARTO_API_KEY"
 
       - name: Package unsigned iOS app
         run: |
@@ -179,6 +185,7 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
       PLAY_STORE_JSON_KEY_FILE: play_store_key.json
+      CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
     steps:
       - name: Checkout deploy branch
         uses: actions/checkout@v5

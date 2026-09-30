@@ -34,6 +34,8 @@ A térkép a CARTO Voyager csempéit használja. Kulcs nélkül az ingyenes csem
 flutter run --dart-define=CARTO_API_KEY=<kulcs>
 ```
 
+A kiadott buildek a kulcsot a `CARTO_API_KEY` GitHub secretből kapják ([deploy.yml](.github/workflows/deploy.yml)); a secret nélkül a deploy megáll.
+
 ## Tesztek és minőség
 
 ```sh

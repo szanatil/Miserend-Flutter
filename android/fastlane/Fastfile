@@ -1,11 +1,20 @@
 default_platform(:android)
 
 platform :android do
-  desc "Build and deploy to the Play Store production track"
-  lane :deploy do
+  # A release without the key would silently fall back to the keyless tile
+  # URL, so a missing key stops the lane instead.
+  def build_appbundle
+    key = ENV["CARTO_API_KEY"].to_s
+    UI.user_error!("CARTO_API_KEY is not set") if key.empty?
+
     sh("flutter", "clean")
     sh("flutter", "pub", "get")
-    sh("flutter", "build", "appbundle", "--release")
+    sh("flutter", "build", "appbundle", "--release", "--dart-define=CARTO_API_KEY=#{key}")
+  end
+
+  desc "Build and deploy to the Play Store production track"
+  lane :deploy do
+    build_appbundle
 
     upload_to_play_store(
       track: "production",
@@ -27,9 +36,7 @@ platform :android do
 
   desc "Build and deploy to the Play Store beta track"
   lane :beta do
-    sh("flutter", "clean")
-    sh("flutter", "pub", "get")
-    sh("flutter", "build", "appbundle", "--release")
+    build_appbundle
 
     upload_to_play_store(
       track: "beta",
