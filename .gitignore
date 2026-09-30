@@ -36,6 +36,10 @@ migrate_working_dir/
 
 # Local configuration
 .env.local
+/android/key.properties
+/android/app/keystore.jks
+/android/play_store_key.json
+/ios/AuthKey_*.p8
 
 # Symbolication related
 app.*.symbols

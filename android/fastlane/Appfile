@@ -1,0 +1,2 @@
+package_name("com.frama.miserend.hu.miserend")
+json_key_file(ENV["PLAY_STORE_JSON_KEY_FILE"] || "play_store_key.json")
