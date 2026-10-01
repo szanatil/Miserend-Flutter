@@ -52,6 +52,29 @@ A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és min
 
 Az ikon forrásképeit (`assets/icon/`) a [tool/app_icon/render_app_icon.swift](tool/app_icon/render_app_icon.swift) rajzolja, a platformonkénti méreteket a `flutter_launcher_icons` készíti. A lépések a [flutter_launcher_icons.yaml](flutter_launcher_icons.yaml) elején vannak.
 
+## Kiadás (CD)
+
+A boltokba a [deploy.yml](.github/workflows/deploy.yml) tölt fel, a CI-vel azonos Flutter-verzióval, mindkét platformon fastlane-nel ([android/fastlane/](android/fastlane/), [ios/fastlane/](ios/fastlane/)).
+
+| Indító | Csatorna | Hová kerül |
+|---|---|---|
+| push egy `*-rc` végű ágra | béta | TestFlight, Play béta sáv |
+| `v<verzió>` tag, például `v1.0.1` | éles | App Store (beküldve felülvizsgálatra), Play éles sáv |
+| kézi indítás (Actions → Deploy) | béta vagy éles | mint fent; éles csak a `main`-ről |
+
+Minden kiadás elején a pipeline megemeli a build-számot a `pubspec.yaml`-ben (`1.0.1+25` → `+26`), és visszacommitolja az ágra (`ci: bump build number to … [skip ci]`). A verziót (`1.0.1`) viszont kézzel, külön commitban emeljük. Az aláíráshoz és a feltöltéshez szükséges kulcsok (Android keystore, Play Store, App Store Connect, match, `CARTO_API_KEY`) a repó GitHub secretjei között vannak.
+
+### A kiadási szöveg: release_notes.txt
+
+A [release-notes/Miserend/hu/release_notes.txt](release-notes/Miserend/hu/release_notes.txt) az a szöveg, amelyet a felhasználók a TestFlightban és az App Store „Újdonságok” rovatában látnak. A pipeline változtatás nélkül tölti fel, senki nem nézi át útközben, ezért kiadás előtt mindig frissíteni kell:
+
+- **Ugyanaz a commit írja meg, amelyik a verziót emeli.** A fájl teljes tartalmát le kell cserélni az előző `v*` tag óta bekerült, a felhasználónak látható változásokra. Refaktor, teszt, CI és dokumentáció nem kerül bele.
+- **Ha nincs látható változás**, a szöveg egyetlen sor: „Miserend alkalmazás frissítése.”
+- **Soha nem lehet üres.** Üres szöveggel az App Store-feltöltés elbukik, ezért a következő verzióemelésig az előző kiadás szövege marad benne.
+- Az Android-kiadás nem használja.
+
+A kiadás pontos szabályai a [CODING_STANDARDS.md](CODING_STANDARDS.md) „V. Kiadás” részében vannak (V1–V2).
+
 ## Hogyan épül fel?
 
 **Adatforrások.** Két forrásból dolgozik az app, mindkettő a miserend.hu API v4-e:
