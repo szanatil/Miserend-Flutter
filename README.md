@@ -110,6 +110,28 @@ Az egyes képernyők pontos működését a [docs/FEATURE-COVERAGE.md](docs/FEAT
 - A commit-üzenet magyar, és ezt a formát követi: `Terület: mi változott (#issue)`, például `Misék fül: időpont-blokkok (#36)`.
 - Az issue-k kezelését és a címkéket a [docs/agents/](docs/agents/) írja le.
 
+### Munka AI-ügynökkel: Matt Pocock skilljei
+
+A fejlesztés AI-ügynökkel (például Claude Code-dal), [Matt Pocock skilljeivel](https://github.com/mattpocock/skills) folyik, és ez minden közreműködőre kötelező: a skilleket telepíteni kell, és a munka minden lépése a hozzá tartozó skillel megy. A [skills-lock.json](skills-lock.json) rögzíti, mely skillek kellenek és honnan; a telepítő mindig a legfrissebb upstream változatot tölti le, és ilyenkor átírja a fájlban a hash-eket. Maguk a skillek a gitignore-olt `.agents/skills/` mappába kerülnek, a `.claude/skills/` alatti linkek erre mutatnak. Friss klón után ezért a skilleket telepíteni kell (Node.js kell hozzá):
+
+```sh
+npx skills experimental_install
+```
+
+A `setup-matt-pocock-skills` skillt nem kell újra futtatni: a repó beállításai (issue-követő, címkék, dokumentumok helye) már a [docs/agents/](docs/agents/)-ben vannak.
+
+A munka menete a skillekkel:
+
+| Lépés | Skill |
+|---|---|
+| Egy ötlet vagy terv kikérdezése, közben a CONTEXT.md és az ADR-ek frissítése | `/grill-with-docs` |
+| A megbeszéltekből specifikáció, majd abból issue-k | `/to-spec`, `/to-tickets` |
+| Beérkező issue-k rendezése, címkézése | `/triage` |
+| Egy issue vagy spec megvalósítása, tesztvezérelten | `/implement` (a `/tdd`-t használja) |
+| A változás ellenőrzése a szabályok és a spec szerint | `/code-review` |
+| Nehéz hiba kivizsgálása | `/diagnosing-bugs` |
+| Ha nem egyértelmű, melyik skill kell | `/ask-matt` |
+
 ## További dokumentáció
 
 - [CONTEXT.md](CONTEXT.md): a szakkifejezések szótára, és hogy miben egyezik vagy tér el a fogalomhasználat a miserend.hu weboldalétól.
