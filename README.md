@@ -44,7 +44,7 @@ dart format .
 flutter analyze
 ```
 
-A Dart-kód írásának szabályai a [CODING_STANDARDS.md](CODING_STANDARDS.md)-ben vannak.
+A Dart-kód írásának szabályai a [CODING_STANDARDS.md](CODING_STANDARDS.md)-ben vannak, a felhasználói felület szabályai pedig a [DESIGN.md](DESIGN.md)-ben. A DESIGN.md szabályainak gépi része teszt: a [test/design_rules_test.dart](test/design_rules_test.dart) a `flutter test` részeként hibát jelez, ha a `lib/`-ben a `lib/theme/`-on kívül nyers szín, betűméret, térköz, lekerekítés vagy emelés, illetve nem lekerekített ikon jelenik meg. A kivétellistája csak a már ismert, issue-hoz kötött eltéréseket tűri, és csak csökkenhet.
 
 A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) minden PR-en és minden main-pushon lefuttatja ezt a három ellenőrzést, és az appot Androidra és iOS-re is lebuildeli. A Flutter-verzió a ci.yml-ben van rögzítve.
 
@@ -86,6 +86,8 @@ Részletek: [ADR-0002](docs/adr/0002-api-v4-mint-elsodleges-adatforras.md).
 
 **Helyi gyorsítótár.** Az első letöltés után az app az exportból feltölti a gyorsítótárat: az összes templomot és a következő 30 nap miséit. A képernyők először mindig a gyorsítótárból rajzolnak, majd a háttérben meghívják az API-t, és a választ visszaírják a gyorsítótárba. Ha a hívás nem sikerül, a korábbi adat marad látható. Részletek: [ADR-0003](docs/adr/0003-offline-mukodes-helyi-gyorsitotarbol.md).
 
+**Felület.** Egyetlen, Material 3 alapú widgetfa mindkét platformon. A döntés szerint iOS-en egy rögzített listán szereplő elemek (például a dialógus, a műveletválasztó, a dátumválasztó és az alsó navigáció) a platform megszokott formáját követik; ez még nincs kész, ma iOS-en is minden Material (#55, #60). Részletek: [ADR-0004](docs/adr/0004-kozos-material-3-alap-platformhu-adaptiv-elemekkel.md) és a [DESIGN.md](DESIGN.md).
+
 **Térkép.** `flutter_map` CARTO Voyager csempékkel, Google Maps helyett. Részletek: [ADR-0001](docs/adr/0001-cartodb-voyager-instead-of-google-maps.md).
 
 **Kódszerkezet (`lib/`):**
@@ -111,8 +113,11 @@ Az egyes képernyők pontos működését a [docs/FEATURE-COVERAGE.md](docs/FEAT
 ## További dokumentáció
 
 - [CONTEXT.md](CONTEXT.md): a szakkifejezések szótára, és hogy miben egyezik vagy tér el a fogalomhasználat a miserend.hu weboldalétól.
+- [DESIGN.md](DESIGN.md): a felhasználói felület szabályai, többek között a szín, a tipográfia, a térköz, a navigáció, a platformkülönbségek, a komponensek, az akadálymentesség és a szövegezés. A review minden eltérést hibának vesz, a hasonló érték sem elég. Ahol a kód még eltér, a szabály alatt a javító issue száma áll, és ez az issue lezárásáig tűrt.
 - [docs/adr/](docs/adr/): az architektúra nehezen visszafordítható döntései.
 - [docs/spec/](docs/spec/): az egyes funkciók specifikációi.
 - [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md): mit tud jelenleg az app, képernyőnként.
+- [docs/ANDROID-OSSZEHASONLITAS.md](docs/ANDROID-OSSZEHASONLITAS.md): ez az app és a natív Miserend-Android app funkcionális összehasonlítása.
+- [docs/MENU-ES-IMPRESSZUM.md](docs/MENU-ES-IMPRESSZUM.md): kutatási jegyzet a „Menü” pont elnevezéséről és az Impresszum tartalmáról.
 
 A fejlesztés részben AI-ügynökökkel folyik. Az ügynököknek szóló utasítások a [CLAUDE.md](CLAUDE.md)-ben és a [docs/agents/](docs/agents/) mappában vannak.
