@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// „8 / 42 találat" at the bottom of the results while they scroll: how far
-/// the user has got, out of how many (spec 0010, „Darabszám-jelvény"). It
+/// the user has got, out of how many (spec 0010, „Darabszám-számláló"; DESIGN.md, KO20). It
 /// fades out a little after the scrolling stops, so that it does not cover
 /// the cards for good.
 class ResultCountBadge extends StatefulWidget {

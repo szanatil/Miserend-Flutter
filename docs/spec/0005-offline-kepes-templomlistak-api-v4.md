@@ -200,7 +200,7 @@ A négy képernyő átállása után a `MiserendDatabase` egyetlen olvasója a `
 
 ## Further Notes
 
-- Domain-fogalmak: [CONTEXT.md](../../CONTEXT.md) — „SQLite export", „Helyi gyorsítótár", „Kezdeti feltöltés", „Nincs kapcsolat", „Szerverhiba", „Helyzet", „Helyzet nem elérhető", „Napi miserend", „Mise vs. egyéb liturgikus esemény".
+- Domain-fogalmak: [CONTEXT.md](../../CONTEXT.md) — „SQLite export", „Helyi gyorsítótár", „Kezdeti feltöltés", „Nincs kapcsolat", „Szerverhiba", „Helyzet", „Helyzet nem elérhető", „Napi miserend", „Mise vs. egyéb alkalom".
 - Döntések: [ADR-0002](../adr/0002-api-v4-mint-elsodleges-adatforras.md) (API mint forrás), [ADR-0003](../adr/0003-offline-mukodes-helyi-gyorsitotarbol.md) (offline működés, gyorsítótárból rajzoló listák).
 - **1. csomag** (#11, e spec előfeltétele): letöltés a `/api/v4/sqlite` végpontról, a heti újraletöltés megszüntetése, az offline elakadó indítás javítása, 30 napos kezdeti feltöltés, 182 napos lejárati védelem a még exportból olvasó képernyőkön.
 - Az élő API-ellenőrzések a grillezés során, 2026-09-15-én történtek.

@@ -59,4 +59,4 @@ A misekártya „település · mise címe" sora kiegészül a **mise jellemzőj
 ## Further Notes
 
 - Élő minta (2026-09-17, Budapest belváros, 20 templom mai miséi): „Római katolikus Szentmise, Csendes", „Római katolikus Szentmise latin nyelven", „Római katolikus Szentmise, Csendes (Mária-kápolnában)", „Római katolikus Szentmise (adventben 6:00)". A 34 miséből 28 jellemző nélküli.
-- Fogalmak: CONTEXT.md, „Mise jellemzője", „Misekártya vs. templomkártya", „Mise vs. egyéb liturgikus esemény", „Legközelebbi misék". Kártya elrendezése: spec 0008.
+- Fogalmak: CONTEXT.md, „Mise jellemzője", „Misekártya vs. templomkártya", „Mise vs. egyéb alkalom", „Legközelebbi misék". Kártya elrendezése: spec 0008.

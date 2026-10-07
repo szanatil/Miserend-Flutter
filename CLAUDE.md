@@ -15,3 +15,7 @@ Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root. See `
 ### Coding standards
 
 Writing or reviewing Dart code: follow `CODING_STANDARDS.md` (rule IDs like K2); formatting and lint are `dart format` and `flutter analyze`.
+
+### Design rules
+
+Writing, testing or reviewing UI code: follow `DESIGN.md` (rule IDs like SZ3, KO6). It is a standards source alongside `CODING_STANDARDS.md`. Matching is exact: any deviation from `DESIGN.md` — a similar but different value included — is a bug in a review. Tests of UI code follow its EH3–EH4 (both platforms, light and dark, 320/430 dp, text scale 2.0).

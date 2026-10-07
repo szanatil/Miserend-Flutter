@@ -104,7 +104,7 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 | Megközelítés: térképkép + szöveg + „Útvonal” | ✅ | ✅ | Flutter: nem interaktív CARTO térkép. Android: Google Static Maps kép ([strings.xml L23][a-strings-static]) |
 | Miserendi megjegyzés | ✅ | ❌ | `church_details_page.dart:282`, `:301-310` |
 | Szentségimádás | ✅ | ❌ | `lib/church_details/widgets/adoration_card.dart:13-27` |
-| „Most gyóntatnak!” (élő kapcsoló) | ✅ | ❌ | `lib/church_details/widgets/confession_tile.dart:12-37` |
+| „Most gyóntatnak” (élő kapcsoló) | ✅ | ❌ | `lib/church_details/widgets/confession_tile.dart:12-37` |
 | Elérhetőség (e-mail, linkek, plébánia) | ✅ | ❌ | `lib/church_details/widgets/contact_card.dart:48-83` |
 | Leírás, akadálymentesség, nyelvek (zászló), közösségek | ✅ | ❌ | `church_details_page.dart:451-469`, `lib/church_details/widgets/church_info_tiles.dart:12-20`, `:88`, `:177` |
 | „Frissítve: …” lábléc | ✅ | ❌ | `church_details_page.dart:475-489` |
@@ -163,7 +163,7 @@ Jelölések: ✅ van · ❌ nincs · ◐ részben vagy eltérően (lásd a Megje
 **Templom-részletező bővebb tartalommal** (`lib/church_details/church_details_page.dart:107-122`):
 - miserendi megjegyzés kinyitható szövegként (`:282`, `:301-310`);
 - **Szentségimádás** kártya (`widgets/adoration_card.dart:13-27`);
-- „Most gyóntatnak!” kártya, csak friss `true` API-értéknél (`widgets/confession_tile.dart:12-37`, `CONTEXT.md` „Gyóntatás”);
+- „Most gyóntatnak” kártya, csak friss `true` API-értéknél (`widgets/confession_tile.dart:12-37`, `CONTEXT.md` „Gyóntatás”);
 - „Elérhetőség”: koppintható e-mail (`mailto:`), a templom saját linkjei hosztnévvel, plébánia szövege (`widgets/contact_card.dart:48-122`);
 - „Leírás”, „Akadálymentesség” (kerekesszékes megközelíthetőség), „Nyelvek” (zászlókkal), „Közösségek” (`church_details_page.dart:451-469`, `widgets/church_info_tiles.dart:12-20`, `:88-135`, `:177-188`);
 - „Frissítve: <dátum>” lábléc a miserend.hu szerkesztési dátumával (`:475-489`);

@@ -292,7 +292,7 @@ void main() {
     );
     await pumpPage(tester, _FakeLoader(cached: cached, refreshed: cached));
 
-    expect(find.text('Most gyóntatnak!'), findsNothing);
+    expect(find.text('Most gyóntatnak'), findsNothing);
   });
 
   testWidgets('confession tile appears for a live response', (tester) async {
@@ -310,7 +310,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Most gyóntatnak!'), findsOneWidget);
+    expect(find.text('Most gyóntatnak'), findsOneWidget);
   });
 
   testWidgets('sections with no data are absent entirely', (tester) async {

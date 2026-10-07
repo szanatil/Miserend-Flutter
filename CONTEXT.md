@@ -49,19 +49,23 @@ A templom és a **helyzet** közti távolság a földfelszínen, egyenes vonalba
 _Avoid_: „távolság" önmagában, ha az útvonal is szóba jöhet; „messze/közel" mértékként; „menetidő".
 
 **Napi miserend (daily masses)**:
-Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb liturgikus esemény**): a napi miserendbe csak a misék tartoznak. A listákon a templomsor mise-időpontjai a napi miserendet mutatják.
+Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb alkalom**): a napi miserendbe csak a misék tartoznak. A listákon a templomsor mise-időpontjai a napi miserendet mutatják.
 _Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkozik, nem a kiterjesztett listára.
 
 **Kiterjesztett miserend (extended schedule)**:
 A templom-részletező oldal több napra (ma / következő vasárnap / 19 nap) kiterjedő miselistája egy adott templomhoz, szemben a napi miserenddel. Egyetlen v4 végpont sem adja ezt vissza közvetlenül, egy adott templomra szűkítve — előállítása a `NearbyMasses` végpont kombinálásával történik (ld. `docs/adr/0002-*`, `docs/spec/0003-*`).
 _Avoid_: "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
 
-**Mise vs. egyéb liturgikus esemény**:
+**Alkalom (occasion)**:
+Egy templomhoz és időhöz kötött esemény, amelyre a hívő elmehet: mise, szentségimádás, gyóntatás, vecsernye, rózsafüzér… — a gyűjtőnév mindegyikre. A **fajtája** mondja meg, mi történik (misealkalom, szentségimádási alkalom); az idejét kezdési időpont vagy időablak adja. A misekártya egy alkalomkártya, amelynek a fajtája mise.
+_Avoid_: "liturgikus esemény" gyűjtőnévként (a szentségimádás és a rózsafüzér ájtatosság, nem liturgia); "program".
+
+**Mise vs. egyéb alkalom**:
 A v4 API `NearbyMasses` végpontja nevével ellentétben nem csak miséket ad vissza, hanem minden, a miserendben rögzített eseményt, amelyeket csak a `title` szövege különböztet meg. **Mise**: *Szentmise*, *Szent Liturgia* (a görögkatolikus szentmise — a neve nem árulja el, de mise), *Régi rítusú szentmise*. **Nem mise**: *Vecsernye*, *Utrenye* (görögkatolikus imaórák), *Igeliturgia* (pap és áldozás nélküli szertartás), *Gyóntatás*, *Szentségimádás*, *Rózsafüzér*, *Litánia*. Ismeretlen cím nem számít misének, amíg valaki fel nem veszi. **Ellenőrizve**: nyolc helyszín két napján (2026-09-19/20, 50 km) ezek voltak az előforduló címek. Ugyanez igaz a `Church`/`Search`/`NearBy` válasz `misek` mezőjére, ahol az esemény fajtáját az `informacio` szöveg eleje hordozza, felekezeti előtaggal és a vessző után jellemzőkkel (pl. „Római katolikus Szentmise, Csendes", „Római katolikus Gyóntatás") — a fajta itt is a fenti listával dől el. **Ellenőrizve** (2026-09-15, Budapest-keresés és tid 1515).
 _Avoid_: a `NearbyMasses` vagy a `misek` elemeit válogatás nélkül "misének" nevezni.
 
 **Legközelebbi misék (nearest masses)**:
-A Misék fül listája: a felhasználó pozíciójához **térben** legközelebbi (legfeljebb 10) templom **összes** mai, még **elérhető** miséje — egy misének egy sor, így egy több misét tartó templom többször is szerepel. Nem egy templomhoz tartozik (szemben a napi miserenddel), hanem a felhasználó helyzetéhez. A "legközelebbi" **a templomok kiválasztására** vonatkozik (térbeli közelség); a lista viszont **időrendben** áll, azonos kezdésnél a közelebbi templom elöl. Csak **misét** tartalmaz, más liturgikus eseményt nem, és csak a mai nap miséit. A "mai nap" két szélén van egy-egy kivétel: egy tegnap késő este kezdődött, még elérhető mise is benne van, és a **holnap pontban 00:00-kor** kezdődő mise is — az éjféli mise (karácsony, újév) a felhasználó fejében az előző estéhez tartozik. A 10-es korlát a templomokra vonatkozik, nem a sorokra: a lista hossza attól függ, hány miséjük van még aznap.
+A Misék fül listája: a felhasználó pozíciójához **térben** legközelebbi (legfeljebb 10) templom **összes** mai, még **elérhető** miséje — egy misének egy sor, így egy több misét tartó templom többször is szerepel. Nem egy templomhoz tartozik (szemben a napi miserenddel), hanem a felhasználó helyzetéhez. A "legközelebbi" **a templomok kiválasztására** vonatkozik (térbeli közelség); a lista viszont **időrendben** áll, azonos kezdésnél a közelebbi templom elöl. Csak **misét** tartalmaz, más alkalmat nem, és csak a mai nap miséit. A "mai nap" két szélén van egy-egy kivétel: egy tegnap késő este kezdődött, még elérhető mise is benne van, és a **holnap pontban 00:00-kor** kezdődő mise is — az éjféli mise (karácsony, újév) a felhasználó fejében az előző estéhez tartozik. A 10-es korlát a templomokra vonatkozik, nem a sorokra: a lista hossza attól függ, hány miséjük van még aznap.
 _Avoid_: "közeli miserend" (a "miserend" egy templom miséit jelenti); "következő misék" (azt sugallja, hogy a kiválasztás is időbeli).
 
 **Elérhető mise (reachable mass)**:
@@ -77,7 +81,7 @@ Mennyi idő van még egy **elérhető** mise kezdéséig, a kezdés pontos időp
 _Avoid_: "visszaszámlálás" (másodpercre pontos, élő órát sugall — percenként frissül); "indulásig hátralévő idő" (menetidővel nem számolunk).
 
 **Misekártya vs. templomkártya (mass card vs. church card)**:
-A **misekártya** a Misék fül egy sora: egy konkrét mise-alkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány miséje van a listán. A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya), a **napi miserendjével** együtt. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
+A **misekártya** a Misék fül egy sora: egy konkrét misealkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány miséje van a listán. A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya), a **napi miserendjével** együtt. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
 _Avoid_: "templomkártya" a Misék fül soraira; "misesor".
 
 **Mise jellemzője (mass detail)**:
@@ -85,7 +89,7 @@ Ami egy mise leírásában a fajtája után áll: „Csendes", „latin nyelven"
 _Avoid_: "címke" / "tag" a teljes jellemzőre (zárt készletet sugall — csak a misetípusok azok); a jellemzőt a mise fajtájának tekinteni (a „Szentmise, Csendes" fajtája szentmise).
 
 **Részletes kereső (advanced search)**:
-**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **miséje** — csak misének, más liturgikus esemény nem számít — egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem mise-alkalom. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
+**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **miséje** — csak misének, más alkalom nem számít — egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem misealkalom. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
 _Avoid_: "misekereső" (a találat templom); "szűrő" (a lista nem egy meglévő lista szűkítése); "összetett keresés".
 
 **Gyóntatás (confession)**:

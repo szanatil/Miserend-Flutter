@@ -25,7 +25,7 @@ class ConfessionTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Most gyóntatnak!',
+                'Most gyóntatnak',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.apply(color: Colors.white),

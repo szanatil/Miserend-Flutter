@@ -62,7 +62,7 @@ Ez a képernyő saját API-migrációs fázisa (ld. ADR-0002, spec 0003 „Out o
 
 ### Mi számít misének
 
-Pontos, `title`-alapú engedélyezőlista (ld. [CONTEXT.md](../../CONTEXT.md), „Mise vs. egyéb liturgikus esemény"):
+Pontos, `title`-alapú engedélyezőlista (ld. [CONTEXT.md](../../CONTEXT.md), „Mise vs. egyéb alkalom"):
 
 - **Mise**: `Szentmise`, `Szent Liturgia`, `Régi rítusú szentmise`.
 - Minden más kimarad — az ismert nem-mise címek (`Vecsernye`, `Utrenye`, `Igeliturgia`, `Gyóntatás`, `Szentségimádás`, `Rózsafüzér`, `Litánia`) és bármely ismeretlen cím is.
@@ -155,7 +155,7 @@ Hiba- és üres állapotban is működjön a lehúzásos frissítés.
 
 ## Further Notes
 
-- Domain-fogalmak: [CONTEXT.md](../../CONTEXT.md) — „Legközelebbi misék", „Elérhető mise", „Épp most tartó mise", „Mise vs. egyéb liturgikus esemény".
+- Domain-fogalmak: [CONTEXT.md](../../CONTEXT.md) — „Legközelebbi misék", „Elérhető mise", „Épp most tartó mise", „Mise vs. egyéb alkalom".
 - Adatforrás-irány: [docs/adr/0002-api-v4-mint-elsodleges-adatforras.md](../adr/0002-api-v4-mint-elsodleges-adatforras.md). Új ADR nem készült: a döntések visszafordíthatók, az API-irányt az ADR-0002 már rögzíti.
 - A spec 0003 „Out of Scope" szakasza a Közeli misék képernyőt még a gyorsítótárra hagyta; ez a spec ezt a pontot váltja fel, a gyorsítótár-tartalék elvetésével.
 - A kiinduló hibajelentés négy pontja és megoldásuk: (1) csak mai misék → az ablak felső határa holnap 00:00; (2) csak még elérhető misék → 10 perces szabály; (3) csak közeli misék → legközelebbi 10 templom (eredetileg templomonként egy sorral, a #30 óta minden elérhető miséjükkel); (4) bökésre részletező → `onTap`.

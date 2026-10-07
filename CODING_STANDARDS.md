@@ -6,6 +6,7 @@ Ami nem ide tartozik, annak megvan a saját forrása:
 
 - **Formázás**: `dart format lib test`.
 - **Lint**: `flutter analyze`, a szabályok az [analysis_options.yaml](analysis_options.yaml)-ban. Ami ott van, azt ez a fájl nem ismétli.
+- **UI és design** (szín, tipográfia, térköz, forma, komponensek, platformkülönbségek, akadálymentesség, szövegezés): [DESIGN.md](DESIGN.md). Design-szabály ebben a fájlban nem áll.
 - **Fogalmak** (Nincs kapcsolat, Helyi gyorsítótár, Elérhető mise…): [CONTEXT.md](CONTEXT.md).
 - **Döntések és indokaik**: [docs/adr/](docs/adr/), képernyőnként a [docs/spec/](docs/spec/).
 
@@ -41,7 +42,7 @@ Ha jó okkal térsz el egy szabálytól, ugyanabban a PR-ben módosítsd a szab�
 
 **K4 — Nyelvek.** A felhasználónak szóló szöveg magyarul, a widgetben helyben áll. Azonosítók, kommentek és tesztnevek angolul.
 
-**K5 — Közös elem a közös helyen.** Több helyen használt szín a `CustomColors`-ban ([colors.dart](lib/colors.dart)). Több képernyő widgetje a [lib/widgets/](lib/widgets/)-ben, egy képernyőé a `<képernyő>/widgets/` alatt. Betöltés-, üres-, offline- és helyzet-állapotra a meglévők: `LoadingView`, `MessageView`, `PullableFill`, `OfflineBanner`, `OfflineInfoButton`, `PositionUnavailableView`.
+**K5 — Közös elem a közös helyen.** Több képernyő widgetje a [lib/widgets/](lib/widgets/)-ben, egy képernyőé a `<képernyő>/widgets/` alatt. Betöltés-, üres-, offline- és helyzet-állapotra a meglévők: `LoadingView`, `MessageView`, `PullableFill`, `OfflineBanner`, `OfflineInfoButton`, `PositionUnavailableView`.
 
 ## D. Dokumentációs kommentek
 
@@ -96,7 +97,7 @@ A C1–C3-at és az Android- meg iOS-buildet a CI ([.github/workflows/ci.yml](.g
 
 **C5 — A sémaváltozás az M1-et követi.**
 
-**C6 — A dokumentáció követi a kódot.** Ha változott egy fogalom, az a [CONTEXT.md](CONTEXT.md)-be kerül; ha egy döntés, egy ADR-be; ha egy képernyő viselkedése, a [docs/spec/](docs/spec/)-be; ha a funkciólefedettség, a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md)-be.
+**C6 — A dokumentáció követi a kódot.** Ha változott egy fogalom, az a [CONTEXT.md](CONTEXT.md)-be kerül; ha egy döntés, egy ADR-be; ha egy képernyő viselkedése, a [docs/spec/](docs/spec/)-be; ha egy design-szabály, a [DESIGN.md](DESIGN.md)-be; ha a funkciólefedettség, a [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md)-be.
 
 ## V. Kiadás
 
