@@ -97,7 +97,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs.
 
-_Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#58)._
+_Ismert eltérés: a fotógaléria fix fekete háttere (#58)._
 
 ## TI. Tipográfia
 
@@ -169,9 +169,9 @@ _Ismert eltérés: szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a té
 
 ## MÉ. Mélység és árnyék
 
-**MÉ1 — A mélységet tónus adja, nem árnyék.** A kártya `elevation: 0`, és a `surfaceContainerLow` színnel válik el a `surface` háttértől.
+**MÉ1 — A kártya az M3 elevated kártyája.** `surfaceContainerLow` színnel és `elevation: 1` alacsony árnyékkal válik el a `surface` háttértől. A tónus egyedül kevés: a `surfaceContainerLow` és a `surface` között a világosságkülönbség csak kb. 1,05:1, ezért a kártyának nem volna széle. Fix szürke (`Colors.black12`, `#F2F2F2`) vagy fehér laphátter nincs: a lap háttere a `Scaffold` `surface`-e (SZ5).
 
-**MÉ2 — Árnyékot csak a lebegő elem kap**, az M3 alapértelmezésével: térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
+**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
 
 **MÉ3 — A címsor görgetéskor tónust kap.** `elevation: 0`, `scrolledUnderElevation: 3` (M3 alapértelmezés), árnyék nélkül.
 
@@ -259,7 +259,7 @@ _Ismert eltérés: nyers időtartamok és görbék, a `FadeInImage` alapértelme
 
 ## KO. Komponensek
 
-**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card.filled` vagy `Card(elevation: 0)`, szín `surfaceContainerLow`, forma `Radii.m`, belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5).
+**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card` a téma `cardTheme`-jével: szín `surfaceContainerLow`, `elevation: 1` (MÉ1), forma `Radii.m`, belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5).
 
 **KO2 — Címsor.** Háttér `surface`, előtér `onSurface`, cím `titleLarge`, `elevation: 0`, `scrolledUnderElevation: 3`. Lila vagy más színes háttér nincs.
 

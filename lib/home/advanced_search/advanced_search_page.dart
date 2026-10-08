@@ -318,7 +318,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black12,
       appBar: SectionBar.title('Részletes kereső', onBack: widget.onClose),
       body: _expanded ? _form() : _results(),
     );

@@ -7,7 +7,9 @@ import '../theme/theme_harness.dart';
 
 void main() {
   for (final brightness in Brightness.values) {
-    testWidgets('is a theme card in $brightness (KO1, MÉ1)', (tester) async {
+    testWidgets('is a theme card, raised 1, in $brightness (KO1, MÉ1)', (
+      tester,
+    ) async {
       await pumpThemed(
         tester,
         const SectionCard(title: 'Elérhetőség', child: Text('Tartalom')),
@@ -23,7 +25,7 @@ void main() {
             .first,
       );
       expect(surface.color, schemeOf(brightness).surfaceContainerLow);
-      expect(surface.elevation, 0);
+      expect(surface.elevation, 1);
       expect(
         surface.shape,
         const RoundedRectangleBorder(

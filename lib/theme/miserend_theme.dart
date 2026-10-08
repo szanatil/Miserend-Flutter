@@ -35,13 +35,14 @@ ThemeData miserendTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 3,
     ),
-    // A card stands apart from the page by its tone, not a shadow (KO1, MÉ1);
-    // no card overrides this but the church card under a server error (SZ4).
-    // Half the gap above and half below puts cards on a list 8 apart (TK2);
-    // the list's own padding keeps them off the screen edge.
+    // M3's elevated card: the tone alone hardly sets a card apart from the
+    // page, so a low shadow does (KO1, MÉ1). No card overrides this but the
+    // church card under a server error (SZ4). Half the gap above and half
+    // below puts cards on a list 8 apart (TK2); the list's own padding keeps
+    // them off the screen edge.
     cardTheme: CardThemeData(
       color: scheme.surfaceContainerLow,
-      elevation: 0,
+      elevation: 1,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
       ),

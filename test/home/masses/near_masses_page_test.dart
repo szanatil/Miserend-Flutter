@@ -260,7 +260,7 @@ void main() {
   });
 
   group('position unavailable', () {
-    testWidgets('sits on the same grey ground as on the Templomok tab', (
+    testWidgets('sits on the page\'s own surface, no grey ground (SZ5)', (
       tester,
     ) async {
       await pumpPage(
@@ -274,10 +274,10 @@ void main() {
         find.ancestor(
           of: find.byType(PositionUnavailableView),
           matching: find.byWidgetPredicate(
-            (w) => w is Container && w.color == Colors.black12,
+            (w) => w is Container && w.color != null,
           ),
         ),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -379,8 +379,8 @@ void main() {
   });
 
   group('card', () {
-    testWidgets('the list sits on the same grey ground as on the Templomok '
-        'tab', (tester) async {
+    testWidgets('the list sits on the page\'s own surface, no grey ground '
+        '(SZ5)', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -392,10 +392,10 @@ void main() {
         find.ancestor(
           of: find.byType(ListView),
           matching: find.byWidgetPredicate(
-            (w) => w is Container && w.color == Colors.black12,
+            (w) => w is Container && w.color != null,
           ),
         ),
-        findsOneWidget,
+        findsNothing,
       );
     });
 

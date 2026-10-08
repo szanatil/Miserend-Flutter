@@ -73,17 +73,14 @@ class _SearchResultsPageState extends State<SearchResultsPage>
     final list = _list;
     return Scaffold(
       appBar: AppBar(title: Text(widget.searchParams.toString())),
-      body: Container(
-        color: Colors.black12,
-        child:
-            list == null
-                ? const LoadingView(message: 'Keresés...')
-                : ChurchListView(
-                  list: list,
-                  emptyMessage: 'Nincs találat',
-                  onRefresh: _load,
-                ),
-      ),
+      body:
+          list == null
+              ? const LoadingView(message: 'Keresés...')
+              : ChurchListView(
+                list: list,
+                emptyMessage: 'Nincs találat',
+                onRefresh: _load,
+              ),
     );
   }
 

@@ -25,13 +25,13 @@ final Map<String, RegExp> _rules = {
 /// never hides a regression behind a fix.
 const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/about/about_page.dart': {
-    'color': (7, '#58'),
+    'color': (5, '#58'),
     'icon': (4, '#61'),
     'radius': (1, '#59'),
     'spacing': (4, '#59'),
   },
   'lib/church_details/church_details_page.dart': {
-    'color': (10, '#58'),
+    'color': (9, '#58'),
     'icon': (3, '#61'),
     'spacing': (17, '#59'),
   },
@@ -61,7 +61,7 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
     'spacing': (1, '#59'),
   },
   'lib/home/advanced_search/advanced_search_page.dart': {
-    'color': (5, '#58'),
+    'color': (4, '#58'),
     'icon': (7, '#61'),
     'spacing': (12, '#59'),
   },
@@ -70,9 +70,6 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
     'radius': (1, '#59'),
     'spacing': (1, '#59'),
   },
-  'lib/home/churches/favorite_churches.dart': {'color': (1, '#58')},
-  'lib/home/churches/near_churches_page.dart': {'color': (1, '#58')},
-  'lib/home/churches/search_results.dart': {'color': (1, '#58')},
   'lib/home/home.dart': {
     'color': (2, '#58'),
     'icon': (2, '#61'),
@@ -82,7 +79,6 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/home/map/widgets/position_unavailable_banner.dart': {
     'icon': (2, '#60, #61'),
   },
-  'lib/home/masses/near_masses_page.dart': {'color': (1, '#58')},
   'lib/splash.dart': {'spacing': (3, '#59')},
   'lib/widgets/language_flag.dart': {'color': (1, '#58'), 'radius': (1, '#59')},
   'lib/widgets/list_status_view.dart': {'spacing': (2, '#59')},

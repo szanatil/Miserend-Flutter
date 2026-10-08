@@ -238,9 +238,7 @@ class _NearMassesPageState extends State<NearMassesPage>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const _Ground(
-        child: LoadingView(message: 'Legközelebbi misék betöltése…'),
-      );
+      return const LoadingView(message: 'Legközelebbi misék betöltése…');
     }
     return RefreshIndicator(onRefresh: _fetch, child: _content());
   }
@@ -248,25 +246,21 @@ class _NearMassesPageState extends State<NearMassesPage>
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return _Ground(
-        child: PullableFill(
-          child: PositionUnavailableView(
-            reason: noPosition,
-            purpose: 'A legközelebbi misékhez',
-            location: _location,
-            onRetry: _fetch,
-          ),
+      return PullableFill(
+        child: PositionUnavailableView(
+          reason: noPosition,
+          purpose: 'A legközelebbi misékhez',
+          location: _location,
+          onRetry: _fetch,
         ),
       );
     }
     if (_apiFailed) {
-      return const _Ground(
-        child: PullableFill(
-          child: MessageView(
-            message:
-                'Nem sikerült betölteni a miséket. '
-                'Ellenőrizd az internetkapcsolatot.',
-          ),
+      return const PullableFill(
+        child: MessageView(
+          message:
+              'Nem sikerült betölteni a miséket. '
+              'Ellenőrizd az internetkapcsolatot.',
         ),
       );
     }
@@ -274,10 +268,8 @@ class _NearMassesPageState extends State<NearMassesPage>
     final now = widget.clock();
     final masses = selectNearestMasses(_items, now);
     if (masses.isEmpty) {
-      return const _Ground(
-        child: PullableFill(
-          child: MessageView(message: 'A közelben ma már nincs elérhető mise.'),
-        ),
+      return const PullableFill(
+        child: MessageView(message: 'A közelben ma már nincs elérhető mise.'),
       );
     }
 
@@ -291,28 +283,26 @@ class _NearMassesPageState extends State<NearMassesPage>
       rows.add(mass);
     }
 
-    return _Ground(
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        // The cards' own margin keeps them 8 apart (TK2).
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.l,
-          vertical: Spacing.xs,
-        ),
-        itemCount: rows.length,
-        itemBuilder: (BuildContext context, int index) {
-          final mass = rows[index];
-          if (mass == null) {
-            return MassStartHeader(mass: rows[index + 1]!, now: now);
-          }
-          return MassCard(
-            mass: mass,
-            detail: _details.of(mass),
-            thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-            onTap: () => _openChurch(mass),
-          );
-        },
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      // The cards' own margin keeps them 8 apart (TK2).
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.l,
+        vertical: Spacing.xs,
       ),
+      itemCount: rows.length,
+      itemBuilder: (BuildContext context, int index) {
+        final mass = rows[index];
+        if (mass == null) {
+          return MassStartHeader(mass: rows[index + 1]!, now: now);
+        }
+        return MassCard(
+          mass: mass,
+          detail: _details.of(mass),
+          thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
+          onTap: () => _openChurch(mass),
+        );
+      },
     );
   }
 
@@ -348,16 +338,4 @@ class _NearMassesPageState extends State<NearMassesPage>
     _onTick();
     _startTicker();
   }
-}
-
-/// The grey the Templomok tab draws its lists and its loading and message
-/// states on, so that the two tabs look like one app.
-class _Ground extends StatelessWidget {
-  const _Ground({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) =>
-      Container(color: Colors.black12, child: child);
 }

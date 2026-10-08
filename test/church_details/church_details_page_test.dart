@@ -262,6 +262,23 @@ void main() {
     );
   });
 
+  testWidgets('the page is the theme\'s surface, not a fixed grey (SZ5)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+    final ground = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(Scaffold),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(ground.color, miserendTheme(Brightness.light).colorScheme.surface);
+  });
+
   testWidgets('shows the church name', (tester) async {
     final empty = _page(_emptyDays());
     await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));

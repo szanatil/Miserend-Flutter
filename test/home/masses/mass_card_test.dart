@@ -390,7 +390,9 @@ void main() {
       group('in $brightness', () {
         final scheme = schemeOf(brightness);
 
-        testWidgets('the card is the theme card (KO1, MÉ1)', (tester) async {
+        testWidgets('the card is the theme card, raised 1 (KO1, MÉ1)', (
+          tester,
+        ) async {
           await pumpDesigned(tester, brightness: brightness);
 
           final surface = tester.widget<Material>(
@@ -402,7 +404,7 @@ void main() {
                 .first,
           );
           expect(surface.color, scheme.surfaceContainerLow);
-          expect(surface.elevation, 0);
+          expect(surface.elevation, 1);
           expect(
             surface.shape,
             const RoundedRectangleBorder(

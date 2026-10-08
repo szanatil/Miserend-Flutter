@@ -74,8 +74,8 @@ void main() {
         expect(title.style.fontSize, 22);
       });
 
-      testWidgets('a card is flat surfaceContainerLow with 12 corners, 8 '
-          'apart (KO1, MÉ1, FO2)', (tester) async {
+      testWidgets('a card is surfaceContainerLow, raised 1, with 12 '
+          'corners, 8 apart (KO1, MÉ1, FO2)', (tester) async {
         await tester.pumpWidget(
           MaterialApp(
             theme: theme,
@@ -99,7 +99,7 @@ void main() {
               .first,
         );
         expect(surface.color, scheme.surfaceContainerLow);
-        expect(surface.elevation, 0);
+        expect(surface.elevation, 1);
         expect(
           surface.shape,
           const RoundedRectangleBorder(

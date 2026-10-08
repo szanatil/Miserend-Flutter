@@ -244,12 +244,14 @@ void main() {
         final scheme = schemeOf(brightness);
         final colors = miserendColorsOf(brightness);
 
-        testWidgets('the card is the theme card (KO1, MÉ1)', (tester) async {
+        testWidgets('the card is the theme card, raised 1 (KO1, MÉ1)', (
+          tester,
+        ) async {
           await pumpDesigned(tester, brightness: brightness);
 
           final surface = cardSurface(tester);
           expect(surface.color, scheme.surfaceContainerLow);
-          expect(surface.elevation, 0);
+          expect(surface.elevation, 1);
           expect(
             surface.shape,
             const RoundedRectangleBorder(

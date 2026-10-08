@@ -88,7 +88,6 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Névjegy')),
       // Floats so it is in view without scrolling on any phone; in the list
       // it would sit below the fold under the church of the day.
@@ -98,70 +97,63 @@ class _AboutPageState extends State<AboutPage> {
         label: const Text('Visszajelzés'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      // The grey the Templomok and Misék tabs draw their lists on, so the
-      // page looks like the same app.
-      body: Container(
-        color: Colors.black12,
-        child: ListView(
-          padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
-          children: [
-            if (_church case final church?) _churchOfTheDay(church),
-            SectionCard(
-              title: 'Fejlesztő',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  const Text(
-                    'Az alkalmazást a Szent József Hackathon fejleszti.',
-                  ),
-                  FutureBuilder<PackageInfo>(
-                    future: _packageInfo,
-                    builder: (context, snapshot) {
-                      final info = snapshot.data;
-                      if (info == null) return const SizedBox.shrink();
-                      return Text(
-                        'Verzió: ${info.version} (${info.buildNumber})',
-                        style: textTheme.bodyMedium?.apply(
-                          color: Colors.black54,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+      body: ListView(
+        padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
+        children: [
+          if (_church case final church?) _churchOfTheDay(church),
+          SectionCard(
+            title: 'Fejlesztő',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                const Text(
+                  'Az alkalmazást a Szent József Hackathon fejleszti.',
+                ),
+                FutureBuilder<PackageInfo>(
+                  future: _packageInfo,
+                  builder: (context, snapshot) {
+                    final info = snapshot.data;
+                    if (info == null) return const SizedBox.shrink();
+                    return Text(
+                      'Verzió: ${info.version} (${info.buildNumber})',
+                      style: textTheme.bodyMedium?.apply(color: Colors.black54),
+                    );
+                  },
+                ),
+              ],
             ),
-            SectionCard(
-              title: 'Forráskód',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  const Text(
-                    'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
-                    'forráskódját:',
+          ),
+          SectionCard(
+            title: 'Forráskód',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                const Text(
+                  'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
+                  'forráskódját:',
+                ),
+                _externalLink('A projekt a GitHubon', _sourceCode),
+              ],
+            ),
+          ),
+          Card(
+            margin: SectionCard.margin,
+            child: ListTile(
+              leading: const Icon(Icons.language, color: Colors.black54),
+              title: const Text('miserend.hu'),
+              subtitle: const Text('A miserend webes változata'),
+              trailing: const Icon(Icons.open_in_new, color: Colors.black54),
+              onTap:
+                  () => launchExternal(
+                    context,
+                    _webVersion,
+                    launch: widget.openLink,
                   ),
-                  _externalLink('A projekt a GitHubon', _sourceCode),
-                ],
-              ),
             ),
-            Card(
-              margin: SectionCard.margin,
-              child: ListTile(
-                leading: const Icon(Icons.language, color: Colors.black54),
-                title: const Text('miserend.hu'),
-                subtitle: const Text('A miserend webes változata'),
-                trailing: const Icon(Icons.open_in_new, color: Colors.black54),
-                onTap:
-                    () => launchExternal(
-                      context,
-                      _webVersion,
-                      launch: widget.openLink,
-                    ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
