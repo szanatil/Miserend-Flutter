@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 
@@ -61,16 +61,19 @@ class OfflineNotice {
 /// the banners, the (i) buttons and the map's card cannot drift apart.
 extension OfflineLook on ApiFailure {
   /// The background of a strip that marks the data.
-  Color get tint => switch (this) {
-    ApiFailure.noConnection => CustomColors.noticeTint,
-    ApiFailure.serverError => CustomColors.serverErrorTint,
+  Color tint(BuildContext context) => switch (this) {
+    ApiFailure.noConnection =>
+      Theme.of(context).colorScheme.surfaceContainerHighest,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorContainer,
   };
 
   /// The background of the map's church card, which keeps its own colour
   /// unless the server failed.
-  Color? get cardTint => switch (this) {
+  Color? cardTint(BuildContext context) => switch (this) {
     ApiFailure.noConnection => null,
-    ApiFailure.serverError => CustomColors.serverErrorTint,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorContainer,
   };
 
   IconData get icon => switch (this) {
@@ -79,9 +82,10 @@ extension OfflineLook on ApiFailure {
   };
 
   /// The colour of the icons, readable on [tint].
-  Color get iconColor => switch (this) {
+  Color iconColor(BuildContext context) => switch (this) {
     ApiFailure.noConnection => Colors.black54,
-    ApiFailure.serverError => CustomColors.serverErrorAccent,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorIcon,
   };
 }
 
@@ -100,7 +104,7 @@ class OfflineInfoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.info_outline),
-      color: failure.iconColor,
+      color: failure.iconColor(context),
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,
       onPressed: () => OfflineNotice.show(context, failure, asOf),
@@ -133,9 +137,9 @@ class OfflineBanner extends StatelessWidget {
     return StaleDataRetry(
       onRetry: onRetry,
       child: NoticeStrip(
-        color: failure.tint,
+        color: failure.tint(context),
         icon: failure.icon,
-        iconColor: failure.iconColor,
+        iconColor: failure.iconColor(context),
         text: switch (failure) {
           ApiFailure.noConnection => 'Nincs kapcsolat, tárolt adatok',
           ApiFailure.serverError => 'A miserend.hu nem elérhető, tárolt adatok',

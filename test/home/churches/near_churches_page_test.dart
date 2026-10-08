@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/near_churches_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/time_chip.dart';
@@ -77,6 +78,7 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: NearChurchesPage(loader: loader, location: location),
           ),
@@ -437,7 +439,11 @@ void main() {
                   .first,
             )
             .color,
-        isNot(CustomColors.serverErrorTint),
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
       );
     });
 
@@ -464,7 +470,9 @@ void main() {
                   .first,
             )
             .color,
-        CustomColors.serverErrorTint,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
       );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });

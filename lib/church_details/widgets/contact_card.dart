@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -100,9 +100,12 @@ class ContactCard extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
+                style: Theme.of(context).textTheme.bodyMedium?.apply(
+                  color:
+                      Theme.of(
+                        context,
+                      ).extension<MiserendColors>()!.occasionTime,
+                ),
               ),
             ),
           ],

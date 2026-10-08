@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 
 class TimeChip extends StatelessWidget {
   const TimeChip({
@@ -46,7 +46,7 @@ class TimeChip extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: Material(
-        color: CustomColors.accent,
+        color: Theme.of(context).extension<MiserendColors>()!.occasionTime,
         child: InkWell(
           onTap: onTap,
           child: Padding(

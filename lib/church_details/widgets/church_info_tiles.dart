@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/community.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -161,9 +161,9 @@ class CommunitiesTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           name,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
+          style: Theme.of(context).textTheme.bodyMedium?.apply(
+            color: Theme.of(context).extension<MiserendColors>()!.occasionTime,
+          ),
         ),
       ),
     );

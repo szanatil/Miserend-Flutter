@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 
 void main() {
   Future<void> pumpBar(WidgetTester tester, SectionBar bar) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: CustomColors.purple,
-          ),
-        ),
+        theme: miserendTheme(Brightness.light),
         home: DefaultTabController(
           length: 2,
           child: Scaffold(appBar: bar, body: const SizedBox.shrink()),
@@ -57,6 +53,6 @@ void main() {
 
     expect(tester.getSize(find.byType(SectionBar)).height, tabsHeight);
     expect(colorOf(tester), tabsColor);
-    expect(tabsColor?.toARGB32(), CustomColors.purple.toARGB32());
+    expect(tabsColor, const Color(0xFF5C27AE));
   });
 }

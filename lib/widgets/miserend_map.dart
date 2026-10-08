@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:miserend/colors.dart';
 
 /// A single church to render on a [MiserendMap].
 class MiserendMapMarker {
@@ -239,7 +238,7 @@ class _MiserendMapState extends State<MiserendMap> {
   Widget _groupCircle(BuildContext context, List<Marker> markers) =>
       DecoratedBox(
         decoration: BoxDecoration(
-          color: CustomColors.purple,
+          color: Theme.of(context).colorScheme.primary,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 3)],

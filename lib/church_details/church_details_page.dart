@@ -14,11 +14,11 @@ import 'package:miserend/church_details/widgets/day_label.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
 import 'package:miserend/church_details/widgets/mass_info.dart';
 import 'package:miserend/church_details/widgets/photo_header.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -529,9 +529,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               padding: const EdgeInsets.only(top: 16),
               child: Text(
                 'ÚTVONAL',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium!.apply(color: CustomColors.accent),
+                style: Theme.of(context).textTheme.titleMedium!.apply(
+                  color:
+                      Theme.of(
+                        context,
+                      ).extension<MiserendColors>()!.occasionTime,
+                ),
               ),
             ),
           ),

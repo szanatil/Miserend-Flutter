@@ -7,7 +7,6 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -16,6 +15,8 @@ import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
@@ -148,6 +149,7 @@ void main() {
   }) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(Brightness.light),
         home: Scaffold(
           body: NearMassesPage(
             loader: loader,
@@ -170,6 +172,7 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: NearMassesPage(
               loader: loader,
@@ -475,7 +478,12 @@ void main() {
       final style = tester.widget<Text>(find.text('18:00')).style!;
       expect(style.fontSize, textTheme.headlineMedium!.fontSize);
       expect(style.fontWeight, FontWeight.bold);
-      expect(style.color, CustomColors.accent);
+      expect(
+        style.color,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.occasionTime,
+      );
     });
 
     testWidgets('marks a mass as ongoing only once it has started, in its '

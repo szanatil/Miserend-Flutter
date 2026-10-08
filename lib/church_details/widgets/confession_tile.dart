@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 
 /// Announces that confession is being heard at this very moment.
 ///
@@ -16,7 +16,7 @@ class ConfessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: CustomColors.accent,
+      color: Theme.of(context).extension<MiserendColors>()!.occasionTime,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(

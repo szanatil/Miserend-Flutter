@@ -52,7 +52,7 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
 
-_Ismert eltérés: a `lib/theme/` még nem létezik; a téma a `lib/main.dart`-ban, a színek a `lib/colors.dart`-ban állnak (#54). Nyers színek, térközök, lekerekítések a widgetekben: #57, #58, #59._
+_Ismert eltérés: nyers színek, térközök, lekerekítések a widgetekben: #57, #58, #59._
 
 ## SZ. Szín
 
@@ -77,8 +77,6 @@ _Ismert eltérés: a `lib/theme/` még nem létezik; a téma a `lib/main.dart`-b
 
 A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) és a nem szöveges jelölésé (`userLocation`) legalább 3:1 (AM1).
 
-_Ismert eltérés: a `CustomColors` (`lib/colors.dart`) fix, csak világos színeket tart (#54)._
-
 **SZ4 — Egy szín, egy jelentés.**
 
 | Információ | Szerep |
@@ -99,7 +97,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs.
 
-_Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Colors.white)` (#56, #58)._
+_Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#56, #58)._
 
 ## TI. Tipográfia
 

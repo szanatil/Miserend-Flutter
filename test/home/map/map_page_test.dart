@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -15,6 +14,8 @@ import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -99,6 +100,7 @@ void main() {
   }) => ChangeNotifierProvider<FavoritesService>.value(
     value: favorites,
     child: MaterialApp(
+      theme: miserendTheme(Brightness.light),
       home: Scaffold(
         body: MapPage(
           isActive: isActive,
@@ -139,6 +141,7 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: MapPage(
               loader: loader,
@@ -319,7 +322,14 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, isNot(CustomColors.serverErrorTint));
+      expect(
+        card.color,
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
+      );
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
@@ -346,7 +356,12 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, CustomColors.serverErrorTint);
+      expect(
+        card.color,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
+      );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
 
@@ -668,6 +683,7 @@ void main() {
         ChangeNotifierProvider<FavoritesService>.value(
           value: favorites,
           child: MaterialApp(
+            theme: miserendTheme(Brightness.light),
             home: _TabsHost(
               map: MapPage(
                 loader: _MapLoader([<ChurchListEntry>[]]),

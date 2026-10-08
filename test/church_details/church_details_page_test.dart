@@ -8,12 +8,13 @@ import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
@@ -182,6 +183,7 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: ChurchDetailsPage(church: _church, loader: loader),
         ),
       ),
@@ -520,7 +522,14 @@ void main() {
 
       expect(find.byType(OfflineBanner), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      expect(bannerColor(tester), isNot(CustomColors.serverErrorTint));
+      expect(
+        bannerColor(tester),
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
+      );
       expect(
         tester.getTopLeft(find.byType(OfflineBanner)).dy,
         lessThan(tester.getTopLeft(find.text('Ma')).dy),
@@ -535,7 +544,12 @@ void main() {
         _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.serverError),
       );
 
-      expect(bannerColor(tester), CustomColors.serverErrorTint);
+      expect(
+        bannerColor(tester),
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
+      );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
       final massCard = tester.widget<Card>(
         find.ancestor(of: find.text('Ma'), matching: find.byType(Card)).first,

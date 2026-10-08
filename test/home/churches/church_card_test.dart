@@ -5,6 +5,7 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -63,6 +64,7 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,

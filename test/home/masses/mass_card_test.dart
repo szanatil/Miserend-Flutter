@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/mass_detail.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 
 NearbyMassesItem _mass({
@@ -58,6 +58,7 @@ void main() {
   }) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(Brightness.light),
         home: MediaQuery(
           data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
           child: Scaffold(
@@ -162,7 +163,7 @@ void main() {
       );
       expect(
         (surface.decoration as BoxDecoration).color,
-        CustomColors.massDetailTint,
+        miserendTheme(Brightness.light).colorScheme.secondaryContainer,
       );
     });
 
@@ -180,6 +181,7 @@ void main() {
       var taps = 0;
       await tester.pumpWidget(
         MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: Center(
               child: SizedBox(
@@ -349,6 +351,7 @@ void main() {
     var taps = 0;
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(Brightness.light),
         home: Scaffold(
           body: MassCard(
             mass: _mass(),

@@ -62,7 +62,7 @@ class ChurchCard extends StatelessWidget {
 
     return Center(
       child: Card(
-        color: failure?.cardTint,
+        color: failure?.cardTint(context),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),

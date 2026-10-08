@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 
 const String _long =
     'Egy nagyon hosszú leírás, amely bőven túlnyúlik három soron, hogy a '
@@ -10,6 +11,7 @@ const String _long =
 
 Widget _host(String text) {
   return MaterialApp(
+    theme: miserendTheme(Brightness.light),
     home: Scaffold(
       body: SizedBox(width: 200, child: ExpandableInfoTile(text: text)),
     ),

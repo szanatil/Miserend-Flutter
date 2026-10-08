@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
@@ -246,7 +245,7 @@ class _BubbleSurface extends StatelessWidget {
     final iconSize = _iconSize(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: CustomColors.massDetailTint,
+        color: Theme.of(context).colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(

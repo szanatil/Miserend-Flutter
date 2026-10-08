@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/extentions.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 
 /// Heads the masses starting together with [mass] on the Misék tab: on this
 /// tab *when* decides (spec 0008), so the start leads, followed by the time
@@ -37,7 +37,10 @@ class MassStartHeader extends StatelessWidget {
                 TimeOfDay.fromDateTime(mass.start).to24hours(),
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: CustomColors.accent,
+                  color:
+                      Theme.of(
+                        context,
+                      ).extension<MiserendColors>()!.occasionTime,
                 ),
               ),
               if (ongoing)

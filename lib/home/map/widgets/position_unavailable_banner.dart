@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
@@ -40,7 +39,7 @@ class PositionUnavailableBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = PositionUnavailableView.action(reason, location, onRetry);
     return NoticeStrip(
-      color: CustomColors.noticeTint,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       icon: Icons.location_off,
       iconColor: Colors.black54,
       text: PositionUnavailableView.message(reason, _purpose),
