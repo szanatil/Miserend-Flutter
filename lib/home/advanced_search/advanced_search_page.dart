@@ -477,6 +477,8 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     if (!mounted) return;
     final picked = await showModalBottomSheet<String>(
       context: context,
+      // Over the navigation bar, as a modal is (DESIGN.md NA1).
+      useRootNavigator: true,
       builder:
           (context) => SafeArea(
             child: ListView(

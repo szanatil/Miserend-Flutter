@@ -11,13 +11,7 @@ import '../database/fake_favorites_service.dart';
 import '../fake_location_provider.dart';
 import 'advanced_search/fake_advanced_search_loader.dart';
 import 'churches/fake_church_list_loader.dart';
-
-/// Offers nothing, so that no test reads the device's cache.
-class _NoSuggestions extends SearchSuggestions {
-  @override
-  Future<Suggestions> suggest(String term) async =>
-      const Suggestions(churches: [], cities: []);
-}
+import 'fake_search_suggestions.dart';
 
 /// Offers Szeged as a city for any term.
 class _SzegedSuggested extends SearchSuggestions {
@@ -39,7 +33,7 @@ void main() {
         child: MaterialApp(
           home: HomeScreen(
             tabBuilder: (index, isActive) => Text('Fül $index'),
-            suggestions: suggestions ?? _NoSuggestions(),
+            suggestions: suggestions ?? NoSearchSuggestions(),
             searchResultsLoader: searchResultsLoader,
             advancedSearchLoader: FakeAdvancedSearchLoader(const []),
             location: FakeLocationProvider(),

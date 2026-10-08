@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
+import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
@@ -274,8 +275,13 @@ class _MassChips extends StatelessWidget {
 }
 
 /// Opens the details page of [entry]. The page loads everything by id; the
-/// entry only seeds the name, the map and the header until then.
-void openChurchDetails(BuildContext context, ChurchListEntry entry) {
+/// entry only seeds the name, the map and the header until then. [loader] is
+/// injected by tests; the page builds its own otherwise.
+void openChurchDetails(
+  BuildContext context,
+  ChurchListEntry entry, {
+  ChurchScheduleLoader? loader,
+}) {
   final church = Church(
     id: entry.id,
     name: entry.name,
@@ -293,6 +299,8 @@ void openChurchDetails(BuildContext context, ChurchListEntry entry) {
   );
   Navigator.push(
     context,
-    MaterialPageRoute(builder: (context) => ChurchDetailsPage(church: church)),
+    MaterialPageRoute(
+      builder: (context) => ChurchDetailsPage(church: church, loader: loader),
+    ),
   );
 }

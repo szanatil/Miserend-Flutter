@@ -6,6 +6,7 @@ import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/church_details/problem_report_sender.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// One report as the page handed it over.
@@ -46,35 +47,50 @@ class _FakeSender extends ProblemReportSender {
   }
 }
 
+final TargetPlatformVariant _bothPlatforms = TargetPlatformVariant(const {
+  TargetPlatform.android,
+  TargetPlatform.iOS,
+});
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  /// The page, opened from a plain screen so that closing it can be seen.
-  Future<void> openPage(WidgetTester tester, _FakeSender sender) async {
+  /// The page, opened as the details page opens it, from a plain screen so
+  /// that closing it can be seen.
+  Future<void> openPage(
+    WidgetTester tester,
+    _FakeSender sender, {
     // Tall enough for the whole form, so an error text is found whether or
     // not the list has scrolled to it.
-    tester.view.physicalSize = const Size(440, 1400);
+    Size size = const Size(440, 1400),
+    double textScale = 1.0,
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       MaterialApp(
+        builder:
+            (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
         home: Builder(
           builder:
               (context) => Scaffold(
                 body: TextButton(
                   onPressed:
-                      () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder:
-                              (_) => ReportProblemPage(
-                                churchId: 38,
-                                churchName:
-                                    'Belvárosi Nagyboldogasszony-templom',
-                                dataAsOf: DateTime(2026, 9, 3, 17, 45),
-                                sender: sender,
-                              ),
+                      () => pushMiserendTaskFlow<void>(
+                        context,
+                        (_) => ReportProblemPage(
+                          churchId: 38,
+                          churchName: 'Belvárosi Nagyboldogasszony-templom',
+                          dataAsOf: DateTime(2026, 9, 3, 17, 45),
+                          sender: sender,
                         ),
                       ),
                   child: const Text('Megnyitás'),
@@ -345,5 +361,34 @@ void main() {
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(ReportProblemPage.emailPreferenceKey), isNull);
+  });
+  testWidgets('Mégse closes the page without sending', (tester) async {
+    final sender = _FakeSender();
+    await openPage(tester, sender);
+
+    await tester.tap(find.text('Mégse'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ReportProblemPage), findsNothing);
+    expect(sender.sent, isEmpty);
+  }, variant: _bothPlatforms);
+
+  group('fits without overflow (EH4)', () {
+    for (final width in [320.0, 430.0]) {
+      for (final textScale in [1.0, 2.0]) {
+        testWidgets('at $width dp and text scale $textScale', (tester) async {
+          await openPage(
+            tester,
+            _FakeSender(),
+            size: Size(width, 2400),
+            textScale: textScale,
+          );
+
+          expect(find.text('Mégse'), findsOneWidget);
+          expect(find.text('Küldés'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        }, variant: _bothPlatforms);
+      }
+    }
   });
 }

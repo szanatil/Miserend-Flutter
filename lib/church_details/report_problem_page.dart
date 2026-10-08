@@ -87,7 +87,18 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Hibajelentés')),
+      appBar: AppBar(
+        // A task flow is left by Mégse, not by a back arrow (DESIGN.md NA2).
+        // Among the actions it takes the width its text needs (EL2).
+        automaticallyImplyLeading: false,
+        title: const Text('Hibajelentés'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Mégse'),
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         child: ListView(

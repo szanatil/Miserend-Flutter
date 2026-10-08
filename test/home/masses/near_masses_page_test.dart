@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
-import 'package:miserend/church_details/church_page_data.dart';
-import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
-import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
@@ -22,6 +19,7 @@ import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../church_details/fake_church_schedule_loader.dart';
 import '../../fake_location_provider.dart';
 
 NearbyMassesItem _mass({
@@ -99,26 +97,6 @@ class _FakeLoader extends NearestMassesLoader {
   }
 }
 
-/// Lets the details page open without a database or a network call.
-class _EmptyDetailsLoader extends ChurchScheduleLoader {
-  ChurchPageData get _empty => ChurchPageData(
-    church: null,
-    massesByDay: List.generate(
-      ChurchScheduleLoader.scheduleDays,
-      (_) => <CachedMass>[],
-    ),
-    scheduleIsFresh: false,
-    confessionLive: false,
-  );
-
-  @override
-  Future<ChurchPageData> loadCached(int churchId, DateTime today) async =>
-      _empty;
-
-  @override
-  Future<ChurchPageData> refresh(Church church, DateTime today) async => _empty;
-}
-
 void main() {
   late DateTime now;
 
@@ -177,7 +155,7 @@ void main() {
             body: NearMassesPage(
               loader: loader,
               clock: () => now,
-              detailsLoader: _EmptyDetailsLoader(),
+              detailsLoader: FakeChurchScheduleLoader(),
             ),
           ),
         ),

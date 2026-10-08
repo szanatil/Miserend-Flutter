@@ -194,8 +194,6 @@ _Ismert eltérés: a kártyák, a csoportfejléc és a `SectionCard` szövegszer
 
 **NA1 — Az alsó navigáció mindig látszik.** Minden lapon, amely egy fülről nyílik (templom-részletező, keresési találatok, részletes kereső, Névjegy, Impresszum), a fülsáv látható. Ehhez minden fülnek saját navigációs verme van. Csak a modális elem takarhatja el: dialógus, bottom sheet, action sheet, teljes képernyős fotónézegető, feladatfolyamat-űrlap (pl. Hibajelentés), nyitóképernyő.
 
-_Ismert eltérés: a részletező, a keresési találatok és a Névjegy `Navigator.push`-sal a fülsáv fölé nyílik; a Hibajelentés nem modális (#55)._
-
 **NA2 — Feladatfolyamat-űrlap.** Ami egy befejezendő vagy elvetendő folyamat (pl. Hibajelentés), az modálisan nyílik: iOS-en modális lap, Androidon teljes képernyős dialógus (`fullscreenDialog: true`), „Mégse" kilépéssel.
 
 **NA3 — Vissza.** A vissza gomb, a vissza-gesztus és az iOS élről húzás a fül saját vermében lép vissza. Androidon egy fül gyökeréről az első fülre (Templomok) visz, onnan kilép az appból. Minden mélyebb lapon van vissza gomb a címsorban.

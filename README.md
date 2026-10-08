@@ -86,7 +86,7 @@ Részletek: [ADR-0002](docs/adr/0002-api-v4-mint-elsodleges-adatforras.md).
 
 **Helyi gyorsítótár.** Az első letöltés után az app az exportból feltölti a gyorsítótárat: az összes templomot és a következő 30 nap miséit. A képernyők először mindig a gyorsítótárból rajzolnak, majd a háttérben meghívják az API-t, és a választ visszaírják a gyorsítótárba. Ha a hívás nem sikerül, a korábbi adat marad látható. Részletek: [ADR-0003](docs/adr/0003-offline-mukodes-helyi-gyorsitotarbol.md).
 
-**Felület.** Egyetlen, Material 3 alapú widgetfa mindkét platformon. A döntés szerint iOS-en egy rögzített listán szereplő elemek (például a dialógus, a műveletválasztó, a dátumválasztó és az alsó navigáció) a platform megszokott formáját követik; ez még nincs kész, ma iOS-en is minden Material (#55, #60). Részletek: [ADR-0004](docs/adr/0004-kozos-material-3-alap-platformhu-adaptiv-elemekkel.md) és a [DESIGN.md](DESIGN.md).
+**Felület.** Egyetlen, Material 3 alapú widgetfa mindkét platformon. A döntés szerint iOS-en egy rögzített listán szereplő elemek (például a dialógus, a műveletválasztó, a dátumválasztó és az alsó navigáció) a platform megszokott formáját követik; ez még nincs kész, ma iOS-en is minden Material (#60, #66). Részletek: [ADR-0004](docs/adr/0004-kozos-material-3-alap-platformhu-adaptiv-elemekkel.md) és a [DESIGN.md](DESIGN.md).
 
 **Térkép.** `flutter_map` CARTO Voyager csempékkel, Google Maps helyett. Részletek: [ADR-0001](docs/adr/0001-cartodb-voyager-instead-of-google-maps.md).
 

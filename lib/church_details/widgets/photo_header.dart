@@ -195,7 +195,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
 
   void _openGallery(int index) {
     _handOver();
-    Navigator.of(context).push(
+    // Full screen, over the navigation bar too (DESIGN.md NA1).
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder:
             (_) => PhotoGalleryPage(

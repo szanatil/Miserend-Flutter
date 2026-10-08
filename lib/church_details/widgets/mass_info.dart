@@ -26,6 +26,8 @@ class MassInfo {
   static void show(BuildContext context, CachedMass mass) {
     showModalBottomSheet<void>(
       context: context,
+      // Over the navigation bar, as a modal is (DESIGN.md NA1).
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Padding(

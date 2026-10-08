@@ -18,7 +18,9 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -44,6 +46,9 @@ class ChurchDetailsPage extends StatefulWidget {
 class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Collapsed-to-expanded height of the photo header.
   static const double _headerHeight = 200;
+
+  /// A day card's width in the strip at text scale 1.0.
+  static const double _dayCardWidth = 160;
 
   ChurchPageData? _data;
   late final DateTime _today = _midnightToday();
@@ -193,9 +198,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   Widget _actionButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      // Wraps rather than overflows on a narrow screen with large text.
+      child: Wrap(
+        alignment: WrapAlignment.center,
         spacing: 24,
+        runSpacing: Spacing.s,
         children: [
           GestureDetector(
             onTap: _toggleFavorites,
@@ -255,16 +262,14 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     // Not before the cache read has answered: until then there is no date
     // for the data the report would be about.
     if (data == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder:
-            (_) => ReportProblemPage(
-              churchId: widget.church.id,
-              churchName: _details?.name ?? widget.church.name ?? '',
-              // Null only when not even the bootstrap import recorded a date;
-              // the API requires one, and today is the nearest truth.
-              dataAsOf: data.dataAsOf ?? _today,
-            ),
+    pushMiserendTaskFlow<void>(
+      context,
+      (_) => ReportProblemPage(
+        churchId: widget.church.id,
+        churchName: _details?.name ?? widget.church.name ?? '',
+        // Null only when not even the bootstrap import recorded a date; the
+        // API requires one, and today is the nearest truth.
+        dataAsOf: data.dataAsOf ?? _today,
       ),
     );
   }
@@ -392,7 +397,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: SizedBox(
-        width: 160,
+        // Grows with the text, so that a time chip and its (i) marker fit at
+        // any text size.
+        width: MediaQuery.textScalerOf(context).scale(_dayCardWidth),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(

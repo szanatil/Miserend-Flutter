@@ -50,6 +50,8 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 Új, teljes képernyős oldal (`lib/church_details/report_problem_page.dart`), `Navigator.push`-sal nyílik. A régi `report_problem_popup.dart` és a `_showReportPopup` törlődik.
 
+> **Módosítva (2026-10-08, #55):** a Hibajelentés feladatfolyamat-űrlapként modálisan nyílik a fülsáv fölé (DESIGN.md NA2): iOS-en modális lap, Androidon teljes képernyős dialógus, a címsorban „Mégse” kilépéssel (`pushMiserendTaskFlow`, `lib/theme/adaptive.dart`).
+
 - **AppBar:** az app témája szerinti lila, címe „Hibajelentés”.
 - **Fejléc:** a templom neve (`titleMedium`), hogy látsszon, miről szól a jelentés.
 - **Típus:** három választógomb (`RadioListTile`), alapból **egyik sincs kiválasztva**:
