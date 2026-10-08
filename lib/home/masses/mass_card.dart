@@ -232,8 +232,10 @@ class _BubbleSurface extends StatelessWidget {
   static const double _verticalPadding = 2;
   static const double _iconGap = 4;
 
-  static TextStyle? _style(BuildContext context) =>
-      Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.black87);
+  static TextStyle? _style(BuildContext context) => Theme.of(context)
+      .textTheme
+      .labelMedium
+      ?.copyWith(color: Theme.of(context).colorScheme.onSecondaryContainer);
 
   /// As tall as the letters, in the text size they are drawn in.
   static double _iconSize(BuildContext context) =>
@@ -261,7 +263,7 @@ class _BubbleSurface extends StatelessWidget {
                 iconAsset,
                 width: iconSize,
                 height: iconSize,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
                 excludeFromSemantics: true,
               ),
               const SizedBox(width: _iconGap),

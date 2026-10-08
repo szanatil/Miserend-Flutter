@@ -83,7 +83,7 @@ extension OfflineLook on ApiFailure {
 
   /// The colour of the icons, readable on [tint].
   Color iconColor(BuildContext context) => switch (this) {
-    ApiFailure.noConnection => Colors.black54,
+    ApiFailure.noConnection => Theme.of(context).colorScheme.onSurfaceVariant,
     ApiFailure.serverError =>
       Theme.of(context).extension<MiserendColors>()!.serverErrorIcon,
   };

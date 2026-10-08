@@ -20,7 +20,7 @@ ThemeData miserendTheme(Brightness brightness) {
   }
   final base = ThemeData(
     colorScheme: scheme,
-    extensions: [MiserendColors.of(scheme)],
+    extensions: [MiserendColors.forScheme(scheme)],
   );
   return base.copyWith(
     appBarTheme: AppBarTheme(

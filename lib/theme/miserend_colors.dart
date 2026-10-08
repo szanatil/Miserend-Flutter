@@ -20,7 +20,7 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
 
   /// The values for [scheme]'s brightness. [mapOverlay] is drawn from the
   /// scheme's `surface`, so it follows the mode with it.
-  factory MiserendColors.of(ColorScheme scheme) {
+  factory MiserendColors.forScheme(ColorScheme scheme) {
     final overlay = scheme.surface.withValues(alpha: 0.7);
     return switch (scheme.brightness) {
       Brightness.light => MiserendColors(

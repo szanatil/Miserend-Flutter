@@ -41,7 +41,7 @@ class PositionUnavailableBanner extends StatelessWidget {
     return NoticeStrip(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       icon: Icons.location_off,
-      iconColor: Colors.black54,
+      iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
       text: PositionUnavailableView.message(reason, _purpose),
       actions: [
         if (button != null)
@@ -53,7 +53,7 @@ class PositionUnavailableBanner extends StatelessWidget {
           ),
         IconButton(
           icon: const Icon(Icons.close),
-          color: Colors.black54,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           tooltip: 'Bezárás',
           visualDensity: VisualDensity.compact,
           onPressed: onClose,

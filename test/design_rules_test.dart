@@ -92,11 +92,9 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   },
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
   'lib/home/map/widgets/position_unavailable_banner.dart': {
-    'color': (2, '#58'),
     'icon': (2, '#60, #61'),
   },
   'lib/home/masses/mass_card.dart': {
-    'color': (2, '#57'),
     'radius': (1, '#57'),
     'spacing': (1, '#57'),
   },
@@ -126,7 +124,7 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
     'spacing': (2, '#59'),
   },
   'lib/widgets/notice_strip.dart': {'spacing': (2, '#59')},
-  'lib/widgets/offline_notice.dart': {'color': (1, '#58'), 'icon': (3, '#61')},
+  'lib/widgets/offline_notice.dart': {'icon': (3, '#61')},
   'lib/widgets/position_unavailable_view.dart': {'spacing': (2, '#59')},
   'lib/widgets/section_card.dart': {'spacing': (3, '#57')},
   'lib/widgets/time_chip.dart': {
