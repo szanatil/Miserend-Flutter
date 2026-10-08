@@ -17,6 +17,7 @@ import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/search_suggestions.dart';
 import 'package:miserend/home/widgets/search_suggestion_list.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
+import 'package:miserend/home/widgets/tab_reselect.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
@@ -191,14 +192,18 @@ class _HomeScreenState extends State<HomeScreen> {
     (_) => GlobalKey(),
   );
 
-  static const int _tabCount = 3;
+  static const int _tabCount = 4;
   static const int _massesTab = 1;
 
-  /// The navigation item after the tabs. It opens the Névjegy as a page of
-  /// its own rather than a tab, so the tab on screen stays selected.
-  static const int _aboutItem = _tabCount;
+  /// The Névjegy: a tab like the others, with a stack of its own, but no
+  /// search bar over it.
+  static const int _aboutTab = 3;
 
-  static const String _aboutRoute = 'about';
+  /// What each tab's pages do when the tab is tapped again on its root.
+  final List<TabReselectHandlers> _reselectHandlers = List.generate(
+    _tabCount,
+    (_) => TabReselectHandlers(),
+  );
 
   /// The Misék and the Térkép tab are told whether they are the one on
   /// screen, because the IndexedStack keeps them alive underneath the others
@@ -243,10 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == _aboutItem) {
-      _openAbout();
-      return;
-    }
     if (index == _selectedIndex) {
       _returnToTop(index);
     } else {
@@ -263,7 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// The tab on screen tapped again (DESIGN.md NA4): from a deeper page back
-  /// to its root, and on the root to the top of its list.
+  /// to its root, and on the root to the top of its list, unless one of its
+  /// pages takes the tap first (the Templomok tab goes back to Közeli).
   void _returnToTop(int index) {
     final navigator = _tabNavigators[index].currentState;
     if (navigator == null) return;
@@ -273,6 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     // The tap closes the Részletes kereső; the list is not on screen yet.
     if (_advancedSearchOpen) return;
+    if (_reselectHandlers[index].handle()) return;
     final rootContext = _tabRoots[index].currentContext;
     if (rootContext == null) return;
     final controller = PrimaryScrollController.maybeOf(rootContext);
@@ -291,28 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
         position.jumpTo(position.minScrollExtent);
       }
     }
-  }
-
-  /// Opens the Névjegy in the tab on screen. It stands right on the tab's
-  /// root, or is gone back to when already open, so that the Névjegy and its
-  /// church of the day cannot pile up past three levels (DESIGN.md NA7).
-  void _openAbout() {
-    final navigator = _activeNavigator;
-    if (navigator == null) return;
-    var aboutOnTop = false;
-    navigator.popUntil((route) {
-      aboutOnTop = route.settings.name == _aboutRoute;
-      return aboutOnTop || route.isFirst;
-    });
-    if (aboutOnTop) return;
-    unawaited(
-      navigator.push(
-        MaterialPageRoute<void>(
-          settings: const RouteSettings(name: _aboutRoute),
-          builder: widget.aboutBuilder ?? (context) => const AboutPage(),
-        ),
-      ),
-    );
   }
 
   /// Back (DESIGN.md NA3) steps through the tab's own stack, then closes the
@@ -400,11 +381,28 @@ class _HomeScreenState extends State<HomeScreen> {
   /// The tab's own stack. Its root page is rebuilt with the screen, so that
   /// it follows the Részletes kereső and the tab's [isActive].
   Widget _tabNavigator(int index) {
-    return Navigator(
-      key: _tabNavigators[index],
-      pages: [MaterialPage<void>(child: _tabRoot(index))],
-      // The root page is never popped: back from it is [_goBack]'s.
-      onDidRemovePage: (_) {},
+    return TabReselect(
+      handlers: _reselectHandlers[index],
+      child: Navigator(
+        key: _tabNavigators[index],
+        pages: [
+          MaterialPage<void>(
+            child:
+                index == _aboutTab
+                    ? KeyedSubtree(
+                      key: _tabRoots[index],
+                      child: Builder(
+                        builder:
+                            widget.aboutBuilder ??
+                            (context) => const AboutPage(),
+                      ),
+                    )
+                    : _tabRoot(index),
+          ),
+        ],
+        // The root page is never popped: back from it is [_goBack]'s.
+        onDidRemovePage: (_) {},
+      ),
     );
   }
 

@@ -11,6 +11,7 @@ import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/home/churches/churches_page.dart';
 import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/home/masses/mass_card.dart';
@@ -160,6 +161,7 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(430, 900),
     double textScale = 1.0,
+    Widget? churchesTab,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -189,6 +191,8 @@ void main() {
                           detailsLoader: FakeChurchScheduleLoader(),
                           location: FakeLocationProvider(),
                         )
+                        : index == 0 && churchesTab != null
+                        ? churchesTab
                         : _ListTab(index),
             suggestions: NoSearchSuggestions(),
             searchResultsLoader: FakeChurchListLoader([
@@ -219,6 +223,11 @@ void main() {
   /// Not merely built: on screen and reachable by a tap.
   Finder navigationBar() => find.byType(BottomNavigationBar).hitTestable();
 
+  int selectedTab(WidgetTester tester) =>
+      tester
+          .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
+          .currentIndex;
+
   Future<void> tapTab(WidgetTester tester, String label) async {
     await tester.tap(
       find.descendant(
@@ -228,6 +237,10 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  /// Which of the Templomok tab's own tabs is on screen.
+  int currentChurchesTab(WidgetTester tester) =>
+      DefaultTabController.of(tester.element(find.byType(TabBarView))).index;
 
   Future<void> openChurch(WidgetTester tester) async {
     await tester.tap(find.text('Templom megnyitása'));
@@ -315,6 +328,35 @@ void main() {
       expect(find.text('Fül 0, 0. sor'), findsOneWidget);
     }, variant: _bothPlatforms);
 
+    testWidgets('on the Templomok tab\'s Kedvencek, goes back to Közeli '
+        'first', (tester) async {
+      await pumpHome(
+        tester,
+        churchesTab: ChurchesPage(
+          nearLoader: FakeChurchListLoader([const <ChurchListEntry>[]]),
+          favoritesLoader: FakeChurchListLoader([const <ChurchListEntry>[]]),
+          location: FakeLocationProvider(),
+        ),
+      );
+      // The Kedvencek keeps loading, as the favorites never do here, so
+      // the tab's animation is waited out rather than settled.
+      await tester.tap(find.text('Kedvencek'));
+      await tester.pump();
+      await tester.pump(Durations.long2);
+      expect(currentChurchesTab(tester), 1);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomNavigationBar),
+          matching: find.text('Templomok'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(Durations.long2);
+
+      expect(currentChurchesTab(tester), 0);
+    }, variant: _bothPlatforms);
+
     testWidgets('scrolls its list to the top on the root', (tester) async {
       await pumpHome(tester);
       await tester.drag(find.byType(ListView), const Offset(0, -1500));
@@ -348,12 +390,7 @@ void main() {
       await goBack(tester);
 
       expect(find.text('Fül 0, 0. sor'), findsOneWidget);
-      expect(
-        tester
-            .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
-            .currentIndex,
-        0,
-      );
+      expect(selectedTab(tester), 0);
     }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
     testWidgets('from the Templomok tab\'s root, leaves the app', (
@@ -405,18 +442,20 @@ void main() {
     }, variant: _bothPlatforms);
   });
 
-  testWidgets('the Névjegy stands on the tab\'s root, so the stack stays '
-      'within three levels (NA7)', (tester) async {
+  testWidgets('the Névjegy is a tab of its own: selected, and keeping its '
+      'stack while away', (tester) async {
     await pumpHome(tester);
     await tapTab(tester, 'Névjegy');
+    expect(selectedTab(tester), 3);
     await tester.tap(find.text('Mai templom'));
     await tester.pumpAndSettle();
 
+    await tapTab(tester, 'Templomok');
+    expect(find.byType(ChurchDetailsPage), findsNothing);
     await tapTab(tester, 'Névjegy');
-    expect(find.text('Névjegy oldal'), findsOneWidget);
-    await goBack(tester);
 
-    expect(find.text('Fül 0, 0. sor'), findsOneWidget);
+    expect(find.byType(ChurchDetailsPage), findsOneWidget);
+    expect(selectedTab(tester), 3);
   }, variant: _bothPlatforms);
 
   group('the church details fit beside the navigation bar (EH4)', () {

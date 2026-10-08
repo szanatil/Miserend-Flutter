@@ -9,7 +9,7 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
 ## Solution
 
 - A pont neve **„Névjegy”**, ikonja ⓘ (`Icons.info_outline`). Viselkedése a régi: nem fül, `Navigator.push`-sal saját oldalt nyit, a kiválasztott fül nem változik (spec 0009, „Visszajelzés: belépési pont”).
-  *(Módosítva 2026-10-08, #55: a Névjegy a képernyőn lévő fül saját vermébe, közvetlenül a fül gyökerére nyílik, így a fülsáv alatta látszik; ha már nyitva van a veremben, oda tér vissza (DESIGN.md NA1, NA7).)*
+  *(Módosítva 2026-10-08, #55: a Névjegy a negyedik fül, saját veremmel és kiemeléssel a fülsávon, keresősáv nélkül; a fülsáv alatta is látszik (DESIGN.md NA1, NA5).)*
 - A **„Visszajelzés”** (spec 0009, „Visszajelzés: a levél”) **lebegő gomb** a képernyő alján, középen (`FloatingActionButton.extended`, `centerFloat`): görgetés nélkül, minden telefonon látszik. A lista alján annyi hely marad, hogy az utolsó csempe is kigördülhessen alóla.
 - Az impresszum **nem külön oldal**: a Névjegy szakaszai. A Névjegy oldal fentről lefelé:
   1. **„Mai templom ajánlatunk”** kártya (spec 0009, „Menü oldal”), változatlanul.

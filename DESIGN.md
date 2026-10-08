@@ -198,7 +198,7 @@ _Ismert eltérés: a kártyák, a csoportfejléc és a `SectionCard` szövegszer
 
 **NA3 — Vissza.** A vissza gomb, a vissza-gesztus és az iOS élről húzás a fül saját vermében lép vissza. Androidon egy fül gyökeréről az első fülre (Templomok) visz, onnan kilép az appból. Minden mélyebb lapon van vissza gomb a címsorban.
 
-**NA4 — Az aktív fülre újra koppintva** a fül a gyökerére ugrik, ha mélyebb lap van nyitva; ha már a gyökéren van, a lista elejére görget.
+**NA4 — Az aktív fülre újra koppintva** a fül a gyökerére ugrik, ha mélyebb lap van nyitva; ha már a gyökéren van, és a gyökérnek saját fülsora van (Templomok: Közeli / Kedvencek), előbb az első fülére vált; onnan a lista elejére görget.
 
 **NA5 — Fülváltáskor** minden fül megtartja a saját vermét és görgetési helyét.
 
