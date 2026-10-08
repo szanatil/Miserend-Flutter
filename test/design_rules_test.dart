@@ -46,9 +46,9 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
     'spacing': (4, '#59'),
   },
   'lib/church_details/widgets/confession_tile.dart': {
-    'color': (3, '#58'),
-    'icon': (1, '#61'),
-    'spacing': (3, '#59'),
+    'color': (3, '#57'),
+    'icon': (1, '#57'),
+    'spacing': (3, '#57'),
   },
   'lib/church_details/widgets/contact_card.dart': {
     'color': (2, '#58'),
@@ -80,32 +80,32 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   },
   'lib/home/churches/church_card.dart': {
     'color': (4, '#57'),
-    'icon': (2, '#61'),
-    'spacing': (2, '#59'),
+    'icon': (2, '#57'),
+    'spacing': (2, '#57'),
   },
   'lib/home/churches/church_list_view.dart': {'spacing': (1, '#59')},
   'lib/home/churches/favorite_churches.dart': {'color': (1, '#58')},
   'lib/home/churches/near_churches_page.dart': {'color': (1, '#58')},
   'lib/home/churches/search_results.dart': {'color': (1, '#58')},
   'lib/home/home.dart': {
-    'color': (7, '#55, #56'),
-    'icon': (5, '#61'),
+    'color': (7, '#56, #58, #66'),
+    'icon': (5, '#61, #66'),
     'radius': (2, '#59'),
   },
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
   'lib/home/map/widgets/position_unavailable_banner.dart': {
     'color': (3, '#58'),
-    'icon': (2, '#61'),
+    'icon': (2, '#60, #61'),
   },
   'lib/home/masses/mass_card.dart': {
     'color': (3, '#57'),
     'radius': (1, '#57'),
-    'spacing': (1, '#59'),
+    'spacing': (1, '#57'),
   },
   'lib/home/masses/mass_start_header.dart': {
     'color': (3, '#57'),
     'radius': (1, '#57'),
-    'spacing': (2, '#59'),
+    'spacing': (2, '#57'),
   },
   'lib/home/masses/near_masses_page.dart': {
     'color': (1, '#58'),
@@ -119,7 +119,7 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/splash.dart': {'spacing': (3, '#59')},
   'lib/widgets/distance_chip.dart': {
     'color': (2, '#57'),
-    'spacing': (1, '#59'),
+    'spacing': (1, '#57'),
   },
   'lib/widgets/language_flag.dart': {'color': (1, '#58'), 'radius': (1, '#59')},
   'lib/widgets/list_status_view.dart': {'spacing': (2, '#59')},
@@ -131,12 +131,12 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/widgets/notice_strip.dart': {'spacing': (2, '#59')},
   'lib/widgets/offline_notice.dart': {'color': (5, '#58'), 'icon': (3, '#61')},
   'lib/widgets/position_unavailable_view.dart': {'spacing': (2, '#59')},
-  'lib/widgets/section_card.dart': {'spacing': (3, '#59')},
+  'lib/widgets/section_card.dart': {'spacing': (3, '#57')},
   'lib/widgets/time_chip.dart': {
     'color': (3, '#57'),
-    'icon': (1, '#61'),
+    'icon': (1, '#57'),
     'radius': (1, '#57'),
-    'spacing': (1, '#59'),
+    'spacing': (1, '#57'),
   },
 };
 

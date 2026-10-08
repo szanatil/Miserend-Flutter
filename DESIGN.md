@@ -71,6 +71,11 @@ _Ismert eltérés: a `lib/theme/` még nem létezik; a téma a `lib/main.dart`-b
 | `serverErrorContainer` | `#FFE0B2` | `#5A3300` | A szerverhiba szalagjának, kártyájának háttere |
 | `onServerErrorContainer` | `#2E1500` | `#FFDCC2` | Szöveg `serverErrorContainer`-en |
 | `serverErrorIcon` | `#B45309` | `#FFB870` | A szerverhiba ikonja `serverErrorContainer`-en |
+| `userLocation` | `#1A73E8` | `#1A73E8` | A saját helyzet pöttye a térképen (spec 0006) |
+| `onUserLocation` | `#FFFFFF` | `#FFFFFF` | A saját helyzet pöttyének gyűrűje |
+| `mapOverlay` | `surface` 70%-os átlátszatlansággal | `surface` 70%-os átlátszatlansággal | A térkép forrásmegjelölésének háttere (KO17) |
+
+A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) és a nem szöveges jelölésé (`userLocation`) legalább 3:1 (AM1).
 
 _Ismert eltérés: a `CustomColors` (`lib/colors.dart`) fix, csak világos színeket tart (#54)._
 
@@ -85,6 +90,8 @@ _Ismert eltérés: a `CustomColors` (`lib/colors.dart`) fix, csak világos szín
 | Nincs kapcsolat, helyzet nem elérhető | `surfaceContainerHighest` / `onSurfaceVariant` |
 | Szerverhiba | `serverErrorContainer` / `onServerErrorContainer` / `serverErrorIcon` |
 | Űrlaphiba | `error` / `onErrorContainer` |
+| Saját helyzet a térképen | `userLocation` / `onUserLocation` |
+| Templom a térképen | a miserend.hu pinje, csoportja `primary` / `onPrimary` (KO17) |
 
 A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem narancs. A narancs szövegként felületen (`surface`, `surfaceContainer*`) nem állhat, mert ott nem éri el az AA kontrasztot; az időpont mindig a saját konténerében áll.
 
@@ -111,11 +118,14 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 | Chip felirata | `labelLarge` |
 | Hátralévő idő | `labelMedium` |
 | Badge felirata | `labelSmall` |
+| Lábjegyzet, az adat kora | `bodySmall`, `onSurfaceVariant` |
 | Gomb felirata | a gomb témájának alapértelmezése (`labelLarge`) |
 
 **TI3 — Az időpont a kártya legerősebb eleme** (AL1). Ugyanazon a kártyán nincs nála nagyobb vagy vastagabb szöveg.
 
 **TI4 — Számjegyek egymás alatt.** Minden időpont és távolság `FontFeature.tabularFigures()`-szel áll, hogy a listán egymás alá igazodjanak.
+
+_Ismert eltérés: a kártyák, a csoportfejléc és a `SectionCard` szövegszerepei (#57); szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a térképen (#59)._
 
 ## TK. Térköz
 
@@ -155,13 +165,14 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 | Menü, snackbar | `xs` |
 | Fotó a részletező lap fejlécében | nincs lekerekítés |
 | Fotó a galériában | `m` |
+| Bélyegkép csempében (pl. a keresési javaslat fotója, ikonja) | `s` |
 | Szalag | nincs lekerekítés |
 
 ## MÉ. Mélység és árnyék
 
 **MÉ1 — A mélységet tónus adja, nem árnyék.** A kártya `elevation: 0`, és a `surfaceContainerLow` színnel válik el a `surface` háttértől.
 
-**MÉ2 — Árnyékot csak a lebegő elem kap**, az M3 alapértelmezésével: térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`.
+**MÉ2 — Árnyékot csak a lebegő elem kap**, az M3 alapértelmezésével: térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
 
 **MÉ3 — A címsor görgetéskor tónust kap.** `elevation: 0`, `scrolledUnderElevation: 3` (M3 alapértelmezés), árnyék nélkül.
 
@@ -169,7 +180,11 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 
 **EL1 — Telefonra optimalizált, 320 dp-től.** A legkisebb támogatott szélesség 320 dp; a tervezési alap 360–393 dp; a nagy telefon 430 dp felett. Egyik szélességen sem vágódik le és nem lóg ki semmi.
 
-**EL2 — Nincs fix szélesség.** Szöveget, chipet, gombot tartalmazó elemnek nincs rögzített szélessége; ami nem fér el egy sorban, az tördel (`Wrap`, több soros `Text`), nem `overflow: ellipsis`-szel vész el. Kivétel: a templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
+**EL2 — Nincs fix szélesség.** Szöveget, chipet, gombot tartalmazó elemnek nincs rögzített szélessége; ami nem fér el egy sorban, az tördel (`Wrap`, több soros `Text`), nem `overflow: ellipsis`-szel vész el. Kivételek:
+
+- A templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
+- A templomkártya mise-chipjei egy sorban állnak; ami nem fér ki, azt a sor végén egy `…` chip jelzi (spec 0007). A részletező minden misét mutat.
+- A mise jellemzőjének buborékja a misekártyán egy sorban, `ellipsis`-szel áll; koppintásra a teljes szöveg látszik (spec 0011).
 
 **EL3 — Széles képernyőn korlátozott tartalom.** 600 dp feletti szélességen (tablet, fekvő tájolás) a lista és az űrlap tartalma legfeljebb **640** dp széles, középre igazítva. A térkép és a fotó kitölti a teljes szélességet. Kétpaneles elrendezés nincs.
 
@@ -219,7 +234,7 @@ _Ismert eltérés: a részletező, a keresési találatok és a Névjegy `Naviga
 
 **PL3 — Az elágazás egy helyen.** A platformfüggő döntés a `lib/theme/adaptive.dart` segédfüggvényeiben (pl. `showMiserendDialog`, `showMiserendActionSheet`, `pickMiserendDate`) és a témában áll; a képernyő kódja nem ágazik el platformonként. A platformot `Theme.of(context).platform` adja, nem a `dart:io` `Platform`, így a teszt felülírhatja.
 
-_Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, töltésjelző, pull-to-refresh, átmenet, érintés (#60)._
+_Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, kapcsoló, rádiógomb, töltésjelző, pull-to-refresh, átmenet, érintés, rendszerikonok (#60)._
 
 ## IK. Ikonok
 
@@ -227,7 +242,7 @@ _Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, 
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
 
-_Ismert eltérés: egyetlen ikon sem `_rounded` (#61)._
+_Ismert eltérés: egyetlen ikon sem `_rounded` (#61; a kártyák és chipek ikonjai: #57; a fülsáv: #66; a rendszerikonok: #60)._
 
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 
@@ -241,7 +256,7 @@ _Ismert eltérés: egyetlen ikon sem `_rounded` (#61)._
 
 **MO3 — Csökkentett mozgás.** Ha `MediaQuery.disableAnimationsOf(context)` igaz, nincs csúszás és átméretezés: a váltás azonnali, vagy legfeljebb 150 ms áttűnés.
 
-_Ismert eltérés: nyers időtartamok és görbék, a csökkentett mozgás nincs kezelve (#64)._
+_Ismert eltérés: nyers időtartamok és görbék, a `FadeInImage` alapértelmezett áttűnései, a csökkentett mozgás nincs kezelve (#64)._
 
 **MO4 — Takarékos mozgás** (AL5). Hero animáció csak a fotónál (fejléc → galéria). Nincs skeleton: a lista a helyi gyorsítótárból szinte azonnal kész, a betöltést a `LoadingView` (KO8) mutatja. Nincs dekoratív, ismétlődő vagy figyelemfelkeltő animáció. Egyetlen kivétel a fotófejléc automatikus diavetítése (spec 0003, KO19).
 
@@ -268,6 +283,8 @@ _Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, k
 
 Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai címkéje van („Épp most tart", „3 új").
 
+_Ismert eltérés: az „Épp most tart" badge `primaryContainer` háttérrel, 12-es lekerekítéssel, `labelMedium` felirattal (#57)._
+
 **KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. Színek: SZ4.
 
 **KO8 — Állapotnézetek** (betöltés, üres, hiba). Betöltés: középre igazított `CircularProgressIndicator.adaptive`. Üres és hiba: ikon `48` `onSurfaceVariant`, alatta `titleMedium` cím, `bodyMedium` magyarázat (SV2), és ha van teendő, egy `FilledButton.tonal` („Újra"). Elemek között `Spacing.l`. A meglévő `LoadingView`, `MessageView`, `PositionUnavailableView` ezt valósítja meg.
@@ -280,6 +297,8 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 
 **KO12 — Szövegmező.** `OutlineInputBorder`, forma `Radii.s`; keret alapból `outline`, fókuszban `primary` 2 dp, hibánál `error`. Címke a mezőben (M3 lebegő címke), hibaüzenet a mező alatt (SV2).
 
+_Ismert eltérés: kézi `inputDecorationTheme` nyers színekkel, lekerekítés nélkül (#56)._
+
 **KO13 — Bottom sheet és action sheet.** A PL2 szerint adaptív. Androidon felső sarkai `Radii.xl`, fogantyúval (`showDragHandle: true`).
 
 **KO14 — Dialógus.** A PL2 szerint adaptív, `showMiserendDialog`-gal. Legfeljebb két gomb, igei felirattal; „OK" csak puszta tudomásulvételre.
@@ -290,9 +309,16 @@ _Ismert eltérés: a `snackBarTheme` lila hátteret ad (#56)._
 
 **KO16 — Alsó navigáció.** A PL2 szerint adaptív, felirat mindig látszik. Androidon `NavigationBar` az M3 alap színeivel (háttér `surfaceContainer`, indikátor `secondaryContainer`); iOS-en `CupertinoTabBar`, aktív szín `primary`, inaktív `onSurfaceVariant`.
 
-_Ismert eltérés: `BottomNavigationBar` lila háttérrel, mindkét platformon (#55)._
+_Ismert eltérés: `BottomNavigationBar` lila háttérrel, mindkét platformon (#66)._
 
-**KO17 — Térképi jelölő és csoport.** A jelölő színe a `primary` szerepből jön. A csoport (spec 0012) kör `primaryContainer` háttérrel, `onPrimaryContainer` `labelLarge` számmal. A kijelölt jelölő nagyobb, nem más színű.
+**KO17 — Térkép: jelölő, csoport, saját helyzet, forrásmegjelölés.**
+
+- **Templom-pin**: a miserend.hu pinje (`assets/images/map_pin.png`, alapszíne a `primary` világos értéke, spec 0006). Kép, ezért sötét módban sem vált színt. A kijelölt pin 1,3×-os, nem más színű.
+- **Csoport** (spec 0012): kör `primary` háttérrel, `onPrimary` szegéllyel és `onPrimary` `labelLarge` `FontWeight.w700` számmal, finom árnyékkal (MÉ2).
+- **Saját helyzet** (spec 0006): `userLocation` pötty `onUserLocation` gyűrűvel, finom árnyékkal (MÉ2).
+- **Forrásmegjelölés**: háttér `mapOverlay`, szöveg `labelSmall` `onSurface`.
+
+_Ismert eltérés: a csoport, a saját helyzet és a forrásmegjelölés nyers színekkel és betűmérettel (#58, #59)._
 
 **KO18 — Térképi kártya.** Lebegő elem: `surfaceContainerLow`, forma `Radii.l`, `elevation: 3`, a képernyő szélétől és a biztonságos területtől `Spacing.l`.
 
@@ -314,7 +340,7 @@ _Ismert eltérés: félig átlátszó fekete kapszula fehér szöveggel, 300 ms-
 
 **AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
 
-_Ismert eltérés (AM3–AM5, EL1–EL3): nincs `MergeSemantics` a kártyákon, fix templomkártya-magasság, nincs 640 dp-s korlát, nincsenek méret- és guideline-tesztek (#62)._
+_Ismert eltérés: nincs `MergeSemantics` a kártyákon, a koppintható időpont-chip 48 dp-nél kisebb, nincsenek guideline-tesztek (AM3–AM5, #62); fix templomkártya-magasság, egysoros vágások, nincs 640 dp-s korlát, nincsenek méret-tesztek (EL1–EL3, #67)._
 
 **AM6 — Gesztus csak kényelmi.** Minden funkció koppintással is elérhető; a húzás, hosszú nyomás csak gyorsítás.
 
@@ -328,7 +354,7 @@ _Ismert eltérés (AM3–AM5, EL1–EL3): nincs `MergeSemantics` a kártyákon, 
 
 **SV3 — A gomb felirata ige**: „Újra", „Küldés", „Megnyitás". „OK" csak puszta tudomásulvételre.
 
-_Ismert eltérés (SV1, SV3): a nyitóképernyő dialógusa magáz, és „Igen" / „Nem" gombokat mutat (#63)._
+_Ismert eltérés (SV1, SV3, SV4): a nyitóképernyő dialógusa magáz, „Igen" / „Nem" gombokat mutat, és a szövegei a kerülendő „adatbázis" szót használják (#63)._
 
 **SV4 — A domain szavai a CONTEXT.md-ből jönnek** (pl. „Részletes kereső", „Épp most tart"), az ott kerülendő szavak a felületen sem szerepelnek.
 
@@ -344,7 +370,7 @@ _Ismert eltérés (SV1, SV3): a nyitóképernyő dialógusa magáz, és „Igen"
 
 **FM5 — Tartomány:** nagykötőjellel, szóköz nélkül („9:00–18:00").
 
-_Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem friss adat dátumáról hiányzik a záró pont (#63)._
+_Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem friss adat dátumáról hiányzik a záró pont, a szentségimádás tartománya szóközzel áll (#63)._
 
 ## EH. Ellenőrzés
 
@@ -358,4 +384,4 @@ _Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem fri
 
 ## Átállás állapota
 
-A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64 issue-k viszik (a #54 a téma-alap, a többi erre épül), és a `test/design_rules_test.dart` kivétellistája ezekre mutat.
+A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat.
