@@ -5,6 +5,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/home/search_suggestions.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:provider/provider.dart';
 
 import '../database/fake_favorites_service.dart';
@@ -82,7 +83,7 @@ void main() {
     expect(find.text('Feltételek'), findsOneWidget);
     expect(fieldText(tester, 'Templom neve'), 'Mátyás');
     expect(find.text('Fül 0'), findsNothing);
-    expect(find.byType(BottomNavigationBar), findsOneWidget);
+    expect(find.byType(MiserendNavigationBar), findsOneWidget);
   });
 
   testWidgets('any tab closes the Részletes kereső, the selected one too', (

@@ -238,7 +238,7 @@ _Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, 
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
 
-_Ismert eltérés: egyetlen ikon sem `_rounded` (#61; a kártyák és chipek ikonjai: #57; a fülsáv: #66; a rendszerikonok: #60)._
+_Ismert eltérés: egyetlen ikon sem `_rounded` (#61; a kártyák és chipek ikonjai: #57; a rendszerikonok: #60)._
 
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 
@@ -304,8 +304,6 @@ _Ismert eltérés: kézi `inputDecorationTheme` nyers színekkel, lekerekítés 
 _Ismert eltérés: a `snackBarTheme` lila hátteret ad (#56)._
 
 **KO16 — Alsó navigáció.** A PL2 szerint adaptív, felirat mindig látszik. Androidon `NavigationBar` az M3 alap színeivel (háttér `surfaceContainer`, indikátor `secondaryContainer`); iOS-en `CupertinoTabBar`, aktív szín `primary`, inaktív `onSurfaceVariant`.
-
-_Ismert eltérés: `BottomNavigationBar` lila háttérrel, mindkét platformon (#66)._
 
 **KO17 — Térkép: jelölő, csoport, saját helyzet, forrásmegjelölés.**
 

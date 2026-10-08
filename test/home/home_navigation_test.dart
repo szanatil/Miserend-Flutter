@@ -18,6 +18,7 @@ import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -221,17 +222,17 @@ void main() {
   }
 
   /// Not merely built: on screen and reachable by a tap.
-  Finder navigationBar() => find.byType(BottomNavigationBar).hitTestable();
+  Finder navigationBar() => find.byType(MiserendNavigationBar).hitTestable();
 
   int selectedTab(WidgetTester tester) =>
       tester
-          .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
-          .currentIndex;
+          .widget<MiserendNavigationBar>(find.byType(MiserendNavigationBar))
+          .selectedIndex;
 
   Future<void> tapTab(WidgetTester tester, String label) async {
     await tester.tap(
       find.descendant(
-        of: find.byType(BottomNavigationBar),
+        of: find.byType(MiserendNavigationBar),
         matching: find.text(label),
       ),
     );
@@ -347,7 +348,7 @@ void main() {
 
       await tester.tap(
         find.descendant(
-          of: find.byType(BottomNavigationBar),
+          of: find.byType(MiserendNavigationBar),
           matching: find.text('Templomok'),
         ),
       );

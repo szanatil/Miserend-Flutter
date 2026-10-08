@@ -19,6 +19,7 @@ import 'package:miserend/home/widgets/search_suggestion_list.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/home/widgets/tab_reselect.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
@@ -347,32 +348,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     : const SizedBox.shrink(),
           ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.church),
+        bottomNavigationBar: MiserendNavigationBar(
+          destinations: const [
+            // Neither the church nor the map has a rounded outline
+            // (DESIGN.md IK2).
+            MiserendDestination(
+              icon: Icon(Icons.church_rounded),
               label: 'Templomok',
             ),
             // The app icon's chalice; tinted like the Material icons beside
             // it.
-            BottomNavigationBarItem(
+            MiserendDestination(
               icon: ImageIcon(AssetImage('assets/images/chalice.png')),
               label: 'Misék',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Térkép'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.info_outline),
+            MiserendDestination(icon: Icon(Icons.map_rounded), label: 'Térkép'),
+            MiserendDestination(
+              icon: Icon(Icons.info_outline_rounded),
+              selectedIcon: Icon(Icons.info_rounded),
               label: 'Névjegy',
             ),
           ],
-          // From four items Flutter switches to the shifting style, which
-          // would drop the purple background and hide the inactive labels.
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          backgroundColor: Theme.of(context).primaryColor,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white54,
-          onTap: _onItemTapped,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
         ),
       ),
     );

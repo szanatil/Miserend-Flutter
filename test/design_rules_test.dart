@@ -86,8 +86,8 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/home/churches/near_churches_page.dart': {'color': (1, '#58')},
   'lib/home/churches/search_results.dart': {'color': (1, '#58')},
   'lib/home/home.dart': {
-    'color': (7, '#56, #58, #66'),
-    'icon': (5, '#61, #66'),
+    'color': (4, '#56, #58'),
+    'icon': (2, '#61'),
     'radius': (2, '#59'),
   },
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
