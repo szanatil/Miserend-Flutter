@@ -150,9 +150,6 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _sending ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
               child:
                   _sending
                       ? const SizedBox.square(

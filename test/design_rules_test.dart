@@ -67,7 +67,6 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   },
   'lib/home/advanced_search/advanced_search_page.dart': {
     'color': (5, '#58'),
-    'elevation': (1, '#56'),
     'icon': (7, '#61'),
     'spacing': (13, '#59'),
   },
@@ -86,7 +85,7 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/home/churches/near_churches_page.dart': {'color': (1, '#58')},
   'lib/home/churches/search_results.dart': {'color': (1, '#58')},
   'lib/home/home.dart': {
-    'color': (4, '#56, #58'),
+    'color': (2, '#58'),
     'icon': (2, '#61'),
     'radius': (2, '#59'),
   },
@@ -106,10 +105,6 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/home/masses/near_masses_page.dart': {
     'color': (1, '#58'),
     'spacing': (1, '#59'),
-  },
-  'lib/home/widgets/section_bar.dart': {
-    'color': (6, '#56'),
-    'elevation': (1, '#56'),
   },
   'lib/splash.dart': {'spacing': (3, '#59')},
   'lib/widgets/distance_chip.dart': {

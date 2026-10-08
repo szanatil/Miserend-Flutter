@@ -430,7 +430,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
             child: Align(
               alignment: Alignment.topLeft,
               child: Material(
-                elevation: 4,
+                // Set off from the form by tone, not shadow (DESIGN.md MÉ1,
+                // MÉ2).
+                color: Theme.of(context).colorScheme.surfaceContainer,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
                     maxHeight: _citySuggestionsMaxHeight,
@@ -614,7 +616,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const MessageView(message: 'Nincs találat'),
-            OutlinedButton(
+            FilledButton.tonal(
               onPressed: _expand,
               child: const Text('Feltételek módosítása'),
             ),

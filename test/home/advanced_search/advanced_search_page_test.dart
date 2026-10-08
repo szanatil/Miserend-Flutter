@@ -5,6 +5,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
 import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
@@ -36,11 +37,13 @@ void main() {
     LocationProvider? location,
     String initialName = '',
     VoidCallback? onClose,
+    Brightness brightness = Brightness.light,
   }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: FakeFavoritesService(const []),
         child: MaterialApp(
+          theme: miserendTheme(brightness),
           home: AdvancedSearchPage(
             initialName: initialName,
             onClose: onClose ?? () {},
@@ -59,7 +62,11 @@ void main() {
   Future<void> search(WidgetTester tester) async {
     // The button follows the fields on the next frame.
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Keresés'));
+    final button = find.widgetWithText(FilledButton, 'Keresés');
+    // Below the fold on a narrow screen with large text.
+    await tester.ensureVisible(button);
+    await tester.pump();
+    await tester.tap(button);
     await tester.pumpAndSettle();
   }
 
@@ -216,6 +223,60 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.widgetWithText(FilledButton, 'Keresés'), findsOneWidget);
     });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, offering the conditions again is a tonal '
+          'button, the only filled one (KO8, KO9)', (tester) async {
+        await pumpPage(
+          tester,
+          FakeAdvancedSearchLoader([resultPage(const [])]),
+          brightness: brightness,
+        );
+        await tester.enterText(field('Település'), 'Sehol');
+        await search(tester);
+
+        expect(find.byType(OutlinedButton), findsNothing);
+        expect(find.byType(FilledButton), findsOneWidget);
+        final again = find.widgetWithText(
+          FilledButton,
+          'Feltételek módosítása',
+        );
+        expect(
+          tester
+              .widget<Material>(
+                find.descendant(of: again, matching: find.byType(Material)),
+              )
+              .color,
+          miserendTheme(brightness).colorScheme.secondaryContainer,
+        );
+      });
+    }
+  });
+
+  group('fits (EH4)', () {
+    for (final width in [320.0, 430.0]) {
+      for (final textScale in [1.0, 2.0]) {
+        testWidgets('at $width dp and text scale $textScale', (tester) async {
+          tester.view.physicalSize = Size(width, 800);
+          tester.view.devicePixelRatio = 1.0;
+          tester.platformDispatcher.textScaleFactorTestValue = textScale;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+          await pumpPage(
+            tester,
+            FakeAdvancedSearchLoader([resultPage(const [])]),
+          );
+          expect(tester.takeException(), isNull, reason: 'the conditions');
+
+          await tester.enterText(field('Település'), 'Sehol');
+          await search(tester);
+          expect(find.text('Nincs találat'), findsOneWidget);
+          expect(tester.takeException(), isNull, reason: 'no church found');
+        });
+      }
+    }
   });
 
   group('pages', () {

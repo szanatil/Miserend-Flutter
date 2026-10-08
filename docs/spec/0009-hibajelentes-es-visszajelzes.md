@@ -53,6 +53,9 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 > **Módosítva (2026-10-08, #55):** a Hibajelentés feladatfolyamat-űrlapként modálisan nyílik a fülsáv fölé (DESIGN.md NA2): iOS-en modális lap, Androidon teljes képernyős dialógus, a címsorban „Mégse” kilépéssel (`pushMiserendTaskFlow`, `lib/theme/adaptive.dart`).
 
 - **AppBar:** az app témája szerinti lila, címe „Hibajelentés”.
+
+  > **Módosítva (2026-10-08, #56): DESIGN.md KO2.** A címsor háttere `surface`, előtere `onSurface`, nem lila.
+
 - **Fejléc:** a templom neve (`titleMedium`), hogy látsszon, miről szól a jelentés.
 - **Típus:** három választógomb (`RadioListTile`), alapból **egyik sincs kiválasztva**:
 

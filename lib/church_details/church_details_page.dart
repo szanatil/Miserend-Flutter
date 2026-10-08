@@ -81,7 +81,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
-                centerTitle: true,
                 background: ChurchPhotoHeader(
                   photos: _photos(),
                   height: _headerHeight,

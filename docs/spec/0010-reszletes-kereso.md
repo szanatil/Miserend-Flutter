@@ -72,6 +72,9 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 ### Keret
 
 - A Részletes kereső **a főképernyőn belül** jelenik meg, a fül tartalmának helyén: a keresősáv és az alsó navigáció a helyén marad, hogy a felhasználó ne érezze, hogy kilépett az appból. A törzs tetején a fülek lila `SectionBar` sávja áll, „Részletes kereső" címmel és bal oldalt vissza nyíllal.
+
+  > **Módosítva (2026-10-08, #56): DESIGN.md KO2.** A `SectionBar` sávja nem lila, hanem `surface` hátterű, árnyék nélkül, `titleMedium` `FontWeight.w600` címmel.
+
 - Az alsó navigáción az a fül marad kijelölve, amelyikről a felhasználó a keresősávot megnyitotta. **Bármelyik** fülre koppintva (a kijelöltre is) a Részletes kereső bezárul, és a fül jelenik meg; a vissza nyíl és a rendszer vissza gombja ugyanígy. Nem marad félbehagyott keresés a fülek mögött.
 - A keresősáv nyitott Részletes kereső mellett is ugyanúgy működik, mint máshol.
 - Egy találatra koppintva a részletező úgy nyílik meg, mint mindenhol (teljes képernyőn, alsó navigáció nélkül — a navigáció megtartása a részletezőn külön issue, #52). Onnan visszalépve a Részletes kereső **változatlanul** fogad: ugyanazok a feltételek, ugyanaz a görgetési hely, a már betöltött lapok, újratöltés nélkül; a közben váltott kedvencjelölés a kártyán is látszik.

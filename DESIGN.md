@@ -97,7 +97,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs.
 
-_Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#56, #58)._
+_Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#58)._
 
 ## TI. Tipográfia
 
@@ -262,8 +262,6 @@ _Ismert eltérés: nyers időtartamok és görbék, a `FadeInImage` alapértelme
 
 **KO2 — Címsor.** Háttér `surface`, előtér `onSurface`, cím `titleLarge`, `elevation: 0`, `scrolledUnderElevation: 3`. Lila vagy más színes háttér nincs.
 
-_Ismert eltérés: a téma `appBarTheme`-je és a szakaszsáv lila hátteret és fehér előteret ad (#56)._
-
 **KO3 — Időpont-chip.** Háttér `occasionTimeContainer`, szöveg `onOccasionTimeContainer`, épp most tartó alkalomnál `occasionTime` / `onOccasionTime`. Forma `Radii.s`, `labelLarge` `w600`, táblázatos számjegyek. Az időblokk végleges formáját külön spec rögzíti.
 
 _Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, kontraszt kb. 2,4:1; az adat-chipek és a kártyák színe, formája sem a KO1/KO4 szerinti (#57)._
@@ -293,15 +291,11 @@ _Ismert eltérés: az „Épp most tart" badge `primaryContainer` háttérrel, 1
 
 **KO12 — Szövegmező.** `OutlineInputBorder`, forma `Radii.s`; keret alapból `outline`, fókuszban `primary` 2 dp, hibánál `error`. Címke a mezőben (M3 lebegő címke), hibaüzenet a mező alatt (SV2).
 
-_Ismert eltérés: kézi `inputDecorationTheme` nyers színekkel, lekerekítés nélkül (#56)._
-
 **KO13 — Bottom sheet és action sheet.** A PL2 szerint adaptív. Androidon felső sarkai `Radii.xl`, fogantyúval (`showDragHandle: true`).
 
 **KO14 — Dialógus.** A PL2 szerint adaptív, `showMiserendDialog`-gal. Legfeljebb két gomb, igei felirattal; „OK" csak puszta tudomásulvételre.
 
 **KO15 — Snackbar.** Háttér `inverseSurface`, szöveg `onInverseSurface`, akció `inversePrimary`, `SnackBarBehavior.floating`, forma `Radii.xs`, 4 s.
-
-_Ismert eltérés: a `snackBarTheme` lila hátteret ad (#56)._
 
 **KO16 — Alsó navigáció.** A PL2 szerint adaptív, felirat mindig látszik. Androidon `NavigationBar` az M3 alap színeivel (háttér `surfaceContainer`, indikátor `secondaryContainer`); iOS-en `CupertinoTabBar`, aktív szín `primary`, inaktív `onSurfaceVariant`.
 

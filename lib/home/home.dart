@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// The Templomok tab's purple strip, with the tab's name in place of its
+  /// The Templomok tab's strip, with the tab's name in place of its
   /// Közeli / Kedvencek tabs.
   Widget _underSectionBar(String title, Widget page) {
     return Scaffold(appBar: SectionBar.title(title), body: page);
@@ -412,10 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
         index == _selectedIndex ? _advancedSearchName : null;
     return Scaffold(
       key: _tabRoots[index],
-      backgroundColor: Colors.white,
       appBar: AppBar(
         clipBehavior: Clip.none,
-        iconTheme: IconThemeData(color: Colors.black54),
         title: _HomeSearchBar(
           suggestions: _suggestions,
           resultsLoader: widget.searchResultsLoader,

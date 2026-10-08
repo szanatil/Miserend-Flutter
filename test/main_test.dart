@@ -12,49 +12,6 @@ void main() {
   databaseFactory = databaseFactoryFfi;
 
   group('the app theme', () {
-    testWidgets('dresses the SnackBars in the app purple', (tester) async {
-      final theme = miserendTheme(Brightness.light);
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: theme,
-          home: Scaffold(
-            body: Builder(
-              builder:
-                  (context) => TextButton(
-                    onPressed:
-                        () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Nem sikerült elküldeni.'),
-                          ),
-                        ),
-                    child: const Text('Mutasd'),
-                  ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Mutasd'));
-      await tester.pumpAndSettle();
-
-      final message = find.text('Nem sikerült elküldeni.');
-      final bar =
-          tester
-              .widgetList<Material>(
-                find.descendant(
-                  of: find.byType(SnackBar),
-                  matching: find.byType(Material),
-                ),
-              )
-              .first;
-      expect(bar.color, const Color(0xFF5C27AE));
-      expect(
-        DefaultTextStyle.of(tester.element(message)).style.color,
-        theme.colorScheme.onPrimary,
-        reason: 'readable on the purple',
-      );
-    });
-
     test('draws a text field\'s outline dark enough to see on white', () {
       // A white outline once made the problem report's fields invisible.
       final theme = miserendTheme(Brightness.light);

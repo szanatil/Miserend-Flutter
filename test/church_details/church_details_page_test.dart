@@ -231,6 +231,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'the header leaves the title\'s alignment to the platform (PL2)',
+    (tester) async {
+      final empty = _page(_emptyDays());
+      await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
+
+      expect(
+        tester.widget<SliverAppBar>(find.byType(SliverAppBar)).centerTitle,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FlexibleSpaceBar>(find.byType(FlexibleSpaceBar))
+            .centerTitle,
+        isNull,
+      );
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+
   testWidgets('an empty day without a response reads as missing data, not as '
       'no mass', (tester) async {
     final empty = _page(_emptyDays());
