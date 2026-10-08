@@ -330,7 +330,7 @@ _Ismert eltérés: félig átlátszó fekete kapszula fehér szöveggel, 300 ms-
 
 **AM3 — Érintési terület legalább 48 × 48 dp**, mindkét platformon (az iOS 44 pt-os minimumát is fedi).
 
-**AM4 — Szövegnagyítás.** A rendszer szövegméretét követjük, nem korlátozzuk (`textScaler` nincs lezárva). 2,0-s nagyításnál, 320 dp szélességen sem vágódik le és nem lóg ki tartalom.
+**AM4 — Szövegnagyítás.** A rendszer szövegméretét követjük, nem korlátozzuk (`textScaler` nincs lezárva). 2,0-s nagyításnál, 320 dp szélességen sem vágódik le és nem lóg ki tartalom. Kivétel: a fülsáv (KO16) felirata legfeljebb 1,3-szorosára nő, mindkét platformon, mint az M3 `NavigationBar`-é.
 
 **AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
 

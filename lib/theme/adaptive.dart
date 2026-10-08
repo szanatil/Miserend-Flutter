@@ -67,9 +67,9 @@ class MiserendNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return switch (theme.platform) {
-      // The labels grow with the text up to the M3 bar's own limit: at 2.0,
-      // a quarter of a 320 dp screen broke „Templomok" in two, and the bar's
-      // fixed height overflowed.
+      // The labels grow with the text up to the M3 bar's own limit (DESIGN.md
+      // AM4): at 2.0, a quarter of a 320 dp screen broke „Templomok" in two,
+      // and the bar's fixed height overflowed.
       TargetPlatform.iOS ||
       TargetPlatform.macOS => MediaQuery.withClampedTextScaling(
         maxScaleFactor: _maxLabelTextScale,
