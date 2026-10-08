@@ -107,6 +107,8 @@ A kiadást a [deploy.yml](.github/workflows/deploy.yml) végzi, a CI-vel azonos 
 
 **V2 — A verzióemelő commit írja meg a kiadási szöveget.** Ugyanaz a commit, amely a verziót emeli, a [release_notes.txt](release-notes/Miserend/hu/release_notes.txt) teljes tartalmát lecseréli az előző `v*` tag óta bekerült, a felhasználónak látható változásokra (az első kiadásnál, tag híján, a `4db0a0b` commit óta: abból készült a boltban lévő 1.0.0). Refaktor, teszt, CI és dokumentáció nem kap tételt; ha a verzióban nincs a felhasználónak látható változás, a szöveg egyetlen sor: „Miserend alkalmazás frissítése." A fájlt a TestFlight és az App Store változtatás nélkül jeleníti meg; az Android-kiadás nem használja. A következő verzióemelésig az előző kiadás szövege marad benne: a fájl nem ürül, mert üres szöveggel az App Store-feltöltés elbukik.
 
+A kiadások között a felhasználónak látható változás tételét a változással együtt a [release-notes/unreleased.txt](release-notes/unreleased.txt)-be írjuk, az alábbi formátumban. A verzióemelő commit ebből állítja össze a szöveget, és az `unreleased.txt`-t kiüríti. A fájl a `release-notes/Miserend/` mappán kívül áll, mert a fastlane azt a mappát a boltba tölti fel.
+
 A formátum sima szöveg, markdown nélkül, legfeljebb 4000 karakter. Két szakasz, soronként egy tétel gondolatjellel; az üres szakasz a fejlécével együtt kimarad. Magyarul, a felhasználó szavaival (K4), issue-szám és belső fogalom nélkül:
 
 ```
