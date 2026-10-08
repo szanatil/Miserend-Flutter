@@ -1,6 +1,7 @@
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
@@ -85,7 +86,7 @@ class ChurchScheduleLoader {
         lat: lat,
         lon: lon,
         from: today,
-        until: today.add(const Duration(days: scheduleDays)),
+        until: today.addCalendarDays(scheduleDays),
       );
       switch (masses) {
         case ApiSuccess(:final value):
@@ -120,7 +121,7 @@ class ChurchScheduleLoader {
     final cached = await cache.getMassesForChurch(
       churchId,
       from: today,
-      until: today.add(const Duration(days: scheduleDays)),
+      until: today.addCalendarDays(scheduleDays),
     );
     return ChurchPageData(
       church: church,
@@ -136,12 +137,7 @@ class ChurchScheduleLoader {
   List<List<CachedMass>> _groupByDay(List<CachedMass> cached, DateTime today) {
     final days = List.generate(scheduleDays, (_) => <CachedMass>[]);
     for (final mass in cached) {
-      final offset =
-          DateTime(
-            mass.time.year,
-            mass.time.month,
-            mass.time.day,
-          ).difference(today).inDays;
+      final offset = mass.time.calendarDaysSince(today);
       if (offset >= 0 && offset < days.length) {
         days[offset].add(mass);
       }

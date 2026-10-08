@@ -404,6 +404,35 @@ void main() {
     expect(tops, hasLength(1));
   });
 
+  testWidgets('the day after the clocks go back is named by its own date', (
+    tester,
+  ) async {
+    // 2026-10-25, the Sunday the clocks go back, has 25 hours.
+    CachedMass at(DateTime time) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: time,
+      info: null,
+      source: MassSource.nearbyMasses,
+    );
+    final masses = _emptyDays();
+    masses[17].add(at(DateTime(2026, 10, 25, 10, 0)));
+    masses[18].add(at(DateTime(2026, 10, 26, 7, 30)));
+    final data = _page(masses, scheduleIsFresh: true);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 8, 10, 0),
+    );
+
+    expect(find.text('Vasárnap'), findsOneWidget);
+    expect(find.text('2026. 10. 25.'), findsOneWidget);
+    expect(find.text('Hétfő'), findsOneWidget);
+    expect(find.text('2026. 10. 26.'), findsOneWidget);
+  });
+
   testWidgets('no confession tile without a live response', (tester) async {
     // The cache says yes, but a cached value is a stale switch reading.
     final cached = _page(

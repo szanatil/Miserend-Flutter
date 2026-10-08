@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
@@ -403,7 +404,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   Widget _getMassListCardForDay(int dayOffset) {
-    final dateTime = _today.add(Duration(days: dayOffset));
+    final dateTime = _today.addCalendarDays(dayOffset);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: ConstrainedBox(

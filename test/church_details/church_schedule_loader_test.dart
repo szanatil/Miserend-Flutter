@@ -142,6 +142,34 @@ void main() {
       expect(days[3].map((m) => m.info), ['Vasárnap']);
     });
 
+    test('a mass after the clocks go back lands on its own day, and one '
+        'after they go forward too', () async {
+      // 2026-10-25 has 25 hours; 2027-03-28 has 23.
+      final today = DateTime(2026, 10, 8);
+      await cache.replaceMassesForChurch(38, [
+        _mass(DateTime(2026, 10, 26, 7, 0), 'Hétfő'),
+      ]);
+      final autumn =
+          (await ChurchScheduleLoader(
+            cache: cache,
+            api: _api(),
+          ).loadCached(38, today)).massesByDay;
+
+      expect(autumn[18].map((m) => m.info), ['Hétfő']);
+
+      final spring = DateTime(2027, 3, 20);
+      await cache.replaceMassesForChurch(38, [
+        _mass(DateTime(2027, 3, 29, 7, 0), 'Hétfő'),
+      ]);
+      final days =
+          (await ChurchScheduleLoader(
+            cache: cache,
+            api: _api(),
+          ).loadCached(38, spring)).massesByDay;
+
+      expect(days[9].map((m) => m.info), ['Hétfő']);
+    });
+
     test('leaves out what falls outside the window', () async {
       await cache.replaceMassesForChurch(38, [
         _mass(DateTime(2026, 9, 9, 17, 0), 'Tegnap'),

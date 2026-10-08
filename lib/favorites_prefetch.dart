@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -97,9 +98,7 @@ class FavoritesPrefetch {
         lat: lat,
         lon: lon,
         from: today,
-        until: today.add(
-          const Duration(days: ChurchScheduleLoader.scheduleDays),
-        ),
+        until: today.addCalendarDays(ChurchScheduleLoader.scheduleDays),
       );
       switch (masses) {
         case ApiFailed():
