@@ -11,6 +11,7 @@ import 'package:miserend/home/masses/mass_start_header.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
@@ -293,7 +294,11 @@ class _NearMassesPageState extends State<NearMassesPage>
     return _Ground(
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(8),
+        // The cards' own margin keeps them 8 apart (TK2).
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.l,
+          vertical: Spacing.xs,
+        ),
         itemCount: rows.length,
         itemBuilder: (BuildContext context, int index) {
           final mass = rows[index];

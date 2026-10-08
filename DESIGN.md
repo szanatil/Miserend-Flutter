@@ -52,7 +52,7 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
 
-_Ismert eltérés: nyers színek, térközök, lekerekítések a widgetekben: #57, #58, #59._
+_Ismert eltérés: nyers színek, térközök, lekerekítések a widgetekben: #58, #59._
 
 ## SZ. Szín
 
@@ -110,10 +110,11 @@ _Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#58)._
 | Képernyőcím (címsor) | `titleLarge` |
 | Szakaszcím a lapon | `titleMedium`, `FontWeight.w600` |
 | Templom neve kártyán | `titleMedium` |
-| Alkalom időpontja kártyán, csoportfejlécben | `titleLarge`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
+| Alkalom időpontja a csoportfejlécben | `titleLarge`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
+| Alkalom időpontja az időpont-chipben (KO3) | `titleMedium`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
 | Hosszabb olvasnivaló (leírás, névjegy) | `bodyLarge` |
 | Kártya másodlagos sorai (hely, cím) | `bodyMedium`, `onSurfaceVariant` |
-| Chip felirata | `labelLarge` |
+| Adat-chip felirata (KO4) | `labelLarge` |
 | Hátralévő idő | `labelMedium` |
 | Badge felirata | `labelSmall` |
 | Lábjegyzet, az adat kora | `bodySmall`, `onSurfaceVariant` |
@@ -123,7 +124,7 @@ _Ismert eltérés: több `Scaffold(backgroundColor: Colors.white)` (#58)._
 
 **TI4 — Számjegyek egymás alatt.** Minden időpont és távolság `FontFeature.tabularFigures()`-szel áll, hogy a listán egymás alá igazodjanak.
 
-_Ismert eltérés: a kártyák, a csoportfejléc és a `SectionCard` szövegszerepei (#57); szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a térképen (#59)._
+_Ismert eltérés: szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a térképen (#59)._
 
 ## TK. Térköz
 
@@ -238,7 +239,7 @@ _Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, 
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
 
-_Ismert eltérés: egyetlen ikon sem `_rounded` (#61; a kártyák és chipek ikonjai: #57; a rendszerikonok: #60)._
+_Ismert eltérés: a tartalmi ikonok nem `_rounded` (#61; a rendszerikonok: #60)._
 
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 
@@ -262,9 +263,7 @@ _Ismert eltérés: nyers időtartamok és görbék, a `FadeInImage` alapértelme
 
 **KO2 — Címsor.** Háttér `surface`, előtér `onSurface`, cím `titleLarge`, `elevation: 0`, `scrolledUnderElevation: 3`. Lila vagy más színes háttér nincs.
 
-**KO3 — Időpont-chip.** Háttér `occasionTimeContainer`, szöveg `onOccasionTimeContainer`, épp most tartó alkalomnál `occasionTime` / `onOccasionTime`. Forma `Radii.s`, `labelLarge` `w600`, táblázatos számjegyek. Az időblokk végleges formáját külön spec rögzíti.
-
-_Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, kontraszt kb. 2,4:1; az adat-chipek és a kártyák színe, formája sem a KO1/KO4 szerinti (#57)._
+**KO3 — Időpont-chip.** Háttér `occasionTimeContainer`, szöveg `onOccasionTimeContainer`, épp most tartó alkalomnál `occasionTime` / `onOccasionTime`. Forma `Radii.s`, `titleMedium` `w600`, táblázatos számjegyek: akkora, mint a templom neve a kártyán, és vastagabb nála, így a kártya legerősebb eleme (TI3). Belső térköz vízszintesen `s`, függőlegesen `xs`; az (i) jelölő `Icons.info_outline_rounded` `18`, a szöveg színében. Koppintás nélkül nincs ripple. Az időblokk végleges formáját külön spec rögzíti.
 
 **KO4 — Adat-chip** (távolság, nyelv, jellemző). Távolság és nyelv: `surfaceContainerHighest` / `onSurfaceVariant`; jellemző: `secondaryContainer` / `onSecondaryContainer`. Forma `Radii.s`, felirat `labelLarge`, ikon `18`. Nem interaktív chip nem kap `onTap`-et és ripple-t.
 
@@ -276,8 +275,6 @@ _Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, k
 - **Állapot-badge**: szöveges, a kártyán (pl. „Épp most tart"). Forma `Radii.full`, `labelSmall`, telt háttér a jelzett állapot szerepével (épp most tartó alkalomnál `occasionTime` / `onOccasionTime`).
 
 Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai címkéje van („Épp most tart", „3 új").
-
-_Ismert eltérés: az „Épp most tart" badge `primaryContainer` háttérrel, 12-es lekerekítéssel, `labelMedium` felirattal (#57)._
 
 **KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. Színek: SZ4.
 

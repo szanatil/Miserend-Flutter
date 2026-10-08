@@ -18,6 +18,7 @@ import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
@@ -29,7 +30,12 @@ import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
 class ChurchDetailsPage extends StatefulWidget {
-  const ChurchDetailsPage({super.key, required this.church, this.loader});
+  const ChurchDetailsPage({
+    super.key,
+    required this.church,
+    this.loader,
+    this.clock = DateTime.now,
+  });
 
   /// The row the calling list already had. It seeds the name and the map while
   /// the cache read is in flight; everything the page renders afterwards comes
@@ -38,6 +44,9 @@ class ChurchDetailsPage extends StatefulWidget {
 
   /// Injected by tests; the page builds its own otherwise.
   final ChurchScheduleLoader? loader;
+
+  /// The time now, for today and the masses going on. Injected by tests.
+  final DateTime Function() clock;
 
   @override
   State<ChurchDetailsPage> createState() => _ChurchDetailsPageState();
@@ -284,7 +293,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     }
 
     final note = MiserendText.normalize(_details?.massScheduleNote);
-    final sundayOffset = DateTime.sunday - DateTime.now().weekday;
+    final sundayOffset = DateTime.sunday - _today.weekday;
 
     return SectionCard(
       child: Column(
@@ -364,6 +373,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final meaningful = MassInfo.isMeaningful(mass.info);
     return TimeChip(
       time: TimeOfDay.fromDateTime(mass.time),
+      ongoing: isOngoingStart(mass.time, widget.clock()),
       hasInfo: meaningful,
       onTap: meaningful ? () => MassInfo.show(context, mass) : null,
     );
@@ -601,7 +611,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   }
 
   DateTime _midnightToday() {
-    final now = DateTime.now();
+    final now = widget.clock();
     return DateTime(now.year, now.month, now.day);
   }
 

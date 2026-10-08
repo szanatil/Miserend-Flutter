@@ -260,4 +260,17 @@ void main() {
       expect(timeUntilStart(_at(18, 0), _at(18, 4)), isNull);
     });
   });
+
+  group('isOngoingStart', () {
+    test('a start is ongoing from the start to 10 minutes after it', () {
+      expect(isOngoingStart(_at(14, 0), _at(13, 59, 59)), isFalse);
+      expect(isOngoingStart(_at(14, 0), _at(14, 0)), isTrue);
+      expect(isOngoingStart(_at(14, 0), _at(14, 10)), isTrue);
+      expect(isOngoingStart(_at(14, 0), _at(14, 10, 1)), isFalse);
+    });
+
+    test('a start of another day is not ongoing', () {
+      expect(isOngoingStart(_at(14, 0), DateTime(2026, 9, 15, 14, 5)), isFalse);
+    });
+  });
 }

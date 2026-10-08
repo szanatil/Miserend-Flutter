@@ -8,8 +8,10 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/mass_kind.dart';
 import 'package:miserend/straight_line_distance.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
@@ -27,6 +29,7 @@ class ChurchCard extends StatelessWidget {
     this.position,
     this.failure,
     this.dataAsOf,
+    this.clock = DateTime.now,
   });
 
   /// The card's fixed height in logical pixels. Fixed, so that a list scrolls
@@ -47,6 +50,9 @@ class ChurchCard extends StatelessWidget {
   /// How old the church's data is, for the (i) explanation.
   final DateTime? dataAsOf;
 
+  /// The time now, for marking the masses going on. Injected by tests.
+  final DateTime Function() clock;
+
   /// Lines the name may take; a third would take the common name's place, and
   /// the full name is on the details page.
   static const int _nameLines = 2;
@@ -57,7 +63,9 @@ class ChurchCard extends StatelessWidget {
     // chips promise a mass (CONTEXT.md, „Napi miserend").
     final masses = entry.masses.where(isMass).toList();
     final km = straightLineKm(position, entry.lat, entry.lon);
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final scheme = theme.colorScheme;
 
     final failure = this.failure;
 
@@ -66,7 +74,6 @@ class ChurchCard extends StatelessWidget {
         color: failure?.cardTint(context),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
           onTap: () => openChurchDetails(context, entry),
           child: SizedBox(
             height: height,
@@ -84,20 +91,20 @@ class ChurchCard extends StatelessWidget {
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(
-                                8.0,
-                                8.0,
-                                8.0,
-                                4.0,
+                                Spacing.l,
+                                Spacing.l,
+                                Spacing.l,
+                                0,
                               ),
                               // The slot keeps both lines even for a short
                               // name, so that everything below stands at the
                               // same height on every card.
                               child: ReservedRoom.lines(
                                 lines: _nameLines,
-                                style: textTheme.titleLarge,
+                                style: textTheme.titleMedium,
                                 child: Text(
                                   entry.name ?? '',
-                                  style: textTheme.titleLarge,
+                                  style: textTheme.titleMedium,
                                   maxLines: _nameLines,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -109,12 +116,17 @@ class ChurchCard extends StatelessWidget {
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 8.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          Spacing.s,
+                          Spacing.l,
+                          0,
+                        ),
                         // An empty text still takes its line.
                         child: Text(
                           entry.commonName ?? '',
-                          style: textTheme.titleMedium?.apply(
-                            color: Colors.grey,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -122,10 +134,19 @@ class ChurchCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: _MassChips(masses: masses),
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          0,
+                          Spacing.l,
+                          Spacing.s,
+                        ),
+                        child: _MassChips(masses: masses, now: clock()),
                       ),
-                      Container(color: Colors.grey, height: 1),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: scheme.outlineVariant,
+                      ),
                       Consumer<FavoritesService>(
                         builder: (context, favoritesService, child) {
                           final favorite = favoritesService.isFavorite(
@@ -134,9 +155,12 @@ class ChurchCard extends StatelessWidget {
                           return IconButton(
                             icon:
                                 favorite
-                                    ? const Icon(Icons.favorite)
-                                    : const Icon(Icons.favorite_border),
-                            color: Colors.grey,
+                                    ? const Icon(Icons.favorite_rounded)
+                                    : const Icon(Icons.favorite_border_rounded),
+                            color:
+                                favorite
+                                    ? scheme.primary
+                                    : scheme.onSurfaceVariant,
                             tooltip:
                                 favorite
                                     ? 'Törlés a kedvencek közül'
@@ -158,8 +182,8 @@ class ChurchCard extends StatelessWidget {
                       // a card without it has nothing moved.
                       if (km != null)
                         Positioned(
-                          right: 8,
-                          bottom: 8,
+                          right: Spacing.s,
+                          bottom: Spacing.s,
                           child: DistanceChip(km: km),
                         ),
                     ],
@@ -213,31 +237,22 @@ class ChurchCard extends StatelessWidget {
 /// [TimeChip.more]; how many fit depends on the card's actual width, which
 /// differs from phone to phone.
 class _MassChips extends StatelessWidget {
-  const _MassChips({required this.masses});
+  const _MassChips({required this.masses, required this.now});
 
   final List<CachedMass> masses;
 
-  static const double _spacing = 4;
+  /// For marking the masses going on (CONTEXT.md, „Épp most tartó mise").
+  final DateTime now;
+
+  static const double _spacing = Spacing.s;
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium;
-    final textScaler = MediaQuery.textScalerOf(context);
     final times = [
       for (final mass in masses) TimeOfDay.fromDateTime(mass.time),
     ];
 
-    double chipWidth(String label) {
-      final painter = TextPainter(
-        text: TextSpan(text: label, style: style),
-        textDirection: TextDirection.ltr,
-        textScaler: textScaler,
-        maxLines: 1,
-      )..layout();
-      final width = painter.width + 2 * TimeChip.padding;
-      painter.dispose();
-      return width;
-    }
+    double chipWidth(String label) => TimeChip.widthOf(context, label);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -261,7 +276,10 @@ class _MassChips extends StatelessWidget {
           children: [
             for (var i = 0; i < fitting; i++) ...[
               if (i > 0) const SizedBox(width: _spacing),
-              TimeChip(time: times[i]),
+              TimeChip(
+                time: times[i],
+                ongoing: isOngoingStart(masses[i].time, now),
+              ),
             ],
             if (fitting < times.length) ...[
               if (fitting > 0) const SizedBox(width: _spacing),

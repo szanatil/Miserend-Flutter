@@ -95,8 +95,15 @@ class MassDetails {
       MassDetails({..._dailyMasses, ...other._dailyMasses});
 }
 
-/// An ongoing mass has already started but is still reachable.
+/// An ongoing mass has already started but is still reachable. Only for a
+/// mass of the nearest masses, which are all reachable; [isOngoingStart]
+/// decides for any start.
 bool isOngoing(NearbyMassesItem mass, DateTime now) => !mass.start.isAfter(now);
+
+/// Whether a mass starting at [start] is going on at [now] (CONTEXT.md,
+/// „Épp most tartó mise"): it has started, and is still reachable.
+bool isOngoingStart(DateTime start, DateTime now) =>
+    !start.isAfter(now) && !start.isBefore(reachableFrom(now));
 
 /// How far ahead a start still gets its time until start. Beyond two hours the
 /// start alone says enough, and "7 óra 40 perc múlva" in the morning is noise

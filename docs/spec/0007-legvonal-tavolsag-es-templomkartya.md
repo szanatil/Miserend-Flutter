@@ -61,7 +61,7 @@ A templomkártya 192 px magas lesz. A név és az ismertnév fix sorszámot kap 
 
 ### Távolság-chip
 
-- Közös widget, félig áttetsző sötét pirula, fehér `bodyMedium` felirattal. Fehér alapon (Misék sor) szürkének, fotón sötétítésnek látszik. A fotó tetszőleges világos lehet, ezért kell a sötét alap.
+- *(Módosítva 2026-10-08, #57: átlátszatlan adat-chip, ld. „Templomkártya-elrendezés” vége.)* Közös widget, félig áttetsző sötét pirula, fehér `bodyMedium` felirattal. Fehér alapon (Misék sor) szürkének, fotón sötétítésnek látszik. A fotó tetszőleges világos lehet, ezért kell a sötét alap.
 - **Templomkártya:** a fotó **jobb alsó sarkában**, 8 px-re a szélektől, a fotóra rétegezve (`Stack`). A helyőrző kép (`church_blurred.png`) fölött is ugyanígy jelenik meg. A szövegoszlopban nem foglal helyet, így a hiánya semmit nem mozdít el.
 - **Misék sor:** a sor **jobb szélén**, a szövegoszlopon kívül. Az időpont mellől kikerül. A városnév, a templomnév színe, az „Épp most tart" jelzés és a cím változatlan marad.
 
@@ -74,6 +74,8 @@ A templomkártya 192 px magas lesz. A név és az ismertnév fix sorszámot kap 
 - A név és az ismertnév helye **fix**: rövid névnél és hiányzó ismertnévnél is ugyanannyi. A mise-chipek, az elválasztó és a szív így minden kártyán ugyanabban a magasságban áll. Az `Expanded` a szövegek körül megszűnik.
 - **Mise-chipek:** legfeljebb **egy sor**. Ha nem fér ki mind, a sor végén egy narancs `TimeChip`-stílusú `…` chip áll a kimaradók helyett. Hogy hány fér ki, azt a tényleges szélesség dönti el (`LayoutBuilder`), nem egy rögzített darabszám, mert a kártya szélessége képernyőnként más.
 - A `…` chipnek nincs saját koppintása: az egész kártya a részletezőt nyitja, és ott minden mise látszik.
+
+> **Módosítva (2026-10-08, #57): DESIGN.md KO1, KO3, KO4, TI2, TI3, SZ4, SZ5, IK1–IK4.** A távolság-chip nem áttetsző sötét pirula, hanem átlátszatlan adat-chip: `surfaceContainerHighest` háttér, `onSurfaceVariant` `labelLarge` felirat táblázatos számjegyekkel, 8-as (`Radii.s`) lekerekítés; átlátszatlan, ezért a fotón is olvasható. A kártya a téma kártyája (`surfaceContainerLow`, `elevation: 0`, `Radii.m`, belül `Spacing.l`); a név `titleMedium`, az ismertnév `bodyMedium` `onSurfaceVariant` (nem szürke `titleMedium`), az elválasztó `outlineVariant` `Divider`, a szív `favorite_rounded` `primary` / `favorite_border_rounded` `onSurfaceVariant`. A mise-chipek és a `…` chip az időpont-chip (KO3) színeit viselik, `occasionTimeContainer` / `onOccasionTimeContainer`, nem narancs alapon fehéret; az épp most tartó mise chipje `occasionTime` / `onOccasionTime`. Az időpont `titleMedium` `w600`, így a kártya legerősebb szövege (TI3). A chipek között `Spacing.s`.
 
 ### Fájlok, amik érintettek
 

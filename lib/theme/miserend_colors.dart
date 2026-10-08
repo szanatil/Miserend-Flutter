@@ -57,6 +57,13 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
   /// Text and icons on [occasionTime].
   final Color onOccasionTime;
 
+  /// The background and the foreground of an occasion's time: the filled
+  /// orange while it is going on, its container otherwise (SZ4).
+  (Color, Color) occasionTimeColors({required bool ongoing}) =>
+      ongoing
+          ? (occasionTime, onOccasionTime)
+          : (occasionTimeContainer, onOccasionTimeContainer);
+
   /// Behind the time chip.
   final Color occasionTimeContainer;
 

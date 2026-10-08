@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// One block of the church details page and the Névjegy page.
 ///
@@ -13,6 +14,13 @@ class SectionCard extends StatelessWidget {
     this.trailing,
   });
 
+  /// Around a card standing straight on a page: the screen edge's distance to
+  /// the sides, and the theme's half gap above and below (DESIGN.md TK2).
+  static const EdgeInsets margin = EdgeInsets.symmetric(
+    horizontal: Spacing.l,
+    vertical: Spacing.xs,
+  );
+
   final String? title;
   final Widget child;
 
@@ -23,9 +31,9 @@ class SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = this.title;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: margin,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Spacing.l),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -35,13 +43,15 @@ class SectionCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   if (trailing != null) trailing!,
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.s),
             ],
             child,
           ],

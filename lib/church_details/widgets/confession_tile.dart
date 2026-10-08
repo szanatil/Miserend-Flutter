@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/section_card.dart';
+import 'package:miserend/widgets/status_badge.dart';
 
-/// Announces that confession is being heard at this very moment.
+/// Announces that confession is being heard at this very moment: a state, so
+/// a state badge on an ordinary card (DESIGN.md KO6), not an orange card.
 ///
 /// The tile has no negative form on purpose. `gyontatas` reports a physical
 /// switch in the confessional over LoRaWAN, and the v4 API returns a bare
@@ -15,22 +18,17 @@ class ConfessionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: Theme.of(context).extension<MiserendColors>()!.occasionTime,
+      margin: SectionCard.margin,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Spacing.l),
         child: Row(
           children: [
-            const Icon(Icons.record_voice_over, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Most gyóntatnak',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.apply(color: Colors.white),
-              ),
+            Icon(
+              Icons.record_voice_over_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+            const SizedBox(width: Spacing.s),
+            const Flexible(child: StatusBadge(label: 'Most gyóntatnak')),
           ],
         ),
       ),

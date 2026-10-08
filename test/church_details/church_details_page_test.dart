@@ -18,6 +18,7 @@ import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
+import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -170,8 +171,9 @@ void main() {
 
   Future<void> pumpPage(
     WidgetTester tester,
-    ChurchScheduleLoader loader,
-  ) async {
+    ChurchScheduleLoader loader, {
+    DateTime Function() clock = DateTime.now,
+  }) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
     tester.view.physicalSize = const Size(1000, 4000);
@@ -184,7 +186,11 @@ void main() {
         value: favorites,
         child: MaterialApp(
           theme: miserendTheme(Brightness.light),
-          home: ChurchDetailsPage(church: _church, loader: loader),
+          home: ChurchDetailsPage(
+            church: _church,
+            loader: loader,
+            clock: clock,
+          ),
         ),
       ),
     );
@@ -221,6 +227,39 @@ void main() {
 
     expect(find.text('18:30'), findsWidgets);
     expect(find.text('09:00'), findsNothing);
+  });
+
+  testWidgets('a mass going on now has its chip in the filled orange, a '
+      'later one not (KO3)', (tester) async {
+    final page = _page(_scheduleWith(_todayAt(9, 0)));
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => _todayAt(9, 5),
+    );
+
+    final chips = tester.widgetList<TimeChip>(
+      find.ancestor(of: find.text('09:00'), matching: find.byType(TimeChip)),
+    );
+    expect(chips.first.ongoing, isTrue);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => _todayAt(8, 59),
+    );
+
+    expect(
+      tester
+          .widgetList<TimeChip>(
+            find.ancestor(
+              of: find.text('09:00'),
+              matching: find.byType(TimeChip),
+            ),
+          )
+          .any((chip) => chip.ongoing),
+      isFalse,
+    );
   });
 
   testWidgets('shows the church name', (tester) async {

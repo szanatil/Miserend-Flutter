@@ -443,8 +443,8 @@ void main() {
       expect(find.byType(Divider), findsNWidgets(2));
     });
 
-    testWidgets('the start leads its block, large, bold and in the accent '
-        'color', (tester) async {
+    testWidgets('the start leads its block, the strongest text on the list, '
+        'in its orange container (TI2, TI3, SZ4)', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -454,13 +454,13 @@ void main() {
 
       final textTheme = Theme.of(tester.element(find.text('18:00'))).textTheme;
       final style = tester.widget<Text>(find.text('18:00')).style!;
-      expect(style.fontSize, textTheme.headlineMedium!.fontSize);
-      expect(style.fontWeight, FontWeight.bold);
+      expect(style.fontSize, textTheme.titleLarge!.fontSize);
+      expect(style.fontWeight, FontWeight.w600);
       expect(
         style.color,
         miserendTheme(
           Brightness.light,
-        ).extension<MiserendColors>()!.occasionTime,
+        ).extension<MiserendColors>()!.onOccasionTimeContainer,
       );
     });
 

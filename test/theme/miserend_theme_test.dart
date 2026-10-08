@@ -74,6 +74,46 @@ void main() {
         expect(title.style.fontSize, 22);
       });
 
+      testWidgets('a card is flat surfaceContainerLow with 12 corners, 8 '
+          'apart (KO1, MÉ1, FO2)', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: const Scaffold(
+              body: Column(
+                children: [
+                  Card(child: SizedBox(height: 40)),
+                  Card(child: SizedBox(height: 40)),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        final surface = tester.widget<Material>(
+          find
+              .descendant(
+                of: find.byType(Card).first,
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(surface.color, scheme.surfaceContainerLow);
+        expect(surface.elevation, 0);
+        expect(
+          surface.shape,
+          const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+          ),
+        );
+        Rect surfaceOf(Finder card) => tester.getRect(
+          find.descendant(of: card, matching: find.byType(Material)).first,
+        );
+        final first = surfaceOf(find.byType(Card).first);
+        final second = surfaceOf(find.byType(Card).last);
+        expect(second.top - first.bottom, Spacing.s);
+      });
+
       testWidgets('a SnackBar floats on inverseSurface for 4 s (KO15)', (
         tester,
       ) async {

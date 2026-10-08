@@ -4,7 +4,10 @@ import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/home/masses/mass_card.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
+
+import '../../theme/theme_harness.dart';
 
 NearbyMassesItem _mass({
   String name = 'Szent Miklós-templom',
@@ -91,17 +94,18 @@ void main() {
   });
 
   group('church', () {
-    testWidgets('writes the church name as large as the church card does', (
-      tester,
-    ) async {
+    testWidgets('writes the church name in titleMedium and the line under it '
+        'in bodyMedium onSurfaceVariant (TI2)', (tester) async {
       await pumpCard(tester, _mass());
 
-      final textTheme =
-          Theme.of(tester.element(find.byType(MassCard))).textTheme;
+      final theme = Theme.of(tester.element(find.byType(MassCard)));
       expect(
-        tester.widget<Text>(find.text('Szent Miklós-templom')).style?.fontSize,
-        textTheme.titleLarge!.fontSize,
+        drawnStyle(tester, find.text('Szent Miklós-templom')).fontSize,
+        theme.textTheme.titleMedium!.fontSize,
       );
+      final place = drawnStyle(tester, find.text('Nyíregyháza'));
+      expect(place.fontSize, theme.textTheme.bodyMedium!.fontSize);
+      expect(place.color, theme.colorScheme.onSurfaceVariant);
     });
 
     testWidgets('leaves plain Szentmise out of the city line', (tester) async {
@@ -134,8 +138,8 @@ void main() {
       expect(find.text('latin nyelven'), findsOneWidget);
     });
 
-    testWidgets('puts each part of the detail in a yellow bubble of its own, '
-        'a type as its icon and its word', (tester) async {
+    testWidgets('puts each part of the detail in a bubble of its own, a type '
+        'as its icon and its word', (tester) async {
       await pumpCard(
         tester,
         _mass(),
@@ -155,16 +159,6 @@ void main() {
         findsOneWidget,
       );
       expect(_bubble(), findsNWidgets(3));
-      final surface = tester.widget<DecoratedBox>(
-        find.descendant(
-          of: _bubble().first,
-          matching: find.byType(DecoratedBox),
-        ),
-      );
-      expect(
-        (surface.decoration as BoxDecoration).color,
-        miserendTheme(Brightness.light).colorScheme.secondaryContainer,
-      );
     });
 
     testWidgets('a card without a detail has no bubble', (tester) async {
@@ -366,5 +360,156 @@ void main() {
     await tester.tap(_photo());
 
     expect(taps, 2);
+  });
+
+  group('design', () {
+    Future<void> pumpDesigned(
+      WidgetTester tester, {
+      Brightness brightness = Brightness.light,
+      TargetPlatform platform = TargetPlatform.android,
+      double width = 400,
+      double textScale = 1,
+      String? detail = 'latin nyelven, Csendes',
+    }) async {
+      await pumpThemed(
+        tester,
+        MassCard(
+          mass: _mass(title: 'Szent Liturgia'),
+          detail: detail,
+          thumbnailUrl: Future.value(null),
+        ),
+        brightness: brightness,
+        platform: platform,
+        width: width,
+        textScale: textScale,
+      );
+      await tester.pump();
+    }
+
+    for (final brightness in Brightness.values) {
+      group('in $brightness', () {
+        final scheme = schemeOf(brightness);
+
+        testWidgets('the card is the theme card (KO1, MÉ1)', (tester) async {
+          await pumpDesigned(tester, brightness: brightness);
+
+          final surface = tester.widget<Material>(
+            find
+                .descendant(
+                  of: find.byType(Card),
+                  matching: find.byType(Material),
+                )
+                .first,
+          );
+          expect(surface.color, scheme.surfaceContainerLow);
+          expect(surface.elevation, 0);
+          expect(
+            surface.shape,
+            const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+            ),
+          );
+        });
+
+        testWidgets('a bubble is secondaryContainer with 8 corners, its '
+            'text and icon onSecondaryContainer (KO4)', (tester) async {
+          await pumpDesigned(tester, brightness: brightness);
+
+          final surface = tester.widget<DecoratedBox>(
+            find.descendant(
+              of: _bubble().last,
+              matching: find.byType(DecoratedBox),
+            ),
+          );
+          final decoration = surface.decoration as ShapeDecoration;
+          expect(decoration.color, scheme.secondaryContainer);
+          expect(
+            decoration.shape,
+            const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(Radii.s)),
+            ),
+          );
+          expect(
+            drawnStyle(tester, find.text('Csendes')).color,
+            scheme.onSecondaryContainer,
+          );
+          final icon = tester.widget<Image>(_typeIcon(MassType.silent));
+          expect(icon.color, scheme.onSecondaryContainer);
+        });
+      });
+    }
+
+    testWidgets('a bubble writes labelLarge beside an 18 icon (KO4, IK3)', (
+      tester,
+    ) async {
+      await pumpDesigned(tester);
+
+      final textTheme =
+          Theme.of(tester.element(find.byType(MassCard))).textTheme;
+      expect(
+        drawnStyle(tester, find.text('Csendes')).fontSize,
+        textTheme.labelLarge!.fontSize,
+      );
+      expect(tester.getSize(_typeIcon(MassType.silent)), const Size(18, 18));
+    });
+
+    testWidgets('keeps 16 inside its edge and 8 between the bubbles '
+        '(KO1, TK2)', (tester) async {
+      await pumpDesigned(tester, width: 600);
+
+      final card = tester.getRect(
+        find
+            .descendant(of: find.byType(Card), matching: find.byType(Material))
+            .first,
+      );
+      final name = tester.getRect(find.text('Szent Miklós-templom'));
+      expect(name.left - card.left, Spacing.l);
+      expect(name.top - card.top, Spacing.l);
+      final first = tester.getRect(_bubble().first);
+      final second = tester.getRect(_bubble().last);
+      expect(second.left - first.right, Spacing.s);
+    });
+
+    testWidgets('nothing on it is larger or bolder than the start in its '
+        'header (TI3)', (tester) async {
+      await pumpDesigned(tester);
+
+      final textTheme =
+          Theme.of(tester.element(find.byType(MassCard))).textTheme;
+      final start = textTheme.titleLarge!;
+      for (final text
+          in find
+              .descendant(
+                of: find.byType(MassCard),
+                matching: find.byType(Text),
+              )
+              .evaluate()) {
+        final style = drawnStyle(tester, find.byWidget(text.widget));
+        expect(style.fontSize, lessThanOrEqualTo(start.fontSize!));
+        expect(
+          style.fontWeight!.value,
+          lessThan(FontWeight.w600.value),
+          reason: (text.widget as Text).data,
+        );
+      }
+    });
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('fits $width dp at text scale $textScale on $platform '
+              '(EH4)', (tester) async {
+            await pumpDesigned(
+              tester,
+              platform: platform,
+              width: width,
+              textScale: textScale,
+            );
+
+            expect(tester.takeException(), isNull);
+          });
+        }
+      }
+    }
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 
@@ -44,7 +45,11 @@ class ChurchListView extends StatelessWidget {
                     ? PullableFill(child: MessageView(message: emptyMessage))
                     : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(8),
+                      // The cards' own margin keeps them 8 apart (TK2).
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.l,
+                        vertical: Spacing.xs,
+                      ),
                       itemCount: list.churches.length,
                       itemBuilder:
                           (BuildContext context, int index) => ChurchCard(

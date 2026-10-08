@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/mass_detail.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/reserved_room.dart';
 
-/// One of the nearest masses, the church card's sibling: the same card, grey
-/// ground and distance chip (spec 0008). The start is not on it: the list
+/// One of the nearest masses, the church card's sibling: the same card and
+/// distance chip (spec 0008). The start is not on it: the list
 /// puts the masses starting together under one header that says when. Tapping
 /// it opens the details page.
 ///
@@ -60,7 +61,7 @@ class MassCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                    padding: const EdgeInsets.all(Spacing.l),
                     child: _churchColumn(context),
                   ),
                 ),
@@ -79,8 +80,8 @@ class MassCard extends StatelessWidget {
                 children: [
                   _photo(),
                   Positioned(
-                    right: 8,
-                    bottom: 8,
+                    right: Spacing.s,
+                    bottom: Spacing.s,
                     child: DistanceChip(km: mass.distanceKm),
                   ),
                 ],
@@ -93,9 +94,10 @@ class MassCard extends StatelessWidget {
   }
 
   Widget _churchColumn(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    // As large as on the church card, its sibling.
-    final nameStyle = textTheme.titleLarge;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    // As large as on the church card, its sibling (TI2).
+    final nameStyle = textTheme.titleMedium;
     final title = mass.title;
     final place = [
       mass.city,
@@ -123,11 +125,13 @@ class MassCard extends StatelessWidget {
         // still takes its line.
         Text(
           place,
-          style: textTheme.bodyMedium,
+          style: textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: _MassDetailBubbles.gap),
+        const SizedBox(height: Spacing.s),
         _MassDetailBubbles(
           parts:
               detail == null
@@ -183,16 +187,13 @@ class _MassDetailBubbles extends StatelessWidget {
 
   final List<MassDetailPart> parts;
 
-  /// Between two bubbles, and between the city line and the bubbles.
-  static const double gap = 6;
-
   @override
   Widget build(BuildContext context) {
     return ReservedRoom(
       placeholder: const _BubbleSurface(part: MassDetailText('')),
       child: Wrap(
-        spacing: gap,
-        runSpacing: gap,
+        spacing: Spacing.s,
+        runSpacing: Spacing.s,
         children: [for (final part in parts) MassDetailBubble(part: part)],
       ),
     );
@@ -221,39 +222,32 @@ class MassDetailBubble extends StatelessWidget {
   }
 }
 
-/// The yellow surface of a [MassDetailBubble], also laid out empty to reserve
-/// the bubbles' line on a card without them.
+/// The surface of a [MassDetailBubble], a data chip in the mass detail's
+/// colours (DESIGN.md KO4, SZ4), also laid out empty to reserve the bubbles'
+/// line on a card without them.
 class _BubbleSurface extends StatelessWidget {
   const _BubbleSurface({required this.part});
 
   final MassDetailPart part;
 
-  static const double _horizontalPadding = 8;
-  static const double _verticalPadding = 2;
-  static const double _iconGap = 4;
-
-  static TextStyle? _style(BuildContext context) => Theme.of(context)
-      .textTheme
-      .labelMedium
-      ?.copyWith(color: Theme.of(context).colorScheme.onSecondaryContainer);
-
-  /// As tall as the letters, in the text size they are drawn in.
-  static double _iconSize(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(_style(context)?.fontSize ?? 12);
+  /// A chip's icon size (IK3).
+  static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final iconAsset = part.iconAsset;
-    final iconSize = _iconSize(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(12),
+      decoration: ShapeDecoration(
+        color: scheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(Radii.s)),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: _horizontalPadding,
-          vertical: _verticalPadding,
+          horizontal: Spacing.s,
+          vertical: Spacing.xs,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -261,17 +255,19 @@ class _BubbleSurface extends StatelessWidget {
             if (iconAsset != null) ...[
               Image.asset(
                 iconAsset,
-                width: iconSize,
-                height: iconSize,
-                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                width: _iconSize,
+                height: _iconSize,
+                color: scheme.onSecondaryContainer,
                 excludeFromSemantics: true,
               ),
-              const SizedBox(width: _iconGap),
+              const SizedBox(width: Spacing.s),
             ],
             Flexible(
               child: Text(
                 part.label,
-                style: _style(context),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: scheme.onSecondaryContainer,
+                ),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,

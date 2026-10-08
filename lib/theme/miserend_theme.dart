@@ -35,6 +35,18 @@ ThemeData miserendTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 3,
     ),
+    // A card stands apart from the page by its tone, not a shadow (KO1, MÉ1);
+    // no card overrides this but the church card under a server error (SZ4).
+    // Half the gap above and half below puts cards on a list 8 apart (TK2);
+    // the list's own padding keeps them off the screen edge.
+    cardTheme: CardThemeData(
+      color: scheme.surfaceContainerLow,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+      ),
+      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
+    ),
     // Text fields are outlined and the outline has to show: Material's
     // default border was once drawn white on white, and the problem
     // report's fields had to be guessed (KO12).

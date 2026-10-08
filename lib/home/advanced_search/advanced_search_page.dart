@@ -6,6 +6,7 @@ import 'package:miserend/home/advanced_search/widgets/result_count_badge.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -637,9 +638,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
+                Spacing.l,
                 _listPadding,
-                _listPadding,
-                _listPadding,
+                Spacing.l,
                 0,
               ),
               sliver: SliverFixedExtentList(
@@ -735,7 +736,7 @@ class _Summary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      margin: const EdgeInsets.fromLTRB(Spacing.l, Spacing.s, Spacing.l, 0),
       child: InkWell(
         onTap: onTap,
         child: Padding(

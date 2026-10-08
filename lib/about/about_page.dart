@@ -146,7 +146,7 @@ class _AboutPageState extends State<AboutPage> {
               ),
             ),
             Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: SectionCard.margin,
               child: ListTile(
                 leading: const Icon(Icons.language, color: Colors.black54),
                 title: const Text('miserend.hu'),
