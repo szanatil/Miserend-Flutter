@@ -364,6 +364,46 @@ void main() {
     expect(find.byType(Card), findsWidgets);
   });
 
+  testWidgets('a day with many masses grows wider, not taller: its times '
+      'stay on one line, its card as tall as the others', (tester) async {
+    // Not this Sunday: the "Most vasárnap" row would show the masses again.
+    final sunday = DateTime.sunday - DateTime.now().weekday;
+    final [few, many] =
+        [
+          for (var d = 1; d < 7; d++) d,
+        ].where((d) => d != sunday).take(2).toList();
+    CachedMass at(int day, int hour) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: _todayAt(hour, 20).add(Duration(days: day)),
+      info: null,
+      source: MassSource.nearbyMasses,
+    );
+    final masses = _emptyDays();
+    masses[few].addAll([at(few, 7), at(few, 18)]);
+    masses[many].addAll([
+      for (final h in [6, 8, 10, 12, 19]) at(many, h),
+    ]);
+    final data = _page(masses, scheduleIsFresh: true);
+
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+
+    Rect cardOf(String time) => tester.getRect(
+      find.ancestor(of: find.text(time), matching: find.byType(Card)).first,
+    );
+    final fewCard = cardOf('07:20');
+    final manyCard = cardOf('06:20');
+    expect(manyCard.height, fewCard.height);
+    expect(manyCard.top, fewCard.top);
+    expect(manyCard.width, greaterThan(fewCard.width));
+    final tops = {
+      for (final time in ['06:20', '08:20', '10:20', '12:20', '19:20'])
+        tester.getTopLeft(find.text(time)).dy,
+    };
+    expect(tops, hasLength(1));
+  });
+
   testWidgets('no confession tile without a live response', (tester) async {
     // The cache says yes, but a cached value is a stale switch reading.
     final cached = _page(

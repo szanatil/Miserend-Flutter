@@ -184,6 +184,7 @@ _Ismert eltérés: szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a té
 - A templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
 - A templomkártya mise-chipjei egy sorban állnak; ami nem fér ki, azt a sor végén egy `…` chip jelzi (spec 0007). A részletező minden misét mutat.
 - A mise jellemzőjének buborékja a misekártyán egy sorban, `ellipsis`-szel áll; koppintásra a teljes szöveg látszik (spec 0011).
+- A templom-részletező napi kártyáinak mise-chipjei egy sorban állnak: sok misés napon a kártya szélesebb lesz, nem magasabb, hogy a sáv kártyái egyforma magasak legyenek. A sáv vízszintesen görgethető, így semmi nem vész el (spec 0003).
 
 **EL3 — Széles képernyőn korlátozott tartalom.** 600 dp feletti szélességen (tablet, fekvő tájolás) a lista és az űrlap tartalma legfeljebb **640** dp széles, középre igazítva. A térkép és a fotó kitölti a teljes szélességet. Kétpaneles elrendezés nincs.
 

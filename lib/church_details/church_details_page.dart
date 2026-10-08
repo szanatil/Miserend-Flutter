@@ -56,8 +56,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Collapsed-to-expanded height of the photo header.
   static const double _headerHeight = 200;
 
-  /// A day card's width in the strip at text scale 1.0.
-  static const double _dayCardWidth = 160;
+  /// A day card's least width in the strip at text scale 1.0; a day with
+  /// more masses grows wider instead of taller.
+  static const double _dayCardMinWidth = 160;
 
   ChurchPageData? _data;
   late final DateTime _today = _midnightToday();
@@ -395,6 +396,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [for (final offset in days) _getMassListCardForDay(offset)],
       ),
     );
@@ -404,10 +406,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final dateTime = _today.add(Duration(days: dayOffset));
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: SizedBox(
-        // Grows with the text, so that a time chip and its (i) marker fit at
+      child: ConstrainedBox(
+        // Grows with the text, so that a short day's card is not a sliver at
         // any text size.
-        width: MediaQuery.textScalerOf(context).scale(_dayCardWidth),
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.textScalerOf(context).scale(_dayCardMinWidth),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -420,9 +424,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               ),
               Text(DayLabel.date.format(dateTime)),
               const SizedBox(height: 4),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
+              // On one line, so that every day's card is as tall as the
+              // others; the strip scrolls sideways for a wide one.
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: Spacing.s,
                 children: [
                   for (final mass in _masses[dayOffset]) _timeChip(mass),
                 ],
