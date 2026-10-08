@@ -20,6 +20,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../fake_location_provider.dart';
 import 'fake_church_list_loader.dart';
+import 'list_surface.dart';
 
 Position _position() => Position(
   latitude: 47.4979,
@@ -72,13 +73,14 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester,
     ChurchListLoader loader,
-    LocationProvider location,
-  ) async {
+    LocationProvider location, {
+    Brightness brightness = Brightness.light,
+  }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
-          theme: miserendTheme(Brightness.light),
+          theme: miserendTheme(brightness),
           home: Scaffold(
             body: NearChurchesPage(loader: loader, location: location),
           ),
@@ -101,6 +103,25 @@ void main() {
   }
 
   final found = PositionFound(_position());
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'in $brightness, the list stands on the page\'s surface (SZ5)',
+      (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader([
+            [_entry('Közelebbi')],
+          ]),
+          FakeLocationProvider([found]),
+          brightness: brightness,
+        );
+
+        expect(find.text('Közelebbi'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      },
+    );
+  }
 
   group('states', () {
     testWidgets('shows the loading caption while the cache is read', (

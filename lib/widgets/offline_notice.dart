@@ -76,6 +76,13 @@ extension OfflineLook on ApiFailure {
       Theme.of(context).extension<MiserendColors>()!.serverErrorContainer,
   };
 
+  /// The colour of the text on [tint].
+  Color textColor(BuildContext context) => switch (this) {
+    ApiFailure.noConnection => Theme.of(context).colorScheme.onSurfaceVariant,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.onServerErrorContainer,
+  };
+
   IconData get icon => switch (this) {
     ApiFailure.noConnection => Icons.signal_wifi_off,
     ApiFailure.serverError => Icons.cloud_off,
@@ -140,6 +147,7 @@ class OfflineBanner extends StatelessWidget {
         color: failure.tint(context),
         icon: failure.icon,
         iconColor: failure.iconColor(context),
+        textColor: failure.textColor(context),
         text: switch (failure) {
           ApiFailure.noConnection => 'Nincs kapcsolat, tárolt adatok',
           ApiFailure.serverError => 'A miserend.hu nem elérhető, tárolt adatok',

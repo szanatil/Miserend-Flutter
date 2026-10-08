@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
-import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -95,16 +94,17 @@ class ContactCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.black54),
+            Icon(
+              icon,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.apply(
-                  color:
-                      Theme.of(
-                        context,
-                      ).extension<MiserendColors>()!.occasionTime,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

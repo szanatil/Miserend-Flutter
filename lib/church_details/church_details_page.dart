@@ -21,7 +21,6 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/theme/adaptive.dart';
-import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -163,7 +162,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               commonName,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.apply(color: Colors.black45),
+              ).textTheme.bodyMedium?.apply(color: _secondaryText),
             ),
           if (address.isNotEmpty)
             Padding(
@@ -172,18 +171,14 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 onTap: _showLocationOnMap,
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.place_outlined,
-                      size: 18,
-                      color: Colors.black54,
-                    ),
+                    Icon(Icons.place_outlined, size: 18, color: _secondaryText),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         address,
                         style: Theme.of(
                           context,
-                        ).textTheme.bodyMedium?.apply(color: Colors.black54),
+                        ).textTheme.bodyMedium?.apply(color: _secondaryText),
                       ),
                     ),
                   ],
@@ -194,6 +189,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       ),
     );
   }
+
+  /// Secondary text and its icons (DESIGN.md SZ5, IK4).
+  Color get _secondaryText => Theme.of(context).colorScheme.onSurfaceVariant;
 
   String _address() {
     final city = _details?.city ?? widget.church.city ?? '';
@@ -213,19 +211,15 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         spacing: 24,
         runSpacing: Spacing.s,
         children: [
-          GestureDetector(
-            onTap: _toggleFavorites,
-            child: Column(
-              spacing: 8,
-              children: [
-                Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  size: 32,
-                  color: Colors.black54,
-                ),
-                Text('Kedvencekhez'),
-              ],
-            ),
+          _actionButton(
+            icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+            // Like any icon, `primary` only when selected (IK4).
+            iconColor:
+                isFavorite
+                    ? Theme.of(context).colorScheme.primary
+                    : _secondaryText,
+            label: 'Kedvencekhez',
+            onPressed: _toggleFavorites,
           ),
           _reportButton(),
         ],
@@ -239,18 +233,33 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// once a retry succeeds.
   Widget _reportButton() {
     final blocked = _data?.failure != null;
-    final color = blocked ? Colors.black26 : Colors.black54;
+    // The disabled button lets the tap through, so the explanation can catch
+    // it; the button itself greys out as any disabled button does.
     return GestureDetector(
-      onTap: blocked ? _explainReportBlocked : _openReport,
+      onTap: blocked ? _explainReportBlocked : null,
+      child: _actionButton(
+        icon: Icons.error,
+        label: 'Hibajelentés',
+        onPressed: blocked ? null : _openReport,
+      ),
+    );
+  }
+
+  /// A button with its icon above its label; colours are the text button's
+  /// own, `primary` and its disabled look (DESIGN.md SZ4), unless [iconColor]
+  /// says otherwise.
+  Widget _actionButton({
+    required IconData icon,
+    Color? iconColor,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return TextButton(
+      onPressed: onPressed,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         spacing: 8,
-        children: [
-          Icon(Icons.error, size: 32, color: color),
-          Text(
-            'Hibajelentés',
-            style: blocked ? const TextStyle(color: Colors.black38) : null,
-          ),
-        ],
+        children: [Icon(icon, size: 32, color: iconColor), Text(label)],
       ),
     );
   }
@@ -319,7 +328,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               text: note,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.apply(color: Colors.black54),
+              ).textTheme.bodySmall?.apply(color: _secondaryText),
             ),
           ],
         ],
@@ -355,7 +364,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           text,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.apply(color: Colors.black45),
+          ).textTheme.bodyMedium?.apply(color: _secondaryText),
         ),
       );
     }
@@ -505,7 +514,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         'Frissítve: ${DayLabel.date.format(updatedAt)}',
         style: Theme.of(
           context,
-        ).textTheme.bodySmall?.apply(color: Colors.black38),
+        ).textTheme.bodySmall?.apply(color: _secondaryText),
       ),
     );
   }
@@ -552,10 +561,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               child: Text(
                 'ÚTVONAL',
                 style: Theme.of(context).textTheme.titleMedium!.apply(
-                  color:
-                      Theme.of(
-                        context,
-                      ).extension<MiserendColors>()!.occasionTime,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

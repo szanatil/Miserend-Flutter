@@ -60,7 +60,9 @@ class LanguageFlag extends StatelessWidget {
           // Several of these flags run to white at the edge — the English one
           // is white with a red cross — and would otherwise bleed into the
           // card behind them.
-          border: Border.all(color: Colors.black12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           borderRadius: BorderRadius.circular(2),
         ),
         child: SvgPicture.asset('assets/flags/$code.svg', fit: BoxFit.contain),

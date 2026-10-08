@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/church_details/widgets/photo_header.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+
+import '../theme/theme_harness.dart';
 
 const List<String> _two = [
   'https://miserend.hu/kepek/templomok/38/a.jpg',
   'https://miserend.hu/kepek/templomok/38/b.jpg',
 ];
 
-Widget _host(List<String> photos) {
+Widget _host(List<String> photos, {Brightness brightness = Brightness.light}) {
   return MaterialApp(
+    theme: miserendTheme(brightness),
     home: Scaffold(
       body: SizedBox(
         height: 200,
@@ -21,6 +25,11 @@ Widget _host(List<String> photos) {
     ),
   );
 }
+
+DecoratedBox _scrimOf(WidgetTester tester, Finder indicator) =>
+    tester.widget<DecoratedBox>(
+      find.ancestor(of: indicator, matching: find.byType(DecoratedBox)).first,
+    );
 
 /// Which page the slideshow is on, read off the controller rather than the
 /// pixels, since the photos themselves never load in a test.
@@ -81,4 +90,53 @@ void main() {
 
     expect(_page(tester), 1);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('the page indicator reads over the photo in $brightness '
+        '(KO19)', (tester) async {
+      await tester.pumpWidget(_host(_two, brightness: brightness));
+      final colors = miserendColorsOf(brightness);
+
+      final indicator = find.byKey(ChurchPhotoHeader.pageIndicatorKey);
+      final scrim =
+          tester
+                  .widget<DecoratedBox>(
+                    find
+                        .ancestor(
+                          of: indicator,
+                          matching: find.byType(DecoratedBox),
+                        )
+                        .first,
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect(scrim.gradient!.colors.last, colors.photoScrim);
+      // Full strength from the top of the dots down, not still fading in
+      // behind them.
+      final gradient = scrim.gradient!;
+      final dotsTop =
+          tester.getTopLeft(indicator).dy -
+          tester.getTopLeft(find.byWidget(_scrimOf(tester, indicator))).dy;
+      final height =
+          tester.getSize(find.byWidget(_scrimOf(tester, indicator))).height;
+      expect(gradient.stops!.last, lessThanOrEqualTo(dotsTop / height));
+
+      final dots =
+          tester
+              .widgetList<Container>(
+                find.descendant(
+                  of: indicator,
+                  matching: find.byType(Container),
+                ),
+              )
+              .map((dot) => dot.decoration! as BoxDecoration)
+              .toList();
+      expect(dots, hasLength(2));
+      // The current photo's dot is filled, the other only a ring: told
+      // apart by shape, not by a fainter white.
+      expect(dots[0].color, colors.onPhoto);
+      expect(dots[1].color, isNull);
+      expect(dots[1].border, Border.all(color: colors.onPhoto, width: 1.5));
+    });
+  }
 }

@@ -47,12 +47,12 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 - `miserend_theme.dart`: a `ThemeData` világos és sötét változata.
 - `miserend_colors.dart`: a `MiserendColors` `ThemeExtension` (SZ3).
-- `tokens.dart`: a `Spacing` (TK1) és a `Radii` (FO1) osztály.
+- `tokens.dart`: a `Spacing` (TK1) és a `Radii` (FO1) osztály, és a térkép jelölőinek árnyéka, `MapShadows` (MÉ2, KO17).
 - `adaptive.dart`: az adaptív elemek segédfüggvényei (PL3).
 
 A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
 
-_Ismert eltérés: nyers színek, térközök, lekerekítések a widgetekben: #58, #59._
+_Ismert eltérés: nyers térközök, lekerekítések a widgetekben: #59._
 
 ## SZ. Szín
 
@@ -74,8 +74,10 @@ _Ismert eltérés: nyers színek, térközök, lekerekítések a widgetekben: #5
 | `userLocation` | `#1A73E8` | `#1A73E8` | A saját helyzet pöttye a térképen (spec 0006) |
 | `onUserLocation` | `#FFFFFF` | `#FFFFFF` | A saját helyzet pöttyének gyűrűje |
 | `mapOverlay` | `surface` 70%-os átlátszatlansággal | `surface` 70%-os átlátszatlansággal | A térkép forrásmegjelölésének háttere (KO17) |
+| `photoScrim` | `#99000000` | `#99000000` | Sötét átmenet a fotón álló szöveg és ikon alatt (KO19) |
+| `onPhoto` | `#FFFFFF` | `#FFFFFF` | Szöveg és ikon fotón, a `photoScrim` fölött (KO19) |
 
-A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) és a nem szöveges jelölésé (`userLocation`) legalább 3:1 (AM1).
+A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) és a nem szöveges jelölésé (`userLocation`) legalább 3:1 (AM1). Az `onPhoto` fehér fotón, a `photoScrim` alatt is legalább 4,5:1.
 
 **SZ4 — Egy szín, egy jelentés.**
 
@@ -90,14 +92,13 @@ A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) é
 | Űrlaphiba | `error` / `onErrorContainer` |
 | Saját helyzet a térképen | `userLocation` / `onUserLocation` |
 | Templom a térképen | a miserend.hu pinje, csoportja `primary` / `onPrimary` (KO17) |
+| Szöveg és ikon fotón | `onPhoto` a `photoScrim` átmenet fölött (KO19) |
 
 A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem narancs. A narancs szövegként felületen (`surface`, `surfaceContainer*`) nem állhat, mert ott nem éri el az AA kontrasztot; az időpont mindig a saját konténerében áll.
 
 **SZ5 — Felületek.** Az oldal háttere `surface`, a kártyáé `surfaceContainerLow`, a keresősávé `surfaceContainerHigh`, az elválasztóé `outlineVariant`. Szöveg: elsődleges `onSurface`, másodlagos `onSurfaceVariant`. Átlátszósággal halványított szöveg (`withAlpha`, `withOpacity`) nincs.
 
-**SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs.
-
-_Ismert eltérés: a fotógaléria fix fekete háttere (#58)._
+**SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs, a fotógalériáé sem: az is a `surface`-en áll.
 
 ## TI. Tipográfia
 
@@ -304,15 +305,15 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 - **Saját helyzet** (spec 0006): `userLocation` pötty `onUserLocation` gyűrűvel, finom árnyékkal (MÉ2).
 - **Forrásmegjelölés**: háttér `mapOverlay`, szöveg `labelSmall` `onSurface`.
 
-_Ismert eltérés: a csoport, a saját helyzet és a forrásmegjelölés nyers színekkel és betűmérettel (#58, #59)._
+_Ismert eltérés: a csoport és a forrásmegjelölés nyers betűmérettel (#59)._
 
 **KO18 — Térképi kártya.** Lebegő elem: `surfaceContainerLow`, forma `Radii.l`, `elevation: 3`, a képernyő szélétől és a biztonságos területtől `Spacing.l`.
 
-**KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül, Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon alatt sötét átmenet biztosítja az AA kontrasztot.
+**KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül, Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon `onPhoto`, alatta `photoScrim` sötét átmenet biztosítja az AA kontrasztot (SZ3). A lapozójelölő pöttyei közül az aktuális fotóé telt, a többié gyűrű: alakjuk különbözteti meg őket, nem halványabb szín (SZ5).
 
 **KO20 — Lebegő számláló** (pl. a részletes kereső „8 / 42 találat" felirata, spec 0010). Nem badge (nem állapot) és nem chip (nem egy elem adata), hanem a lista egészéről szóló, ideiglenes lebegő felirat. Alul középen, a biztonságos területtől `Spacing.l`-re; háttér `inverseSurface`, szöveg `onInverseSurface` `labelLarge`, táblázatos számjegyekkel, forma `Radii.full`, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Görgetés közben látszik, a görgetés vége után 1,5 s-mal `Durations.medium1` alatt elhalványul. Nem interaktív, árnyéka nincs.
 
-_Ismert eltérés: félig átlátszó fekete kapszula fehér szöveggel, 300 ms-os halványulás (#58, #64)._
+_Ismert eltérés: 300 ms-os halványulás (#64); nyers lekerekítés és belső térköz (#59)._
 
 ## AM. Akadálymentesség
 

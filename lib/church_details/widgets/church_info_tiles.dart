@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/database/cache/community.dart';
-import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -47,7 +46,7 @@ class AccessibilityTile extends StatelessWidget {
           Icon(
             state == 'no' ? Icons.not_accessible : Icons.accessible,
             size: 20,
-            color: Colors.black54,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -60,9 +59,9 @@ class AccessibilityTile extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       description,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.apply(color: Colors.black54),
+                      style: Theme.of(context).textTheme.bodySmall?.apply(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
               ],
@@ -162,7 +161,7 @@ class CommunitiesTile extends StatelessWidget {
         child: Text(
           name,
           style: Theme.of(context).textTheme.bodyMedium?.apply(
-            color: Theme.of(context).extension<MiserendColors>()!.occasionTime,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),

@@ -23,6 +23,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../theme/theme_harness.dart';
+
 final Church _church = Church(
   id: 38,
   name: 'Belvárosi Nagyboldogasszony-templom',
@@ -173,19 +175,24 @@ void main() {
     WidgetTester tester,
     ChurchScheduleLoader loader, {
     DateTime Function() clock = DateTime.now,
+    Brightness brightness = Brightness.light,
+    double width = 1000,
+    double textScale = 1,
   }) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
-    tester.view.physicalSize = const Size(1000, 4000);
+    tester.view.physicalSize = Size(width, 4000);
     tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
-          theme: miserendTheme(Brightness.light),
+          theme: miserendTheme(brightness),
           home: ChurchDetailsPage(
             church: _church,
             loader: loader,
@@ -262,21 +269,56 @@ void main() {
     );
   });
 
-  testWidgets('the page is the theme\'s surface, not a fixed grey (SZ5)', (
-    tester,
-  ) async {
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the page is the theme\'s surface, not a '
+        'fixed grey (SZ5)', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+      );
+
+      final ground = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(Scaffold),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(ground.color, miserendTheme(brightness).colorScheme.surface);
+    });
+  }
+
+  testWidgets('an unselected favourite is an outline in the secondary '
+      'colour, not the button\'s primary (IK4)', (tester) async {
     final page = _page(_emptyDays());
     await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
 
-    final ground = tester.widget<Material>(
-      find
-          .descendant(
-            of: find.byType(Scaffold),
-            matching: find.byType(Material),
-          )
-          .first,
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.favorite_border)).color,
+      schemeOf(Brightness.light).onSurfaceVariant,
     );
-    expect(ground.color, miserendTheme(Brightness.light).colorScheme.surface);
+  });
+
+  group('fits (EH4)', () {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('at $width dp and text scale $textScale', (tester) async {
+          final page = _page(_scheduleWith(_todayAt(9, 0)));
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: page, refreshed: page),
+            width: width,
+            textScale: textScale,
+          );
+
+          expect(find.text('Hibajelentés'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 
   testWidgets('shows the church name', (tester) async {
@@ -782,6 +824,30 @@ void main() {
       await tester.tap(find.text('Hibajelentés'));
       await tester.pumpAndSettle();
     }
+
+    TextButton reportButton(WidgetTester tester) => tester.widget<TextButton>(
+      find.ancestor(
+        of: find.text('Hibajelentés'),
+        matching: find.byType(TextButton),
+      ),
+    );
+
+    testWidgets('while blocked, the button greys out as a disabled one, '
+        'not in a colour of its own', (tester) async {
+      await answered(
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.noConnection),
+      );
+
+      expect(reportButton(tester).enabled, isFalse);
+      expect(reportButton(tester).style, isNull);
+    });
+
+    testWidgets('with live data, the button is enabled', (tester) async {
+      await answered(tester, _page(_scheduleWith(_todayAt(9, 0))));
+
+      expect(reportButton(tester).enabled, isTrue);
+    });
 
     for (final failure in ApiFailure.values) {
       testWidgets('with ${failure.name} marked, the button explains itself '

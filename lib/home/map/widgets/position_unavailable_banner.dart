@@ -42,6 +42,7 @@ class PositionUnavailableBanner extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       icon: Icons.location_off,
       iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      textColor: Theme.of(context).colorScheme.onSurfaceVariant,
       text: PositionUnavailableView.message(reason, _purpose),
       actions: [
         if (button != null)

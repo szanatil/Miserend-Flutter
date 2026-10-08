@@ -4,9 +4,11 @@ import 'package:miserend/about/about_page.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/church_details.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../theme/theme_harness.dart';
 import '../widgets/fake_feedback_launcher.dart';
 
 /// Church 38 as the bootstrap import leaves it, without a description.
@@ -85,14 +87,19 @@ void main() {
     FeedbackLauncher? feedback,
     Future<bool> Function(Uri uri)? openLink,
     ChurchOfTheDayLoader? churchOfTheDay,
+    Brightness brightness = Brightness.light,
+    double textScale = 1,
   }) async {
     // Tall enough for every card, so none is left unbuilt below the fold.
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(brightness),
         home: AboutPage(
           feedback: feedback,
           openLink: openLink,
@@ -241,5 +248,51 @@ void main() {
       expect(find.text('Mai templom ajánlatunk'), findsNothing);
       expect(find.text('Fejlesztő'), findsOneWidget);
     });
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the page stands on the surface with roles '
+        'for its text and links (SZ4, SZ5)', (tester) async {
+      await pumpPage(tester, brightness: brightness);
+      final scheme = schemeOf(brightness);
+
+      final ground = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(Scaffold),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(ground.color, scheme.surface);
+      expect(
+        drawnStyle(tester, find.text('Verzió: 1.2.3 (45)')).color,
+        scheme.onSurfaceVariant,
+      );
+      expect(
+        drawnStyle(tester, find.text('A projekt a GitHubon')).color,
+        scheme.primary,
+      );
+    });
+  }
+
+  group('fits (EH4)', () {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('at $width dp and text scale $textScale', (tester) async {
+          await pumpPage(
+            tester,
+            size: Size(width, 3000),
+            textScale: textScale,
+            churchOfTheDay: _FakeChurchOfTheDay(
+              cached: _withDescription('A templom története'),
+            ),
+          );
+
+          expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 }

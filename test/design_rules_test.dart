@@ -25,28 +25,21 @@ final Map<String, RegExp> _rules = {
 /// never hides a regression behind a fix.
 const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/about/about_page.dart': {
-    'color': (5, '#58'),
     'icon': (4, '#61'),
     'radius': (1, '#59'),
     'spacing': (4, '#59'),
   },
   'lib/church_details/church_details_page.dart': {
-    'color': (9, '#58'),
     'icon': (3, '#61'),
     'spacing': (17, '#59'),
   },
   'lib/church_details/report_problem_page.dart': {'spacing': (5, '#59')},
-  'lib/church_details/widgets/adoration_card.dart': {
-    'color': (1, '#58'),
-    'spacing': (2, '#59'),
-  },
+  'lib/church_details/widgets/adoration_card.dart': {'spacing': (2, '#59')},
   'lib/church_details/widgets/church_info_tiles.dart': {
-    'color': (2, '#58'),
     'icon': (1, '#61'),
     'spacing': (4, '#59'),
   },
   'lib/church_details/widgets/contact_card.dart': {
-    'color': (1, '#58'),
     'icon': (2, '#61'),
     'spacing': (3, '#59'),
   },
@@ -55,35 +48,24 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
     'spacing': (2, '#59'),
   },
   'lib/church_details/widgets/mass_info.dart': {'spacing': (2, '#59')},
-  'lib/church_details/widgets/photo_gallery_page.dart': {'color': (3, '#58')},
-  'lib/church_details/widgets/photo_header.dart': {
-    'color': (1, '#58'),
-    'spacing': (1, '#59'),
-  },
+  'lib/church_details/widgets/photo_header.dart': {'spacing': (1, '#59')},
   'lib/home/advanced_search/advanced_search_page.dart': {
-    'color': (4, '#58'),
     'icon': (7, '#61'),
     'spacing': (12, '#59'),
   },
-  'lib/home/advanced_search/widgets/result_count_badge.dart': {
-    'color': (2, '#58'),
+  'lib/home/advanced_search/widgets/result_counter.dart': {
     'radius': (1, '#59'),
     'spacing': (1, '#59'),
   },
-  'lib/home/home.dart': {
-    'color': (2, '#58'),
-    'icon': (2, '#61'),
-    'radius': (2, '#59'),
-  },
+  'lib/home/home.dart': {'icon': (2, '#61'), 'radius': (2, '#59')},
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
   'lib/home/map/widgets/position_unavailable_banner.dart': {
     'icon': (2, '#60, #61'),
   },
   'lib/splash.dart': {'spacing': (3, '#59')},
-  'lib/widgets/language_flag.dart': {'color': (1, '#58'), 'radius': (1, '#59')},
+  'lib/widgets/language_flag.dart': {'radius': (1, '#59')},
   'lib/widgets/list_status_view.dart': {'spacing': (2, '#59')},
   'lib/widgets/miserend_map.dart': {
-    'color': (8, '#58'),
     'fontSize': (2, '#59'),
     'spacing': (2, '#59'),
   },

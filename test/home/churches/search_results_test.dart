@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'fake_church_list_loader.dart';
+import 'list_surface.dart';
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   id: id,
@@ -44,12 +45,13 @@ void main() {
     WidgetTester tester,
     ChurchListLoader loader, {
     SearchParams? params,
+    Brightness brightness = Brightness.light,
   }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
-          theme: miserendTheme(Brightness.light),
+          theme: miserendTheme(brightness),
           home: SearchResultsPage(
             searchParams:
                 params ?? SearchParams.fromSearchTerm('Boldogasszony'),
@@ -212,4 +214,25 @@ void main() {
     expect(loader.refreshes, 2);
     expect(find.byType(OfflineBanner), findsNothing);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'in $brightness, the list stands on the page\'s surface (SZ5)',
+      (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader(
+            [
+              [_entry(1155, 'Havas Boldogasszony templom')],
+            ],
+            refreshed: [Completer<ChurchList>()],
+          ),
+          brightness: brightness,
+        );
+
+        expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      },
+    );
+  }
 }

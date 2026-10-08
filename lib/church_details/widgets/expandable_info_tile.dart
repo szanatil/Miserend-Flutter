@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/theme/miserend_colors.dart';
 
 /// A long text field that shows a few lines and expands in place.
 ///
@@ -69,10 +68,6 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    foregroundColor:
-                        Theme.of(
-                          context,
-                        ).extension<MiserendColors>()!.occasionTime,
                   ),
                   onPressed: () => setState(() => _expanded = !_expanded),
                   icon: Icon(

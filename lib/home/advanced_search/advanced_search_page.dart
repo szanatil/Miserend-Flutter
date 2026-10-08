@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
-import 'package:miserend/home/advanced_search/widgets/result_count_badge.dart';
+import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
@@ -393,9 +393,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                             'amíg a helyzeted meghatározzuk.'
                         : 'Adj meg nevet vagy települést: a helyzeted nem '
                             'ismert, így a környékeden nem kereshetünk.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
             ],
@@ -659,7 +659,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           right: 0,
           bottom: 16,
           child: Center(
-            child: ResultCountBadge(
+            child: ResultCounter(
               controller: _scroll,
               rowExtent: _rowExtent,
               topPadding: _listPadding,
@@ -695,7 +695,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       child: Text(
         'Nincs több találat · ${last.found} találat',
         textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.grey),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -734,6 +736,7 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Card(
       margin: const EdgeInsets.fromLTRB(Spacing.l, Spacing.s, Spacing.l, 0),
       child: InkWell(
@@ -742,10 +745,10 @@ class _Summary extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              const Icon(Icons.filter_list, color: Colors.black54),
+              Icon(Icons.filter_list, color: iconColor),
               const SizedBox(width: 12),
               Expanded(child: Text(text)),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+              Icon(Icons.keyboard_arrow_down, color: iconColor),
             ],
           ),
         ),

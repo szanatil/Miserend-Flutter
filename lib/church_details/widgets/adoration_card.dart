@@ -57,9 +57,9 @@ class AdorationCard extends StatelessWidget {
           if (info.isNotEmpty)
             Text(
               info,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.apply(color: Colors.black54),
+              style: Theme.of(context).textTheme.bodySmall?.apply(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
         ],
       ),

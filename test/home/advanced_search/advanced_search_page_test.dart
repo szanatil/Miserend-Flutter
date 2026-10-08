@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import 'fake_advanced_search_loader.dart';
 
 /// A Wednesday morning; its Sunday is 2026-09-20.
@@ -339,6 +340,50 @@ void main() {
 
       expect(find.textContaining(RegExp(r'^\d+ / 20\+ találat$')), findsOne);
     });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, the results stand on the surface and the '
+          'count on the inverse surface (SZ5, KO20)', (tester) async {
+        await pumpPage(
+          tester,
+          FakeAdvancedSearchLoader([
+            resultPage([for (var i = 1; i <= 20; i++) churchEntry(i)]),
+          ]),
+          brightness: brightness,
+        );
+        await tester.enterText(field('Település'), 'Pécs');
+        await search(tester);
+        await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+        await tester.pump();
+
+        final scheme = miserendTheme(brightness).colorScheme;
+        final ground = tester.widget<Material>(
+          find
+              .descendant(
+                of: find.byType(Scaffold),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(ground.color, scheme.surface);
+
+        final count = find.textContaining(RegExp(r'^\d+ / 20 találat$'));
+        final box =
+            tester
+                    .widget<DecoratedBox>(
+                      find
+                          .ancestor(
+                            of: count,
+                            matching: find.byType(DecoratedBox),
+                          )
+                          .first,
+                    )
+                    .decoration
+                as BoxDecoration;
+        expect(box.color, scheme.inverseSurface);
+        expect(drawnStyle(tester, count).color, scheme.onInverseSurface);
+      });
+    }
   });
 
   test('a picked date reads as the month\'s short name and the day', () {

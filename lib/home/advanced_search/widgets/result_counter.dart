@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// „8 / 42 találat" at the bottom of the results while they scroll: how far
-/// the user has got, out of how many (spec 0010, „Darabszám-számláló"; DESIGN.md, KO20). It
-/// fades out a little after the scrolling stops, so that it does not cover
-/// the cards for good.
-class ResultCountBadge extends StatefulWidget {
-  const ResultCountBadge({
+/// the user has got, out of how many (spec 0010, „Darabszám-számláló";
+/// DESIGN.md KO20). It fades out a little after the scrolling stops, so that
+/// it does not cover the cards for good. Not a badge: it marks no state.
+class ResultCounter extends StatefulWidget {
+  const ResultCounter({
     super.key,
     required this.controller,
     required this.rowExtent,
@@ -17,10 +17,10 @@ class ResultCountBadge extends StatefulWidget {
     required this.foundIsFinal,
   });
 
-  /// How long the badge stays after the last movement.
+  /// How long the counter stays after the last movement.
   static const Duration lingerFor = Duration(milliseconds: 1500);
 
-  /// The results' scrolling, which the badge follows.
+  /// The results' scrolling, which the counter follows.
   final ScrollController controller;
 
   /// The height of one card, and the space above the first.
@@ -31,15 +31,15 @@ class ResultCountBadge extends StatefulWidget {
   final int shown;
 
   /// The churches found; with [foundIsFinal] false, only so far, and the
-  /// badge says so with a „+".
+  /// counter says so with a „+".
   final int found;
   final bool foundIsFinal;
 
   @override
-  State<ResultCountBadge> createState() => _ResultCountBadgeState();
+  State<ResultCounter> createState() => _ResultCounterState();
 }
 
-class _ResultCountBadgeState extends State<ResultCountBadge> {
+class _ResultCounterState extends State<ResultCounter> {
   bool _visible = false;
   Timer? _hide;
 
@@ -50,7 +50,7 @@ class _ResultCountBadgeState extends State<ResultCountBadge> {
   }
 
   @override
-  void didUpdateWidget(ResultCountBadge oldWidget) {
+  void didUpdateWidget(ResultCounter oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_scrolled);
@@ -67,7 +67,7 @@ class _ResultCountBadgeState extends State<ResultCountBadge> {
 
   void _scrolled() {
     _hide?.cancel();
-    _hide = Timer(ResultCountBadge.lingerFor, () {
+    _hide = Timer(ResultCounter.lingerFor, () {
       if (mounted) setState(() => _visible = false);
     });
     setState(() => _visible = true);
@@ -88,6 +88,8 @@ class _ResultCountBadgeState extends State<ResultCountBadge> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final plus = widget.foundIsFinal ? '' : '+';
     return IgnorePointer(
       child: AnimatedOpacity(
@@ -95,14 +97,17 @@ class _ResultCountBadgeState extends State<ResultCountBadge> {
         duration: const Duration(milliseconds: 300),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.black.withAlpha(160),
+            color: scheme.inverseSurface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Text(
               '${_lastSeen()} / ${widget.found}$plus találat',
-              style: const TextStyle(color: Colors.white),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.onInverseSurface,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ),

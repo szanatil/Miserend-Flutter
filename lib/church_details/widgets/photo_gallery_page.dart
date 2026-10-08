@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// Full-screen view of a church's photos, pushed from the details header.
+///
+/// It stands on the theme's surface like any other page, not on a fixed
+/// black, so that it follows the light and the dark mode (DESIGN.md SZ6); its
+/// controls sit in the app bar, off the photo.
 class PhotoGalleryPage extends StatefulWidget {
   const PhotoGalleryPage({
     super.key,
@@ -32,10 +36,7 @@ class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
         title:
             widget.photos.length > 1
                 ? Text('${_index + 1} / ${widget.photos.length}')

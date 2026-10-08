@@ -117,7 +117,9 @@ class _AboutPageState extends State<AboutPage> {
                     if (info == null) return const SizedBox.shrink();
                     return Text(
                       'Verzió: ${info.version} (${info.buildNumber})',
-                      style: textTheme.bodyMedium?.apply(color: Colors.black54),
+                      style: textTheme.bodyMedium?.apply(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     );
                   },
                 ),
@@ -141,10 +143,10 @@ class _AboutPageState extends State<AboutPage> {
           Card(
             margin: SectionCard.margin,
             child: ListTile(
-              leading: const Icon(Icons.language, color: Colors.black54),
+              leading: const Icon(Icons.language),
               title: const Text('miserend.hu'),
               subtitle: const Text('A miserend webes változata'),
-              trailing: const Icon(Icons.open_in_new, color: Colors.black54),
+              trailing: const Icon(Icons.open_in_new),
               onTap:
                   () => launchExternal(
                     context,
@@ -159,7 +161,7 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _externalLink(String label, Uri uri) {
-    final color = Theme.of(context).primaryColor;
+    final color = Theme.of(context).colorScheme.primary;
     return InkWell(
       onTap: () => launchExternal(context, uri, launch: widget.openLink),
       child: Padding(
@@ -204,7 +206,9 @@ class _AboutPageState extends State<AboutPage> {
             if (address.isNotEmpty)
               Text(
                 address,
-                style: textTheme.bodyMedium?.apply(color: Colors.black54),
+                style: textTheme.bodyMedium?.apply(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             if (description.isNotEmpty)
               Padding(

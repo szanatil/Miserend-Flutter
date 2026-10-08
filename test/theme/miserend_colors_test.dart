@@ -25,6 +25,8 @@ void main() {
       'serverErrorIcon': (Color(0xFFB45309), Color(0xFFFFB870)),
       'userLocation': (Color(0xFF1A73E8), Color(0xFF1A73E8)),
       'onUserLocation': (Color(0xFFFFFFFF), Color(0xFFFFFFFF)),
+      'photoScrim': (Color(0x99000000), Color(0x99000000)),
+      'onPhoto': (Color(0xFFFFFFFF), Color(0xFFFFFFFF)),
     };
 
     Map<String, Color> roles(MiserendColors c) => {
@@ -37,6 +39,8 @@ void main() {
       'serverErrorIcon': c.serverErrorIcon,
       'userLocation': c.userLocation,
       'onUserLocation': c.onUserLocation,
+      'photoScrim': c.photoScrim,
+      'onPhoto': c.onPhoto,
     };
 
     for (final brightness in Brightness.values) {
@@ -82,6 +86,12 @@ void main() {
             _contrast(c.serverErrorIcon, c.serverErrorContainer),
             greaterThanOrEqualTo(3),
           );
+        });
+
+        test('keeps what stands on a photo readable on a white one (KO19)', () {
+          final c = colors!;
+          final ground = Color.alphaBlend(c.photoScrim, Colors.white);
+          expect(_contrast(c.onPhoto, ground), greaterThanOrEqualTo(4.5));
         });
       });
     }

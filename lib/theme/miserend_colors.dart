@@ -16,6 +16,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
     required this.userLocation,
     required this.onUserLocation,
     required this.mapOverlay,
+    required this.photoScrim,
+    required this.onPhoto,
   });
 
   /// The values for [scheme]'s brightness. [mapOverlay] is drawn from the
@@ -34,6 +36,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
         userLocation: const Color(0xFF1A73E8),
         onUserLocation: const Color(0xFFFFFFFF),
         mapOverlay: overlay,
+        photoScrim: const Color(0x99000000),
+        onPhoto: const Color(0xFFFFFFFF),
       ),
       Brightness.dark => MiserendColors(
         occasionTime: const Color(0xFFFF8C00),
@@ -46,6 +50,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
         userLocation: const Color(0xFF1A73E8),
         onUserLocation: const Color(0xFFFFFFFF),
         mapOverlay: overlay,
+        photoScrim: const Color(0x99000000),
+        onPhoto: const Color(0xFFFFFFFF),
       ),
     };
   }
@@ -90,6 +96,14 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
   /// Behind the map's attribution, so that it reads over any tile (KO17).
   final Color mapOverlay;
 
+  /// The dark fade a photo gets under what stands on it, so that [onPhoto]
+  /// reads over any photo, a white one too (KO19). A photo is the same in
+  /// both modes, so the scrim is too.
+  final Color photoScrim;
+
+  /// Text and icons on a photo, over [photoScrim] (KO19).
+  final Color onPhoto;
+
   @override
   MiserendColors copyWith({
     Color? occasionTime,
@@ -102,6 +116,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
     Color? userLocation,
     Color? onUserLocation,
     Color? mapOverlay,
+    Color? photoScrim,
+    Color? onPhoto,
   }) {
     return MiserendColors(
       occasionTime: occasionTime ?? this.occasionTime,
@@ -117,6 +133,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
       userLocation: userLocation ?? this.userLocation,
       onUserLocation: onUserLocation ?? this.onUserLocation,
       mapOverlay: mapOverlay ?? this.mapOverlay,
+      photoScrim: photoScrim ?? this.photoScrim,
+      onPhoto: onPhoto ?? this.onPhoto,
     );
   }
 
@@ -142,6 +160,8 @@ class MiserendColors extends ThemeExtension<MiserendColors> {
       userLocation: Color.lerp(userLocation, other.userLocation, t)!,
       onUserLocation: Color.lerp(onUserLocation, other.onUserLocation, t)!,
       mapOverlay: Color.lerp(mapOverlay, other.mapOverlay, t)!,
+      photoScrim: Color.lerp(photoScrim, other.photoScrim, t)!,
+      onPhoto: Color.lerp(onPhoto, other.onPhoto, t)!,
     );
   }
 }

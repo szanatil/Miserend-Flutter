@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
 import 'fake_church_list_loader.dart';
+import 'list_surface.dart';
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   id: id,
@@ -30,13 +31,14 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester,
     ChurchListLoader loader,
-    FavoritesService favorites,
-  ) async {
+    FavoritesService favorites, {
+    Brightness brightness = Brightness.light,
+  }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
-          theme: miserendTheme(Brightness.light),
+          theme: miserendTheme(brightness),
           home: Scaffold(body: FavoriteChurchesPage(loader: loader)),
         ),
       ),
@@ -234,4 +236,23 @@ void main() {
     expect(find.text('Új kedvenc'), findsOneWidget);
     expect(loader.refreshes, 1);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'in $brightness, the list stands on the page\'s surface (SZ5)',
+      (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader([
+            [_entry(1, 'Kedvenc')],
+          ]),
+          FakeFavoritesService(const [1]),
+          brightness: brightness,
+        );
+
+        expect(find.text('Kedvenc'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      },
+    );
+  }
 }

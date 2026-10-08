@@ -145,7 +145,11 @@ class CitySuggestion extends Suggestion {
         aspectRatio: 1,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8.0),
-          child: Icon(Icons.location_city, color: Colors.black54, size: 24.0),
+          child: Icon(
+            Icons.location_city,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            size: 24.0,
+          ),
         ),
       ),
       title: Text(cityName),
@@ -561,9 +565,13 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
     return ListTile(
       onTap: _openAdvancedSearch,
       titleAlignment: ListTileTitleAlignment.center,
-      leading: const AspectRatio(
+      leading: AspectRatio(
         aspectRatio: 1,
-        child: Icon(Icons.manage_search, color: Colors.black54, size: 24.0),
+        child: Icon(
+          Icons.manage_search,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 24.0,
+        ),
       ),
       title: const Text('Részletes kereső'),
     );

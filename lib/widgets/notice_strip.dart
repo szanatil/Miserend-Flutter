@@ -10,6 +10,7 @@ class NoticeStrip extends StatelessWidget {
     required this.color,
     required this.icon,
     required this.iconColor,
+    required this.textColor,
     required this.text,
     required this.actions,
   });
@@ -20,6 +21,9 @@ class NoticeStrip extends StatelessWidget {
   /// Carries the meaning as much as [icon] does — a server error's amber
   /// against the quieter grey of what merely informs.
   final Color iconColor;
+
+  /// The `on…` role of [color], so the line reads in both modes (SZ4).
+  final Color textColor;
 
   final String text;
 
@@ -39,7 +43,12 @@ class NoticeStrip extends StatelessWidget {
             Icon(icon, size: _iconSize, color: iconColor),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                text,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: textColor),
+              ),
             ),
             ...actions,
           ],

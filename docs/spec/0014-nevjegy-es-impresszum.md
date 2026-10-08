@@ -22,7 +22,7 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
 ## Implementation Decisions
 
 - A `lib/menu/` könyvtár `lib/about/` lett, a `MenuPage` `AboutPage`.
-- A szakaszok `SectionCard`-ok, a lap a régi szürke hátterén.
+- A szakaszok `SectionCard`-ok, a lap a régi szürke hátterén. *(Módosítva 2026-10-08, #58: a lap a `Scaffold` `surface`-én áll, nem szürkén; a verzió és a templom címe `onSurfaceVariant`, a GitHub-link `primary` (DESIGN.md SZ4, SZ5).)*
 - A külső linkek a `launchExternal`-on át nyílnak; az indító injektálható (K1).
 
 ## Testing Decisions

@@ -32,7 +32,7 @@ A templom képe marad, mert segít gyorsan felismerni, melyik templomról van sz
 ### Kártyacsalád (egyezés a templomkártyával)
 
 - `Card` az app alapértelmezett árnyékával. **A templomkártya árnyéka nem változik**, a téma `cardTheme`-jét nem kell bővíteni.
-- A lista `Colors.black12` háttéren áll, mint a Templomok fül listái, 8 px-es `ListView` paddinggel (ma is ennyi).
+- A lista `Colors.black12` háttéren áll, mint a Templomok fül listái, 8 px-es `ListView` paddinggel (ma is ennyi). *(Módosítva 2026-10-08, #58: a lista a lap `surface`-én áll, saját háttérszín nélkül (DESIGN.md SZ5, MÉ1).)*
 - Ugyanaz a `DistanceChip`, ugyanaz a fotó-helykitöltő (`church_blurred.png`), ugyanazok a `PhotoDecode` szabályok.
 - **Nincs kedvenc-gomb.** A kártya egy konkrét, rövidesen lejáró alkalomról szól, a kedvenc pedig a templomra vonatkozik. Kedvencnek jelölni a részletezőn és a Templomok fülön lehet.
 - Az egész kártya koppintásra a részletezőt nyitja (a mostani `onTap`, változatlanul).

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/photo_gallery_page.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 
 /// The photo strip behind the collapsing app bar.
@@ -21,6 +23,9 @@ class ChurchPhotoHeader extends StatefulWidget {
   final List<String> photos;
   final double height;
   final String heroPrefix;
+
+  /// The row of dots that tells how many photos there are and which one shows.
+  static const Key pageIndicatorKey = ValueKey('photo-page-indicator');
 
   @override
   State<ChurchPhotoHeader> createState() => _ChurchPhotoHeaderState();
@@ -151,7 +156,7 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
                 ),
           ),
         ),
-        Positioned(left: 0, right: 0, bottom: 8, child: _dots()),
+        Positioned(left: 0, right: 0, bottom: 0, child: _dots()),
       ],
     );
   }
@@ -175,21 +180,47 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
     );
   }
 
+  /// The dots stand on the photo, so they get a dark fade under them that
+  /// keeps them readable on a white photo too (KO19). The top padding is the
+  /// fade's room, as tall as the dots and their bottom padding.
   Widget _dots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List<Widget>.generate(widget.photos.length, (index) {
-        final active = index == _index;
-        return Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? Colors.white : Colors.white54,
-          ),
-        );
-      }),
+    final colors = Theme.of(context).extension<MiserendColors>()!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, colors.photoScrim],
+          // Fades in above the dots and is at full strength behind them: the
+          // dots start halfway down, below the top padding.
+          stops: const [0, 0.5],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: Spacing.l, bottom: Spacing.s),
+        child: Row(
+          key: ChurchPhotoHeader.pageIndicatorKey,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List<Widget>.generate(widget.photos.length, (index) {
+            final active = index == _index;
+            // The current photo's dot is filled, the others are rings: the
+            // shape tells them apart, not a fainter white.
+            return Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? colors.onPhoto : null,
+                border:
+                    active
+                        ? null
+                        : Border.all(color: colors.onPhoto, width: 1.5),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 
