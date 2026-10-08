@@ -178,10 +178,12 @@ void main() {
     Brightness brightness = Brightness.light,
     double width = 1000,
     double textScale = 1,
+    double height = 4000,
+    bool pushed = false,
   }) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
-    tester.view.physicalSize = Size(width, 4000);
+    tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1.0;
     tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.resetPhysicalSize);
@@ -193,14 +195,38 @@ void main() {
         value: favorites,
         child: MaterialApp(
           theme: miserendTheme(brightness),
-          home: ChurchDetailsPage(
-            church: _church,
-            loader: loader,
-            clock: clock,
-          ),
+          home:
+              pushed
+                  ? Builder(
+                    builder:
+                        (context) => TextButton(
+                          onPressed:
+                              () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder:
+                                      (_) => ChurchDetailsPage(
+                                        church: _church,
+                                        loader: loader,
+                                        clock: clock,
+                                      ),
+                                ),
+                              ),
+                          child: const Text('Megnyitás'),
+                        ),
+                  )
+                  : ChurchDetailsPage(
+                    church: _church,
+                    loader: loader,
+                    clock: clock,
+                  ),
         ),
       ),
     );
+    if (pushed) {
+      await tester.tap(find.text('Megnyitás'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
     await tester.pump();
     await tester.pump();
   }
@@ -300,6 +326,60 @@ void main() {
       tester.widget<Icon>(find.byIcon(Icons.favorite_border)).color,
       schemeOf(Brightness.light).onSurfaceVariant,
     );
+  });
+
+  group('the back button over the photo (KO19)', () {
+    SliverAppBar appBar(WidgetTester tester) =>
+        tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, it stands on a dark disc in onPhoto, '
+          'under light status bar icons', (tester) async {
+        final page = _page(_scheduleWith(_todayAt(9, 0)));
+        await pumpPage(
+          tester,
+          _FakeLoader(cached: page, refreshed: page),
+          brightness: brightness,
+          pushed: true,
+        );
+        final colors = miserendColorsOf(brightness);
+
+        final style = tester.widget<BackButton>(find.byType(BackButton)).style!;
+        expect(style.backgroundColor!.resolve({}), colors.photoScrim);
+        expect(style.foregroundColor!.resolve({}), colors.onPhoto);
+        expect(
+          appBar(tester).systemOverlayStyle!.statusBarIconBrightness,
+          Brightness.light,
+        );
+      });
+    }
+
+    testWidgets('once the header has collapsed, it is the title bar\'s own '
+        'again', (tester) async {
+      final page = _page(_scheduleWith(_todayAt(9, 0)));
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        height: 800,
+        pushed: true,
+      );
+
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -600));
+      await tester.pump();
+
+      expect(appBar(tester).leading, isNull);
+      expect(appBar(tester).systemOverlayStyle, isNull);
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
+    testWidgets('with nowhere to go back to, there is no back button', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+      expect(find.byType(BackButton), findsNothing);
+    });
   });
 
   group('fits (EH4)', () {

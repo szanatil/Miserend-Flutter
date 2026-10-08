@@ -27,6 +27,9 @@ class ChurchPhotoHeader extends StatefulWidget {
   /// The row of dots that tells how many photos there are and which one shows.
   static const Key pageIndicatorKey = ValueKey('photo-page-indicator');
 
+  /// The dark fade at the top, under the status bar and the back button.
+  static const Key topScrimKey = ValueKey('photo-top-scrim');
+
   @override
   State<ChurchPhotoHeader> createState() => _ChurchPhotoHeaderState();
 }
@@ -129,6 +132,13 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
       WidgetsBinding.instance.addPostFrameCallback((_) => _syncTimer());
     }
 
+    return Stack(
+      fit: StackFit.expand,
+      children: [_photos(context), _topScrim(context)],
+    );
+  }
+
+  Widget _photos(BuildContext context) {
     if (widget.photos.isEmpty) {
       return Image.asset(
         _placeholder,
@@ -176,6 +186,35 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
             ),
         imageCacheHeight: _decodeHeight(context),
         placeholderCacheHeight: _decodeHeight(context),
+      ),
+    );
+  }
+
+  /// The status bar and the back button stand on the photo too, so its top
+  /// gets the same scrim: at full strength behind the status bar's light
+  /// icons, fading out down the toolbar, where the back button brings a disc
+  /// of its own (KO19).
+  Widget _topScrim(BuildContext context) {
+    final statusBar = MediaQuery.paddingOf(context).top;
+    final height = statusBar + kToolbarHeight;
+    final scrim = Theme.of(context).extension<MiserendColors>()!.photoScrim;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: height,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          key: ChurchPhotoHeader.topScrimKey,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [scrim, scrim, Colors.transparent],
+              stops: [0, statusBar / height, 1],
+            ),
+          ),
+        ),
       ),
     );
   }

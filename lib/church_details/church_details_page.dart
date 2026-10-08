@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:miserend/calendar_days.dart';
@@ -21,6 +22,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/theme/adaptive.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -63,16 +65,37 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   ChurchPageData? _data;
   late final DateTime _today = _midnightToday();
 
+  /// The header's scrolling, which tells whether the photo is still under
+  /// the title bar.
+  final ScrollController _header = ScrollController();
+
+  /// True while the photo stands under the back button and the status bar,
+  /// which then need the photo's own colours to be seen (KO19).
+  bool _photoUnderBar = true;
+
   var isFavorite = false;
 
   @override
   void initState() {
     super.initState();
+    _header.addListener(_headerScrolled);
     loadMasses();
     isFavorite = Provider.of<FavoritesService>(
       context,
       listen: false,
     ).isFavorite(widget.church.id);
+  }
+
+  @override
+  void dispose() {
+    _header.dispose();
+    super.dispose();
+  }
+
+  /// The header collapses fully once it has scrolled by all but the toolbar.
+  void _headerScrolled() {
+    final under = _header.offset < _headerHeight - kToolbarHeight;
+    if (under != _photoUnderBar) setState(() => _photoUnderBar = under);
   }
 
   ChurchDetails? get _details => _data?.church;
@@ -83,12 +106,16 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: NestedScrollView(
+        controller: _header,
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          final onPhoto = _photoUnderBar;
           return <Widget>[
             SliverAppBar(
               expandedHeight: _headerHeight,
               floating: false,
               pinned: true,
+              leading: onPhoto ? _backOverPhoto(context) : null,
+              systemOverlayStyle: onPhoto ? SystemUiOverlayStyle.light : null,
               flexibleSpace: FlexibleSpaceBar(
                 background: ChurchPhotoHeader(
                   photos: _photos(),
@@ -111,6 +138,24 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               ),
             Expanded(child: _sections()),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// The back button while the photo is under it: the title bar's own
+  /// colour would vanish on a dark photo, so it stands on a dark disc
+  /// (KO19). Null where there is nowhere to go back to.
+  Widget? _backOverPhoto(BuildContext context) {
+    if (!(ModalRoute.of(context)?.impliesAppBarDismissal ?? false)) {
+      return null;
+    }
+    final colors = Theme.of(context).extension<MiserendColors>()!;
+    return Center(
+      child: BackButton(
+        style: IconButton.styleFrom(
+          backgroundColor: colors.photoScrim,
+          foregroundColor: colors.onPhoto,
         ),
       ),
     );
