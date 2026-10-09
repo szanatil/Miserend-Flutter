@@ -251,7 +251,7 @@ void main() {
 
     await pumpPage(tester, loader);
 
-    expect(find.text('09:00'), findsWidgets);
+    expect(find.text('9:00'), findsWidgets);
     expect(find.text('18:30'), findsNothing);
   });
 
@@ -269,7 +269,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('18:30'), findsWidgets);
-    expect(find.text('09:00'), findsNothing);
+    expect(find.text('9:00'), findsNothing);
   });
 
   testWidgets('a mass going on now has its chip in the filled orange, a '
@@ -282,7 +282,7 @@ void main() {
     );
 
     final chips = tester.widgetList<TimeChip>(
-      find.ancestor(of: find.text('09:00'), matching: find.byType(TimeChip)),
+      find.ancestor(of: find.text('9:00'), matching: find.byType(TimeChip)),
     );
     expect(chips.first.ongoing, isTrue);
 
@@ -296,7 +296,7 @@ void main() {
       tester
           .widgetList<TimeChip>(
             find.ancestor(
-              of: find.text('09:00'),
+              of: find.text('9:00'),
               matching: find.byType(TimeChip),
             ),
           )
@@ -605,7 +605,7 @@ void main() {
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
     // One card, for the only day that has anything.
-    expect(find.text('07:30'), findsOneWidget);
+    expect(find.text('7:30'), findsOneWidget);
     expect(find.byType(Card), findsWidgets);
   });
 
@@ -637,13 +637,13 @@ void main() {
     Rect cardOf(String time) => tester.getRect(
       find.ancestor(of: find.text(time), matching: find.byType(Card)).first,
     );
-    final fewCard = cardOf('07:20');
-    final manyCard = cardOf('06:20');
+    final fewCard = cardOf('7:20');
+    final manyCard = cardOf('6:20');
     expect(manyCard.height, fewCard.height);
     expect(manyCard.top, fewCard.top);
     expect(manyCard.width, greaterThan(fewCard.width));
     final tops = {
-      for (final time in ['06:20', '08:20', '10:20', '12:20', '19:20'])
+      for (final time in ['6:20', '8:20', '10:20', '12:20', '19:20'])
         tester.getTopLeft(find.text(time)).dy,
     };
     expect(tops, hasLength(1));
@@ -794,7 +794,28 @@ void main() {
 
     expect(find.text('Szentségimádás'), findsOneWidget);
     expect(find.text('Egész nap · csendes'), findsOneWidget);
-    expect(find.text('00:00 – 23:59 · csendes'), findsNothing);
+    expect(find.text('0:00–23:59 · csendes'), findsNothing);
+  });
+
+  testWidgets('an adoration window is an en dash range without spaces (FM1, '
+      'FM5)', (tester) async {
+    final data = _page(
+      _emptyDays(),
+      church: _details(
+        adorations: [
+          Adoration(
+            start: _todayAt(9, 0),
+            end: _todayAt(18, 0),
+            kind: null,
+            info: null,
+          ),
+        ],
+      ),
+    );
+
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+
+    expect(find.text('9:00–18:00'), findsOneWidget);
   });
 
   testWidgets('accessibility states a "no" plainly', (tester) async {
@@ -967,7 +988,8 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot mutatják. '
+          'Az adatok a telefonon tárolt, 2026. 08. 01. óta nem frissült '
+          'állapotot mutatják. '
           'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
           'Miserend használhat-e mobilnetet a telefon beállításaiban — '
           'amint újra van kapcsolat, a képernyő magától frissül.',
@@ -993,8 +1015,8 @@ void main() {
 
       expect(
         find.text(
-          'A miserend.hu jelenleg nem elérhető, az adatok '
-          '2026. 08. 01-i állapotot mutatnak.',
+          'A miserend.hu jelenleg nem elérhető, az adatok a '
+          '2026. 08. 01. óta nem frissült állapotot mutatják.',
         ),
         findsOneWidget,
       );
@@ -1152,7 +1174,7 @@ void main() {
       find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
       findsOneWidget,
     );
-    expect(find.text('09:00'), findsNothing);
+    expect(find.text('9:00'), findsNothing);
     expect(find.text('Nincs adat a mai miserendről'), findsNothing);
     expect(find.text('Most vasárnap'), findsNothing);
     expect(find.byType(ChurchDetailsPage), findsOneWidget);

@@ -356,7 +356,10 @@ void main() {
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
-      expect(find.textContaining('2026. 09. 01-i állapotot'), findsOneWidget);
+      expect(
+        find.textContaining('2026. 09. 01. óta nem frissült állapotot'),
+        findsOneWidget,
+      );
       expect(find.textContaining('a képernyő magától frissül'), findsOneWidget);
     });
 

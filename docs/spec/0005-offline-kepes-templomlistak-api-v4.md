@@ -68,8 +68,8 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
   - **Szerverhiba** (HTTP-hiba, `error: 1`, értelmezhetetlen válasz): eltérő szín **és** (i) jelzés.
 - Listaképernyőn a jelölés **egyszer, a lista fölötti sávban** jelenik meg, nem soronként. A **térképi templomkártyán** a kártyán, ha a kártya hívása elbukik. A részletező oldalon (spec 0003) a listákéval azonos sáv, a fejléc alatt rögzítve; a „húzd le a listát" helyett „nyisd meg újra a templomot" (kézi teszt, 2026-09-15: a misék csempéjén álló (i) nem volt észrevehető).
 - Az (i) koppintásra részletes tájékoztatót ad: mikori az adat, és mit tehet a felhasználó.
-  - Nincs kapcsolat: „Az adatok a telefonon tárolt, {dátum}-i állapotot mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon beállításaiban, majd húzd le a listát."
-  - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok {dátum}-i állapotot mutatnak."
+  - Nincs kapcsolat: „Az adatok a telefonon tárolt, {dátum} óta nem frissült állapotot mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon beállításaiban, majd húzd le a listát."
+  - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok a {dátum} óta nem frissült állapotot mutatják." A dátum `yyyy. MM. dd.` (DESIGN.md FM2): a záró pont miatt rag nem kerülhet rá.
   - A térképi kártyán a „húzd le a listát" helyett „nyisd meg újra a templomot".
 - Az "utoljára frissítve" dátum **nem** jelenik meg alapból a képernyőn (UX-döntés), csak az (i) tájékoztatóban.
 - **A {dátum} jelentése** (CONTEXT.md, „helyi szinkron"): listaképernyőn az adott lista utolsó sikeres háttérfrissítésének ideje, képernyőnként tárolva; a részletezőn és a térképi kártyán a templom helyi szinkronja (`local_synced_at`). Ha még nem volt ilyen, a kezdeti feltöltés dátuma.

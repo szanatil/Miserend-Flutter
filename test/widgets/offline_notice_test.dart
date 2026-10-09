@@ -73,6 +73,16 @@ void main() {
   }
 
   for (final failure in ApiFailure.values) {
+    test('the ${failure.name} explanation dates the data with a closing dot '
+        '(FM2)', () {
+      expect(
+        OfflineNotice.explanation(failure, DateTime(2026, 10, 7)),
+        contains('2026. 10. 07. óta'),
+      );
+    });
+  }
+
+  for (final failure in ApiFailure.values) {
     testWidgets('the ${failure.name} icon is rounded and strip-sized, 18 '
         '(IK1, IK3)', (tester) async {
       await pumpBanner(tester, failure, Brightness.light);

@@ -235,7 +235,7 @@ void main() {
     ) async {
       await pumpCard(tester, _entry(masses: [_mass(8, 0), _mass(18, 0)]));
 
-      expect(find.text('08:00'), findsOneWidget);
+      expect(find.text('8:00'), findsOneWidget);
       expect(find.text('18:00'), findsOneWidget);
       expect(find.text('…'), findsNothing);
     });
@@ -363,7 +363,7 @@ void main() {
           );
           final later = tester.widget<TimeChip>(
             find.ancestor(
-              of: find.text('08:00'),
+              of: find.text('8:00'),
               matching: find.byType(TimeChip),
             ),
           );
@@ -417,7 +417,7 @@ void main() {
     testWidgets('the time is its strongest text (TI3)', (tester) async {
       await pumpDesigned(tester);
 
-      final time = drawnStyle(tester, find.text('08:00'));
+      final time = drawnStyle(tester, find.text('8:00'));
       for (final text
           in find
               .descendant(

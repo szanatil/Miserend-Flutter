@@ -247,14 +247,14 @@ void main() {
 
     Future<Object?> dialog(BuildContext context) => showMiserendDialog<bool>(
       context,
-      title: 'Adatbázis nem található',
+      title: 'Hiányoznak a miserendek',
       content:
-          'Az alkalmazás használatához szükség van az adatbázis '
-              'letöltésére. Letölti most? ' *
+          'Az app használatához egyszer le kell tölteni a templomok és '
+              'misék adatait. Letöltöd most? ' *
           3,
       actions: const [
-        MiserendDialogAction('Nem', false),
-        MiserendDialogAction('Igen', true),
+        MiserendDialogAction('Kilépés', false),
+        MiserendDialogAction('Letöltés', true),
       ],
     );
 
@@ -285,7 +285,7 @@ void main() {
       // AlertDialog.adaptive is a subclass, which builds the Cupertino one
       // on iOS.
       expect(find.byWidgetPredicate((w) => w is AlertDialog), findsOneWidget);
-      await tester.tap(find.text('Igen'));
+      await tester.tap(find.text('Letöltés'));
       await tester.pumpAndSettle();
 
       expect(results, [true]);
@@ -501,7 +501,7 @@ void main() {
               textScale: textScale,
             );
 
-            expect(find.text('Igen'), findsOneWidget);
+            expect(find.text('Letöltés'), findsOneWidget);
             expect(tester.takeException(), isNull);
           }, variant: _bothPlatforms);
 

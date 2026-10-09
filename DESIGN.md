@@ -332,8 +332,6 @@ _Ismert eltérés: nincs `MergeSemantics` a kártyákon, a koppintható időpont
 
 **SV3 — A gomb felirata ige**: „Újra", „Küldés", „Megnyitás". „OK" csak puszta tudomásulvételre.
 
-_Ismert eltérés (SV1, SV3, SV4): a nyitóképernyő dialógusa magáz, „Igen" / „Nem" gombokat mutat, és a szövegei a kerülendő „adatbázis" szót használják (#63)._
-
 **SV4 — A domain szavai a CONTEXT.md-ből jönnek** (pl. „Részletes kereső", „Épp most tart"), az ott kerülendő szavak a felületen sem szerepelnek.
 
 ## FM. Formátumok
@@ -347,8 +345,6 @@ _Ismert eltérés (SV1, SV3, SV4): a nyitóképernyő dialógusa magáz, „Igen
 **FM4 — Hátralévő idő:** a CONTEXT.md „Hátralévő idő" szerint („25 perc múlva", „1 óra 5 perc múlva").
 
 **FM5 — Tartomány:** nagykötőjellel, szóköz nélkül („9:00–18:00").
-
-_Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem friss adat dátumáról hiányzik a záró pont, a szentségimádás tartománya szóközzel áll (#63)._
 
 ## EH. Ellenőrzés
 

@@ -11,27 +11,28 @@ import 'package:miserend/widgets/stale_data_retry.dart';
 /// church card and the details page. Their colours and icons are
 /// [OfflineLook]'s.
 class OfflineNotice {
-  static final DateFormat _date = DateFormat('yyyy. MM. dd');
+  static final DateFormat _date = DateFormat('yyyy. MM. dd.');
 
   /// The explanation the (i) opens. [asOf] is how old the data is; null only
   /// when not even the bootstrap import recorded a date.
+  ///
+  /// The date keeps its closing dot (FM2), so it takes no "-i" suffix: the
+  /// sentence says "óta nem frissült" instead.
   static String explanation(ApiFailure failure, DateTime? asOf) {
-    final state = asOf == null ? '' : ', ${_date.format(asOf)}-i';
+    final since =
+        asOf == null ? null : '${_date.format(asOf)} óta nem frissült';
     switch (failure) {
       case ApiFailure.noConnection:
         // No instruction to pull or reopen: the screen retries by itself
         // (StaleDataRetry), so the only thing left for the user to do is to
         // restore the connection.
-        return 'Az adatok a telefonon tárolt$state állapotot mutatják. '
+        return 'Az adatok a telefonon tárolt${since == null ? '' : ', $since'} állapotot mutatják. '
             'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
             'Miserend használhat-e mobilnetet a telefon beállításaiban — '
             'amint újra van kapcsolat, a képernyő magától frissül.';
       case ApiFailure.serverError:
-        return asOf == null
-            ? 'A miserend.hu jelenleg nem elérhető, az adatok a telefonon '
-                'tárolt állapotot mutatják.'
-            : 'A miserend.hu jelenleg nem elérhető, az adatok '
-                '${_date.format(asOf)}-i állapotot mutatnak.';
+        return 'A miserend.hu jelenleg nem elérhető, az adatok a '
+            '${since ?? 'telefonon tárolt'} állapotot mutatják.';
     }
   }
 

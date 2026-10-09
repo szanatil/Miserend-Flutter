@@ -9,7 +9,7 @@ import 'package:miserend/widgets/section_card.dart';
 /// The church's adoration windows, grouped by the day they fall on.
 ///
 /// Overlapping entries on the same day are all shown. Church 38 reports both a
-/// 00:00–23:59 window and a 09:00–18:00 one for the same day; collapsing them
+/// 0:00–23:59 window and a 9:00–18:00 one for the same day; collapsing them
 /// to the narrower would throw away a perpetual adoration, and we cannot tell
 /// the two cases apart from the data.
 class AdorationCard extends StatelessWidget {
@@ -68,7 +68,7 @@ class AdorationCard extends StatelessWidget {
     );
   }
 
-  /// A window that covers the whole day is stated as such — "00:00 – 23:59"
+  /// A window that covers the whole day is stated as such — "0:00–23:59"
   /// reads as a precise schedule when it means the opposite.
   String _range(Adoration adoration) {
     final start = adoration.start;
@@ -84,7 +84,7 @@ class AdorationCard extends StatelessWidget {
     if (coversDay) {
       return 'Egész nap';
     }
-    return '${TimeOfDay.fromDateTime(start).to24hours()} – '
+    return '${TimeOfDay.fromDateTime(start).to24hours()}–'
         '${TimeOfDay.fromDateTime(end).to24hours()}';
   }
 

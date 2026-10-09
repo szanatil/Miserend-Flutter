@@ -77,24 +77,14 @@ class _RouteSplashState extends State<RouteSplash> {
   _checkDatabase() async {
     final bool fileExists = await widget.startup.exportExists();
     if (!fileExists) {
-      unawaited(
-        _showDialog(
-          'Adatabázis nem taláható',
-          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
-        ),
-      );
+      unawaited(_showDialog('Hiányoznak a miserendek'));
       return;
     }
 
     final bool databaseVersionCompatible =
         await widget.startup.exportVersionCompatible();
     if (!databaseVersionCompatible) {
-      unawaited(
-        _showDialog(
-          'Adatbázis nem megfelelő',
-          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
-        ),
-      );
+      unawaited(_showDialog('Elavultak a miserendek'));
       return;
     }
 
@@ -104,12 +94,14 @@ class _RouteSplashState extends State<RouteSplash> {
   _downloadDatabase() async {
     setState(() {
       _downloadFailed = false;
-      _status = 'Adatbázis letöltése…';
+      _status = 'Miserendek letöltése…';
     });
     final bool success = await widget.startup.downloadExport();
     if (success) {
       if (mounted) {
-        const snackBar = SnackBar(content: Text('Adatbázis letöltése sikeres'));
+        const snackBar = SnackBar(
+          content: Text('A miserendek letöltése sikeres'),
+        );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
       _goToMainScreen();
@@ -122,7 +114,7 @@ class _RouteSplashState extends State<RouteSplash> {
       if (mounted) {
         const snackBar = SnackBar(
           content: Text(
-            'Az adatbázis letöltése nem sikerült, '
+            'A miserendek letöltése nem sikerült, '
             'a korábban letöltött adatokkal folytatjuk.',
           ),
         );
@@ -195,7 +187,7 @@ class _RouteSplashState extends State<RouteSplash> {
   Widget build(BuildContext context) {
     if (_downloadFailed) {
       return _retryScreen(
-        'Az adatbázis letöltése nem sikerült. Ellenőrizd az '
+        'A miserendek letöltése nem sikerült. Ellenőrizd az '
         'internetkapcsolatot, és próbáld újra.',
         _downloadDatabase,
       );
@@ -244,14 +236,16 @@ class _RouteSplashState extends State<RouteSplash> {
     );
   }
 
-  Future<void> _showDialog(String title, String description) async {
+  Future<void> _showDialog(String title) async {
     final download = await showMiserendDialog<bool>(
       context,
       title: title,
-      content: description,
+      content:
+          'Az app használatához egyszer le kell tölteni a templomok és misék '
+          'adatait. Letöltöd most?',
       actions: const [
-        MiserendDialogAction('Nem', false),
-        MiserendDialogAction('Igen', true),
+        MiserendDialogAction('Kilépés', false),
+        MiserendDialogAction('Letöltés', true),
       ],
       barrierDismissible: false, // user must tap button!
     );

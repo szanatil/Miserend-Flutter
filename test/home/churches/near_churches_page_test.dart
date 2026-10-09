@@ -204,8 +204,8 @@ void main() {
       );
 
       expect(find.byType(TimeChip), findsNWidgets(2));
-      expect(find.text('07:00'), findsOneWidget);
-      expect(find.text('09:00'), findsNothing);
+      expect(find.text('7:00'), findsOneWidget);
+      expect(find.text('9:00'), findsNothing);
       expect(find.text('18:00'), findsOneWidget);
     });
   });
@@ -525,7 +525,8 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 09. 10-i állapotot mutatják. '
+          'Az adatok a telefonon tárolt, 2026. 09. 10. óta nem frissült '
+          'állapotot mutatják. '
           'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
           'Miserend használhat-e mobilnetet a telefon beállításaiban — '
           'amint újra van kapcsolat, a képernyő magától frissül.',
