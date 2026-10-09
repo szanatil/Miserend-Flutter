@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/day_label.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/section_card.dart';
 
@@ -34,7 +35,7 @@ class AdorationCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: Spacing.s),
               child: Text(
                 _dayHeading(day),
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.sectionTitle,
               ),
             ),
             for (final adoration in byDay[day]!) _entry(context, adoration),
@@ -48,7 +49,7 @@ class AdorationCard extends StatelessWidget {
     final kind = adoration.kind?.trim() ?? '';
     final info = adoration.info?.trim() ?? '';
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.xs),
+      padding: const EdgeInsets.only(top: Spacing.s),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

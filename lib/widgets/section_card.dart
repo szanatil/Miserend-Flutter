@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 
 /// One block of the church details page and the Névjegy page.
@@ -43,9 +44,7 @@ class SectionCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: Theme.of(context).textTheme.sectionTitle,
                     ),
                   ),
                   if (trailing != null) trailing!,

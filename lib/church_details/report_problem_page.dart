@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/church_details/problem_report_sender.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -107,14 +108,9 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
           children: [
             Text(widget.churchName, style: textTheme.titleMedium),
             const SizedBox(height: Spacing.xl),
-            Text(
-              'Milyen hibát jelentesz?',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('Milyen hibát jelentesz?', style: textTheme.sectionTitle),
             _typeField(),
-            const SizedBox(height: Spacing.xl),
+            const SizedBox(height: Spacing.l),
             TextFormField(
               key: ReportProblemPage.textKey,
               controller: _textController,

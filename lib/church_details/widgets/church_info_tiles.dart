@@ -57,7 +57,7 @@ class AccessibilityTile extends StatelessWidget {
                 Text(_wheelchair[state] ?? ''),
                 if (description.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: Spacing.xs),
+                    padding: const EdgeInsets.only(top: Spacing.s),
                     child: Text(
                       description,
                       style: Theme.of(context).textTheme.bodySmall?.apply(

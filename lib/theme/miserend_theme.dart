@@ -79,3 +79,11 @@ OutlineInputBorder _fieldBorder(Color color, {double width = 1}) =>
       borderRadius: const BorderRadius.all(Radius.circular(Radii.s)),
       borderSide: BorderSide(color: color, width: width),
     );
+
+/// The text roles DESIGN.md TI2 builds from a [TextTheme] role with a weight.
+extension MiserendTextRoles on TextTheme {
+  /// A section's title on a page: a card's heading, or one inside a card
+  /// such as "Ma" (TI2).
+  TextStyle? get sectionTitle =>
+      titleMedium?.copyWith(fontWeight: FontWeight.w600);
+}

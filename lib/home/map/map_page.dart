@@ -45,8 +45,9 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   static const double _positionZoom = 14;
 
-  /// Around the church card, between it and the map's edges (KO18).
-  static const double _cardPadding = Spacing.l;
+  /// Between the map's edges and what floats on it, the church card and the
+  /// my-position button (KO18).
+  static const double _edgeGap = Spacing.l;
 
   late final MapController _controller =
       widget.mapController ?? MapController();
@@ -154,18 +155,16 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                   children: [
                     Expanded(child: Container()),
                     Padding(
-                      padding: const EdgeInsets.all(_cardPadding),
+                      padding: const EdgeInsets.all(_edgeGap),
                       child: _cardWithRetry(entry, card!),
                     ),
                   ],
                 ),
               Positioned(
-                right: _cardPadding,
+                right: _edgeGap,
                 // Above the card and its padding on both sides.
                 bottom:
-                    entry != null
-                        ? ChurchCard.height + 2 * _cardPadding
-                        : _cardPadding,
+                    entry != null ? ChurchCard.height + 2 * _edgeGap : _edgeGap,
                 child: FloatingActionButton(
                   onPressed: _goToMyPosition,
                   child: const Icon(Icons.my_location),

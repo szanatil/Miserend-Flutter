@@ -47,7 +47,7 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
           children: [
             if (title != null) ...[
               Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: Spacing.xs),
+              const SizedBox(height: Spacing.s),
             ],
             Text(
               widget.text,

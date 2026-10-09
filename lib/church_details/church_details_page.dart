@@ -23,6 +23,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -240,11 +241,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-  /// A heading inside a section, such as "Ma" (DESIGN.md TI2).
-  TextStyle? get _sectionTitle => Theme.of(
-    context,
-  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
-
   /// Secondary text and its icons (DESIGN.md SZ5, IK4).
   Color get _secondaryText => Theme.of(context).colorScheme.onSurfaceVariant;
 
@@ -364,13 +360,16 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Ma', style: _sectionTitle),
+          Text('Ma', style: Theme.of(context).textTheme.sectionTitle),
           _massListWidgetForDay(0),
           // On a Sunday the two headings would name the same day, and the
           // section would repeat itself.
           if (sundayOffset != 0) ...[
             const SizedBox(height: Spacing.s),
-            Text('Most vasárnap', style: _sectionTitle),
+            Text(
+              'Most vasárnap',
+              style: Theme.of(context).textTheme.sectionTitle,
+            ),
             _massListWidgetForDay(sundayOffset),
           ],
           if (note.isNotEmpty) ...[
@@ -411,7 +410,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 : 'Nincs adat erről a napról';
       }
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        padding: const EdgeInsets.only(top: Spacing.s),
         child: Text(
           text,
           style: Theme.of(
@@ -422,7 +421,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      padding: const EdgeInsets.only(top: Spacing.s),
       child: Wrap(
         spacing: Spacing.s,
         runSpacing: Spacing.s,

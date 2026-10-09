@@ -6,6 +6,7 @@ import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/list_status_view.dart';
@@ -356,12 +357,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
               const SizedBox(height: Spacing.l),
               _languageRow(),
               const SizedBox(height: Spacing.l),
-              Text(
-                'Nap',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
+              Text('Nap', style: Theme.of(context).textTheme.sectionTitle),
               const SizedBox(height: Spacing.s),
               _dayChips(),
               if (day != null) ...[
