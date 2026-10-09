@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -50,5 +51,20 @@ void main() {
       expect(app.themeMode, ThemeMode.system);
       expect(app.title, 'Miserend');
     });
+  });
+
+  testWidgets('speaks Hungarian, so the pickers do too', (tester) async {
+    // A date picker in English once showed "January" and "Cancel".
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (context) => FavoritesService(),
+        child: const MyApp(),
+      ),
+    );
+
+    final context = tester.element(find.byType(Navigator).first);
+    expect(Localizations.localeOf(context), const Locale('hu'));
+    expect(MaterialLocalizations.of(context).cancelButtonLabel, 'Mégse');
+    expect(CupertinoLocalizations.of(context).datePickerMonth(1), 'január');
   });
 }
