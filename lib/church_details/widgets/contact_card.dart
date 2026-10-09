@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -74,7 +75,7 @@ class ContactCard extends StatelessWidget {
             ),
           if (parishText.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: ExpandableInfoTile(text: parishText),
             ),
         ],
@@ -91,7 +92,7 @@ class ContactCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Row(
           children: [
             Icon(
@@ -99,7 +100,7 @@ class ContactCard extends StatelessWidget {
               size: 20,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.s),
             Expanded(
               child: Text(
                 label,

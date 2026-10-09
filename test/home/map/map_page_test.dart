@@ -16,6 +16,7 @@ import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -402,7 +403,8 @@ void main() {
 
       final map = tester.getRect(find.byType(MiserendMap));
       final button = tester.getRect(find.byType(FloatingActionButton));
-      expect(map.bottom - button.bottom, ChurchCard.height + 16);
+      // The card stands Spacing.l off the map's edge on both sides (KO18).
+      expect(map.bottom - button.bottom, ChurchCard.height + 2 * Spacing.l);
       expect(
         button.bottom,
         lessThanOrEqualTo(tester.getRect(find.byType(Card)).top),

@@ -4,6 +4,7 @@ import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -49,8 +50,8 @@ class _AboutPageState extends State<AboutPage> {
   );
 
   /// Room below the last tile so it can scroll clear of the floating
-  /// feedback button: the button's 56 plus its 16 margin, and a gap.
-  static const double _feedbackClearance = 88;
+  /// feedback button: the button's 56 plus its margin, and a gap.
+  static const double _feedbackClearance = 56 + Spacing.l + Spacing.l;
 
   late final FeedbackLauncher _feedback = widget.feedback ?? FeedbackLauncher();
 
@@ -98,14 +99,17 @@ class _AboutPageState extends State<AboutPage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: ListView(
-        padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
+        padding: const EdgeInsets.only(
+          top: Spacing.s,
+          bottom: _feedbackClearance,
+        ),
         children: [
           if (_church case final church?) _churchOfTheDay(church),
           SectionCard(
             title: 'Fejlesztő',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 4,
+              spacing: Spacing.s,
               children: [
                 const Text(
                   'Az alkalmazást a Szent József Hackathon fejleszti.',
@@ -130,7 +134,7 @@ class _AboutPageState extends State<AboutPage> {
             title: 'Forráskód',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 4,
+              spacing: Spacing.s,
               children: [
                 const Text(
                   'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
@@ -165,10 +169,10 @@ class _AboutPageState extends State<AboutPage> {
     return InkWell(
       onTap: () => launchExternal(context, uri, launch: widget.openLink),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+          spacing: Spacing.s,
           children: [
             Flexible(child: Text(label, style: TextStyle(color: color))),
             Icon(Icons.open_in_new, size: 16, color: color),
@@ -191,17 +195,16 @@ class _AboutPageState extends State<AboutPage> {
         onTap: () => openChurchDetails(context, _listEntry(church)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 4,
+          spacing: Spacing.s,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Radii.s),
               child: SizedBox(
                 height: _photoHeight,
                 width: double.infinity,
                 child: _photo(church),
               ),
             ),
-            const SizedBox(height: 4),
             Text(church.name ?? '', style: textTheme.titleMedium),
             if (address.isNotEmpty)
               Text(
@@ -211,13 +214,10 @@ class _AboutPageState extends State<AboutPage> {
                 ),
               ),
             if (description.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  description,
-                  maxLines: _descriptionLines,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                description,
+                maxLines: _descriptionLines,
+                overflow: TextOverflow.ellipsis,
               ),
           ],
         ),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/splash.dart';
 
+import 'theme/theme_harness.dart';
+
 /// A device whose export is downloaded and current; only the bootstrap
 /// import's outcome varies.
 class _FakeStartup extends AppStartup {
@@ -122,5 +124,54 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(startup.imports, 0);
+  });
+
+  group('fits (EH4)', () {
+    void sizeView(WidgetTester tester, double width, double textScale) {
+      tester.view.physicalSize = Size(width, 800);
+      tester.view.devicePixelRatio = 1.0;
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    }
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('the error with its retry at $width dp and text scale '
+            '$textScale', (tester) async {
+          sizeView(tester, width, textScale);
+
+          await pumpSplash(
+            tester,
+            _FakeStartup(bootstrapped: false, importSucceeds: [false]),
+          );
+
+          expect(find.text('Újrapróbálás'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        });
+
+        testWidgets('the spinner at $width dp and text scale $textScale', (
+          tester,
+        ) async {
+          sizeView(tester, width, textScale);
+
+          await tester.pumpWidget(
+            MaterialApp(
+              home: RouteSplash(
+                startup: _SlowStartup(),
+                homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
+              ),
+            ),
+          );
+          await tester.pump();
+
+          expect(find.byType(CircularProgressIndicator), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          // Gone before the check answers, so nothing is left running.
+          await tester.pumpWidget(const SizedBox.shrink());
+        });
+      }
+    }
   });
 }

@@ -247,17 +247,16 @@ class _MiserendMapState extends State<MiserendMap> {
           boxShadow: MapShadows.group,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(Spacing.xs),
           // The circle already grew with the text size, up to a limit; past it
           // the count shrinks to fit rather than spill out of the circle.
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               '${markers.length}',
-              style: TextStyle(
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -368,17 +367,16 @@ class _MiserendMapState extends State<MiserendMap> {
           ],
         ),
         Positioned(
-          right: 4,
-          bottom: 4,
+          right: Spacing.xs,
+          bottom: Spacing.xs,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.xs),
             color: colors.mapOverlay,
             child: Text(
               widget.compactAttribution
                   ? MiserendMap._compactAttribution
                   : MiserendMap._fullAttribution,
-              style: TextStyle(
-                fontSize: 10,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),

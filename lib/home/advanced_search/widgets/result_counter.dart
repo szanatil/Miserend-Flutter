@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// „8 / 42 találat" at the bottom of the results while they scroll: how far
 /// the user has got, out of how many (spec 0010, „Darabszám-számláló";
@@ -96,12 +97,15 @@ class _ResultCounterState extends State<ResultCounter> {
         opacity: _visible ? 1 : 0,
         duration: const Duration(milliseconds: 300),
         child: DecoratedBox(
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: scheme.inverseSurface,
-            borderRadius: BorderRadius.circular(16),
+            shape: Radii.full,
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.l,
+              vertical: Spacing.s,
+            ),
             child: Text(
               '${_lastSeen()} / ${widget.found}$plus találat',
               style: theme.textTheme.labelLarge?.copyWith(

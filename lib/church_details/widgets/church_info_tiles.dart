@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/database/cache/community.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -48,7 +49,7 @@ class AccessibilityTile extends StatelessWidget {
             size: 20,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.s),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +57,7 @@ class AccessibilityTile extends StatelessWidget {
                 Text(_wheelchair[state] ?? ''),
                 if (description.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: Spacing.xs),
                     child: Text(
                       description,
                       style: Theme.of(context).textTheme.bodySmall?.apply(
@@ -108,8 +109,8 @@ class LanguagesTile extends StatelessWidget {
     return SectionCard(
       title: 'Nyelvek',
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: Spacing.s,
+        runSpacing: Spacing.s,
         children: [for (final code in _clean(languages)) LanguageFlag(code)],
       ),
     );
@@ -145,7 +146,7 @@ class CommunitiesTile extends StatelessWidget {
     final name = community.name!.trim();
     if (link.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Text(name),
       );
     }
@@ -157,7 +158,7 @@ class CommunitiesTile extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Text(
           name,
           style: Theme.of(context).textTheme.bodyMedium?.apply(

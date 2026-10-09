@@ -317,6 +317,26 @@ void main() {
     });
   }
 
+  testWidgets('the day headings are section titles, titleMedium w600 (TI2)', (
+    tester,
+  ) async {
+    // A Wednesday, so that both "Ma" and "Most vasárnap" are shown.
+    final page = _page(_emptyDays());
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => DateTime(2026, 10, 7, 9),
+    );
+
+    for (final heading in ['Ma', 'Most vasárnap']) {
+      final titleMedium =
+          Theme.of(tester.element(find.text(heading))).textTheme.titleMedium!;
+      final style = tester.widget<Text>(find.text(heading)).style!;
+      expect(style.fontSize, titleMedium.fontSize, reason: heading);
+      expect(style.fontWeight, FontWeight.w600, reason: heading);
+    }
+  });
+
   for (final brightness in Brightness.values) {
     testWidgets('in $brightness, an unselected favourite is an outline in the '
         'secondary colour, not the button\'s primary (IK4)', (tester) async {

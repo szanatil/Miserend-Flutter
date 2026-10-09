@@ -6,6 +6,7 @@ import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
 import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
@@ -379,11 +380,50 @@ void main() {
                           .first,
                     )
                     .decoration
-                as BoxDecoration;
+                as ShapeDecoration;
         expect(box.color, scheme.inverseSurface);
         expect(drawnStyle(tester, count).color, scheme.onInverseSurface);
       });
     }
+
+    testWidgets('the count is a full-round pill, labelLarge with tabular '
+        'figures (KO20)', (tester) async {
+      await pumpPage(
+        tester,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 20; i++) churchEntry(i)]),
+        ]),
+      );
+      await tester.enterText(field('Település'), 'Pécs');
+      await search(tester);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+      await tester.pump();
+
+      final count = find.textContaining(RegExp(r'^\d+ / 20 találat$'));
+      final pill = find.ancestor(
+        of: count,
+        matching: find.byType(DecoratedBox),
+      );
+      expect(
+        (tester.widget<DecoratedBox>(pill.first).decoration as ShapeDecoration)
+            .shape,
+        Radii.full,
+      );
+      expect(
+        tester
+            .widget<Padding>(
+              find.ancestor(of: count, matching: find.byType(Padding)).first,
+            )
+            .padding,
+        const EdgeInsets.symmetric(horizontal: Spacing.l, vertical: Spacing.s),
+      );
+      final style = drawnStyle(tester, count);
+      expect(
+        style.fontSize,
+        Theme.of(tester.element(count)).textTheme.labelLarge!.fontSize,
+      );
+      expect(style.fontFeatures, [const FontFeature.tabularFigures()]);
+    });
   });
 
   test('a picked date reads as the month\'s short name and the day', () {

@@ -240,6 +240,7 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
         child: Row(
           key: ChurchPhotoHeader.pageIndicatorKey,
           mainAxisAlignment: MainAxisAlignment.center,
+          spacing: Spacing.s,
           children: List<Widget>.generate(widget.photos.length, (index) {
             final active = index == _index;
             // The current photo's dot is filled, the others are rings: the
@@ -247,7 +248,6 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
             return Container(
               width: 8,
               height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: active ? colors.onPhoto : null,

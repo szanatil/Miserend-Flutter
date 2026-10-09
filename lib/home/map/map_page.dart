@@ -7,6 +7,7 @@ import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:provider/provider.dart';
@@ -44,8 +45,8 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   static const double _positionZoom = 14;
 
-  /// Around the church card, between it and the map's edges.
-  static const double _cardPadding = 8;
+  /// Around the church card, between it and the map's edges (KO18).
+  static const double _cardPadding = Spacing.l;
 
   late final MapController _controller =
       widget.mapController ?? MapController();
@@ -159,10 +160,12 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                   ],
                 ),
               Positioned(
-                right: 8,
+                right: _cardPadding,
                 // Above the card and its padding on both sides.
                 bottom:
-                    entry != null ? ChurchCard.height + 2 * _cardPadding : 8,
+                    entry != null
+                        ? ChurchCard.height + 2 * _cardPadding
+                        : _cardPadding,
                 child: FloatingActionButton(
                   onPressed: _goToMyPosition,
                   child: const Icon(Icons.my_location),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// The shape every informational strip takes — a tinted band with a small
 /// icon, one line of prose and its buttons on the right. Only the look lives
@@ -37,11 +38,11 @@ class NoticeStrip extends StatelessWidget {
     return Material(
       color: color,
       child: Padding(
-        padding: const EdgeInsets.only(left: 16),
+        padding: const EdgeInsets.only(left: Spacing.l),
         child: Row(
           children: [
             Icon(icon, size: _iconSize, color: iconColor),
-            const SizedBox(width: 8),
+            const SizedBox(width: Spacing.s),
             Expanded(
               child: Text(
                 text,

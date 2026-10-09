@@ -24,54 +24,18 @@ final Map<String, RegExp> _rules = {
 /// fixed one fails it too until its entry is lowered or removed, so the list
 /// never hides a regression behind a fix.
 const Map<String, Map<String, (int, String)>> _knownDeviations = {
-  'lib/about/about_page.dart': {
-    'icon': (4, '#61'),
-    'radius': (1, '#59'),
-    'spacing': (4, '#59'),
-  },
-  'lib/church_details/church_details_page.dart': {
-    'icon': (3, '#61'),
-    'spacing': (17, '#59'),
-  },
-  'lib/church_details/report_problem_page.dart': {'spacing': (5, '#59')},
-  'lib/church_details/widgets/adoration_card.dart': {'spacing': (2, '#59')},
-  'lib/church_details/widgets/church_info_tiles.dart': {
-    'icon': (1, '#61'),
-    'spacing': (4, '#59'),
-  },
-  'lib/church_details/widgets/contact_card.dart': {
-    'icon': (2, '#61'),
-    'spacing': (3, '#59'),
-  },
-  'lib/church_details/widgets/expandable_info_tile.dart': {
-    'icon': (2, '#61'),
-    'spacing': (2, '#59'),
-  },
-  'lib/church_details/widgets/mass_info.dart': {'spacing': (2, '#59')},
-  'lib/church_details/widgets/photo_header.dart': {'spacing': (1, '#59')},
-  'lib/home/advanced_search/advanced_search_page.dart': {
-    'icon': (7, '#61'),
-    'spacing': (12, '#59'),
-  },
-  'lib/home/advanced_search/widgets/result_counter.dart': {
-    'radius': (1, '#59'),
-    'spacing': (1, '#59'),
-  },
-  'lib/home/home.dart': {'icon': (2, '#61'), 'radius': (2, '#59')},
+  'lib/about/about_page.dart': {'icon': (4, '#61')},
+  'lib/church_details/church_details_page.dart': {'icon': (3, '#61')},
+  'lib/church_details/widgets/church_info_tiles.dart': {'icon': (1, '#61')},
+  'lib/church_details/widgets/contact_card.dart': {'icon': (2, '#61')},
+  'lib/church_details/widgets/expandable_info_tile.dart': {'icon': (2, '#61')},
+  'lib/home/advanced_search/advanced_search_page.dart': {'icon': (7, '#61')},
+  'lib/home/home.dart': {'icon': (2, '#61')},
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
   'lib/home/map/widgets/position_unavailable_banner.dart': {
     'icon': (2, '#60, #61'),
   },
-  'lib/splash.dart': {'spacing': (3, '#59')},
-  'lib/widgets/language_flag.dart': {'radius': (1, '#59')},
-  'lib/widgets/list_status_view.dart': {'spacing': (2, '#59')},
-  'lib/widgets/miserend_map.dart': {
-    'fontSize': (2, '#59'),
-    'spacing': (2, '#59'),
-  },
-  'lib/widgets/notice_strip.dart': {'spacing': (2, '#59')},
   'lib/widgets/offline_notice.dart': {'icon': (3, '#61')},
-  'lib/widgets/position_unavailable_view.dart': {'spacing': (2, '#59')},
 };
 
 /// Counts the lines of each `lib/` file outside `lib/theme/` that match a

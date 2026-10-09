@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/church_details/problem_report_sender.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Reports a problem with one church's data to miserend.hu (CONTEXT.md,
@@ -102,13 +103,18 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.l),
           children: [
             Text(widget.churchName, style: textTheme.titleMedium),
-            const SizedBox(height: 24),
-            Text('Milyen hibát jelentesz?', style: textTheme.titleSmall),
+            const SizedBox(height: Spacing.xl),
+            Text(
+              'Milyen hibát jelentesz?',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             _typeField(),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.xl),
             TextFormField(
               key: ReportProblemPage.textKey,
               controller: _textController,
@@ -130,7 +136,7 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
                           ? 'Írd le, mi a hiba.'
                           : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.l),
             TextFormField(
               key: ReportProblemPage.emailKey,
               controller: _emailController,
@@ -147,7 +153,7 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
                     : 'Ez nem e-mail cím.';
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.xl),
             FilledButton(
               onPressed: _sending ? null : _submit,
               child:

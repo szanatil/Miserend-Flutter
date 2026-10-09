@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// A long text field that shows a few lines and expands in place.
 ///
@@ -46,7 +47,7 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
           children: [
             if (title != null) ...[
               Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.xs),
             ],
             Text(
               widget.text,
@@ -65,7 +66,7 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
                 // only marking the collapsed one.
                 child: TextButton.icon(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),

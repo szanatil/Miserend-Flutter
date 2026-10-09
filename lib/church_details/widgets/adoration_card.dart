@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/day_label.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/section_card.dart';
 
 /// The church's adoration windows, grouped by the day they fall on.
@@ -30,7 +31,7 @@ class AdorationCard extends StatelessWidget {
         children: [
           for (final day in byDay.keys) ...[
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 2),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: Text(
                 _dayHeading(day),
                 style: Theme.of(context).textTheme.titleMedium,
@@ -47,7 +48,7 @@ class AdorationCard extends StatelessWidget {
     final kind = adoration.kind?.trim() ?? '';
     final info = adoration.info?.trim() ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.only(top: Spacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -8,6 +8,7 @@ import 'package:miserend/database/database_manager.dart';
 import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/preferences.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// What the splash screen does to get the app ready, behind one seam so that
 /// the screen can be pumped without files, preferences or a network.
@@ -212,7 +213,7 @@ class _RouteSplashState extends State<RouteSplash> {
           children: [
             const CircularProgressIndicator(),
             if (_status != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               Text(_status!),
             ],
           ],
@@ -225,12 +226,12 @@ class _RouteSplashState extends State<RouteSplash> {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Spacing.l),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               FilledButton(
                 onPressed: onRetry,
                 child: const Text('Újrapróbálás'),

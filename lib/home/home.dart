@@ -20,6 +20,7 @@ import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/home/widgets/tab_reselect.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/adaptive.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:provider/provider.dart';
 
@@ -97,7 +98,7 @@ class ChurchSuggestion extends Suggestion {
       leading: AspectRatio(
         aspectRatio: 1,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(Radii.s),
           child: FadeInImage.assetNetwork(
             fit: BoxFit.cover,
             placeholder: 'assets/images/church_blurred.png',
@@ -144,7 +145,7 @@ class CitySuggestion extends Suggestion {
       leading: AspectRatio(
         aspectRatio: 1,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(Radii.s),
           child: Icon(
             Icons.location_city,
             color: Theme.of(context).colorScheme.onSurfaceVariant,

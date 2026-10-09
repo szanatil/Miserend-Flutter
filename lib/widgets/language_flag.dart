@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// The Hungarian name of each `nyelvek` code with a flag in `assets/flags/`
 /// — the language it marks, not the country whose flag is borrowed
@@ -63,7 +64,7 @@ class LanguageFlag extends StatelessWidget {
           border: Border.all(
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(Radii.xs),
         ),
         child: SvgPicture.asset('assets/flags/$code.svg', fit: BoxFit.contain),
       ),

@@ -164,7 +164,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// Every section of the page, in reading order.
   Widget _sections() {
     return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: Spacing.xl),
       children: [
         _churchName(),
         _actionButtons(),
@@ -197,7 +197,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     final address = _address();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.l,
+        Spacing.l,
+        Spacing.l,
+        Spacing.s,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -211,13 +216,13 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             ),
           if (address.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: InkWell(
                 onTap: _showLocationOnMap,
                 child: Row(
                   children: [
                     Icon(Icons.place_outlined, size: 18, color: _secondaryText),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: Spacing.s),
                     Expanded(
                       child: Text(
                         address,
@@ -235,6 +240,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
+  /// A heading inside a section, such as "Ma" (DESIGN.md TI2).
+  TextStyle? get _sectionTitle => Theme.of(
+    context,
+  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+
   /// Secondary text and its icons (DESIGN.md SZ5, IK4).
   Color get _secondaryText => Theme.of(context).colorScheme.onSurfaceVariant;
 
@@ -249,11 +259,11 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   Widget _actionButtons() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.s),
       // Wraps rather than overflows on a narrow screen with large text.
       child: Wrap(
         alignment: WrapAlignment.center,
-        spacing: 24,
+        spacing: Spacing.xl,
         runSpacing: Spacing.s,
         children: [
           _actionButton(
@@ -303,7 +313,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       onPressed: onPressed,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        spacing: 8,
+        spacing: Spacing.s,
         children: [Icon(icon, size: 32, color: iconColor), Text(label)],
       ),
     );
@@ -354,20 +364,17 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Ma', style: Theme.of(context).textTheme.titleLarge),
+          Text('Ma', style: _sectionTitle),
           _massListWidgetForDay(0),
           // On a Sunday the two headings would name the same day, and the
           // section would repeat itself.
           if (sundayOffset != 0) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Most vasárnap',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            const SizedBox(height: Spacing.s),
+            Text('Most vasárnap', style: _sectionTitle),
             _massListWidgetForDay(sundayOffset),
           ],
           if (note.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.s),
             ExpandableInfoTile(
               title: 'Megjegyzés a miserendhez',
               text: note,
@@ -404,7 +411,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 : 'Nincs adat erről a napról';
       }
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
         child: Text(
           text,
           style: Theme.of(
@@ -415,10 +422,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
+        spacing: Spacing.s,
+        runSpacing: Spacing.s,
         children: [for (final mass in masses) _timeChip(mass)],
       ),
     );
@@ -449,7 +456,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      // With each card's own margin, the first and last card stand the
+      // screen edge's distance in, in line with the sections (TK2).
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.l - Spacing.xs,
+        vertical: Spacing.xs,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [for (final offset in days) _getMassListCardForDay(offset)],
@@ -460,7 +472,8 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   Widget _getMassListCardForDay(int dayOffset) {
     final dateTime = _today.addCalendarDays(dayOffset);
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      // Half the gap between cards on either side (TK2).
+      margin: const EdgeInsets.symmetric(horizontal: Spacing.xs),
       child: ConstrainedBox(
         // Grows with the text, so that a short day's card is not a sliver at
         // any text size.
@@ -468,7 +481,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           minWidth: MediaQuery.textScalerOf(context).scale(_dayCardMinWidth),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(Spacing.l),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -478,7 +491,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               Text(DayLabel.date.format(dateTime)),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.s),
               // On one line, so that every day's card is as tall as the
               // others; the strip scrolls sideways for a wide one.
               Row(
@@ -554,7 +567,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.l,
+        Spacing.l,
+        Spacing.l,
+        Spacing.s,
+      ),
       child: Text(
         'Frissítve: ${DayLabel.date.format(updatedAt)}',
         style: Theme.of(
@@ -592,17 +610,17 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           ),
           if (gettingThere.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: ExpandableInfoTile(text: gettingThere),
             ),
           const Padding(
-            padding: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.only(top: Spacing.s),
             child: Divider(height: 1),
           ),
           GestureDetector(
             onTap: _showDirectionsOnMap,
             child: Padding(
-              padding: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: Text(
                 'ÚTVONAL',
                 style: Theme.of(context).textTheme.titleMedium!.apply(

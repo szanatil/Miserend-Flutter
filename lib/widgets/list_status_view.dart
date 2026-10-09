@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// Full-page spinner with a caption, shown while a list is still being built.
 class LoadingView extends StatelessWidget {
@@ -14,7 +15,7 @@ class LoadingView extends StatelessWidget {
         children: [
           const CircularProgressIndicator(),
           Padding(
-            padding: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.only(top: Spacing.l),
             child: Text(message),
           ),
         ],
@@ -33,7 +34,7 @@ class MessageView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.l),
         child: Text(message, textAlign: TextAlign.center),
       ),
     );

@@ -441,7 +441,7 @@ void main() {
       }
 
       testWidgets('a group is a primary circle with an onPrimary ring and '
-          'count', (tester) async {
+          'count, the count labelLarge w700', (tester) async {
         await pumpMap(tester);
         final scheme = schemeOf(brightness);
 
@@ -460,7 +460,13 @@ void main() {
                 as BoxDecoration;
         expect(circle.color, scheme.primary);
         expect(circle.border, Border.all(color: scheme.onPrimary, width: 2));
-        expect(drawnStyle(tester, count).color, scheme.onPrimary);
+        final style = drawnStyle(tester, count);
+        expect(style.color, scheme.onPrimary);
+        expect(
+          style.fontSize,
+          Theme.of(tester.element(count)).textTheme.labelLarge!.fontSize,
+        );
+        expect(style.fontWeight, FontWeight.w700);
       });
 
       testWidgets('the user\'s own dot is userLocation with an onUserLocation '
@@ -482,7 +488,9 @@ void main() {
         );
       });
 
-      testWidgets('the attribution reads on the map overlay', (tester) async {
+      testWidgets('the attribution reads on the map overlay, in labelSmall', (
+        tester,
+      ) async {
         await pumpMap(tester);
         final attribution = find.text('© OpenStreetMap contributors © CARTO');
 
@@ -492,9 +500,11 @@ void main() {
               .first,
         );
         expect(box.color, miserendColorsOf(brightness).mapOverlay);
+        final style = drawnStyle(tester, attribution);
+        expect(style.color, schemeOf(brightness).onSurface);
         expect(
-          drawnStyle(tester, attribution).color,
-          schemeOf(brightness).onSurface,
+          style.fontSize,
+          Theme.of(tester.element(attribution)).textTheme.labelSmall!.fontSize,
         );
       });
     });

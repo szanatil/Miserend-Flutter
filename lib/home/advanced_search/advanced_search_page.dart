@@ -104,12 +104,12 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   static const double _loadAhead = 2 * _rowExtent;
 
   /// A card with the room its [Card] margin takes around it.
-  static const double _rowExtent = ChurchCard.height + 8;
-  static const double _listPadding = 8;
+  static const double _rowExtent = ChurchCard.height + Spacing.s;
+  static const double _listPadding = Spacing.s;
 
   /// The list end's spinner and the room around it.
   static const double _spinnerSize = 24;
-  static const double _listEndPadding = 16;
+  static const double _listEndPadding = Spacing.l;
 
   /// About five cities, leaving the fields below in sight.
   static const double _citySuggestionsMaxHeight = 240;
@@ -329,7 +329,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     final canSearch = _criteriaOf(_conditions).canSearch;
     final day = _dayOf(_dayChoice);
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.s),
       children: [
         SectionCard(
           title: 'Feltételek',
@@ -351,13 +351,18 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                 onSubmitted: (_) => _cityFocus.requestFocus(),
                 onTapOutside: _unfocus,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.l),
               _cityField(),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.l),
               _languageRow(),
-              const SizedBox(height: 8),
-              Text('Nap', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.l),
+              Text(
+                'Nap',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: Spacing.s),
               _dayChips(),
               if (day != null) ...[
                 SwitchListTile(
@@ -372,21 +377,21 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                       Expanded(
                         child: _timeField('-tól', _from, (t) => _from = t),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: Spacing.l),
                       Expanded(
                         child: _timeField('-ig', _until, (t) => _until = t),
                       ),
                     ],
                   ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               FilledButton(
                 onPressed: canSearch ? _search : null,
                 child: const Text('Keresés'),
               ),
               if (!canSearch)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: Spacing.s),
                   child: Text(
                     _locating
                         ? 'Adj meg nevet vagy települést, vagy várd meg, '
@@ -515,7 +520,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                 : choice.label,
     };
     return Wrap(
-      spacing: 8,
+      spacing: Spacing.s,
       children: [
         for (final MapEntry(key: choice, value: label) in labels.entries)
           ChoiceChip(
@@ -657,7 +662,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         Positioned(
           left: 0,
           right: 0,
-          bottom: 16,
+          bottom: Spacing.l,
           child: Center(
             child: ResultCounter(
               controller: _scroll,
@@ -677,7 +682,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   /// between pages, so the end of the list does not jump.
   Widget _listEnd(AdvancedSearchResultPage last) {
     if (!_loading && last.hasMore) {
-      return const SizedBox(height: 2 * _listEndPadding + _spinnerSize);
+      return const SizedBox(
+        height: _listEndPadding + _spinnerSize + _listEndPadding,
+      );
     }
     if (_loading) {
       return const Padding(
@@ -691,7 +698,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       );
     }
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(_listEndPadding),
       child: Text(
         'Nincs több találat · ${last.found} találat',
         textAlign: TextAlign.center,
@@ -742,11 +749,11 @@ class _Summary extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(Spacing.l),
           child: Row(
             children: [
               Icon(Icons.filter_list, color: iconColor),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.s),
               Expanded(child: Text(text)),
               Icon(Icons.keyboard_arrow_down, color: iconColor),
             ],

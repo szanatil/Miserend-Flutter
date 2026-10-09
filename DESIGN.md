@@ -52,8 +52,6 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
 
-_Ismert eltérés: nyers térközök, lekerekítések a widgetekben: #59._
-
 ## SZ. Szín
 
 **SZ1 — A séma a lilából generálódik.** `ColorScheme.fromSeed(seedColor: Color(0xFF5C27AE), dynamicSchemeVariant: DynamicSchemeVariant.fidelity, brightness: …)`, világos és sötét változatban. Világos módban a `primary` pontosan `#5C27AE`; ha a generálás eltér, a `primary` `copyWith`-szel rögzített. Más seed, `ColorScheme.fromSwatch` és kézzel összerakott `ColorScheme` nincs.
@@ -124,8 +122,6 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 **TI3 — Az időpont a kártya legerősebb eleme** (AL1). Ugyanazon a kártyán nincs nála nagyobb vagy vastagabb szöveg.
 
 **TI4 — Számjegyek egymás alatt.** Minden időpont és távolság `FontFeature.tabularFigures()`-szel áll, hogy a listán egymás alá igazodjanak.
-
-_Ismert eltérés: szakaszcímek `titleLarge`/`titleSmall`-lal, `fontSize` a térképen (#59)._
 
 ## TK. Térköz
 
@@ -305,15 +301,13 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 - **Saját helyzet** (spec 0006): `userLocation` pötty `onUserLocation` gyűrűvel, finom árnyékkal (MÉ2).
 - **Forrásmegjelölés**: háttér `mapOverlay`, szöveg `labelSmall` `onSurface`.
 
-_Ismert eltérés: a csoport és a forrásmegjelölés nyers betűmérettel (#59)._
-
 **KO18 — Térképi kártya.** Lebegő elem: `surfaceContainerLow`, forma `Radii.l`, `elevation: 3`, a képernyő szélétől és a biztonságos területtől `Spacing.l`.
 
 **KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül, Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon `onPhoto`, alatta `photoScrim` sötét átmenet biztosítja az AA kontrasztot (SZ3). A lapozójelölő pöttyei közül az aktuális fotóé telt, a többié gyűrű: alakjuk különbözteti meg őket, nem halványabb szín (SZ5). A fotó tetején a status bar alatt teljes erejű `photoScrim` áll, amely a címsor alján átlátszóba fut; amíg a fotó a címsor alatt van, a status bar ikonjai világosak, a vissza gomb pedig `photoScrim` korongon `onPhoto` színű. Összecsukott fejlécnél a vissza gomb és a status bar a címsoré (KO2).
 
 **KO20 — Lebegő számláló** (pl. a részletes kereső „8 / 42 találat" felirata, spec 0010). Nem badge (nem állapot) és nem chip (nem egy elem adata), hanem a lista egészéről szóló, ideiglenes lebegő felirat. Alul középen, a biztonságos területtől `Spacing.l`-re; háttér `inverseSurface`, szöveg `onInverseSurface` `labelLarge`, táblázatos számjegyekkel, forma `Radii.full`, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Görgetés közben látszik, a görgetés vége után 1,5 s-mal `Durations.medium1` alatt elhalványul. Nem interaktív, árnyéka nincs.
 
-_Ismert eltérés: 300 ms-os halványulás (#64); nyers lekerekítés és belső térköz (#59)._
+_Ismert eltérés: 300 ms-os halványulás (#64)._
 
 ## AM. Akadálymentesség
 
