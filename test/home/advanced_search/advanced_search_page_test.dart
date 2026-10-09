@@ -494,4 +494,65 @@ void main() {
       TargetPlatform.iOS,
     }),
   );
+
+  group('the time window', () {
+    /// Picks [hour] o'clock in the [field]'s M3 time picker.
+    Future<void> pickHour(WidgetTester tester, String field, int hour) async {
+      await tester.tap(find.widgetWithText(InputDecorator, field));
+      await tester.pumpAndSettle();
+      // The dial's numbers are painted, so the hour is typed instead.
+      await tester.tap(find.byIcon(Icons.keyboard_outlined));
+      await tester.pumpAndSettle();
+      final fields = find.descendant(
+        of: find.byType(TimePickerDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(fields.at(0), '$hour');
+      await tester.enterText(fields.at(1), '00');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kész'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openWindow(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(430, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await pumpPage(tester, FakeAdvancedSearchLoader([]));
+      await tester.tap(find.text('Vasárnap'));
+      await tester.pump();
+      await tester.tap(find.text('Egész nap'));
+      await tester.pumpAndSettle();
+      expect(find.text('8:00'), findsOneWidget);
+      expect(find.text('12:00'), findsOneWidget);
+    }
+
+    testWidgets('a start after the end moves the end along', (tester) async {
+      await openWindow(tester);
+
+      await pickHour(tester, '-tól', 15);
+
+      expect(find.text('15:00'), findsNWidgets(2));
+    });
+
+    testWidgets('an end before the start moves the start along', (
+      tester,
+    ) async {
+      await openWindow(tester);
+
+      await pickHour(tester, '-ig', 6);
+
+      expect(find.text('6:00'), findsNWidgets(2));
+    });
+
+    testWidgets('a start before the end leaves the end alone', (tester) async {
+      await openWindow(tester);
+
+      await pickHour(tester, '-tól', 10);
+
+      expect(find.text('10:00'), findsOneWidget);
+      expect(find.text('12:00'), findsOneWidget);
+    });
+  });
 }

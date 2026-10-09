@@ -219,18 +219,13 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   AdvancedSearchCriteria _criteriaOf(_Conditions conditions) {
     final day = _dayOf(conditions.dayChoice);
     final window = day != null && !conditions.wholeDay;
-    // A window typed back to front means the same hours.
-    final (from, until) =
-        _minutes(conditions.from) <= _minutes(conditions.until)
-            ? (conditions.from, conditions.until)
-            : (conditions.until, conditions.from);
     return AdvancedSearchCriteria(
       name: conditions.name,
       city: conditions.city,
       language: conditions.language,
       day: day,
-      from: window ? from : null,
-      until: window ? until : null,
+      from: window ? conditions.from : null,
+      until: window ? conditions.until : null,
       position: _position,
     );
   }
@@ -375,11 +370,19 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _timeField('-tól', _from, (t) => _from = t),
+                        // The window never runs back to front: moving one
+                        // end past the other takes the other along.
+                        child: _timeField('-tól', _from, (t) {
+                          _from = t;
+                          if (_minutes(_until) < _minutes(t)) _until = t;
+                        }),
                       ),
                       const SizedBox(width: Spacing.l),
                       Expanded(
-                        child: _timeField('-ig', _until, (t) => _until = t),
+                        child: _timeField('-ig', _until, (t) {
+                          _until = t;
+                          if (_minutes(_from) > _minutes(t)) _from = t;
+                        }),
                       ),
                     ],
                   ),
