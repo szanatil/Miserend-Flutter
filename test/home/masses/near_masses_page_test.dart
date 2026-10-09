@@ -21,6 +21,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../church_details/fake_church_schedule_loader.dart';
 import '../../fake_location_provider.dart';
+import '../churches/list_surface.dart';
 
 NearbyMassesItem _mass({
   int church = 1,
@@ -124,10 +125,11 @@ void main() {
     NearestMassesLoader loader, {
     bool isActive = true,
     LocationProvider? location,
+    Brightness brightness = Brightness.light,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: miserendTheme(Brightness.light),
+        theme: miserendTheme(brightness),
         home: Scaffold(
           body: NearMassesPage(
             loader: loader,
@@ -379,25 +381,21 @@ void main() {
   });
 
   group('card', () {
-    testWidgets('the list sits on the page\'s own surface, no grey ground '
-        '(SZ5)', (tester) async {
-      await pumpPage(
-        tester,
-        _FakeLoader([
-          [_mass(start: _at(18, 30))],
-        ]),
-      );
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, the list sits on the page\'s own surface, '
+          'no grey ground (SZ5)', (tester) async {
+        await pumpPage(
+          tester,
+          _FakeLoader([
+            [_mass(start: _at(18, 30))],
+          ]),
+          brightness: brightness,
+        );
 
-      expect(
-        find.ancestor(
-          of: find.byType(ListView),
-          matching: find.byWidgetPredicate(
-            (w) => w is Container && w.color != null,
-          ),
-        ),
-        findsNothing,
-      );
-    });
+        expect(find.text('18:30'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      });
+    }
 
     testWidgets('keeps the city and shows the distance', (tester) async {
       await pumpPage(

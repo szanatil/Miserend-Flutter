@@ -317,18 +317,30 @@ void main() {
     });
   }
 
-  testWidgets('an unselected favourite is an outline in the secondary '
-      'colour, not the button\'s primary (IK4)', (tester) async {
-    final page = _page(_emptyDays());
-    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, an unselected favourite is an outline in the '
+        'secondary colour, not the button\'s primary (IK4)', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+      );
 
-    expect(
-      tester.widget<Icon>(find.byIcon(Icons.favorite_border)).color,
-      schemeOf(Brightness.light).onSurfaceVariant,
-    );
-  });
+      expect(
+        tester.widget<Icon>(find.byIcon(Icons.favorite_border)).color,
+        schemeOf(brightness).onSurfaceVariant,
+      );
+    });
+  }
 
   group('the back button over the photo (KO19)', () {
+    // The back button is the platform's own (PL2), so each case runs on both.
+    const platforms = TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    });
+
     SliverAppBar appBar(WidgetTester tester) =>
         tester.widget<SliverAppBar>(find.byType(SliverAppBar));
 
@@ -351,7 +363,7 @@ void main() {
           appBar(tester).systemOverlayStyle!.statusBarIconBrightness,
           Brightness.light,
         );
-      });
+      }, variant: platforms);
     }
 
     testWidgets('once the header has collapsed, it is the title bar\'s own '
@@ -370,7 +382,7 @@ void main() {
       expect(appBar(tester).leading, isNull);
       expect(appBar(tester).systemOverlayStyle, isNull);
       expect(find.byType(BackButton), findsOneWidget);
-    });
+    }, variant: platforms);
 
     testWidgets('with nowhere to go back to, there is no back button', (
       tester,
@@ -379,7 +391,7 @@ void main() {
       await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
 
       expect(find.byType(BackButton), findsNothing);
-    });
+    }, variant: platforms);
   });
 
   group('fits (EH4)', () {

@@ -140,44 +140,47 @@ void main() {
     });
   }
 
-  for (final photos in [const <String>[], _two.sublist(0, 1), _two]) {
-    testWidgets('with ${photos.length} photo(s), the status bar stands on the '
-        'full scrim, which fades out below the toolbar (KO19)', (tester) async {
-      const statusBar = 47.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: miserendTheme(Brightness.light),
-          home: MediaQuery(
-            data: const MediaQueryData(
-              padding: EdgeInsets.only(top: statusBar),
-            ),
-            child: Scaffold(
-              body: SizedBox(
-                height: 300,
-                child: ChurchPhotoHeader(
-                  photos: photos,
+  for (final brightness in Brightness.values) {
+    for (final photos in [const <String>[], _two.sublist(0, 1), _two]) {
+      testWidgets('with ${photos.length} photo(s) in $brightness, the status '
+          'bar stands on the full scrim, which fades out below the toolbar '
+          '(KO19)', (tester) async {
+        const statusBar = 47.0;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: miserendTheme(brightness),
+            home: MediaQuery(
+              data: const MediaQueryData(
+                padding: EdgeInsets.only(top: statusBar),
+              ),
+              child: Scaffold(
+                body: SizedBox(
                   height: 300,
-                  heroPrefix: 'church-38-photo',
+                  child: ChurchPhotoHeader(
+                    photos: photos,
+                    height: 300,
+                    heroPrefix: 'church-38-photo',
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      final colors = miserendColorsOf(Brightness.light);
+        );
+        final colors = miserendColorsOf(brightness);
 
-      final scrim = find.byKey(ChurchPhotoHeader.topScrimKey);
-      final height = tester.getSize(scrim).height;
-      expect(height, statusBar + kToolbarHeight);
-      final gradient =
-          (tester.widget<DecoratedBox>(scrim).decoration as BoxDecoration)
-              .gradient!;
-      expect(gradient.colors, [
-        colors.photoScrim,
-        colors.photoScrim,
-        Colors.transparent,
-      ]);
-      expect(gradient.stops, [0, statusBar / height, 1]);
-    });
+        final scrim = find.byKey(ChurchPhotoHeader.topScrimKey);
+        final height = tester.getSize(scrim).height;
+        expect(height, statusBar + kToolbarHeight);
+        final gradient =
+            (tester.widget<DecoratedBox>(scrim).decoration as BoxDecoration)
+                .gradient!;
+        expect(gradient.colors, [
+          colors.photoScrim,
+          colors.photoScrim,
+          Colors.transparent,
+        ]);
+        expect(gradient.stops, [0, statusBar / height, 1]);
+      });
+    }
   }
 }
