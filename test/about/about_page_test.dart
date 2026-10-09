@@ -111,6 +111,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('the Visszajelzés button is no hero: the Térkép tab\'s '
+      'button is alive beside it, and two default tags break the next '
+      'full-screen page', (tester) async {
+    await pumpPage(tester);
+
+    expect(
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .heroTag,
+      isNull,
+    );
+  });
+
   testWidgets('shows the version beside the developer', (tester) async {
     await pumpPage(tester);
     expect(find.text('Névjegy'), findsOneWidget);

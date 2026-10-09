@@ -166,6 +166,10 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 bottom:
                     entry != null ? ChurchCard.height + 2 * _edgeGap : _edgeGap,
                 child: FloatingActionButton(
+                  // No hero: the Névjegy tab's button lives beside this one,
+                  // and two default tags fail a full-screen push over the
+                  // tabs.
+                  heroTag: null,
                   onPressed: _goToMyPosition,
                   child: const Icon(Icons.my_location_rounded),
                 ),

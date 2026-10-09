@@ -93,6 +93,9 @@ class _AboutPageState extends State<AboutPage> {
       // Floats so it is in view without scrolling on any phone; in the list
       // it would sit below the fold under the church of the day.
       floatingActionButton: FloatingActionButton.extended(
+        // No hero: the Térkép tab's button lives beside this one, and two
+        // default tags fail a full-screen push over the tabs.
+        heroTag: null,
         onPressed: () => _feedback.send(context),
         icon: const Icon(Icons.mail_outline_rounded),
         label: const Text('Visszajelzés'),

@@ -199,6 +199,19 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('the my-position button is no hero: the Névjegy tab\'s '
+      'button is alive beside it, and two default tags break the next '
+      'full-screen page', (tester) async {
+    await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
+
+    expect(
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .heroTag,
+      isNull,
+    );
+  });
+
   group('markers', () {
     testWidgets('are every church the cache knows', (tester) async {
       await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
