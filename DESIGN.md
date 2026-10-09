@@ -236,8 +236,6 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
 
-_Ismert eltérés: a tartalmi ikonok nem `_rounded` (#61)._
-
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 
 **IK4 — Az ikon színe szerep**: `onSurfaceVariant` alapból, `primary` kiválasztva, a konténer `on…` szerepe konténeren.

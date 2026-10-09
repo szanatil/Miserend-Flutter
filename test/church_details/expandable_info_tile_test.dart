@@ -24,14 +24,14 @@ void main() {
 
     expect(find.text('Több'), findsNothing);
     expect(find.text('Kevesebb'), findsNothing);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
   });
 
   testWidgets('collapsed shows a down arrow and "Több"', (tester) async {
     await tester.pumpWidget(_host(_long));
 
     expect(find.text('Több'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
     // The old wording is gone.
     expect(find.text('Tovább'), findsNothing);
   });
@@ -43,8 +43,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Kevesebb'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_up), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    expect(find.byIcon(Icons.keyboard_arrow_up_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
   });
 
   testWidgets('collapses again on a second tap', (tester) async {
@@ -56,6 +56,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Több'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
   });
 }

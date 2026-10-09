@@ -45,8 +45,9 @@ class AccessibilityTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            state == 'no' ? Icons.not_accessible : Icons.accessible,
-            size: 20,
+            state == 'no'
+                ? Icons.not_accessible_rounded
+                : Icons.accessible_rounded,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: Spacing.s),

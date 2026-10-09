@@ -194,7 +194,7 @@ void main() {
   /// Asks for the position the way the my-position button does, and lets the
   /// answer come back.
   Future<void> tapMyPosition(WidgetTester tester) async {
-    await tester.tap(find.byIcon(Icons.my_location));
+    await tester.tap(find.byIcon(Icons.my_location_rounded));
     await tester.pump();
     await tester.pump();
   }

@@ -71,4 +71,20 @@ void main() {
       });
     });
   }
+
+  for (final failure in ApiFailure.values) {
+    testWidgets('the ${failure.name} icon is rounded and strip-sized, 18 '
+        '(IK1, IK3)', (tester) async {
+      await pumpBanner(tester, failure, Brightness.light);
+
+      expect(
+        failure.icon,
+        {
+          ApiFailure.noConnection: Icons.signal_wifi_off_rounded,
+          ApiFailure.serverError: Icons.cloud_off_rounded,
+        }[failure],
+      );
+      expect(tester.getSize(find.byIcon(failure.icon)), const Size(18, 18));
+    });
+  }
 }

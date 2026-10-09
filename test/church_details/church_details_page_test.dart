@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../database/fake_favorites_service.dart';
 import '../theme/theme_harness.dart';
 
 final Church _church = Church(
@@ -180,6 +181,7 @@ void main() {
     double textScale = 1,
     double height = 4000,
     bool pushed = false,
+    FavoritesService? favoritesService,
   }) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
@@ -192,7 +194,7 @@ void main() {
 
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
-        value: favorites,
+        value: favoritesService ?? favorites,
         child: MaterialApp(
           theme: miserendTheme(brightness),
           home:
@@ -348,11 +350,32 @@ void main() {
       );
 
       expect(
-        tester.widget<Icon>(find.byIcon(Icons.favorite_border)).color,
+        tester.widget<Icon>(find.byIcon(Icons.favorite_border_rounded)).color,
         schemeOf(brightness).onSurfaceVariant,
       );
     });
   }
+
+  testWidgets('the favourite is filled only while selected: '
+      'favorite_rounded, otherwise favorite_border_rounded (IK2)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      favoritesService: FakeFavoritesService([]),
+    );
+
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_rounded), findsNothing);
+
+    await tester.tap(find.text('Kedvencekhez'));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_border_rounded), findsNothing);
+  });
 
   group('the back button over the photo (KO19)', () {
     // The back button is the platform's own (PL2), so each case runs on both.

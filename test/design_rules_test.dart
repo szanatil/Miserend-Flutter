@@ -23,18 +23,7 @@ final Map<String, RegExp> _rules = {
 /// removes it. A count may only fall: a new deviation fails the test, and a
 /// fixed one fails it too until its entry is lowered or removed, so the list
 /// never hides a regression behind a fix.
-const Map<String, Map<String, (int, String)>> _knownDeviations = {
-  'lib/about/about_page.dart': {'icon': (4, '#61')},
-  'lib/church_details/church_details_page.dart': {'icon': (3, '#61')},
-  'lib/church_details/widgets/church_info_tiles.dart': {'icon': (1, '#61')},
-  'lib/church_details/widgets/contact_card.dart': {'icon': (2, '#61')},
-  'lib/church_details/widgets/expandable_info_tile.dart': {'icon': (2, '#61')},
-  'lib/home/advanced_search/advanced_search_page.dart': {'icon': (7, '#61')},
-  'lib/home/home.dart': {'icon': (2, '#61')},
-  'lib/home/map/map_page.dart': {'icon': (1, '#61')},
-  'lib/home/map/widgets/position_unavailable_banner.dart': {'icon': (1, '#61')},
-  'lib/widgets/offline_notice.dart': {'icon': (3, '#61')},
-};
+const Map<String, Map<String, (int, String)>> _knownDeviations = {};
 
 /// Counts the lines of each `lib/` file outside `lib/theme/` that match a
 /// rule, skipping comment lines.

@@ -94,7 +94,7 @@ class _AboutPageState extends State<AboutPage> {
       // it would sit below the fold under the church of the day.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _feedback.send(context),
-        icon: const Icon(Icons.mail_outline),
+        icon: const Icon(Icons.mail_outline_rounded),
         label: const Text('Visszajelzés'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -147,10 +147,10 @@ class _AboutPageState extends State<AboutPage> {
           Card(
             margin: SectionCard.margin,
             child: ListTile(
-              leading: const Icon(Icons.language),
+              leading: const Icon(Icons.language_rounded),
               title: const Text('miserend.hu'),
               subtitle: const Text('A miserend webes változata'),
-              trailing: const Icon(Icons.open_in_new),
+              trailing: const Icon(Icons.open_in_new_rounded),
               onTap:
                   () => launchExternal(
                     context,
@@ -175,7 +175,7 @@ class _AboutPageState extends State<AboutPage> {
           spacing: Spacing.s,
           children: [
             Flexible(child: Text(label, style: TextStyle(color: color))),
-            Icon(Icons.open_in_new, size: 16, color: color),
+            Icon(Icons.open_in_new_rounded, color: color),
           ],
         ),
       ),

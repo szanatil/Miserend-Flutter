@@ -334,7 +334,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
               _applied == null
                   ? null
                   : IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_up),
+                    icon: const Icon(Icons.keyboard_arrow_up_rounded),
                     tooltip: 'Összecsukás',
                     onPressed: _collapse,
                   ),
@@ -451,7 +451,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     children: [
                       for (final city in options)
                         ListTile(
-                          leading: const Icon(Icons.location_city),
+                          leading: const Icon(Icons.location_city_rounded),
                           title: Text(city),
                           onTap: () => onSelected(city),
                         ),
@@ -470,12 +470,12 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       contentPadding: EdgeInsets.zero,
       leading:
           language == null
-              ? const Icon(Icons.translate)
+              ? const Icon(Icons.translate_rounded)
               : LanguageFlag(language),
       title: Text(
         'Nyelv: ${language == null ? 'bármelyik' : languageName(language)}',
       ),
-      trailing: const Icon(Icons.arrow_drop_down),
+      trailing: const Icon(Icons.arrow_drop_down_rounded),
       onTap: _pickLanguage,
     );
   }
@@ -491,7 +491,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         const MiserendSheetAction(
           label: 'Bármelyik',
           value: '',
-          leading: Icon(Icons.translate),
+          leading: Icon(Icons.translate_rounded),
         ),
         for (final code in languages)
           MiserendSheetAction(
@@ -733,10 +733,10 @@ class _Summary extends StatelessWidget {
           padding: const EdgeInsets.all(Spacing.l),
           child: Row(
             children: [
-              Icon(Icons.filter_list, color: iconColor),
+              Icon(Icons.filter_list_rounded, color: iconColor),
               const SizedBox(width: Spacing.s),
               Expanded(child: Text(text)),
-              Icon(Icons.keyboard_arrow_down, color: iconColor),
+              Icon(Icons.keyboard_arrow_down_rounded, color: iconColor),
             ],
           ),
         ),

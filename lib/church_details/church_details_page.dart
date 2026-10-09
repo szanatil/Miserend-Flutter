@@ -222,7 +222,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 onTap: _showLocationOnMap,
                 child: Row(
                   children: [
-                    Icon(Icons.place_outlined, size: 18, color: _secondaryText),
+                    Icon(Icons.place_rounded, color: _secondaryText),
                     const SizedBox(width: Spacing.s),
                     Expanded(
                       child: Text(
@@ -263,7 +263,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         runSpacing: Spacing.s,
         children: [
           _actionButton(
-            icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+            icon:
+                isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
             // Like any icon, `primary` only when selected (IK4).
             iconColor:
                 isFavorite
@@ -289,7 +292,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     return GestureDetector(
       onTap: blocked ? _explainReportBlocked : null,
       child: _actionButton(
-        icon: Icons.error,
+        icon: Icons.error_outline_rounded,
         label: 'Hibajelentés',
         onPressed: blocked ? null : _openReport,
       ),
@@ -310,7 +313,7 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: Spacing.s,
-        children: [Icon(icon, size: 32, color: iconColor), Text(label)],
+        children: [Icon(icon, color: iconColor), Text(label)],
       ),
     );
   }

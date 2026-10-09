@@ -73,9 +73,8 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
                   onPressed: () => setState(() => _expanded = !_expanded),
                   icon: Icon(
                     _expanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    size: 20,
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
                   ),
                   label: Text(_expanded ? 'Kevesebb' : 'Több'),
                 ),

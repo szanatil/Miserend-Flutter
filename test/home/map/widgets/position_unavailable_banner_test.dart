@@ -36,6 +36,16 @@ void main() {
     );
   }
 
+  testWidgets('its icon is the rounded location_off, strip-sized, 18 '
+      '(IK1, IK3)', (tester) async {
+    await pumpBanner(tester, PositionUnavailableReason.serviceDisabled);
+
+    expect(
+      tester.getSize(find.byIcon(Icons.location_off_rounded)),
+      const Size(18, 18),
+    );
+  });
+
   group('the way out of each reason', () {
     testWidgets('a denied permission is asked for again, in the app', (
       tester,

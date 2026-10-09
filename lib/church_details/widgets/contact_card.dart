@@ -53,7 +53,7 @@ class ContactCard extends StatelessWidget {
           if (email.isNotEmpty)
             _row(
               context,
-              icon: Icons.mail_outline,
+              icon: Icons.mail_outline_rounded,
               label: email,
               onTap:
                   () => launchExternal(
@@ -64,7 +64,7 @@ class ContactCard extends StatelessWidget {
           for (final link in links)
             _row(
               context,
-              icon: Icons.link,
+              icon: Icons.link_rounded,
               label: _label(link),
               onTap: () {
                 final uri = Uri.tryParse(link);
@@ -95,11 +95,7 @@ class ContactCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: Spacing.s),
             Expanded(
               child: Text(

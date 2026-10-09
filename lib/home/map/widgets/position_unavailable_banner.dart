@@ -41,7 +41,7 @@ class PositionUnavailableBanner extends StatelessWidget {
     final button = PositionUnavailableView.action(reason, location, onRetry);
     return NoticeStrip(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      icon: Icons.location_off,
+      icon: Icons.location_off_rounded,
       iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
       textColor: Theme.of(context).colorScheme.onSurfaceVariant,
       text: PositionUnavailableView.message(reason, _purpose),

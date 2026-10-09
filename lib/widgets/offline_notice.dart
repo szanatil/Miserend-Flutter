@@ -77,8 +77,8 @@ extension OfflineLook on ApiFailure {
   };
 
   IconData get icon => switch (this) {
-    ApiFailure.noConnection => Icons.signal_wifi_off,
-    ApiFailure.serverError => Icons.cloud_off,
+    ApiFailure.noConnection => Icons.signal_wifi_off_rounded,
+    ApiFailure.serverError => Icons.cloud_off_rounded,
   };
 
   /// The colour of the icons, readable on [tint].
@@ -103,7 +103,7 @@ class OfflineInfoButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.info_outline),
+      icon: const Icon(Icons.info_outline_rounded),
       color: failure.iconColor(context),
       tooltip: 'Nem friss adat',
       visualDensity: VisualDensity.compact,

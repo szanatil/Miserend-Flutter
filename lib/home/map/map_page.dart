@@ -167,7 +167,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                     entry != null ? ChurchCard.height + 2 * _edgeGap : _edgeGap,
                 child: FloatingActionButton(
                   onPressed: _goToMyPosition,
-                  child: const Icon(Icons.my_location),
+                  child: const Icon(Icons.my_location_rounded),
                 ),
               ),
             ],
