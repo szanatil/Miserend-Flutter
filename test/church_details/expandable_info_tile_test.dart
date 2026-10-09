@@ -58,4 +58,15 @@ void main() {
     expect(find.text('Több'), findsOneWidget);
     expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
   });
+
+  testWidgets('the arrow is a regular icon, 24, not the button\'s 18 (IK3)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_long));
+
+    expect(
+      tester.getSize(find.byIcon(Icons.keyboard_arrow_down_rounded)),
+      const Size(24, 24),
+    );
+  });
 }

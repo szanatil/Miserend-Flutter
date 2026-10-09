@@ -42,6 +42,12 @@ final Church _church = Church(
   imageUrl: null,
 );
 
+/// Long enough for [ExpandableInfoTile] to collapse it even on a wide page.
+final String _longText = List.filled(
+  12,
+  'A templom a város legrégebbi épülete, többször átépítették.',
+).join(' ');
+
 DateTime _todayAt(int hour, int minute) {
   final now = DateTime.now();
   return DateTime(now.year, now.month, now.day, hour, minute);
@@ -377,6 +383,20 @@ void main() {
     expect(find.byIcon(Icons.favorite_border_rounded), findsNothing);
   });
 
+  testWidgets('the action buttons\' icons are regular icons, 24 (IK3)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+    for (final icon in [
+      Icons.favorite_border_rounded,
+      Icons.error_outline_rounded,
+    ]) {
+      expect(tester.getSize(find.byIcon(icon)), const Size(24, 24));
+    }
+  });
+
   group('the back button over the photo (KO19)', () {
     // The back button is the platform's own (PL2), so each case runs on both.
     const platforms = TargetPlatformVariant({
@@ -441,7 +461,16 @@ void main() {
     for (final width in eh4Widths) {
       for (final textScale in eh4TextScales) {
         testWidgets('at $width dp and text scale $textScale', (tester) async {
-          final page = _page(_scheduleWith(_todayAt(9, 0)));
+          // Every tile with an icon, so their rows are measured too.
+          final page = _page(
+            _scheduleWith(_todayAt(9, 0)),
+            church: _details(
+              description: _longText,
+              email: 'plebania@example.hu',
+              links: ['https://www.example.hu/egy-hosszu-cim'],
+              accessibility: {'wheelchair': 'limited'},
+            ),
+          );
           await pumpPage(
             tester,
             _FakeLoader(cached: page, refreshed: page),
@@ -450,6 +479,9 @@ void main() {
           );
 
           expect(find.text('Hibajelentés'), findsOneWidget);
+          expect(find.text('plebania@example.hu'), findsOneWidget);
+          expect(find.text('Több'), findsOneWidget);
+          expect(find.byIcon(Icons.accessible_rounded), findsOneWidget);
           expect(tester.takeException(), isNull);
         });
       }

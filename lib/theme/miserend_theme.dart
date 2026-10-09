@@ -79,6 +79,11 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
       ),
       margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
     ),
+    // A text button's icon is a regular one, 24, not M3's 18: 18 is for
+    // chips and strips only (IK3).
+    textButtonTheme: const TextButtonThemeData(
+      style: ButtonStyle(iconSize: WidgetStatePropertyAll(24)),
+    ),
     // Text fields are outlined and the outline has to show: Material's
     // default border was once drawn white on white, and the problem
     // report's fields had to be guessed (KO12).
