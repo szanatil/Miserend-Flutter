@@ -532,6 +532,73 @@ void main() {
     });
   });
 
+  group('the Megközelítés map\'s height', () {
+    final map = find.byType(MiserendMap);
+
+    Future<Size> mapSize(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        map,
+        200,
+        scrollable:
+            find
+                .byWidgetPredicate(
+                  (widget) =>
+                      widget is Scrollable &&
+                      widget.axisDirection == AxisDirection.down,
+                )
+                .last,
+      );
+      return tester.getSize(map);
+    }
+
+    testWidgets('on a phone it is 3:2 to its own width', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+
+      final size = await mapSize(tester);
+      expect(size.width, lessThan(360));
+      expect(size.height, moreOrLessEquals(size.width * 2 / 3));
+    });
+
+    testWidgets('in a wide window it is at most half the height', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 600,
+      );
+
+      final size = await mapSize(tester);
+      expect(size.width * 2 / 3, greaterThan(300));
+      expect(size.height, 300);
+    });
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+      await mapSize(tester);
+
+      tester.view.physicalSize = const Size(1500, 600);
+      await tester.pump();
+
+      final size = await mapSize(tester);
+      expect(size.height, 300);
+    });
+  });
+
   group('fits (EH4)', () {
     for (final width in eh4Widths) {
       for (final textScale in eh4TextScales) {

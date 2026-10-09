@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -69,6 +70,18 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// A day card's least width in the strip at text scale 1.0; a day with
   /// more masses grows wider instead of taller.
   static const double _dayCardMinWidth = 160;
+
+  /// The Megközelítés map's shape: as wide as its card, 3:2.
+  static const double _mapAspectRatio = 3 / 2;
+
+  /// The most of the screen's height the Megközelítés map takes, so a wide
+  /// window still shows the text around it.
+  static const double _mapMaxHeightShare = 1 / 2;
+
+  /// The Megközelítés map's height at [width] on a screen of [screen]: a
+  /// fixed height would be a thin strip of the map in a wide window.
+  static double _mapHeightFor(double width, Size screen) =>
+      min(width / _mapAspectRatio, screen.height * _mapMaxHeightShare);
 
   ChurchPageData? _data;
   late final DateTime _today = _midnightToday();
@@ -649,18 +662,27 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         children: [
           GestureDetector(
             onTap: _showLocationOnMap,
-            child: SizedBox(
-              height: 200,
-              child: MiserendMap(
-                interactive: false,
-                initialCenter: _location(),
-                initialZoom: 17,
-                compactAttribution: true,
-                apiKey: const String.fromEnvironment('CARTO_API_KEY'),
-                markers: [
-                  MiserendMapMarker(id: widget.church.id, point: _location()),
-                ],
-              ),
+            child: LayoutBuilder(
+              builder:
+                  (context, constraints) => SizedBox(
+                    height: _mapHeightFor(
+                      constraints.maxWidth,
+                      MediaQuery.sizeOf(context),
+                    ),
+                    child: MiserendMap(
+                      interactive: false,
+                      initialCenter: _location(),
+                      initialZoom: 17,
+                      compactAttribution: true,
+                      apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+                      markers: [
+                        MiserendMapMarker(
+                          id: widget.church.id,
+                          point: _location(),
+                        ),
+                      ],
+                    ),
+                  ),
             ),
           ),
           if (gettingThere.isNotEmpty)
