@@ -1,9 +1,10 @@
 Újdonságok
 – iPhone-on a párbeszédablakok, a választók, a kapcsolók és a lapok közötti átmenet az iOS megszokott formáját követik.
+– Tableten és széles ablakban a templom adatlapja, a templomlista és a miselista kártyái két vagy három oszlopba rendeződnek, így egyszerre több látszik belőlük.
 
 Javítások
 – Az óraátállás körüli napokon a templom miserendje a helyes napot mutatja: eddig október végén kétszer szerepelt a vasárnap, és a hétfő kimaradt.
 – A dátum- és időválasztó magyarul jelenik meg.
 – A részletes keresőben a „-tól” időpont nem lehet későbbi az „-ig”-nél: ha az egyiket a másikon túl állítod, a másik vele mozdul.
 – iPhone-on a hibajelentés választógombjai jól látszanak.
-– Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, tableten és fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.
+– Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.

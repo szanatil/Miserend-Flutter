@@ -133,6 +133,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 |---|---|
 | A képernyő vízszintes széle | `l` |
 | Kártyák között a listán | `s` |
+| Kártyák között egymás mellett, oszlopokban (EL3) | `s` |
 | Kártyán belül, a széltől | `l` |
 | Kártyán belül, sorok között | `s` |
 | Chipek között | `s` |
@@ -183,7 +184,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 - A mise jellemzőjének buborékja a misekártyán egy sorban, `ellipsis`-szel áll; koppintásra a teljes szöveg látszik (spec 0011).
 - A templom-részletező napi kártyáinak mise-chipjei egy sorban állnak: sok misés napon a kártya szélesebb lesz, nem magasabb, hogy a sáv kártyái egyforma magasak legyenek. A sáv vízszintesen görgethető, így semmi nem vész el (spec 0003).
 
-**EL3 — Széles képernyőn korlátozott tartalom.** 600 dp feletti szélességen (tablet, fekvő tájolás) a lista és az űrlap tartalma legfeljebb **640** dp széles, középre igazítva. A térkép és a fotó kitölti a teljes szélességet. Kétpaneles elrendezés nincs.
+**EL3 — Széles képernyőn oszlopok.** Az űrlap (Hibajelentés, Részletes kereső) és a Névjegy tartalma 600 dp feletti szélességen is legfeljebb **640** dp széles, középre igazítva. A templom-részletező és a Templomok, Misék lista kártyái 840 dp alatt egy, legfeljebb **640** dp-s oszlopban állnak középen; 840 dp-től **két**, 1200 dp-től **három** oszlopban, többen nem. Egy oszlop legfeljebb 640 dp; ami ezen felül marad, az két oldalt egyenlően üres. A listán a kártyák sorokban, balról jobbra és felülről lefelé követik egymást, egy sor kártyái egyforma magasak, a rövid utolsó sor kártyái sem szélesebbek; a Misék időfejléce a teljes tartalomszélességben áll, a csoportja új sorban kezdődik. A templom-részletezőn a név, a gombok és a misék a teljes tartalomszélességben állnak, alattuk a szakaszok téma szerint oszlopokban; üres téma nem hagy üres oszlopot (spec 0003). A térkép és a fotó kitölti a teljes szélességet.
 
 **EL4 — Biztonságos terület.** Tartalom nem kerül a notch, a status bar, a home indicator vagy a navigációs gesztussáv alá (`SafeArea` vagy a `Scaffold` beépített kezelése). A térkép kitöltheti, de a rajta lévő vezérlők és lebegő elemek nem.
 

@@ -25,6 +25,7 @@ import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
 import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -59,6 +60,11 @@ class ChurchDetailsPage extends StatefulWidget {
 class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// The open photo header's height, from the screen's size at the last build.
   double _headerHeight = 0;
+
+  /// Between two columns of sections: they overlap in the cards' side
+  /// margins ([SectionCard.margin], `l` each), so that the cards stand `s`
+  /// apart across, as they do down (DESIGN.md TK2).
+  static const double _columnGap = Spacing.s - 2 * Spacing.l;
 
   /// A day card's least width in the strip at text scale 1.0; a day with
   /// more masses grows wider instead of taller.
@@ -173,25 +179,59 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   /// Every section of the page, in reading order.
   Widget _sections() {
-    return ContentWidth(
+    return ContentColumns(
       padding: const EdgeInsets.only(bottom: Spacing.xl),
+      gap: _columnGap,
       builder:
-          (context, padding) => ListView(
+          (context, padding, columns) => ListView(
             padding: padding,
             children: [
+              // The masses stand across every column: the day strip scrolls
+              // sideways, and the width shows more of its days.
               _churchName(),
               _actionButtons(),
               _massCard(),
               _dayStrip(),
-              ..._adorationSection(),
-              if (_data?.confessionLive ?? false) const ConfessionTile(),
-              _mapCard(),
-              ..._contactSection(),
-              ..._infoTiles(),
+              ..._topics(columns),
               _updatedFooter(),
             ],
           ),
     );
+  }
+
+  /// The sections under the masses, by topic: the other occasions, where the
+  /// church is and how to reach it, and what else there is to know. Each
+  /// topic has a column of its own while there are enough of them; a topic
+  /// with nothing to show leaves no empty column, and of three topics in two
+  /// columns the last goes under the shorter (DESIGN.md EL3).
+  List<Widget> _topics(int columns) {
+    final topics =
+        [
+          [
+            ..._adorationSection(),
+            if (_data?.confessionLive ?? false) const ConfessionTile(),
+          ],
+          [_mapCard(), ..._contactSection()],
+          _infoTiles(),
+        ].where((topic) => topic.isNotEmpty).toList();
+    if (columns == 1 || topics.length == 1) {
+      return [for (final topic in topics) ...topic];
+    }
+
+    Widget column(List<Widget> topic) =>
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: topic);
+    if (topics.length <= columns) {
+      return [
+        CardColumns(gap: _columnGap, columns: topics.map(column).toList()),
+      ];
+    }
+    return [
+      CardColumns(
+        gap: _columnGap,
+        columns: [column(topics[0]), column(topics[1])],
+        tail: column(topics[2]),
+      ),
+    ];
   }
 
   /// The cached photo list, falling back to the single image the calling list

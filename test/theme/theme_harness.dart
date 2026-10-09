@@ -72,10 +72,21 @@ void setScreen(WidgetTester tester, Size size, {double textScale = 1}) {
 /// content is checked to stay [ContentWidth.maxWidth] in (DESIGN.md EL3).
 const double el3Width = 800;
 
-/// Checks that [content], on a screen [el3Width] wide, takes the
+/// The width of a screen that holds two columns of cards (DESIGN.md EL3).
+const double twoColumnWidth = 1000;
+
+/// The width of a screen wide enough for three columns of cards, which a
+/// one-column page still keeps to [ContentWidth.maxWidth] (DESIGN.md EL3).
+const double threeColumnWidth = 1300;
+
+/// Checks that [content], on a screen [screenWidth] wide, takes the
 /// [ContentWidth.maxWidth] the content is held to and stands in the middle.
-void expectCentredContent(WidgetTester tester, Finder content) {
+void expectCentredContent(
+  WidgetTester tester,
+  Finder content, {
+  double screenWidth = el3Width,
+}) {
   final rect = tester.getRect(content);
   expect(rect.width, ContentWidth.maxWidth);
-  expect(rect.center.dx, el3Width / 2);
+  expect(rect.center.dx, screenWidth / 2);
 }

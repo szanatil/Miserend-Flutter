@@ -318,36 +318,41 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'the results');
   }, variant: eh4Platforms);
 
-  testWidgets('on an $el3Width dp screen the conditions and the results are '
-      'at most 640 wide and centred (EL3)', (tester) async {
-    setScreen(tester, const Size(el3Width, 800));
-    await pumpPage(
-      tester,
-      FakeAdvancedSearchLoader([
-        resultPage([churchEntry(1)]),
-      ]),
-    );
+  for (final width in const [el3Width, threeColumnWidth]) {
+    testWidgets('on a $width dp screen the conditions and the results are '
+        'at most 640 wide and centred (EL3)', (tester) async {
+      setScreen(tester, Size(width, 800));
+      await pumpPage(
+        tester,
+        FakeAdvancedSearchLoader([
+          resultPage([churchEntry(1)]),
+        ]),
+      );
 
-    expectCentredContent(
-      tester,
-      find.ancestor(of: find.text('Feltételek'), matching: find.byType(Card)),
-    );
+      expectCentredContent(
+        tester,
+        find.ancestor(of: find.text('Feltételek'), matching: find.byType(Card)),
+        screenWidth: width,
+      );
 
-    await tester.enterText(field('Település'), 'Pécs');
-    await search(tester);
+      await tester.enterText(field('Település'), 'Pécs');
+      await search(tester);
 
-    expectCentredContent(
-      tester,
-      find.ancestor(of: find.text('Templom 1'), matching: find.byType(Card)),
-    );
-    expectCentredContent(
-      tester,
-      // The summary's surface, inside the margin that centres it.
-      find
-          .ancestor(of: find.text('Pécs'), matching: find.byType(InkWell))
-          .first,
-    );
-  });
+      expectCentredContent(
+        tester,
+        find.ancestor(of: find.text('Templom 1'), matching: find.byType(Card)),
+        screenWidth: width,
+      );
+      expectCentredContent(
+        tester,
+        // The summary's surface, inside the margin that centres it.
+        find
+            .ancestor(of: find.text('Pécs'), matching: find.byType(InkWell))
+            .first,
+        screenWidth: width,
+      );
+    });
+  }
 
   group('pages', () {
     testWidgets('scrolling towards the end asks for the next page', (

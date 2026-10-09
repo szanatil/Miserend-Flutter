@@ -9,6 +9,7 @@ import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
+import 'package:miserend/church_details/widgets/contact_card.dart';
 import 'package:miserend/church_details/widgets/photo_header.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
@@ -17,6 +18,7 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -593,6 +595,146 @@ void main() {
 
     expect(tester.getRect(find.byType(ChurchPhotoHeader)).width, el3Width);
     expectCentredContent(tester, find.byType(SectionCard).first);
+  });
+
+  group('on a wide screen the sections stand in columns (EL3)', () {
+    ChurchPageData full({bool adoration = true}) => _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(
+        description: _longText,
+        email: 'plebania@example.hu',
+        adorations: [
+          if (adoration)
+            Adoration(
+              start: _todayAt(0, 0),
+              end: _todayAt(23, 59),
+              kind: 'csendes',
+              info: null,
+            ),
+        ],
+      ),
+    );
+
+    // The outermost: the masses' card holds a card of its own.
+    Rect section(WidgetTester tester, String text) => tester.getRect(
+      find
+          .ancestor(of: find.text(text), matching: find.byType(SectionCard))
+          .last,
+    );
+
+    /// How far apart the cards in [left] and [right] stand, without their
+    /// side margins.
+    double gapBetween(Rect left, Rect right) =>
+        (right.left + Spacing.l) - (left.right - Spacing.l);
+
+    testWidgets('three columns: the masses across all of them, then when, '
+        'where and about, side by side, as far apart as down (TK2)', (
+      tester,
+    ) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: threeColumnWidth,
+      );
+
+      expect(section(tester, '9:00').width, threeColumnWidth);
+      final when = section(tester, 'Szentségimádás');
+      final where = section(tester, 'Megközelítés');
+      final about = section(tester, 'Leírás');
+      expect([when.left, about.right], [0, threeColumnWidth]);
+      expect(where.width, moreOrLessEquals(when.width));
+      expect(about.width, moreOrLessEquals(when.width));
+      expect(gapBetween(when, where), moreOrLessEquals(Spacing.s));
+      expect(gapBetween(where, about), moreOrLessEquals(Spacing.s));
+      expect([where.top, about.top], [when.top, when.top]);
+    });
+
+    testWidgets('two columns: when on the left, where on the right, and '
+        'about under the shorter', (tester) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: twoColumnWidth,
+      );
+
+      final when = section(tester, 'Szentségimádás');
+      final where = section(tester, 'Megközelítés');
+      final contact = tester.getRect(find.byType(ContactCard));
+      final about = section(tester, 'Leírás');
+      expect([when.left, where.right], [0, twoColumnWidth]);
+      expect(gapBetween(when, where), Spacing.s);
+      expect(where.top, when.top);
+      final shorter = when.bottom <= contact.bottom ? when : contact;
+      expect(about.topLeft, Offset(shorter.left, shorter.bottom));
+    });
+
+    testWidgets('a church with neither adoration nor confession leaves no '
+        'empty column', (tester) async {
+      final page = full(adoration: false);
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: threeColumnWidth,
+      );
+
+      expect(find.text('Szentségimádás'), findsNothing);
+      final where = section(tester, 'Megközelítés');
+      final about = section(tester, 'Leírás');
+      expect([where.left, about.right], [0, threeColumnWidth]);
+      expect(about.width, where.width);
+      expect(gapBetween(where, about), Spacing.s);
+      expect(about.top, where.top);
+    });
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: el3Width,
+      );
+      expect(
+        section(tester, 'Megközelítés').left,
+        section(tester, '9:00').left,
+      );
+
+      tester.view.physicalSize = const Size(threeColumnWidth, 4000);
+      await tester.pump();
+      expect(
+        section(tester, 'Megközelítés').top,
+        section(tester, 'Szentségimádás').top,
+      );
+
+      tester.view.physicalSize = const Size(el3Width, 4000);
+      await tester.pump();
+      expect(
+        section(tester, 'Megközelítés').left,
+        section(tester, '9:00').left,
+      );
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('fits in $brightness at $width dp and text scale '
+              '$textScale (EH3, EH4)', (tester) async {
+            final page = full();
+            await pumpPage(
+              tester,
+              _FakeLoader(cached: page, refreshed: page),
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+
+            expect(find.text('Leírás'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
   });
 
   testWidgets('shows the church name', (tester) async {

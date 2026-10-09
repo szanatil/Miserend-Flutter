@@ -330,16 +330,22 @@ void main() {
     }
   });
 
-  testWidgets(
-    'on an $el3Width dp screen the sections are at most 640 wide, centred '
-    '(EL3)',
-    (tester) async {
-      await pumpPage(tester, size: const Size(el3Width, 1800));
+  for (final width in const [el3Width, threeColumnWidth]) {
+    testWidgets(
+      'on a $width dp screen the sections are at most 640 wide, centred, in '
+      'one column (EL3)',
+      (tester) async {
+        await pumpPage(tester, size: Size(width, 1800));
 
-      expectCentredContent(
-        tester,
-        find.ancestor(of: find.text('Fejlesztő'), matching: find.byType(Card)),
-      );
-    },
-  );
+        expectCentredContent(
+          tester,
+          find.ancestor(
+            of: find.text('Fejlesztő'),
+            matching: find.byType(Card),
+          ),
+          screenWidth: width,
+        );
+      },
+    );
+  }
 }

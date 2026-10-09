@@ -646,5 +646,72 @@ void main() {
 
       expectCentredContent(tester, find.byType(ChurchCard).first);
     });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in columns, fits in $brightness at $width dp and text '
+              'scale $textScale (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              FakeChurchListLoader([crowded]),
+              FakeLocationProvider([found]),
+              brightness: brightness,
+            );
+
+            expect(find.byType(ChurchCard), findsWidgets);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
+    testWidgets('on a 1300 dp screen the cards stand three to a row, as tall '
+        'as each other (EL3)', (tester) async {
+      setScreen(tester, const Size(threeColumnWidth, 1200));
+      // A short card beside the crowded ones, and one for the second row.
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([
+          [crowded[0], _entry('Rövid'), crowded[1], crowded[2]],
+        ]),
+        FakeLocationProvider([found]),
+      );
+
+      final cards = [
+        for (var i = 0; i < 4; i++)
+          tester.getRect(find.byType(ChurchCard).at(i)),
+      ];
+      // The screen edge's distance either side; 8 between the cards (TK2).
+      expect([cards[0].left, cards[2].right], [16, 1284]);
+      expect(cards[1].left - cards[0].right, 8);
+      expect([cards[1].top, cards[2].top], everyElement(cards[0].top));
+      expect([cards[1].height, cards[2].height], everyElement(cards[0].height));
+      expect([cards[3].left, cards[3].top], [16, cards[0].bottom]);
+      expect(cards[3].width, cards[0].width);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the rows follow the window when it is resized (EL3)', (
+      tester,
+    ) async {
+      setScreen(tester, const Size(el3Width, 1200));
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([crowded]),
+        FakeLocationProvider([found]),
+      );
+      Rect card(int index) => tester.getRect(find.byType(ChurchCard).at(index));
+      expect(card(1).top, card(0).bottom);
+
+      tester.view.physicalSize = const Size(threeColumnWidth, 1200);
+      await tester.pump();
+      expect([card(1).top, card(2).top], everyElement(card(0).top));
+
+      tester.view.physicalSize = const Size(el3Width, 1200);
+      await tester.pump();
+      expect(card(1).top, card(0).bottom);
+    });
   });
 }

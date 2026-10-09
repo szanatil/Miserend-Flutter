@@ -8,6 +8,7 @@ import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
+import 'package:miserend/home/masses/mass_start_header.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
@@ -971,6 +972,69 @@ void main() {
       await pumpPage(tester, _FakeLoader([crowded]));
 
       expectCentredContent(tester, find.byType(MassCard).first);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in columns, fits in $brightness at $width dp and text '
+              'scale $textScale (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              _FakeLoader([crowded]),
+              brightness: brightness,
+            );
+
+            expect(find.byType(MassCard), findsWidgets);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
+    testWidgets('on a 1300 dp screen the cards stand three to a row, as tall '
+        'as each other, under a header across the row (EL3)', (tester) async {
+      setScreen(tester, const Size(threeColumnWidth, 1200));
+      // A long name on the second card only, so that its row has a tallest.
+      final masses = [
+        for (var i = 1; i <= 4; i++)
+          _mass(
+            church: i,
+            name: i == 2 ? crowded.first.churchName! : 'Templom $i',
+            start: _at(18, 0),
+          ),
+        _mass(church: 5, name: 'Templom 5', start: _at(19, 0)),
+      ];
+      await pumpPage(tester, _FakeLoader([masses]));
+
+      final cards = [
+        for (var i = 0; i < 5; i++) tester.getRect(find.byType(MassCard).at(i)),
+      ];
+      final headers = [
+        for (var i = 0; i < 2; i++)
+          tester.getRect(find.byType(MassStartHeader).at(i)),
+      ];
+      // The screen edge's distance either side; 8 between the cards (TK2).
+      expect([headers[0].left, headers[0].right], [16, 1284]);
+      expect([
+        cards[0].top,
+        cards[1].top,
+        cards[2].top,
+      ], everyElement(cards[0].top));
+      expect([
+        cards[0].height,
+        cards[1].height,
+        cards[2].height,
+      ], everyElement(cards[1].height));
+      expect(cards[1].left - cards[0].right, 8);
+      expect(cards[2].right, 1284);
+      // The fourth card begins a row, the next start a header of its own.
+      expect(cards[3].left, 16);
+      expect(cards[3].top, cards[1].bottom);
+      expect(cards[3].width, cards[0].width);
+      expect(headers[1].top, greaterThanOrEqualTo(cards[3].bottom));
+      expect(cards[4].left, 16);
     });
   });
 }

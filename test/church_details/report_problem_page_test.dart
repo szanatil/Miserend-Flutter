@@ -378,12 +378,18 @@ void main() {
     expect(sender.sent, isEmpty);
   }, variant: _bothPlatforms);
 
-  testWidgets('on an $el3Width dp screen the form is at most 640 wide and '
-      'centred (EL3)', (tester) async {
-    await openPage(tester, _FakeSender(), size: const Size(el3Width, 1400));
+  for (final width in const [el3Width, threeColumnWidth]) {
+    testWidgets('on a $width dp screen the form is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      await openPage(tester, _FakeSender(), size: Size(width, 1400));
 
-    expectCentredContent(tester, find.byKey(ReportProblemPage.textKey));
-  });
+      expectCentredContent(
+        tester,
+        find.byKey(ReportProblemPage.textKey),
+        screenWidth: width,
+      );
+    });
+  }
 
   testWidgets('fits a phone on its side (EL5)', (tester) async {
     await openPage(

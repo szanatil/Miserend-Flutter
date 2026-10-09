@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
@@ -12,6 +13,7 @@ import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
 import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
@@ -274,42 +276,66 @@ class _NearMassesPageState extends State<NearMassesPage>
       );
     }
 
-    // The masses come in time order, so each start's masses follow its
-    // header. The rows are built lazily, as before the headers: a card asks
-    // the cache for its photo only once it is scrolled to.
-    final rows = <NearbyMassesItem?>[];
-    for (final (index, mass) in masses.indexed) {
-      // A null row stands for the header of the mass after it.
-      if (index == 0 || masses[index - 1].start != mass.start) rows.add(null);
-      rows.add(mass);
-    }
-
-    return ContentWidth(
+    return ContentColumns(
       // The cards' own margin keeps them 8 apart (TK2).
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.l,
         vertical: Spacing.xs,
       ),
-      builder:
-          (context, padding) => ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: padding,
-            itemCount: rows.length,
-            itemBuilder: (BuildContext context, int index) {
-              final mass = rows[index];
-              if (mass == null) {
-                return MassStartHeader(mass: rows[index + 1]!, now: now);
-              }
-              return MassCard(
-                mass: mass,
-                detail: _details.of(mass),
-                thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-                onTap: () => _openChurch(mass),
-              );
-            },
-          ),
+      gap: CardRow.listGap,
+      builder: (context, padding, columns) {
+        final rows = _rows(masses, columns);
+        // The rows are built lazily, as before the headers: a card asks the
+        // cache for its photo only once it is scrolled to.
+        return ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          itemCount: rows.length,
+          itemBuilder: (BuildContext context, int index) {
+            final row = rows[index];
+            if (row.isHeader) {
+              return MassStartHeader(mass: row.masses.single, now: now);
+            }
+            final cards = [for (final mass in row.masses) _card(mass)];
+            return CardRow.of(columns, cards);
+          },
+        );
+      },
     );
   }
+
+  /// [masses], in time order, as rows: each start's header across the list,
+  /// then its masses [columns] to a row (DESIGN.md EL3). A header row holds
+  /// the start's first mass, which it names the time of.
+  static List<({bool isHeader, List<NearbyMassesItem> masses})> _rows(
+    List<NearbyMassesItem> masses,
+    int columns,
+  ) {
+    final rows = <({bool isHeader, List<NearbyMassesItem> masses})>[];
+    var first = 0;
+    while (first < masses.length) {
+      var end = first;
+      while (end < masses.length && masses[end].start == masses[first].start) {
+        end++;
+      }
+      rows.add((isHeader: true, masses: [masses[first]]));
+      for (var row = first; row < end; row += columns) {
+        rows.add((
+          isHeader: false,
+          masses: masses.sublist(row, min(row + columns, end)),
+        ));
+      }
+      first = end;
+    }
+    return rows;
+  }
+
+  Widget _card(NearbyMassesItem mass) => MassCard(
+    mass: mass,
+    detail: _details.of(mass),
+    thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
+    onTap: () => _openChurch(mass),
+  );
 
   /// The details page loads everything by id; the item only has to seed the
   /// name and the map until then.
