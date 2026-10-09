@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
@@ -449,6 +450,30 @@ void main() {
       expect(find.byType(BackButton), findsOneWidget);
     }, variant: platforms);
 
+    testWidgets('in a wide window, where the header is taller, it stays on '
+        'the photo until that header has collapsed', (tester) async {
+      final page = _page(_scheduleWith(_todayAt(9, 0)));
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 1000,
+        pushed: true,
+      );
+
+      // The header is 500 tall: 300 is past a 200 header's collapse, not
+      // past this one's.
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -300));
+      await tester.pump();
+      expect(appBar(tester).leading, isNotNull);
+      expect(appBar(tester).systemOverlayStyle, SystemUiOverlayStyle.light);
+
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -300));
+      await tester.pump();
+      expect(appBar(tester).leading, isNull);
+      expect(appBar(tester).systemOverlayStyle, isNull);
+    }, variant: platforms);
+
     testWidgets('with nowhere to go back to, there is no back button', (
       tester,
     ) async {
@@ -457,6 +482,52 @@ void main() {
 
       expect(find.byType(BackButton), findsNothing);
     }, variant: platforms);
+  });
+
+  group('the photo header\'s height (KO19)', () {
+    double photoHeight(WidgetTester tester) =>
+        tester.getSize(find.byType(ChurchPhotoHeader)).height;
+
+    testWidgets('on a phone it is 16:9 to the width', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+
+      expect(photoHeight(tester), 360 * 9 / 16);
+    });
+
+    testWidgets('in a wide window it is at most half the height', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 1000,
+      );
+
+      expect(photoHeight(tester), 500);
+    });
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 1000,
+      );
+
+      tester.view.physicalSize = const Size(1500, 1000);
+      await tester.pump();
+
+      expect(photoHeight(tester), 500);
+    });
   });
 
   group('fits (EH4)', () {

@@ -57,8 +57,8 @@ class ChurchDetailsPage extends StatefulWidget {
 }
 
 class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
-  /// Collapsed-to-expanded height of the photo header.
-  static const double _headerHeight = 200;
+  /// The open photo header's height, from the screen's size at the last build.
+  double _headerHeight = 0;
 
   /// A day card's least width in the strip at text scale 1.0; a day with
   /// more masses grows wider instead of taller.
@@ -94,11 +94,15 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     super.dispose();
   }
 
-  /// The header collapses fully once it has scrolled by all but the toolbar.
   void _headerScrolled() {
-    final under = _header.offset < _headerHeight - kToolbarHeight;
+    final under = _isPhotoUnderBar();
     if (under != _photoUnderBar) setState(() => _photoUnderBar = under);
   }
+
+  /// The header collapses fully once it has scrolled by all but the toolbar;
+  /// before the first layout it is open.
+  bool _isPhotoUnderBar() =>
+      !_header.hasClients || _header.offset < _headerHeight - kToolbarHeight;
 
   ChurchDetails? get _details => _data?.church;
 
@@ -106,6 +110,10 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // A resized or turned screen rebuilds with a new height, and the same
+    // scroll offset may then be on the other side of the collapse.
+    _headerHeight = ChurchPhotoHeader.heightFor(MediaQuery.sizeOf(context));
+    _photoUnderBar = _isPhotoUnderBar();
     return Scaffold(
       body: NestedScrollView(
         controller: _header,

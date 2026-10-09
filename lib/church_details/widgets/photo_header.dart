@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/photo_gallery_page.dart';
@@ -29,6 +30,18 @@ class ChurchPhotoHeader extends StatefulWidget {
 
   /// The dark fade at the top, under the status bar and the back button.
   static const Key topScrimKey = ValueKey('photo-top-scrim');
+
+  /// The open header's shape: as wide as the screen, 16:9.
+  static const double _aspectRatio = 16 / 9;
+
+  /// The most of the screen's height the open header takes, so a wide window
+  /// still shows content under it.
+  static const double _maxHeightShare = 1 / 2;
+
+  /// The open header's height on a screen of [size]: a fixed height would be
+  /// a thin strip of the photo in a wide window.
+  static double heightFor(Size size) =>
+      min(size.width / _aspectRatio, size.height * _maxHeightShare);
 
   @override
   State<ChurchPhotoHeader> createState() => _ChurchPhotoHeaderState();
