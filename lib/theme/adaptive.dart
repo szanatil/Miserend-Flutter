@@ -27,6 +27,59 @@ void miserendSelectionHaptic(BuildContext context) {
   if (_isCupertino(context)) unawaited(HapticFeedback.lightImpact());
 }
 
+/// A radio button row inside a [RadioGroup] (DESIGN.md PL2): the M3
+/// [RadioListTile] on Android; on iOS, the [CupertinoRadio] raised and
+/// enlarged, since at its own 14 dp with a hairline edge it hardly shows on
+/// a light page (MÉ2). It is on in the selection colour on both (SZ4).
+class MiserendRadioTile<T> extends StatelessWidget {
+  const MiserendRadioTile({
+    super.key,
+    required this.value,
+    required this.title,
+    this.contentPadding,
+  });
+
+  final T value;
+  final Widget title;
+  final EdgeInsetsGeometry? contentPadding;
+
+  /// The iOS radio's diameter: an icon's size (IK3), where its own is 14.
+  static const double _cupertinoDiameter = 24;
+
+  /// The diameter [CupertinoRadio] draws itself at.
+  static const double _cupertinoOwnDiameter = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    if (!_isCupertino(context)) {
+      return RadioListTile<T>(
+        value: value,
+        title: title,
+        activeColor: scheme.primary,
+        contentPadding: contentPadding,
+      );
+    }
+    return ListTile(
+      contentPadding: contentPadding,
+      leading: Material(
+        type: MaterialType.circle,
+        elevation: 1,
+        color: scheme.surface,
+        child: SizedBox.square(
+          dimension: _cupertinoDiameter,
+          child: Transform.scale(
+            scale: _cupertinoDiameter / _cupertinoOwnDiameter,
+            child: CupertinoRadio<T>(value: value, activeColor: scheme.primary),
+          ),
+        ),
+      ),
+      title: title,
+      onTap: () => RadioGroup.maybeOf<T>(context)?.onChanged(value),
+    );
+  }
+}
+
 /// The system icons of PL2: Material's rounded one on Android (IK1), the
 /// [CupertinoIcons] one on iOS. The back button takes its icon from the theme.
 enum SystemIcon {

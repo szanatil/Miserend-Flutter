@@ -189,10 +189,8 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
               child: Column(
                 children: [
                   for (final type in ProblemType.values)
-                    RadioListTile<ProblemType>.adaptive(
+                    MiserendRadioTile<ProblemType>(
                       value: type,
-                      // The selection colour on iOS too, not its blue (SZ4).
-                      activeColor: Theme.of(context).colorScheme.primary,
                       title: Text(_label(type)),
                       contentPadding: EdgeInsets.zero,
                     ),

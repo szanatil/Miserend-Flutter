@@ -521,4 +521,65 @@ void main() {
       }
     });
   });
+
+  group('a radio button row', () {
+    Future<void> pumpRadios(
+      WidgetTester tester, {
+      Brightness brightness = Brightness.light,
+      ValueChanged<String?>? onChanged,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: miserendTheme(brightness),
+          home: Scaffold(
+            body: RadioGroup<String>(
+              groupValue: 'a',
+              onChanged: onChanged ?? (_) {},
+              child: const Column(
+                children: [
+                  MiserendRadioTile(value: 'a', title: Text('Első')),
+                  MiserendRadioTile(value: 'b', title: Text('Második')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('chooses its value when the row is tapped', (tester) async {
+      String? chosen;
+      await pumpRadios(tester, onChanged: (value) => chosen = value);
+
+      await tester.tap(find.text('Második'));
+
+      expect(chosen, 'b');
+    }, variant: _bothPlatforms);
+
+    for (final brightness in Brightness.values) {
+      testWidgets('is the M3 radio on Android, a raised 24 dp iOS radio in the '
+          'selection colour on iOS, in $brightness (PL2, MÉ2, SZ4)', (
+        tester,
+      ) async {
+        await pumpRadios(tester, brightness: brightness);
+
+        if (!isIOS()) {
+          expect(find.byType(RadioListTile<String>), findsNWidgets(2));
+          expect(find.byType(CupertinoRadio<String>), findsNothing);
+          return;
+        }
+        final radio = find.byType(CupertinoRadio<String>).first;
+        expect(
+          tester.widget<CupertinoRadio<String>>(radio).activeColor,
+          schemeOf(brightness).primary,
+        );
+        final mark = find.ancestor(of: radio, matching: find.byType(Material));
+        expect(tester.getSize(mark.first), const Size.square(24));
+        final material = tester.widget<Material>(mark.first);
+        expect(material.type, MaterialType.circle);
+        expect(material.elevation, 1);
+        expect(material.color, schemeOf(brightness).surface);
+      }, variant: _bothPlatforms);
+    }
+  });
 }

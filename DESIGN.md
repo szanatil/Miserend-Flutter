@@ -168,7 +168,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **MÉ1 — A kártya az M3 elevated kártyája.** `surfaceContainerLow` színnel és `elevation: 1` alacsony árnyékkal válik el a `surface` háttértől. A tónus egyedül kevés: a `surfaceContainerLow` és a `surface` között a világosságkülönbség csak kb. 1,05:1, ezért a kártyának nem volna széle. Fix szürke (`Colors.black12`, `#F2F2F2`) vagy fehér laphátter nincs: a lap háttere a `Scaffold` `surface`-e (SZ5).
 
-**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
+**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel az iOS-es rádiógomb (`1`, PL2), valamint a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
 
 **MÉ3 — A címsor görgetéskor tónust kap.** `elevation: 0`, `scrolledUnderElevation: 3` (M3 alapértelmezés), árnyék nélkül.
 
@@ -218,7 +218,8 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 | Dialógus | M3 `AlertDialog` | `CupertinoAlertDialog` (`AlertDialog.adaptive`) |
 | Műveletválasztó (pl. a liturgikus nyelv választója) | M3 `showModalBottomSheet` | `CupertinoActionSheet` |
 | Dátum- és időválasztó | M3 `showDatePicker` / `showTimePicker` | `CupertinoDatePicker` sheetben |
-| Kapcsoló, pipa, rádiógomb | M3 | `.adaptive` konstruktor |
+| Kapcsoló, pipa | M3 | `.adaptive` konstruktor |
+| Rádiógomb (`MiserendRadioTile`) | M3 `RadioListTile` | `CupertinoRadio` 24 dp-re nagyítva, `elevation: 1` árnyékkal (a saját 14 dp-s, hajszálvékony szélű köre világos lapon alig látszik) |
 | Töltésjelző | `CircularProgressIndicator` | `CircularProgressIndicator.adaptive` |
 | Pull-to-refresh | `RefreshIndicator` | `RefreshIndicator.adaptive` |
 | Alsó navigáció | M3 `NavigationBar` | `CupertinoTabBar`, aktív szín `primary` |
