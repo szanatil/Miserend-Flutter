@@ -32,9 +32,7 @@ const Map<String, Map<String, (int, String)>> _knownDeviations = {
   'lib/home/advanced_search/advanced_search_page.dart': {'icon': (7, '#61')},
   'lib/home/home.dart': {'icon': (2, '#61')},
   'lib/home/map/map_page.dart': {'icon': (1, '#61')},
-  'lib/home/map/widgets/position_unavailable_banner.dart': {
-    'icon': (2, '#60, #61'),
-  },
+  'lib/home/map/widgets/position_unavailable_banner.dart': {'icon': (1, '#61')},
   'lib/widgets/offline_notice.dart': {'icon': (3, '#61')},
 };
 

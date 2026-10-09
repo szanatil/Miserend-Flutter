@@ -229,15 +229,13 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **PL3 — Az elágazás egy helyen.** A platformfüggő döntés a `lib/theme/adaptive.dart` segédfüggvényeiben (pl. `showMiserendDialog`, `showMiserendActionSheet`, `pickMiserendDate`) és a témában áll; a képernyő kódja nem ágazik el platformonként. A platformot `Theme.of(context).platform` adja, nem a `dart:io` `Platform`, így a teszt felülírhatja.
 
-_Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, kapcsoló, rádiógomb, töltésjelző, pull-to-refresh, átmenet, érintés, rendszerikonok (#60)._
-
 ## IK. Ikonok
 
 **IK1 — Beépített lekerekített ikonok.** Tartalmi ikon: `Icons.*_rounded` (külső ikoncsomag nincs). Egy képernyőn nem keveredik a sima és a lekerekített változat. Kivétel: az app saját képi ikonjai (pl. a kehely) és a liturgikus nyelvek zászlói.
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
 
-_Ismert eltérés: a tartalmi ikonok nem `_rounded` (#61; a rendszerikonok: #60)._
+_Ismert eltérés: a tartalmi ikonok nem `_rounded` (#61)._
 
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 

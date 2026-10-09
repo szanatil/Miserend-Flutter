@@ -38,7 +38,7 @@ class ChurchListView extends StatelessWidget {
             onRetry: onRefresh,
           ),
         Expanded(
-          child: RefreshIndicator(
+          child: RefreshIndicator.adaptive(
             onRefresh: onRefresh,
             child:
                 list.churches.isEmpty

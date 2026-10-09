@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/church_details/problem_report_sender.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -156,7 +157,9 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
                   _sending
                       ? const SizedBox.square(
                         dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator.adaptive(
+                          strokeWidth: 2,
+                        ),
                       )
                       : const Text('Küldés'),
             ),
@@ -179,14 +182,17 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
             RadioGroup<ProblemType>(
               groupValue: _type,
               onChanged: (type) {
+                miserendSelectionHaptic(context);
                 setState(() => _type = type);
                 field.didChange(type);
               },
               child: Column(
                 children: [
                   for (final type in ProblemType.values)
-                    RadioListTile<ProblemType>(
+                    RadioListTile<ProblemType>.adaptive(
                       value: type,
+                      // The selection colour on iOS too, not its blue (SZ4).
+                      activeColor: Theme.of(context).colorScheme.primary,
                       title: Text(_label(type)),
                       contentPadding: EdgeInsets.zero,
                     ),

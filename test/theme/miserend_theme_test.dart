@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/theme/miserend_theme.dart';
@@ -245,7 +247,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(
         MaterialApp(
-          theme: miserendTheme(Brightness.light).copyWith(platform: platform),
+          theme: miserendTheme(Brightness.light, platform: platform),
           home: Scaffold(
             appBar: AppBar(title: const Text('Cím')),
             body: const SizedBox.shrink(),
@@ -261,4 +263,60 @@ void main() {
       }
     });
   }
+
+  group('on each platform (PL2)', () {
+    test('Android has predictive back and the ripple', () {
+      final theme = miserendTheme(
+        Brightness.light,
+        platform: TargetPlatform.android,
+      );
+
+      expect(theme.platform, TargetPlatform.android);
+      expect(
+        theme.pageTransitionsTheme.builders[TargetPlatform.android],
+        isA<PredictiveBackPageTransitionsBuilder>(),
+      );
+      expect(theme.splashFactory, InkSparkle.splashFactory);
+    });
+
+    test('iOS slides the page and has no ripple', () {
+      final theme = miserendTheme(
+        Brightness.light,
+        platform: TargetPlatform.iOS,
+      );
+
+      expect(theme.platform, TargetPlatform.iOS);
+      expect(
+        theme.pageTransitionsTheme.builders[TargetPlatform.iOS],
+        isA<CupertinoPageTransitionsBuilder>(),
+      );
+      expect(theme.splashFactory, NoSplash.splashFactory);
+    });
+
+    test('the platform is the phone\'s unless given', () {
+      expect(miserendTheme(Brightness.light).platform, defaultTargetPlatform);
+    });
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      testWidgets('the back button wears $platform\'s system icon', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: miserendTheme(Brightness.light, platform: platform),
+            home: const Scaffold(body: Center(child: BackButton())),
+          ),
+        );
+
+        expect(
+          find.byIcon(
+            platform == TargetPlatform.iOS
+                ? CupertinoIcons.back
+                : Icons.arrow_back_rounded,
+          ),
+          findsOneWidget,
+        );
+      });
+    }
+  });
 }

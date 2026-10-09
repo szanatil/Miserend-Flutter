@@ -6,6 +6,7 @@ import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/language_flag.dart';
@@ -361,11 +362,14 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
               const SizedBox(height: Spacing.s),
               _dayChips(),
               if (day != null) ...[
-                SwitchListTile(
+                SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Egész nap'),
                   value: _wholeDay,
-                  onChanged: (value) => setState(() => _wholeDay = value),
+                  onChanged: (value) {
+                    miserendSelectionHaptic(context);
+                    setState(() => _wholeDay = value);
+                  },
                 ),
                 if (!_wholeDay)
                   Row(
@@ -478,29 +482,21 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     FocusScope.of(context).unfocus();
     final languages = await _loader.languages();
     if (!mounted) return;
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      // Over the navigation bar, as a modal is (DESIGN.md NA1).
-      useRootNavigator: true,
-      builder:
-          (context) => SafeArea(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.translate),
-                  title: const Text('Bármelyik'),
-                  onTap: () => Navigator.of(context).pop(''),
-                ),
-                for (final code in languages)
-                  ListTile(
-                    leading: LanguageFlag(code),
-                    title: Text(languageName(code)),
-                    onTap: () => Navigator.of(context).pop(code),
-                  ),
-              ],
-            ),
+    final picked = await showMiserendActionSheet<String>(
+      context,
+      actions: [
+        const MiserendSheetAction(
+          label: 'Bármelyik',
+          value: '',
+          leading: Icon(Icons.translate),
+        ),
+        for (final code in languages)
+          MiserendSheetAction(
+            label: languageName(code),
+            value: code,
+            leading: LanguageFlag(code),
           ),
+      ],
     );
     if (picked == null || !mounted) return;
     setState(() => _language = picked.isEmpty ? null : picked);
@@ -537,14 +533,12 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     }
     if (choice == DayChoice.date) {
       final today = _today;
-      final picked = await showDatePicker(
-        context: context,
+      final picked = await pickMiserendDate(
+        context,
         initialDate: _date ?? today,
         firstDate: today,
         lastDate: DateTime(today.year, today.month, today.day + _pickableDays),
         helpText: 'Nap',
-        cancelText: 'Mégse',
-        confirmText: 'Kész',
       );
       if (picked == null || !mounted) return;
       setState(() {
@@ -563,19 +557,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   ) {
     return InkWell(
       onTap: () async {
-        final picked = await showTimePicker(
-          context: context,
-          initialTime: value,
-          cancelText: 'Mégse',
-          confirmText: 'Kész',
-          builder:
-              (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(alwaysUse24HourFormat: true),
-                child: child!,
-              ),
-        );
+        final picked = await pickMiserendTime(context, initialTime: value);
         if (picked == null || !mounted) return;
         setState(() => set(picked));
       },
@@ -688,7 +670,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         child: Center(
           child: SizedBox.square(
             dimension: _spinnerSize,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
           ),
         ),
       );

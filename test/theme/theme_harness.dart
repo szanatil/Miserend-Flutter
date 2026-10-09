@@ -20,7 +20,7 @@ Future<void> pumpThemed(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: miserendTheme(brightness).copyWith(platform: platform),
+      theme: miserendTheme(brightness, platform: platform),
       home: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
         child: Scaffold(

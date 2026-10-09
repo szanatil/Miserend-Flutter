@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
 
@@ -8,7 +11,11 @@ const Color _seed = Color(0xFF5C27AE);
 /// The app's look in [brightness], in one place so that every screen and
 /// every message wears it. The light and the dark scheme both grow from the
 /// purple (SZ1); the phone's wallpaper palette is not used (SZ2).
-ThemeData miserendTheme(Brightness brightness) {
+///
+/// The [platform] is the phone's unless a test gives one; it picks the touch
+/// feedback, so it is set here rather than with `copyWith` later (PL2).
+ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
+  final target = platform ?? defaultTargetPlatform;
   var scheme = ColorScheme.fromSeed(
     seedColor: _seed,
     dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
@@ -22,6 +29,30 @@ ThemeData miserendTheme(Brightness brightness) {
   final base = ThemeData(
     colorScheme: scheme,
     extensions: [MiserendColors.forScheme(scheme)],
+    platform: target,
+    // Android's ripple; on iOS a tap only highlights, as there (PL2).
+    splashFactory: switch (target) {
+      TargetPlatform.iOS || TargetPlatform.macOS => NoSplash.splashFactory,
+      _ => InkSparkle.splashFactory,
+    },
+    // Android's predictive back; on iOS the page slides and can be dragged
+    // back from the edge (PL2).
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
+    // An iOS switch is on in the selection colour, `primary`, not in its
+    // own green (SZ4).
+    cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
+    // Every back and close button, the title bar's own included, wears the
+    // platform's system icon (PL2).
+    actionIconTheme: ActionIconThemeData(
+      backButtonIconBuilder: (context) => Icon(SystemIcon.back.of(context)),
+      closeButtonIconBuilder: (context) => Icon(SystemIcon.close.of(context)),
+    ),
   );
   return base.copyWith(
     // The title bar is the page's own surface, tinted only when the content

@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/church_details/widgets/mass_info.dart';
@@ -14,6 +16,11 @@ final CachedMass _mass = CachedMass(
   info: 'Gitáros mise a kápolnában',
   source: MassSource.nearbyMasses,
 );
+
+final TargetPlatformVariant _bothPlatforms = TargetPlatformVariant(const {
+  TargetPlatform.android,
+  TargetPlatform.iOS,
+});
 
 void main() {
   Future<void> openSheet(
@@ -60,7 +67,18 @@ void main() {
     expect(style.fontWeight, FontWeight.w600);
     expect(style.fontFeatures, [const FontFeature.tabularFigures()]);
     expect(find.text('Gitáros mise a kápolnában'), findsOneWidget);
-  });
+  }, variant: _bothPlatforms);
+
+  testWidgets('opens as the platform\'s own sheet (KO13, PL2)', (tester) async {
+    await openSheet(tester);
+
+    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+    expect(
+      find.byType(CupertinoActionSheet),
+      isIOS ? findsOneWidget : findsNothing,
+    );
+    expect(find.byType(BottomSheet), isIOS ? findsNothing : findsOneWidget);
+  }, variant: _bothPlatforms);
 
   group('fits (EH4)', () {
     for (final width in eh4Widths) {
@@ -70,7 +88,7 @@ void main() {
 
           expect(find.text('18:30'), findsOneWidget);
           expect(tester.takeException(), isNull);
-        });
+        }, variant: _bothPlatforms);
       }
     }
   });

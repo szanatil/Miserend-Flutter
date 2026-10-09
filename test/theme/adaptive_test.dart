@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
+
+import 'theme_harness.dart';
 
 final TargetPlatformVariant _bothPlatforms = TargetPlatformVariant(const {
   TargetPlatform.android,
@@ -179,5 +183,342 @@ void main() {
         }, variant: _bothPlatforms);
       }
     }
+  });
+
+  group('the helpers (PL2, PL3)', () {
+    late List<MethodCall> platformCalls;
+
+    /// Pumps a button that runs [helper] and keeps what it returned in
+    /// [results], then taps it.
+    Future<void> open(
+      WidgetTester tester,
+      Future<Object?> Function(BuildContext context) helper, {
+      List<Object?>? results,
+      Size size = const Size(430, 900),
+      double textScale = 1.0,
+      Brightness brightness = Brightness.light,
+    }) async {
+      platformCalls = [];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          platformCalls.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: miserendTheme(brightness),
+          home: Scaffold(
+            body: Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed: () async {
+                      final result = await helper(context);
+                      results?.add(result);
+                    },
+                    child: const Text('Megnyitás'),
+                  ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Megnyitás'));
+      await tester.pumpAndSettle();
+    }
+
+    bool lightImpact() => platformCalls.any(
+      (call) =>
+          call.method == 'HapticFeedback.vibrate' &&
+          call.arguments == 'HapticFeedbackType.lightImpact',
+    );
+
+    Future<Object?> dialog(BuildContext context) => showMiserendDialog<bool>(
+      context,
+      title: 'Adatbázis nem található',
+      content:
+          'Az alkalmazás használatához szükség van az adatbázis '
+              'letöltésére. Letölti most? ' *
+          3,
+      actions: const [
+        MiserendDialogAction('Nem', false),
+        MiserendDialogAction('Igen', true),
+      ],
+    );
+
+    Future<Object?> sheet(BuildContext context) =>
+        showMiserendActionSheet<String>(
+          context,
+          title: const Text('Nyelv'),
+          actions: const [
+            MiserendSheetAction(
+              label: 'Bármelyik',
+              value: '',
+              leading: Icon(Icons.translate_rounded),
+            ),
+            MiserendSheetAction(label: 'magyar', value: 'hu'),
+            MiserendSheetAction(label: 'szlovák', value: 'sk'),
+          ],
+        );
+
+    testWidgets('a dialog is the platform\'s own, and closes with the tapped '
+        'button\'s value (KO14)', (tester) async {
+      final results = <Object?>[];
+      await open(tester, dialog, results: results);
+
+      expect(
+        find.byType(CupertinoAlertDialog),
+        isIOS() ? findsOneWidget : findsNothing,
+      );
+      // AlertDialog.adaptive is a subclass, which builds the Cupertino one
+      // on iOS.
+      expect(find.byWidgetPredicate((w) => w is AlertDialog), findsOneWidget);
+      await tester.tap(find.text('Igen'));
+      await tester.pumpAndSettle();
+
+      expect(results, [true]);
+    }, variant: _bothPlatforms);
+
+    testWidgets('an action sheet is the platform\'s own, and closes with the '
+        'chosen value (KO13)', (tester) async {
+      final results = <Object?>[];
+      await open(tester, sheet, results: results);
+
+      if (isIOS()) {
+        expect(find.byType(CupertinoActionSheet), findsOneWidget);
+        expect(find.text('Mégse'), findsOneWidget);
+      } else {
+        final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+        expect(sheet.showDragHandle, isTrue);
+        expect(
+          sheet.shape,
+          const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
+          ),
+        );
+        expect(find.byType(CupertinoActionSheet), findsNothing);
+      }
+      await tester.tap(find.text('szlovák'));
+      await tester.pumpAndSettle();
+
+      expect(results, ['sk']);
+      expect(lightImpact(), isIOS());
+    }, variant: _bothPlatforms);
+
+    testWidgets('an action sheet dismissed without a choice gives null', (
+      tester,
+    ) async {
+      final results = <Object?>[];
+      await open(tester, sheet, results: results);
+
+      if (isIOS()) {
+        await tester.tap(find.text('Mégse'));
+      } else {
+        await tester.tapAt(const Offset(10, 10));
+      }
+      await tester.pumpAndSettle();
+
+      expect(results, [null]);
+      expect(lightImpact(), isFalse);
+    }, variant: _bothPlatforms);
+
+    testWidgets('a date picker is the platform\'s own, and gives the day', (
+      tester,
+    ) async {
+      final results = <Object?>[];
+      await open(
+        tester,
+        (context) => pickMiserendDate(
+          context,
+          initialDate: DateTime(2026, 10, 9),
+          firstDate: DateTime(2026, 10, 9),
+          lastDate: DateTime(2026, 11, 9),
+          helpText: 'Nap',
+        ),
+        results: results,
+      );
+
+      expect(
+        find.byType(CupertinoDatePicker),
+        isIOS() ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byType(DatePickerDialog),
+        isIOS() ? findsNothing : findsOneWidget,
+      );
+      await tester.tap(find.text('Kész'));
+      await tester.pumpAndSettle();
+
+      expect(results, [DateTime(2026, 10, 9)]);
+      expect(lightImpact(), isIOS());
+    }, variant: _bothPlatforms);
+
+    testWidgets('a time picker is the platform\'s own, on the 24-hour clock', (
+      tester,
+    ) async {
+      final results = <Object?>[];
+      await open(
+        tester,
+        (context) => pickMiserendTime(
+          context,
+          initialTime: const TimeOfDay(hour: 18, minute: 30),
+        ),
+        results: results,
+      );
+
+      if (isIOS()) {
+        final picker = tester.widget<CupertinoDatePicker>(
+          find.byType(CupertinoDatePicker),
+        );
+        expect(picker.mode, CupertinoDatePickerMode.time);
+        expect(picker.use24hFormat, isTrue);
+      } else {
+        expect(find.byType(TimePickerDialog), findsOneWidget);
+        expect(find.text('PM'), findsNothing);
+      }
+      await tester.tap(find.text('Kész'));
+      await tester.pumpAndSettle();
+
+      expect(results, [const TimeOfDay(hour: 18, minute: 30)]);
+    }, variant: _bothPlatforms);
+
+    testWidgets('a cancelled picker gives null', (tester) async {
+      final results = <Object?>[];
+      await open(
+        tester,
+        (context) => pickMiserendTime(
+          context,
+          initialTime: const TimeOfDay(hour: 18, minute: 30),
+        ),
+        results: results,
+      );
+
+      await tester.tap(find.text('Mégse'));
+      await tester.pumpAndSettle();
+
+      expect(results, [null]);
+    }, variant: _bothPlatforms);
+
+    testWidgets('a selection taps lightly on iOS only (PL2)', (tester) async {
+      await open(tester, (context) async => miserendSelectionHaptic(context));
+
+      expect(lightImpact(), isIOS());
+    }, variant: _bothPlatforms);
+
+    testWidgets('the system icons are the platform\'s own (IK1)', (
+      tester,
+    ) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: miserendTheme(Brightness.light),
+          home: Builder(
+            builder: (c) {
+              context = c;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(
+        SystemIcon.close.of(context),
+        isIOS() ? CupertinoIcons.xmark : Icons.close_rounded,
+      );
+      expect(
+        SystemIcon.back.of(context),
+        isIOS() ? CupertinoIcons.back : Icons.arrow_back_rounded,
+      );
+      expect(
+        SystemIcon.share.of(context),
+        isIOS() ? CupertinoIcons.share : Icons.share_rounded,
+      );
+      expect(
+        SystemIcon.more.of(context),
+        isIOS() ? CupertinoIcons.ellipsis : Icons.more_vert_rounded,
+      );
+    }, variant: _bothPlatforms);
+
+    Future<Object?> datePicker(BuildContext context) => pickMiserendDate(
+      context,
+      initialDate: DateTime(2026, 10, 9),
+      firstDate: DateTime(2026, 10, 9),
+      lastDate: DateTime(2026, 11, 9),
+      helpText: 'Nap',
+    );
+
+    for (final brightness in Brightness.values) {
+      testWidgets('the iOS picker sheet stands on the bottom sheet\'s surface '
+          'in $brightness (SZ5)', (tester) async {
+        await open(tester, datePicker, brightness: brightness);
+
+        final sheet = tester.widget<Material>(
+          find
+              .ancestor(
+                of: find.byType(CupertinoDatePicker),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(sheet.color, schemeOf(brightness).surfaceContainerLow);
+      }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+    }
+
+    group('fit without overflow (EH4)', () {
+      for (final width in [320.0, 430.0]) {
+        for (final textScale in [1.0, 2.0]) {
+          testWidgets('the date picker fits at $width dp and text scale '
+              '$textScale', (tester) async {
+            await open(
+              tester,
+              datePicker,
+              size: Size(width, 640),
+              textScale: textScale,
+            );
+
+            expect(find.text('Kész'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: _bothPlatforms);
+
+          testWidgets('the dialog fits at $width dp and text scale '
+              '$textScale', (tester) async {
+            await open(
+              tester,
+              dialog,
+              size: Size(width, 640),
+              textScale: textScale,
+            );
+
+            expect(find.text('Igen'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: _bothPlatforms);
+
+          testWidgets('the action sheet fits at $width dp and text scale '
+              '$textScale', (tester) async {
+            await open(
+              tester,
+              sheet,
+              size: Size(width, 640),
+              textScale: textScale,
+            );
+
+            expect(find.text('szlovák'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: _bothPlatforms);
+        }
+      }
+    });
   });
 }

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -435,4 +437,61 @@ void main() {
     expect(const AdvancedSearchCriteria(language: 'va').canSearch, isFalse);
     expect(const AdvancedSearchCriteria(name: 'x').canSearch, isTrue);
   });
+
+  testWidgets(
+    'the whole-day switch is the platform\'s own, and taps '
+    'lightly on iOS (PL2)',
+    (tester) async {
+      final haptics = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pumpPage(tester, FakeAdvancedSearchLoader([]));
+
+      await tester.tap(find.text('Vasárnap'));
+      await tester.pump();
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      // Switch.adaptive draws the iOS switch itself rather than building a
+      // CupertinoSwitch: its track is iOS's 51 × 31 rather than M3's
+      // 52 × 32, and switched on it is the selection colour on both
+      // platforms (SZ4).
+      expect(
+        tester.renderObject(find.byType(Switch)),
+        paints..rrect(
+          rrect:
+              isIOS
+                  ? RRect.fromLTRBR(
+                    4.5,
+                    4.5,
+                    55.5,
+                    35.5,
+                    const Radius.circular(15.5),
+                  )
+                  : RRect.fromLTRBR(4, 4, 56, 36, const Radius.circular(16)),
+          color: schemeOf(Brightness.light).primary,
+        ),
+      );
+      await tester.tap(find.text('Egész nap'));
+      await tester.pump();
+
+      expect(
+        haptics.map((call) => call.arguments),
+        isIOS ? ['HapticFeedbackType.lightImpact'] : isEmpty,
+      );
+    },
+    variant: TargetPlatformVariant(const {
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
 }

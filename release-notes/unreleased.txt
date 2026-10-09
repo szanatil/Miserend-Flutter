@@ -1,2 +1,5 @@
+Újdonságok
+– iPhone-on a párbeszédablakok, a választók, a kapcsolók és a lapok közötti átmenet az iOS megszokott formáját követik.
+
 Javítások
 – Az óraátállás körüli napokon a templom miserendje a helyes napot mutatja: eddig október végén kétszer szerepelt a vasárnap, és a hétfő kimaradt.

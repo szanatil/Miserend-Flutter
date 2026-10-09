@@ -13,7 +13,7 @@ class LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator.adaptive(),
           Padding(
             padding: const EdgeInsets.only(top: Spacing.l),
             child: Text(message),

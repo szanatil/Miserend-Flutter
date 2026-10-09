@@ -8,6 +8,7 @@ import 'package:miserend/database/database_manager.dart';
 import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/preferences.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/tokens.dart';
 
 /// What the splash screen does to get the app ready, behind one seam so that
@@ -211,7 +212,7 @@ class _RouteSplashState extends State<RouteSplash> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
+            const CircularProgressIndicator.adaptive(),
             if (_status != null) ...[
               const SizedBox(height: Spacing.l),
               Text(_status!),
@@ -244,30 +245,24 @@ class _RouteSplashState extends State<RouteSplash> {
   }
 
   Future<void> _showDialog(String title, String description) async {
-    return showDialog<void>(
-      context: context,
+    final download = await showMiserendDialog<bool>(
+      context,
+      title: title,
+      content: description,
+      actions: const [
+        MiserendDialogAction('Nem', false),
+        MiserendDialogAction('Igen', true),
+      ],
       barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(description),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Nem'),
-              onPressed: () {
-                SystemNavigator.pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Igen'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _downloadDatabase();
-              },
-            ),
-          ],
-        );
-      },
     );
+    if (!mounted) return;
+    switch (download) {
+      case true:
+        _downloadDatabase();
+      case false:
+        unawaited(SystemNavigator.pop());
+      case null:
+        break;
+    }
   }
 }

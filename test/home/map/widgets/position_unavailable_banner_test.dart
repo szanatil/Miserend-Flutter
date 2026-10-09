@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
@@ -110,4 +112,27 @@ void main() {
     expect(location.locationSettingsOpened, 0);
     expect(retries, 0);
   });
+
+  testWidgets(
+    'the close button wears the platform\'s system icon (PL2)',
+    (tester) async {
+      await pumpBanner(tester, PositionUnavailableReason.permissionDenied);
+
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      expect(
+        find.widgetWithIcon(
+          IconButton,
+          isIOS ? CupertinoIcons.xmark : Icons.close_rounded,
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Bezárás'));
+
+      expect(closes, 1);
+    },
+    variant: TargetPlatformVariant(const {
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/extentions.dart';
-import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 
 /// Decides whether a mass carries anything worth opening, and shows it.
@@ -25,32 +25,16 @@ class MassInfo {
   }
 
   static void show(BuildContext context, CachedMass mass) {
-    showModalBottomSheet<void>(
-      context: context,
-      // Over the navigation bar, as a modal is (DESIGN.md NA1).
-      useRootNavigator: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.l),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  TimeOfDay.fromDateTime(mass.time).to24hours(),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                const SizedBox(height: Spacing.s),
-                Text(MiserendText.normalize(mass.info)),
-              ],
-            ),
-          ),
-        );
-      },
+    showMiserendActionSheet<void>(
+      context,
+      title: Text(
+        TimeOfDay.fromDateTime(mass.time).to24hours(),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+      message: Text(MiserendText.normalize(mass.info)),
     );
   }
 }

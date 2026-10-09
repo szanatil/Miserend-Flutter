@@ -240,7 +240,7 @@ class _NearMassesPageState extends State<NearMassesPage>
     if (!_loaded) {
       return const LoadingView(message: 'Legközelebbi misék betöltése…');
     }
-    return RefreshIndicator(onRefresh: _fetch, child: _content());
+    return RefreshIndicator.adaptive(onRefresh: _fetch, child: _content());
   }
 
   Widget _content() {

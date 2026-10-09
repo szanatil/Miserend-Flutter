@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/location_provider.dart';
@@ -75,4 +77,22 @@ void main() {
       }
     }
   });
+
+  testWidgets(
+    'the loading spinner is the platform\'s own (KO8, PL2)',
+    (tester) async {
+      await pumpView(tester, views['loading']!());
+
+      expect(
+        find.byType(CupertinoActivityIndicator),
+        defaultTargetPlatform == TargetPlatform.iOS
+            ? findsOneWidget
+            : findsNothing,
+      );
+    },
+    variant: TargetPlatformVariant(const {
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
 }

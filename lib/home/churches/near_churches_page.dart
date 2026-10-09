@@ -91,7 +91,7 @@ class _NearChurchesPageState extends State<NearChurchesPage>
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return RefreshIndicator(
+      return RefreshIndicator.adaptive(
         onRefresh: _load,
         child: PullableFill(
           child: PositionUnavailableView(

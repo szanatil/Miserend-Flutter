@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
@@ -39,18 +40,10 @@ class OfflineNotice {
     ApiFailure failure,
     DateTime? asOf,
   ) {
-    return showDialog<void>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            content: Text(explanation(failure, asOf)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Rendben'),
-              ),
-            ],
-          ),
+    return showMiserendDialog<void>(
+      context,
+      content: explanation(failure, asOf),
+      actions: const [MiserendDialogAction('Rendben', null)],
     );
   }
 }

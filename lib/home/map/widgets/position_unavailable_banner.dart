@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 
@@ -53,7 +54,7 @@ class PositionUnavailableBanner extends StatelessWidget {
             child: Text(button.label),
           ),
         IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(SystemIcon.close.of(context)),
           color: Theme.of(context).colorScheme.onSurfaceVariant,
           tooltip: 'Bezárás',
           visualDensity: VisualDensity.compact,

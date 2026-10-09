@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
@@ -391,4 +394,48 @@ void main() {
       }
     }
   });
+
+  testWidgets(
+    'the type is chosen with the platform\'s own radio buttons, in the '
+    'selection colour, with a light tap on iOS (PL2, SZ4)',
+    (tester) async {
+      await openPage(tester, _FakeSender());
+
+      final haptics = <Object?>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            haptics.add(call.arguments);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+
+      expect(
+        find.byType(CupertinoRadio<ProblemType>),
+        isIOS ? findsNWidgets(ProblemType.values.length) : findsNothing,
+      );
+      await fill(tester, type: 'Egyéb');
+
+      if (isIOS) {
+        final radio = tester.widget<CupertinoRadio<ProblemType>>(
+          find.byType(CupertinoRadio<ProblemType>).first,
+        );
+        expect(
+          radio.activeColor,
+          Theme.of(tester.element(find.text('Egyéb'))).colorScheme.primary,
+        );
+      }
+      expect(haptics, isIOS ? ['HapticFeedbackType.lightImpact'] : isEmpty);
+    },
+    variant: _bothPlatforms,
+  );
 }
