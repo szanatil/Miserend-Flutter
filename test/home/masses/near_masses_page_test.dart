@@ -21,6 +21,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../church_details/fake_church_schedule_loader.dart';
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import '../churches/list_surface.dart';
 
 NearbyMassesItem _mass({
@@ -933,6 +934,43 @@ void main() {
       );
 
       expect(fetchesWhileAway, 1);
+    });
+  });
+
+  group('size', () {
+    final crowded = [
+      for (var i = 1; i <= 4; i++)
+        _mass(
+          church: i,
+          name:
+              'Nagyboldogasszony görögkatolikus székesegyház és püspöki '
+              'templom $i',
+          city: 'Budapest XVIII. kerület, Pestszentlőrinc-Pestszentimre',
+          title: 'Régi rítusú szentmise',
+          start: _at(18, i * 5),
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(tester, _FakeLoader([crowded]));
+
+          expect(find.byType(MassCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(tester, _FakeLoader([crowded]));
+
+      expectCentredContent(tester, find.byType(MassCard).first);
     });
   });
 }

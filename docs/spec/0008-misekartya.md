@@ -58,6 +58,8 @@ A templom képe marad, mert segít gyorsan felismerni, melyik templomról van sz
 - **Ismert kockázat:** hosszú településnévnél a mise címe esik ki. Vállaljuk, mert a cím ritka, egy mindig lefoglalt, de szinte mindig üres külön sor pedig a tömörséget rontaná.
 - A bélyegkép továbbra is a `thumbnailUrl` jövőből jön, és amíg nem oldódik fel, a helykitöltő látszik (spec 0004: a kép nem tartja vissza a listát). A dekódolási méret a fotósáv magasságából számolódik, a templomkártyához hasonlóan `tight: true`-val.
 
+> **Módosítva (2026-10-09, #67): DESIGN.md EL2–EL3.** A kártyának nincs fix magassága: a tartalomból jön. A település · cím sora nem vágódik le ellipszissel, hanem tördel, így hosszú településnévnél sem esik ki a mise címe; a kártya ilyenkor magasabb. A név két sora és a buborékok egy sora továbbra is le van foglalva, így a később érkező mise-jellemző nem tolja le a lista többi kártyáját. A buborék egy sorban, ellipszissel áll, koppintásra a teljes szöveg látszik (EL2 kivétel). 600 dp feletti szélességen a lista legfeljebb 640 dp széles, középre igazítva (EL3).
+
 ### Hátralévő idő
 
 A fogalom a CONTEXT.md „Hátralévő idő" szócikkében van. A szabály:

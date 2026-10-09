@@ -16,6 +16,10 @@ import '../../fake_location_provider.dart';
 import '../../theme/theme_harness.dart';
 import 'fake_advanced_search_loader.dart';
 
+/// A common name that takes a card's line twice over on a phone.
+const String _longCommonName =
+    'Alsóvárosi templom, Ferences templom, Barátok temploma, Szent Miklós';
+
 /// A Wednesday morning; its Sunday is 2026-09-20.
 final DateTime _now = DateTime(2026, 9, 16, 10, 0);
 
@@ -258,29 +262,91 @@ void main() {
   });
 
   group('fits (EH4)', () {
-    for (final width in [320.0, 430.0]) {
-      for (final textScale in [1.0, 2.0]) {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
         testWidgets('at $width dp and text scale $textScale', (tester) async {
-          tester.view.physicalSize = Size(width, 800);
-          tester.view.devicePixelRatio = 1.0;
-          tester.platformDispatcher.textScaleFactorTestValue = textScale;
-          addTearDown(tester.view.resetPhysicalSize);
-          addTearDown(tester.view.resetDevicePixelRatio);
-          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          setScreen(tester, Size(width, 800), textScale: textScale);
 
+          await pumpPage(
+            tester,
+            FakeAdvancedSearchLoader([
+              resultPage([
+                for (var i = 1; i <= 3; i++)
+                  churchEntry(i, commonName: _longCommonName),
+              ]),
+              resultPage(const []),
+            ]),
+          );
+          expect(tester.takeException(), isNull, reason: 'the conditions');
+
+          await tester.enterText(field('Település'), 'Pécs');
+          await search(tester);
+          expect(find.text('Templom 1'), findsOneWidget);
+          expect(tester.takeException(), isNull, reason: 'the results');
+        }, variant: eh4Platforms);
+
+        testWidgets('with no church found at $width dp and text scale '
+            '$textScale', (tester) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
           await pumpPage(
             tester,
             FakeAdvancedSearchLoader([resultPage(const [])]),
           );
-          expect(tester.takeException(), isNull, reason: 'the conditions');
 
           await tester.enterText(field('Település'), 'Sehol');
           await search(tester);
           expect(find.text('Nincs találat'), findsOneWidget);
-          expect(tester.takeException(), isNull, reason: 'no church found');
-        });
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
       }
     }
+  });
+
+  testWidgets('fits a phone on its side (EL5)', (tester) async {
+    setScreen(tester, const Size(640, 320), textScale: 2);
+    await pumpPage(
+      tester,
+      FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1, commonName: _longCommonName)]),
+      ]),
+    );
+    expect(tester.takeException(), isNull, reason: 'the conditions');
+
+    await tester.enterText(field('Település'), 'Pécs');
+    await search(tester);
+    expect(find.text('Templom 1'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'the results');
+  }, variant: eh4Platforms);
+
+  testWidgets('on an $el3Width dp screen the conditions and the results are '
+      'at most 640 wide and centred (EL3)', (tester) async {
+    setScreen(tester, const Size(el3Width, 800));
+    await pumpPage(
+      tester,
+      FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1)]),
+      ]),
+    );
+
+    expectCentredContent(
+      tester,
+      find.ancestor(of: find.text('Feltételek'), matching: find.byType(Card)),
+    );
+
+    await tester.enterText(field('Település'), 'Pécs');
+    await search(tester);
+
+    expectCentredContent(
+      tester,
+      find.ancestor(of: find.text('Templom 1'), matching: find.byType(Card)),
+    );
+    expectCentredContent(
+      tester,
+      // The summary's surface, inside the margin that centres it.
+      find
+          .ancestor(of: find.text('Pécs'), matching: find.byType(InkWell))
+          .first,
+    );
   });
 
   group('pages', () {
@@ -343,6 +409,44 @@ void main() {
 
       expect(find.textContaining(RegExp(r'^\d+ / 20\+ találat$')), findsOne);
     });
+
+    for (final textScale in [1.0, 2.0]) {
+      testWidgets('the count names the last card seen whole at text scale '
+          '$textScale, however tall the cards', (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = textScale;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await pumpPage(
+          tester,
+          FakeAdvancedSearchLoader([
+            resultPage([
+              for (var i = 1; i <= 20; i++)
+                churchEntry(i, commonName: i.isEven ? _longCommonName : null),
+            ]),
+          ]),
+        );
+        await tester.enterText(field('Település'), 'Pécs');
+        await search(tester);
+
+        await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
+        await tester.pump();
+        // The count reads the cards once they are laid out where the scroll
+        // put them, and shows it on the next frame.
+        await tester.pump();
+
+        final viewport = tester.getRect(find.byType(CustomScrollView));
+        var lastWhole = 0;
+        for (var i = 1; i <= 20; i++) {
+          final card = find.text('Templom $i');
+          if (card.evaluate().isEmpty) continue;
+          final rect = tester.getRect(
+            find.ancestor(of: card, matching: find.byType(Card)).first,
+          );
+          if (rect.bottom <= viewport.bottom) lastWhole = i;
+        }
+        expect(lastWhole, greaterThan(1));
+        expect(find.text('$lastWhole / 20 találat'), findsOneWidget);
+      });
+    }
 
     for (final brightness in Brightness.values) {
       testWidgets('in $brightness, the results stand on the surface and the '

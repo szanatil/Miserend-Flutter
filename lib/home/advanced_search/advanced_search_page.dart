@@ -9,6 +9,7 @@ import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -101,12 +102,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   static const TimeOfDay _defaultFrom = TimeOfDay(hour: 8, minute: 0);
   static const TimeOfDay _defaultUntil = TimeOfDay(hour: 12, minute: 0);
 
-  /// How close to the end of the list the next page is asked for, so that it
-  /// has usually arrived by the time the user gets there.
-  static const double _loadAhead = 2 * _rowExtent;
-
-  /// A card with the room its [Card] margin takes around it.
-  static const double _rowExtent = ChurchCard.height + Spacing.s;
   static const double _listPadding = Spacing.s;
 
   /// The list end's spinner and the room around it.
@@ -122,6 +117,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   final TextEditingController _city = TextEditingController();
   final FocusNode _cityFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
+
+  /// The results' sliver list, which the count reads the cards seen off.
+  final GlobalKey _resultList = GlobalKey();
 
   String? _language;
   DayChoice? _dayChoice;
@@ -286,7 +284,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   /// — also when a page found few churches or none (spec 0010, „Betöltés").
   void _fillScreen() {
     if (!mounted || _expanded) return;
-    if (!_scroll.hasClients || _scroll.position.extentAfter < _loadAhead) {
+    // A screenful ahead: the next page has usually arrived by the time the
+    // user gets there, however tall the cards are at the text size.
+    if (!_scroll.hasClients ||
+        _scroll.position.extentAfter < _scroll.position.viewportDimension) {
       _loadNext();
     }
   }
@@ -325,91 +326,103 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   Widget _form() {
     final canSearch = _criteriaOf(_conditions).canSearch;
     final day = _dayOf(_dayChoice);
-    return ListView(
+    return ContentWidth(
       padding: const EdgeInsets.symmetric(vertical: Spacing.s),
-      children: [
-        SectionCard(
-          title: 'Feltételek',
-          trailing:
-              _applied == null
-                  ? null
-                  : IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_up_rounded),
-                    tooltip: 'Összecsukás',
-                    onPressed: _collapse,
-                  ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      builder:
+          (context, padding) => ListView(
+            padding: padding,
             children: [
-              TextField(
-                controller: _name,
-                decoration: const InputDecoration(labelText: 'Templom neve'),
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _cityFocus.requestFocus(),
-                onTapOutside: _unfocus,
-              ),
-              const SizedBox(height: Spacing.l),
-              _cityField(),
-              const SizedBox(height: Spacing.l),
-              _languageRow(),
-              const SizedBox(height: Spacing.l),
-              Text('Nap', style: Theme.of(context).textTheme.sectionTitle),
-              const SizedBox(height: Spacing.s),
-              _dayChips(),
-              if (day != null) ...[
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Egész nap'),
-                  value: _wholeDay,
-                  onChanged: (value) {
-                    miserendSelectionHaptic(context);
-                    setState(() => _wholeDay = value);
-                  },
-                ),
-                if (!_wholeDay)
-                  Row(
-                    children: [
-                      Expanded(
-                        // The window never runs back to front: moving one
-                        // end past the other takes the other along.
-                        child: _timeField('-tól', _from, (t) {
-                          _from = t;
-                          if (_minutes(_until) < _minutes(t)) _until = t;
-                        }),
+              SectionCard(
+                title: 'Feltételek',
+                trailing:
+                    _applied == null
+                        ? null
+                        : IconButton(
+                          icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                          tooltip: 'Összecsukás',
+                          onPressed: _collapse,
+                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _name,
+                      decoration: const InputDecoration(
+                        labelText: 'Templom neve',
                       ),
-                      const SizedBox(width: Spacing.l),
-                      Expanded(
-                        child: _timeField('-ig', _until, (t) {
-                          _until = t;
-                          if (_minutes(_from) > _minutes(t)) _from = t;
-                        }),
-                      ),
-                    ],
-                  ),
-              ],
-              const SizedBox(height: Spacing.l),
-              FilledButton(
-                onPressed: canSearch ? _search : null,
-                child: const Text('Keresés'),
-              ),
-              if (!canSearch)
-                Padding(
-                  padding: const EdgeInsets.only(top: Spacing.s),
-                  child: Text(
-                    _locating
-                        ? 'Adj meg nevet vagy települést, vagy várd meg, '
-                            'amíg a helyzeted meghatározzuk.'
-                        : 'Adj meg nevet vagy települést: a helyzeted nem '
-                            'ismert, így a környékeden nem kereshetünk.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _cityFocus.requestFocus(),
+                      onTapOutside: _unfocus,
                     ),
-                  ),
+                    const SizedBox(height: Spacing.l),
+                    _cityField(),
+                    const SizedBox(height: Spacing.l),
+                    _languageRow(),
+                    const SizedBox(height: Spacing.l),
+                    Text(
+                      'Nap',
+                      style: Theme.of(context).textTheme.sectionTitle,
+                    ),
+                    const SizedBox(height: Spacing.s),
+                    _dayChips(),
+                    if (day != null) ...[
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Egész nap'),
+                        value: _wholeDay,
+                        onChanged: (value) {
+                          miserendSelectionHaptic(context);
+                          setState(() => _wholeDay = value);
+                        },
+                      ),
+                      if (!_wholeDay)
+                        Row(
+                          children: [
+                            Expanded(
+                              // The window never runs back to front: moving one
+                              // end past the other takes the other along.
+                              child: _timeField('-tól', _from, (t) {
+                                _from = t;
+                                if (_minutes(_until) < _minutes(t)) _until = t;
+                              }),
+                            ),
+                            const SizedBox(width: Spacing.l),
+                            Expanded(
+                              child: _timeField('-ig', _until, (t) {
+                                _until = t;
+                                if (_minutes(_from) > _minutes(t)) _from = t;
+                              }),
+                            ),
+                          ],
+                        ),
+                    ],
+                    const SizedBox(height: Spacing.l),
+                    FilledButton(
+                      onPressed: canSearch ? _search : null,
+                      child: const Text('Keresés'),
+                    ),
+                    if (!canSearch)
+                      Padding(
+                        padding: const EdgeInsets.only(top: Spacing.s),
+                        child: Text(
+                          _locating
+                              ? 'Adj meg nevet vagy települést, vagy várd meg, '
+                                  'amíg a helyzeted meghatározzuk.'
+                              : 'Adj meg nevet vagy települést: a helyzeted nem '
+                                  'ismert, így a környékeden nem kereshetünk.',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+              ),
             ],
           ),
-        ),
-      ],
     );
   }
 
@@ -615,30 +628,37 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     final position = _criteria?.distanceOrderFrom;
     return Stack(
       children: [
-        CustomScrollView(
-          // Folding the conditions without a search puts the list back where
-          // it was.
-          key: const PageStorageKey('results'),
-          controller: _scroll,
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.l,
-                _listPadding,
-                Spacing.l,
-                0,
+        ContentWidth(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.l,
+            _listPadding,
+            Spacing.l,
+            0,
+          ),
+          builder:
+              (context, padding) => CustomScrollView(
+                // Folding the conditions without a search puts the list back
+                // where it was.
+                key: const PageStorageKey('results'),
+                controller: _scroll,
+                slivers: [
+                  SliverPadding(
+                    padding: padding,
+                    // Each card as tall as its content (DESIGN.md EL2).
+                    sliver: SliverList(
+                      key: _resultList,
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => ChurchCard(
+                          entry: churches[index],
+                          position: position,
+                        ),
+                        childCount: churches.length,
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: _listEnd(last)),
+                ],
               ),
-              sliver: SliverFixedExtentList(
-                itemExtent: _rowExtent,
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) =>
-                      ChurchCard(entry: churches[index], position: position),
-                  childCount: churches.length,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(child: _listEnd(last)),
-          ],
         ),
         Positioned(
           left: 0,
@@ -647,8 +667,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           child: Center(
             child: ResultCounter(
               controller: _scroll,
-              rowExtent: _rowExtent,
-              topPadding: _listPadding,
+              list: _resultList,
               shown: churches.length,
               found: last.found,
               foundIsFinal: last.foundIsFinal,
@@ -725,22 +744,26 @@ class _Summary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(Spacing.l, Spacing.s, Spacing.l, 0),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.l),
-          child: Row(
-            children: [
-              Icon(Icons.filter_list_rounded, color: iconColor),
-              const SizedBox(width: Spacing.s),
-              Expanded(child: Text(text)),
-              Icon(Icons.keyboard_arrow_down_rounded, color: iconColor),
-            ],
+    return ContentWidth(
+      padding: const EdgeInsets.fromLTRB(Spacing.l, Spacing.s, Spacing.l, 0),
+      builder:
+          (context, margin) => Card(
+            margin: margin,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.l),
+                child: Row(
+                  children: [
+                    Icon(Icons.filter_list_rounded, color: iconColor),
+                    const SizedBox(width: Spacing.s),
+                    Expanded(child: Text(text)),
+                    Icon(Icons.keyboard_arrow_down_rounded, color: iconColor),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 }

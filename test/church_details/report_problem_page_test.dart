@@ -12,6 +12,8 @@ import 'package:miserend/church_details/report_problem_page.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/theme_harness.dart';
+
 /// One report as the page handed it over.
 typedef _Sent =
     ({
@@ -375,6 +377,27 @@ void main() {
     expect(find.byType(ReportProblemPage), findsNothing);
     expect(sender.sent, isEmpty);
   }, variant: _bothPlatforms);
+
+  testWidgets('on an $el3Width dp screen the form is at most 640 wide and '
+      'centred (EL3)', (tester) async {
+    await openPage(tester, _FakeSender(), size: const Size(el3Width, 1400));
+
+    expectCentredContent(tester, find.byKey(ReportProblemPage.textKey));
+  });
+
+  testWidgets('fits a phone on its side (EL5)', (tester) async {
+    await openPage(
+      tester,
+      _FakeSender(),
+      size: const Size(640, 320),
+      textScale: 2,
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    expect(find.text('Küldés'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  }, variant: eh4Platforms);
 
   group('fits without overflow (EH4)', () {
     for (final width in [320.0, 430.0]) {

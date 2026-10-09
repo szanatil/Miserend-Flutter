@@ -11,11 +11,12 @@ import 'package:miserend/widgets/reserved_room.dart';
 /// puts the masses starting together under one header that says when. Tapping
 /// it opens the details page.
 ///
-/// Every card is the same height whatever it says: each line reserves its
+/// Short texts leave every card the same height: each line reserves its
 /// room, as on the church card, the bubbles of the mass detail among them, so
 /// that a detail arriving after the list does not push the cards below it
-/// down. The room is reserved in the text size the lines are drawn in, so a
-/// larger text size makes the card taller rather than overflow it.
+/// down. The room is reserved in the text size the lines are drawn in, and a
+/// line too long for it wraps, so a larger text size or a long city makes the
+/// card taller rather than overflow it (DESIGN.md EL2).
 class MassCard extends StatelessWidget {
   const MassCard({
     super.key,
@@ -121,15 +122,13 @@ class MassCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // The city leads, so a long one cuts the title off. An empty text
-        // still takes its line.
+        // A long line wraps rather than being cut off (DESIGN.md EL2). An
+        // empty text still takes its line.
         Text(
           place,
           style: textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: Spacing.s),
         _MassDetailBubbles(

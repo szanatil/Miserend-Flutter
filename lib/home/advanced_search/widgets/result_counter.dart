@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:miserend/theme/tokens.dart';
 
 /// „8 / 42 találat" at the bottom of the results while they scroll: how far
@@ -11,8 +13,7 @@ class ResultCounter extends StatefulWidget {
   const ResultCounter({
     super.key,
     required this.controller,
-    required this.rowExtent,
-    required this.topPadding,
+    required this.list,
     required this.shown,
     required this.found,
     required this.foundIsFinal,
@@ -24,9 +25,10 @@ class ResultCounter extends StatefulWidget {
   /// The results' scrolling, which the counter follows.
   final ScrollController controller;
 
-  /// The height of one card, and the space above the first.
-  final double rowExtent;
-  final double topPadding;
+  /// The key of the sliver list holding the cards. The cards are as tall as
+  /// their content (DESIGN.md EL2), so the count reads where each one ends
+  /// off the list itself.
+  final GlobalKey list;
 
   /// The cards in the list.
   final int shown;
@@ -72,19 +74,39 @@ class _ResultCounterState extends State<ResultCounter> {
       if (mounted) setState(() => _visible = false);
     });
     setState(() => _visible = true);
+    // The cards are only where this scroll puts them once laid out.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final lastSeen = _lastSeen();
+      if (lastSeen != _shownLastSeen) {
+        setState(() => _shownLastSeen = lastSeen);
+      }
+    });
   }
 
-  /// The number of the last card seen whole.
+  /// The number in front, as of the last layout.
+  int _shownLastSeen = 0;
+
+  /// The number of the last card seen whole: the cards scrolled past and
+  /// those whose bottom is on the screen.
   int _lastSeen() {
-    if (!widget.controller.hasClients) return 0;
-    final position = widget.controller.position;
-    // Not laid out yet on the list's first frame.
-    if (!position.hasContentDimensions || !position.hasViewportDimension) {
-      return 0;
+    final list = widget.list.currentContext?.findRenderObject();
+    if (list is! RenderSliverMultiBoxAdaptor) return 0;
+    final constraints = list.constraints;
+    final visibleEnd =
+        constraints.scrollOffset + constraints.remainingPaintExtent;
+    var child = list.firstChild;
+    if (child == null) return 0;
+    // The cards above the first one laid out are all scrolled past.
+    var seen = list.indexOf(child);
+    while (child != null) {
+      if (list.childScrollOffset(child)! + child.size.height > visibleEnd) {
+        break;
+      }
+      seen = list.indexOf(child) + 1;
+      child = list.childAfter(child);
     }
-    final bottom =
-        position.pixels + position.viewportDimension - widget.topPadding;
-    return (bottom / widget.rowExtent).floor().clamp(0, widget.shown);
+    return seen.clamp(0, widget.shown);
   }
 
   @override
@@ -107,7 +129,7 @@ class _ResultCounterState extends State<ResultCounter> {
               vertical: Spacing.s,
             ),
             child: Text(
-              '${_lastSeen()} / ${widget.found}$plus találat',
+              '$_shownLastSeen / ${widget.found}$plus találat',
               style: theme.textTheme.labelLarge?.copyWith(
                 color: scheme.onInverseSurface,
                 fontFeatures: const [FontFeature.tabularFigures()],

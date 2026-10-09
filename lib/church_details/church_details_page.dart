@@ -25,6 +25,7 @@ import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -164,20 +165,24 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   /// Every section of the page, in reading order.
   Widget _sections() {
-    return ListView(
+    return ContentWidth(
       padding: const EdgeInsets.only(bottom: Spacing.xl),
-      children: [
-        _churchName(),
-        _actionButtons(),
-        _massCard(),
-        _dayStrip(),
-        ..._adorationSection(),
-        if (_data?.confessionLive ?? false) const ConfessionTile(),
-        _mapCard(),
-        ..._contactSection(),
-        ..._infoTiles(),
-        _updatedFooter(),
-      ],
+      builder:
+          (context, padding) => ListView(
+            padding: padding,
+            children: [
+              _churchName(),
+              _actionButtons(),
+              _massCard(),
+              _dayStrip(),
+              ..._adorationSection(),
+              if (_data?.confessionLive ?? false) const ConfessionTile(),
+              _mapCard(),
+              ..._contactSection(),
+              ..._infoTiles(),
+              _updatedFooter(),
+            ],
+          ),
     );
   }
 

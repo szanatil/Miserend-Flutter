@@ -150,28 +150,40 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 apiKey: const String.fromEnvironment('CARTO_API_KEY'),
                 onTap: _closeCard,
               ),
-              if (entry != null)
-                Column(
+              // The button stands on the card, so wherever the card's
+              // content puts its top, the button is clear above it. A card
+              // taller than the room — large text, a phone on its side —
+              // scrolls rather than overflow (DESIGN.md EL2, EL5).
+              Positioned.fill(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(child: Container()),
                     Padding(
-                      padding: const EdgeInsets.all(_edgeGap),
-                      child: _cardWithRetry(entry, card!),
+                      padding: EdgeInsets.only(
+                        top: _edgeGap,
+                        right: _edgeGap,
+                        bottom: entry == null ? _edgeGap : 0,
+                      ),
+                      child: FloatingActionButton(
+                        // No hero: the Névjegy tab's button lives beside this
+                        // one, and two default tags fail a full-screen push
+                        // over the tabs.
+                        heroTag: null,
+                        onPressed: _goToMyPosition,
+                        child: const Icon(Icons.my_location_rounded),
+                      ),
                     ),
+                    if (entry != null)
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.all(_edgeGap),
+                          child: SingleChildScrollView(
+                            child: _cardWithRetry(entry, card!),
+                          ),
+                        ),
+                      ),
                   ],
-                ),
-              Positioned(
-                right: _edgeGap,
-                // Above the card and its padding on both sides.
-                bottom:
-                    entry != null ? ChurchCard.height + 2 * _edgeGap : _edgeGap,
-                child: FloatingActionButton(
-                  // No hero: the Névjegy tab's button lives beside this one,
-                  // and two default tags fail a full-screen push over the
-                  // tabs.
-                  heroTag: null,
-                  onPressed: _goToMyPosition,
-                  child: const Icon(Icons.my_location_rounded),
                 ),
               ),
             ],

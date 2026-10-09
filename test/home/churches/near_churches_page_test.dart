@@ -7,6 +7,7 @@ import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/near_churches_page.dart';
 import 'package:miserend/location_provider.dart';
@@ -19,6 +20,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import 'fake_church_list_loader.dart';
 import 'list_surface.dart';
 
@@ -591,6 +593,57 @@ void main() {
 
       expect(loader.refreshes, 0);
       expect(find.byType(OfflineBanner), findsNothing);
+    });
+  });
+
+  group('size', () {
+    final crowded = [
+      for (var i = 0; i < 3; i++)
+        ChurchListEntry(
+          id: i,
+          name:
+              'Kecskeméti Szent Miklós Ferences Templom és Kolostor Plébánia '
+              'Templom $i',
+          commonName: 'Alsóvárosi templom, Ferences templom, Barátok temploma',
+          city: 'Budapest',
+          lat: 47.5,
+          lon: 19.04,
+          photo: null,
+          masses: [
+            for (var hour = 6; hour < 20; hour++)
+              _row(hour, 'Szentmise', MassSource.bootstrap),
+          ],
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(
+            tester,
+            FakeChurchListLoader([crowded]),
+            FakeLocationProvider([found]),
+          );
+
+          expect(find.byType(ChurchCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([crowded]),
+        FakeLocationProvider([found]),
+      );
+
+      expectCentredContent(tester, find.byType(ChurchCard).first);
     });
   });
 }

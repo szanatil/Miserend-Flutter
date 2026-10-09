@@ -12,6 +12,7 @@ import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
@@ -283,26 +284,30 @@ class _NearMassesPageState extends State<NearMassesPage>
       rows.add(mass);
     }
 
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
+    return ContentWidth(
       // The cards' own margin keeps them 8 apart (TK2).
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.l,
         vertical: Spacing.xs,
       ),
-      itemCount: rows.length,
-      itemBuilder: (BuildContext context, int index) {
-        final mass = rows[index];
-        if (mass == null) {
-          return MassStartHeader(mass: rows[index + 1]!, now: now);
-        }
-        return MassCard(
-          mass: mass,
-          detail: _details.of(mass),
-          thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-          onTap: () => _openChurch(mass),
-        );
-      },
+      builder:
+          (context, padding) => ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: padding,
+            itemCount: rows.length,
+            itemBuilder: (BuildContext context, int index) {
+              final mass = rows[index];
+              if (mass == null) {
+                return MassStartHeader(mass: rows[index + 1]!, now: now);
+              }
+              return MassCard(
+                mass: mass,
+                detail: _details.of(mass),
+                thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
+                onTap: () => _openChurch(mass),
+              );
+            },
+          ),
     );
   }
 

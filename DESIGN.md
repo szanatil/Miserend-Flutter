@@ -318,7 +318,7 @@ _Ismert eltérés: 300 ms-os halványulás (#64)._
 
 **AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
 
-_Ismert eltérés: nincs `MergeSemantics` a kártyákon, a koppintható időpont-chip 48 dp-nél kisebb, nincsenek guideline-tesztek (AM3–AM5, #62); fix templomkártya-magasság, egysoros vágások, nincs 640 dp-s korlát, nincsenek méret-tesztek (EL1–EL3, #67)._
+_Ismert eltérés: nincs `MergeSemantics` a kártyákon, a koppintható időpont-chip 48 dp-nél kisebb, nincsenek guideline-tesztek (AM3–AM5, #62)._
 
 **AM6 — Gesztus csak kényelmi.** Minden funkció koppintással is elérhető; a húzás, hosszú nyomás csak gyorsítás.
 

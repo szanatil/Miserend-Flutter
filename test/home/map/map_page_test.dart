@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import '../churches/fake_church_list_loader.dart';
 
 /// Near the default centre, so the markers are on screen.
@@ -136,6 +137,7 @@ void main() {
     _MapLoader loader, {
     LocationProvider? location,
     double zoom = _pinsZoom,
+    double textScale = 1,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
@@ -143,6 +145,13 @@ void main() {
         value: favorites,
         child: MaterialApp(
           theme: miserendTheme(Brightness.light),
+          builder:
+              (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
           home: Scaffold(
             body: MapPage(
               loader: loader,
@@ -403,25 +412,46 @@ void main() {
       expect(find.byType(DistanceChip), findsNothing);
     });
 
-    testWidgets('the my-position button stands clear above the card', (
+    for (final (size, textScale) in [
+      for (final width in eh4Widths)
+        for (final textScale in eh4TextScales) (Size(width, 640), textScale),
+      // On its side (EL5): the card is taller than the room, and scrolls.
+      (const Size(640, 320), 2.0),
+    ]) {
+      testWidgets('the my-position button stands clear above the card at '
+          '$size and text scale $textScale', (tester) async {
+        setScreen(tester, size);
+        await pumpPage(
+          tester,
+          _MapLoader([
+            [_entry(1, 'Tárolt templom')],
+          ]),
+          textScale: textScale,
+        );
+        await tapMarker(tester, 1);
+
+        expect(tester.takeException(), isNull);
+        final map = tester.getRect(find.byType(MiserendMap));
+        final button = tester.getRect(find.byType(FloatingActionButton));
+        final card = tester.getRect(find.byType(Card));
+        expect(button.top, greaterThanOrEqualTo(map.top));
+        // The card stands Spacing.l off the map's edge on every side (KO18),
+        // the button as far above it.
+        expect(button.bottom, card.top - Spacing.l);
+        expect(map.right - button.right, Spacing.l);
+        expect(find.byType(FloatingActionButton).hitTestable(), findsOneWidget);
+      }, variant: eh4Platforms);
+    }
+
+    testWidgets('without a card, the my-position button stands in the corner', (
       tester,
     ) async {
-      await pumpPage(
-        tester,
-        _MapLoader([
-          [_entry(1, 'Tárolt templom')],
-        ]),
-      );
-      await tapMarker(tester, 1);
+      await pumpPage(tester, _MapLoader(const []));
 
       final map = tester.getRect(find.byType(MiserendMap));
       final button = tester.getRect(find.byType(FloatingActionButton));
-      // The card stands Spacing.l off the map's edge on both sides (KO18).
-      expect(map.bottom - button.bottom, ChurchCard.height + 2 * Spacing.l);
-      expect(
-        button.bottom,
-        lessThanOrEqualTo(tester.getRect(find.byType(Card)).top),
-      );
+      expect(map.bottom - button.bottom, Spacing.l);
+      expect(map.right - button.right, Spacing.l);
     });
 
     testWidgets('tapping the map away from the markers closes the card', (

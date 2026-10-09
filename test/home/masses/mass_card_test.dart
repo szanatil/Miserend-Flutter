@@ -258,6 +258,55 @@ void main() {
       });
     }
 
+    testWidgets('a long city and title wrap rather than being cut off (EL2)', (
+      tester,
+    ) async {
+      await pumpCard(tester, _mass(), width: 320);
+      final oneLine = tester.getSize(find.text('Nyíregyháza')).height;
+
+      const city = 'Budapest XVIII. kerület, Pestszentlőrinc-Pestszentimre';
+      await pumpCard(
+        tester,
+        _mass(city: city, title: 'Régi rítusú szentmise'),
+        width: 320,
+      );
+
+      expect(tester.takeException(), isNull);
+      final place = find.text('$city · Régi rítusú szentmise');
+      expect(tester.widget<Text>(place).maxLines, isNull);
+      expect(tester.widget<Text>(place).overflow, isNot(TextOverflow.ellipsis));
+      expect(tester.getSize(place).height, greaterThan(oneLine));
+    });
+
+    testWidgets('a long comment at 320 dp and text scale 2.0 stays on one line '
+        'in its bubble, and tapped shows its whole text (EL2)', (tester) async {
+      const comment =
+          '(Minden hónap első péntekén a szentmise után Jézus Szíve '
+          'litánia.)';
+      await pumpCard(
+        tester,
+        _mass(),
+        detail: comment,
+        width: 320,
+        textScale: 2,
+      );
+
+      expect(tester.takeException(), isNull);
+      final text = tester.widget<Text>(
+        find.descendant(of: _bubble(), matching: find.text(comment)),
+      );
+      expect(text.maxLines, 1);
+      expect(text.overflow, TextOverflow.ellipsis);
+      final card = tester.getRect(find.byType(MassCard));
+      expect(tester.getRect(_bubble()).right, lessThanOrEqualTo(card.right));
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(seconds: 1));
+
+      // The bubble's own text, and the tooltip's whole one over it.
+      expect(find.text(comment), findsNWidgets(2));
+    });
+
     testWidgets('the line under the name stands at the same height for a short '
         'and a long name', (tester) async {
       await pumpCard(tester, _mass(name: 'Rövid'));

@@ -145,26 +145,63 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(tester.widget<Text>(find.text(longName)).maxLines, 2);
-      expect(tester.widget<Text>(find.text(longCommonName)).maxLines, 1);
     });
 
-    testWidgets('the mass chips and the heart stand at the same height '
-        'whatever the names', (tester) async {
+    testWidgets('a long common name wraps rather than being cut off, and the '
+        'card grows for it (EL2)', (tester) async {
+      await pumpCard(tester, _entry(), width: 320);
+      final oneLine = tester.getSize(find.byType(Card)).height;
+
+      await pumpCard(tester, _entry(commonName: longCommonName), width: 320);
+
+      expect(tester.takeException(), isNull);
+      final common = tester.widget<Text>(find.text(longCommonName));
+      expect(common.maxLines, isNull);
+      expect(common.overflow, isNot(TextOverflow.ellipsis));
+      expect(tester.getSize(find.byType(Card)).height, greaterThan(oneLine));
+    });
+
+    testWidgets('the mass chips and the heart stand at the same height for a '
+        'short and a long name', (tester) async {
       final masses = [_mass(8, 0)];
-      await pumpCard(
-        tester,
-        _entry(name: 'Rövid', commonName: null, masses: masses),
-      );
+      await pumpCard(tester, _entry(name: 'Rövid', masses: masses));
       final chip = tester.getTopLeft(find.byType(TimeChip));
       final heart = tester.getTopLeft(find.byType(IconButton));
 
-      await pumpCard(
-        tester,
-        _entry(name: longName, commonName: longCommonName, masses: masses),
-      );
+      await pumpCard(tester, _entry(name: longName, masses: masses));
 
       expect(tester.getTopLeft(find.byType(TimeChip)).dy, chip.dy);
       expect(tester.getTopLeft(find.byType(IconButton)).dy, heart.dy);
+    });
+
+    testWidgets('a card without a common name is as tall as one with a short '
+        'one', (tester) async {
+      await pumpCard(tester, _entry());
+      final withCommonName = tester.getSize(find.byType(Card)).height;
+
+      await pumpCard(tester, _entry(commonName: null));
+
+      expect(tester.getSize(find.byType(Card)).height, withCommonName);
+    });
+
+    testWidgets('the photo runs the card\'s full height, whatever it is', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        _entry(name: longName, commonName: longCommonName),
+        width: 320,
+      );
+
+      final surface = tester.getRect(
+        find
+            .descendant(of: find.byType(Card), matching: find.byType(Material))
+            .first,
+      );
+      final photo = tester.getRect(find.byType(Image));
+      expect(photo.top, surface.top);
+      expect(photo.bottom, surface.bottom);
+      expect(photo.right, surface.right);
     });
 
     testWidgets('masses that do not fit on one line give way to a „…" chip', (
@@ -424,12 +461,34 @@ void main() {
 
               expect(tester.takeException(), isNull);
             },
-            // The card's fixed height cannot hold a doubled text size; the
-            // height comes from the content with #67.
-            skip: textScale > 1,
           );
         }
       }
     }
+
+    testWidgets('many masses at 320 dp and text scale 2.0 stay on one line, '
+        'ending in a „…" chip (EL2)', (tester) async {
+      await pumpDesigned(
+        tester,
+        entry: _entry(
+          masses: [for (var hour = 6; hour < 20; hour++) _mass(hour, 30)],
+        ),
+        width: 320,
+        textScale: 2,
+      );
+
+      expect(tester.takeException(), isNull);
+      final chips = find.byType(TimeChip);
+      final tops = {
+        for (final element in chips.evaluate())
+          tester.getTopLeft(find.byWidget(element.widget)).dy,
+      };
+      expect(tops, hasLength(1));
+      final last = chips.evaluate().last.widget;
+      expect(
+        find.descendant(of: find.byWidget(last), matching: find.text('…')),
+        findsOneWidget,
+      );
+    });
   });
 }

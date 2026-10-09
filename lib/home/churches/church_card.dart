@@ -32,10 +32,6 @@ class ChurchCard extends StatelessWidget {
     this.clock = DateTime.now,
   });
 
-  /// The card's fixed height in logical pixels. Fixed, so that a list scrolls
-  /// evenly and the map can keep its buttons clear of the card.
-  static const double height = 192;
-
   final ChurchListEntry entry;
 
   /// The user's position, for the straight-line distance on the photo. Null
@@ -57,6 +53,10 @@ class ChurchCard extends StatelessWidget {
   /// the full name is on the details page.
   static const int _nameLines = 2;
 
+  /// The text takes two thirds of the card, the photo the third beside it.
+  static const int _textFlex = 2;
+  static const int _photoFlex = 1;
+
   @override
   Widget build(BuildContext context) {
     // Confession, adoration and the hours come back among the rows too; the
@@ -75,162 +75,174 @@ class ChurchCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => openChurchDetails(context, entry),
-          child: SizedBox(
-            height: height,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                Spacing.l,
-                                Spacing.l,
-                                Spacing.l,
-                                0,
-                              ),
-                              // The slot keeps both lines even for a short
-                              // name, so that everything below stands at the
-                              // same height on every card.
-                              child: ReservedRoom.lines(
-                                lines: _nameLines,
-                                style: textTheme.titleMedium,
-                                child: Text(
-                                  entry.name ?? '',
+          // The text sets the card's height; the photo is laid over the
+          // third left free for it, so that it takes that height instead of
+          // setting it (DESIGN.md EL2).
+          child: Stack(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: _textFlex,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  Spacing.l,
+                                  Spacing.l,
+                                  Spacing.l,
+                                  0,
+                                ),
+                                // The slot keeps both lines even for a short
+                                // name, so that everything below stands at
+                                // the same height on every card.
+                                child: ReservedRoom.lines(
+                                  lines: _nameLines,
                                   style: textTheme.titleMedium,
-                                  maxLines: _nameLines,
-                                  overflow: TextOverflow.ellipsis,
+                                  child: Text(
+                                    entry.name ?? '',
+                                    style: textTheme.titleMedium,
+                                    maxLines: _nameLines,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
                             ),
+                            if (failure != null)
+                              OfflineInfoButton(
+                                failure: failure,
+                                asOf: dataAsOf,
+                              ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            Spacing.l,
+                            Spacing.s,
+                            Spacing.l,
+                            Spacing.m,
                           ),
-                          if (failure != null)
-                            OfflineInfoButton(failure: failure, asOf: dataAsOf),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          Spacing.l,
-                          Spacing.s,
-                          Spacing.l,
-                          0,
-                        ),
-                        // An empty text still takes its line.
-                        child: Text(
-                          entry.commonName ?? '',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
+                          // An empty text still takes its line; a long one
+                          // wraps (DESIGN.md EL2).
+                          child: Text(
+                            entry.commonName ?? '',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          Spacing.l,
-                          0,
-                          Spacing.l,
-                          Spacing.s,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            Spacing.l,
+                            0,
+                            Spacing.l,
+                            Spacing.s,
+                          ),
+                          child: _MassChips(masses: masses, now: clock()),
                         ),
-                        child: _MassChips(masses: masses, now: clock()),
-                      ),
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: scheme.outlineVariant,
-                      ),
-                      Consumer<FavoritesService>(
-                        builder: (context, favoritesService, child) {
-                          final favorite = favoritesService.isFavorite(
-                            entry.id,
-                          );
-                          return IconButton(
-                            icon:
-                                favorite
-                                    ? const Icon(Icons.favorite_rounded)
-                                    : const Icon(Icons.favorite_border_rounded),
-                            color:
-                                favorite
-                                    ? scheme.primary
-                                    : scheme.onSurfaceVariant,
-                            tooltip:
-                                favorite
-                                    ? 'Törlés a kedvencek közül'
-                                    : 'Kedvencekhez',
-                            onPressed: () => favoritesService.toggle(entry.id),
-                          );
-                        },
-                      ),
-                    ],
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: scheme.outlineVariant,
+                        ),
+                        Consumer<FavoritesService>(
+                          builder: (context, favoritesService, child) {
+                            final favorite = favoritesService.isFavorite(
+                              entry.id,
+                            );
+                            return IconButton(
+                              icon:
+                                  favorite
+                                      ? const Icon(Icons.favorite_rounded)
+                                      : const Icon(
+                                        Icons.favorite_border_rounded,
+                                      ),
+                              color:
+                                  favorite
+                                      ? scheme.primary
+                                      : scheme.onSurfaceVariant,
+                              tooltip:
+                                  favorite
+                                      ? 'Törlés a kedvencek közül'
+                                      : 'Kedvencekhez',
+                              onPressed:
+                                  () => favoritesService.toggle(entry.id),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(flex: _photoFlex),
+                ],
+              ),
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FractionallySizedBox(
+                    widthFactor: _photoFlex / (_textFlex + _photoFlex),
+                    heightFactor: 1,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _photo(),
+                        // Over the photo rather than in the text column, so
+                        // that a card without it has nothing moved.
+                        if (km != null)
+                          Positioned(
+                            right: Spacing.s,
+                            bottom: Spacing.s,
+                            child: DistanceChip(km: km),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _photo(context),
-                      // Over the photo rather than in the text column, so that
-                      // a card without it has nothing moved.
-                      if (km != null)
-                        Positioned(
-                          right: Spacing.s,
-                          bottom: Spacing.s,
-                          child: DistanceChip(km: km),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _photo(BuildContext context) {
-    final photo = entry.photo;
-    return photo != null && photo.isNotEmpty
-        ? FadeInImage.assetNetwork(
-          image: photo,
-          fit: BoxFit.cover,
-          placeholder: 'assets/images/church_blurred.png',
-          imageErrorBuilder: _errorBuilder,
-          imageCacheHeight: _decodeHeight(context),
-          placeholderCacheHeight: _decodeHeight(context),
-        )
-        : Image.asset(
+  /// The photo strip, as tall as the card.
+  Widget _photo() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The strip is a third of the card wide and the full card tall, so
+        // height is the axis [BoxFit.cover] scales by and needs no headroom.
+        final decodeHeight = PhotoDecode.forSlot(
+          context,
+          constraints.maxHeight,
+          tight: true,
+        );
+        final placeholder = Image.asset(
           'assets/images/church_blurred.png',
           fit: BoxFit.cover,
-          cacheHeight: _decodeHeight(context),
+          cacheHeight: decodeHeight,
         );
-  }
-
-  Widget _errorBuilder(
-    BuildContext context,
-    Object error,
-    StackTrace? stackTrace,
-  ) {
-    return Image.asset(
-      'assets/images/church_blurred.png',
-      fit: BoxFit.cover,
-      cacheHeight: _decodeHeight(context),
+        final photo = entry.photo;
+        return photo != null && photo.isNotEmpty
+            ? FadeInImage.assetNetwork(
+              image: photo,
+              fit: BoxFit.cover,
+              placeholder: 'assets/images/church_blurred.png',
+              imageErrorBuilder: (context, error, stackTrace) => placeholder,
+              imageCacheHeight: decodeHeight,
+              placeholderCacheHeight: decodeHeight,
+            )
+            : placeholder;
+      },
     );
   }
-
-  /// The photo slot is a third of the card wide and the full card tall, so
-  /// height is the axis [BoxFit.cover] scales by and needs no headroom.
-  int _decodeHeight(BuildContext context) =>
-      PhotoDecode.forSlot(context, height, tight: true);
 }
 
 /// Today's masses on a single line. Those that do not fit give way to one

@@ -88,6 +88,7 @@ void main() {
     Future<bool> Function(Uri uri)? openLink,
     ChurchOfTheDayLoader? churchOfTheDay,
     Brightness brightness = Brightness.light,
+    TargetPlatform platform = TargetPlatform.android,
     double textScale = 1,
   }) async {
     // Tall enough for every card, so none is left unbuilt below the fold.
@@ -99,7 +100,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpWidget(
       MaterialApp(
-        theme: miserendTheme(brightness),
+        theme: miserendTheme(brightness, platform: platform),
         home: AboutPage(
           feedback: feedback,
           openLink: openLink,
@@ -255,6 +256,21 @@ void main() {
       expect(find.text('A templom története'), findsOneWidget);
     });
 
+    testWidgets('a long description wraps whole rather than being cut off '
+        '(EL2)', (tester) async {
+      final description = List.filled(30, 'A templom története.').join(' ');
+      await pumpPage(
+        tester,
+        churchOfTheDay: _FakeChurchOfTheDay(
+          cached: _withDescription(description),
+        ),
+      );
+
+      final text = tester.widget<Text>(find.text(description));
+      expect(text.maxLines, isNull);
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    });
+
     testWidgets('is left out when the cache has no church', (tester) async {
       await pumpPage(tester, churchOfTheDay: _FakeChurchOfTheDay());
 
@@ -290,22 +306,40 @@ void main() {
   }
 
   group('fits (EH4)', () {
-    for (final width in eh4Widths) {
-      for (final textScale in eh4TextScales) {
-        testWidgets('at $width dp and text scale $textScale', (tester) async {
-          await pumpPage(
+    for (final platform in eh4Platforms.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('at $width dp and text scale $textScale on $platform', (
             tester,
-            size: Size(width, 3000),
-            textScale: textScale,
-            churchOfTheDay: _FakeChurchOfTheDay(
-              cached: _withDescription('A templom története'),
-            ),
-          );
+          ) async {
+            await pumpPage(
+              tester,
+              size: Size(width, 3000),
+              platform: platform,
+              textScale: textScale,
+              churchOfTheDay: _FakeChurchOfTheDay(
+                cached: _withDescription('A templom története'),
+              ),
+            );
 
-          expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
-          expect(tester.takeException(), isNull);
-        });
+            expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          });
+        }
       }
     }
   });
+
+  testWidgets(
+    'on an $el3Width dp screen the sections are at most 640 wide, centred '
+    '(EL3)',
+    (tester) async {
+      await pumpPage(tester, size: const Size(el3Width, 1800));
+
+      expectCentredContent(
+        tester,
+        find.ancestor(of: find.text('Fejlesztő'), matching: find.byType(Card)),
+      );
+    },
+  );
 }

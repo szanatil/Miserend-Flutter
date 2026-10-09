@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/search_results.dart';
 import 'package:miserend/theme/miserend_theme.dart';
@@ -13,6 +14,7 @@ import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../theme/theme_harness.dart';
 import 'fake_church_list_loader.dart';
 import 'list_surface.dart';
 
@@ -235,4 +237,37 @@ void main() {
       },
     );
   }
+
+  group('size', () {
+    final found = [
+      for (var i = 1; i <= 3; i++)
+        _entry(
+          i,
+          'Kecskeméti Szent Miklós Ferences Templom és Kolostor Plébánia '
+          'Templom $i',
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(tester, FakeChurchListLoader([found]));
+
+          expect(find.byType(ChurchCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(tester, FakeChurchListLoader([found]));
+
+      expectCentredContent(tester, find.byType(ChurchCard).first);
+    });
+  });
 }

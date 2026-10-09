@@ -6,3 +6,4 @@ Javítások
 – A dátum- és időválasztó magyarul jelenik meg.
 – A részletes keresőben a „-tól” időpont nem lehet későbbi az „-ig”-nél: ha az egyiket a másikon túl állítod, a másik vele mozdul.
 – iPhone-on a hibajelentés választógombjai jól látszanak.
+– Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, tableten és fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.

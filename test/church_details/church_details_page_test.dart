@@ -8,6 +8,7 @@ import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
+import 'package:miserend/church_details/widgets/photo_header.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -17,6 +18,7 @@ import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
+import 'package:miserend/widgets/section_card.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -483,9 +485,43 @@ void main() {
           expect(find.text('Több'), findsOneWidget);
           expect(find.byIcon(Icons.accessible_rounded), findsOneWidget);
           expect(tester.takeException(), isNull);
-        });
+        }, variant: eh4Platforms);
       }
     }
+  });
+
+  testWidgets('fits a phone on its side (EL5)', (tester) async {
+    final page = _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(description: _longText, email: 'plebania@example.hu'),
+    );
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      width: 640,
+      height: 320,
+      textScale: 2,
+    );
+
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  }, variant: eh4Platforms);
+
+  testWidgets('on an $el3Width dp screen the photo fills the width and the '
+      'sections are at most 640 wide, centred (EL3)', (tester) async {
+    final page = _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(email: 'plebania@example.hu'),
+    );
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      width: el3Width,
+    );
+
+    expect(tester.getRect(find.byType(ChurchPhotoHeader)).width, el3Width);
+    expectCentredContent(tester, find.byType(SectionCard).first);
   });
 
   testWidgets('shows the church name', (tester) async {

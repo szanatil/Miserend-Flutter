@@ -48,13 +48,14 @@ AdvancedSearchResultPage resultPage(
   dataAsOf: null,
 );
 
-ChurchListEntry churchEntry(int id, {String? name}) => ChurchListEntry(
-  id: id,
-  name: name ?? 'Templom $id',
-  commonName: null,
-  city: 'Pécs',
-  lat: 46.07,
-  lon: 18.23,
-  photo: null,
-  masses: const [],
-);
+ChurchListEntry churchEntry(int id, {String? name, String? commonName}) =>
+    ChurchListEntry(
+      id: id,
+      name: name ?? 'Templom $id',
+      commonName: commonName,
+      city: 'Pécs',
+      lat: 46.07,
+      lon: 18.23,
+      photo: null,
+      masses: const [],
+    );

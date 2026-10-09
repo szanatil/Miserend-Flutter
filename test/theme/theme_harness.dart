@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/widgets/content_width.dart';
 
 /// The screen widths and text scales every card and chip is checked at
 /// (DESIGN.md EH4).
@@ -48,4 +49,33 @@ MiserendColors miserendColorsOf(Brightness brightness) =>
 TextStyle drawnStyle(WidgetTester tester, Finder text) {
   final widget = tester.widget<Text>(text);
   return DefaultTextStyle.of(tester.element(text)).style.merge(widget.style);
+}
+
+/// The platforms every screen and card is checked on for size (DESIGN.md
+/// EH4); the app's theme follows the platform the variant sets.
+final TargetPlatformVariant eh4Platforms = TargetPlatformVariant(const {
+  TargetPlatform.android,
+  TargetPlatform.iOS,
+});
+
+/// Makes the test's screen [size] in dp, at [textScale], until the test ends.
+void setScreen(WidgetTester tester, Size size, {double textScale = 1}) {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  tester.platformDispatcher.textScaleFactorTestValue = textScale;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+}
+
+/// The width of a wide screen, a tablet or a phone on its side, that the
+/// content is checked to stay [ContentWidth.maxWidth] in (DESIGN.md EL3).
+const double el3Width = 800;
+
+/// Checks that [content], on a screen [el3Width] wide, takes the
+/// [ContentWidth.maxWidth] the content is held to and stands in the middle.
+void expectCentredContent(WidgetTester tester, Finder content) {
+  final rect = tester.getRect(content);
+  expect(rect.width, ContentWidth.maxWidth);
+  expect(rect.center.dx, el3Width / 2);
 }

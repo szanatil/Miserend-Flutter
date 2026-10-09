@@ -5,6 +5,7 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
@@ -101,68 +102,75 @@ class _AboutPageState extends State<AboutPage> {
         label: const Text('Visszajelzés'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: ListView(
+      body: ContentWidth(
         padding: const EdgeInsets.only(
           top: Spacing.s,
           bottom: _feedbackClearance,
         ),
-        children: [
-          if (_church case final church?) _churchOfTheDay(church),
-          SectionCard(
-            title: 'Fejlesztő',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: Spacing.s,
+        builder:
+            (context, padding) => ListView(
+              padding: padding,
               children: [
-                const Text(
-                  'Az alkalmazást a Szent József Hackathon fejleszti.',
-                ),
-                FutureBuilder<PackageInfo>(
-                  future: _packageInfo,
-                  builder: (context, snapshot) {
-                    final info = snapshot.data;
-                    if (info == null) return const SizedBox.shrink();
-                    return Text(
-                      'Verzió: ${info.version} (${info.buildNumber})',
-                      style: textTheme.bodyMedium?.apply(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                if (_church case final church?) _churchOfTheDay(church),
+                SectionCard(
+                  title: 'Fejlesztő',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: Spacing.s,
+                    children: [
+                      const Text(
+                        'Az alkalmazást a Szent József Hackathon fejleszti.',
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          SectionCard(
-            title: 'Forráskód',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: Spacing.s,
-              children: [
-                const Text(
-                  'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
-                  'forráskódját:',
-                ),
-                _externalLink('A projekt a GitHubon', _sourceCode),
-              ],
-            ),
-          ),
-          Card(
-            margin: SectionCard.margin,
-            child: ListTile(
-              leading: const Icon(Icons.language_rounded),
-              title: const Text('miserend.hu'),
-              subtitle: const Text('A miserend webes változata'),
-              trailing: const Icon(Icons.open_in_new_rounded),
-              onTap:
-                  () => launchExternal(
-                    context,
-                    _webVersion,
-                    launch: widget.openLink,
+                      FutureBuilder<PackageInfo>(
+                        future: _packageInfo,
+                        builder: (context, snapshot) {
+                          final info = snapshot.data;
+                          if (info == null) return const SizedBox.shrink();
+                          return Text(
+                            'Verzió: ${info.version} (${info.buildNumber})',
+                            style: textTheme.bodyMedium?.apply(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
+                ),
+                SectionCard(
+                  title: 'Forráskód',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: Spacing.s,
+                    children: [
+                      const Text(
+                        'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
+                        'forráskódját:',
+                      ),
+                      _externalLink('A projekt a GitHubon', _sourceCode),
+                    ],
+                  ),
+                ),
+                Card(
+                  margin: SectionCard.margin,
+                  child: ListTile(
+                    leading: const Icon(Icons.language_rounded),
+                    title: const Text('miserend.hu'),
+                    subtitle: const Text('A miserend webes változata'),
+                    trailing: const Icon(Icons.open_in_new_rounded),
+                    onTap:
+                        () => launchExternal(
+                          context,
+                          _webVersion,
+                          launch: widget.openLink,
+                        ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
       ),
     );
   }
@@ -217,11 +225,8 @@ class _AboutPageState extends State<AboutPage> {
                 ),
               ),
             if (description.isNotEmpty)
-              Text(
-                description,
-                maxLines: _descriptionLines,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Whole, wrapping: nothing is cut off (DESIGN.md EL2).
+              Text(description),
           ],
         ),
       ),
@@ -250,9 +255,6 @@ class _AboutPageState extends State<AboutPage> {
       placeholderCacheHeight: decodeHeight,
     );
   }
-
-  /// A taste of the description; the whole of it is on the details page.
-  static const int _descriptionLines = 4;
 
   static ChurchListEntry _listEntry(ChurchDetails church) => ChurchListEntry(
     id: church.id,
