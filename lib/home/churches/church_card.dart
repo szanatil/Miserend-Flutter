@@ -15,6 +15,7 @@ import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/reserved_room.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -231,9 +232,8 @@ class ChurchCard extends StatelessWidget {
         );
         final photo = entry.photo;
         return photo != null && photo.isNotEmpty
-            ? FadeInImage.assetNetwork(
+            ? PhotoFadeIn(
               image: photo,
-              fit: BoxFit.cover,
               placeholder: 'assets/images/church_blurred.png',
               imageErrorBuilder: (context, error, stackTrace) => placeholder,
               imageCacheHeight: decodeHeight,

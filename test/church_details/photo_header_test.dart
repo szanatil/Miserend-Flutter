@@ -64,6 +64,36 @@ void main() {
     expect(_page(tester), 1);
   });
 
+  testWidgets('a slide is over within Durations.medium3 (KO19)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_two));
+
+    // The timer fires at 4 s, and the slide takes its first frame there.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump(Durations.medium3 - const Duration(milliseconds: 10));
+    expect(_page(tester), lessThan(1));
+    await tester.pump(const Duration(milliseconds: 10));
+
+    expect(_page(tester), 1);
+  });
+
+  testWidgets('with reduced motion the slideshow never starts (MO3, KO19)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: _host(_two),
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+
+    expect(_page(tester), 0);
+  });
+
   testWidgets('a swipe stops the slideshow for good', (tester) async {
     await tester.pumpWidget(_host(_two));
 

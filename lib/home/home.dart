@@ -22,6 +22,7 @@ import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -99,8 +100,7 @@ class ChurchSuggestion extends Suggestion {
         aspectRatio: 1,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(Radii.s),
-          child: FadeInImage.assetNetwork(
-            fit: BoxFit.cover,
+          child: PhotoFadeIn(
             placeholder: 'assets/images/church_blurred.png',
             image: church.photo ?? '',
             imageErrorBuilder: _errorBuilder,

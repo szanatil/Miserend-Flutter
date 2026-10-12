@@ -249,8 +249,6 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 **MO3 — Csökkentett mozgás.** Ha `MediaQuery.disableAnimationsOf(context)` igaz, nincs csúszás és átméretezés: a váltás azonnali, vagy legfeljebb 150 ms áttűnés.
 
-_Ismert eltérés: nyers időtartamok és görbék, a `FadeInImage` alapértelmezett áttűnései, a csökkentett mozgás nincs kezelve (#64)._
-
 **MO4 — Takarékos mozgás** (AL5). Hero animáció csak a fotónál (fejléc → galéria). Nincs skeleton: a lista a helyi gyorsítótárból szinte azonnal kész, a betöltést a `LoadingView` (KO8) mutatja. Nincs dekoratív, ismétlődő vagy figyelemfelkeltő animáció. Egyetlen kivétel a fotófejléc automatikus diavetítése (spec 0003, KO19).
 
 ## KO. Komponensek
@@ -304,8 +302,6 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 **KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül; kinyitva 16:9 arányú, de legfeljebb a látható magasság fele; Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon `onPhoto`, alatta `photoScrim` sötét átmenet biztosítja az AA kontrasztot (SZ3). A lapozójelölő pöttyei közül az aktuális fotóé telt, a többié gyűrű: alakjuk különbözteti meg őket, nem halványabb szín (SZ5). A fotó tetején a status bar alatt teljes erejű `photoScrim` áll, amely a címsor alján átlátszóba fut; amíg a fotó a címsor alatt van, a status bar ikonjai világosak, a vissza gomb pedig `photoScrim` korongon `onPhoto` színű. Összecsukott fejlécnél a vissza gomb és a status bar a címsoré (KO2).
 
 **KO20 — Lebegő számláló** (pl. a részletes kereső „8 / 42 találat" felirata, spec 0010). Nem badge (nem állapot) és nem chip (nem egy elem adata), hanem a lista egészéről szóló, ideiglenes lebegő felirat. Alul középen, a biztonságos területtől `Spacing.l`-re; háttér `inverseSurface`, szöveg `onInverseSurface` `labelLarge`, táblázatos számjegyekkel, forma `Radii.full`, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Görgetés közben látszik, a görgetés vége után 1,5 s-mal `Durations.medium1` alatt elhalványul. Nem interaktív, árnyéka nincs.
-
-_Ismert eltérés: 300 ms-os halványulás (#64)._
 
 ## AM. Akadálymentesség
 

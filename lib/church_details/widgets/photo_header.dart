@@ -6,13 +6,14 @@ import 'package:miserend/church_details/widgets/photo_gallery_page.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 
 /// The photo strip behind the collapsing app bar.
 ///
 /// With two or more photos it advances on its own, because a still image gives
 /// no hint that there are others behind it. A swipe stops that for good: an
 /// slideshow that resumes takes the photo out from under the person looking
-/// at it.
+/// at it. With reduced motion it does not start at all (DESIGN.md MO3, KO19).
 class ChurchPhotoHeader extends StatefulWidget {
   const ChurchPhotoHeader({
     super.key,
@@ -61,10 +62,20 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
 
   bool _collapsed = false;
 
+  bool _reducedMotion = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Also runs right after [initState], which is where the timer first starts:
+  /// whether motion is reduced is only known from the context.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
     _syncTimer();
   }
 
@@ -96,11 +107,13 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
   }
 
   /// Runs only while there is something to advance through, the header is open,
-  /// the app is in front, and the person has not taken over.
+  /// the app is in front, motion is not reduced, and the person has not taken
+  /// over.
   void _syncTimer({bool resumed = true}) {
     final shouldRun =
         widget.photos.length > 1 &&
         !_handedOver &&
+        !_reducedMotion &&
         !_collapsed &&
         resumed &&
         mounted;
@@ -119,8 +132,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
     final next = (_index + 1) % widget.photos.length;
     _controller.animateToPage(
       next,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
+      duration: Durations.medium3,
+      curve: Easing.emphasizedDecelerate,
     );
   }
 
@@ -187,9 +200,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
   Widget _photo(int index) {
     return Hero(
       tag: '${widget.heroPrefix}-$index',
-      child: FadeInImage.assetNetwork(
+      child: PhotoFadeIn(
         image: widget.photos[index],
-        fit: BoxFit.cover,
         placeholder: _placeholder,
         imageErrorBuilder:
             (context, error, stackTrace) => Image.asset(

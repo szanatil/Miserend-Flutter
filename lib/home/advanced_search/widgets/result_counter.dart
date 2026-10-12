@@ -117,7 +117,16 @@ class _ResultCounterState extends State<ResultCounter> {
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: _visible ? 1 : 0,
-        duration: const Duration(milliseconds: 300),
+        // Coming in it decelerates, leaving it accelerates (MO2); with
+        // reduced motion only a short fade (MO3).
+        duration:
+            MediaQuery.disableAnimationsOf(context)
+                ? Durations.short3
+                : Durations.medium1,
+        curve:
+            _visible
+                ? Easing.emphasizedDecelerate
+                : Easing.emphasizedAccelerate,
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: scheme.inverseSurface,

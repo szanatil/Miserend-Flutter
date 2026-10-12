@@ -4,6 +4,7 @@ import 'package:miserend/mass_detail.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/reserved_room.dart';
 
 /// One of the nearest masses, the church card's sibling: the same card and
@@ -162,9 +163,8 @@ class MassCard extends StatelessWidget {
           builder: (context, snapshot) {
             final url = snapshot.data;
             if (url == null) return placeholder;
-            return FadeInImage.assetNetwork(
+            return PhotoFadeIn(
               image: url,
-              fit: BoxFit.cover,
               placeholder: _placeholder,
               imageErrorBuilder: (context, error, stackTrace) => placeholder,
               imageCacheHeight: decodeHeight,

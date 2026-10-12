@@ -10,6 +10,7 @@ import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -246,10 +247,9 @@ class _AboutPageState extends State<AboutPage> {
       cacheHeight: decodeHeight,
     );
     if (church.photos.isEmpty) return placeholder;
-    return FadeInImage.assetNetwork(
+    return PhotoFadeIn(
       image: church.photos.first,
       placeholder: _placeholder,
-      fit: BoxFit.cover,
       imageErrorBuilder: (context, error, stackTrace) => placeholder,
       imageCacheHeight: decodeHeight,
       placeholderCacheHeight: decodeHeight,
