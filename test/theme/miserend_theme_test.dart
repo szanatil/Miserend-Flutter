@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 
+import 'theme_harness.dart';
+
 void main() {
   const seed = Color(0xFF5C27AE);
 
@@ -236,6 +238,93 @@ void main() {
       );
     });
   }
+
+  group('a tooltip (KO21)', () {
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final brightness in Brightness.values) {
+        testWidgets('is solid inverseSurface with xs corners, its text '
+            'onInverseSurface bodySmall, at least 24 tall, on $platform in '
+            '$brightness', (tester) async {
+          final theme = miserendTheme(brightness, platform: platform);
+          final scheme = theme.colorScheme;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: theme,
+              home: Scaffold(
+                body: Center(
+                  child: IconButton(
+                    tooltip: 'Bezárás',
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          await tester.longPress(find.byType(IconButton));
+          await tester.pump(const Duration(milliseconds: 200));
+
+          final box = tooltipBox('Bezárás');
+          final decoration =
+              tester.widget<DecoratedBox>(box).decoration as BoxDecoration;
+          expect(decoration.color, scheme.inverseSurface);
+          expect(decoration.color!.a, 1);
+          expect(
+            decoration.borderRadius,
+            const BorderRadius.all(Radius.circular(Radii.xs)),
+          );
+          expect(decoration.boxShadow, isNull);
+          final style = drawnStyle(tester, tooltipText('Bezárás'));
+          final bodySmall =
+              Theme.of(
+                tester.element(find.byType(IconButton)),
+              ).textTheme.bodySmall!;
+          expect(style.color, scheme.onInverseSurface);
+          expect(style.fontSize, bodySmall.fontSize);
+          final rect = tester.getRect(box);
+          final text = tester.getRect(tooltipText('Bezárás'));
+          expect(rect.height, greaterThanOrEqualTo(24));
+          expect(text.left - rect.left, Spacing.s);
+          expect(rect.right - text.right, Spacing.s);
+          expect(
+            theme.tooltipTheme.padding,
+            const EdgeInsets.symmetric(
+              horizontal: Spacing.s,
+              vertical: Spacing.xs,
+            ),
+          );
+        });
+      }
+    }
+
+    testWidgets('of an icon button stays 1.5 s after the long press', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: miserendTheme(Brightness.light),
+          home: Scaffold(
+            body: Center(
+              child: IconButton(
+                tooltip: 'Bezárás',
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.longPress(find.byType(IconButton));
+      await tester.pump(const Duration(milliseconds: 1400));
+      expect(tooltipText('Bezárás'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      expect(tooltipText('Bezárás'), findsNothing);
+    });
+  });
 
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     testWidgets('the title stands where $platform puts it (PL2)', (

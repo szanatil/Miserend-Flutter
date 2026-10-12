@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/home/masses/mass_card.dart';
@@ -440,6 +441,186 @@ void main() {
     await tester.tap(_photo());
 
     expect(taps, 2);
+  });
+
+  group('a cut-off bubble\'s tooltip (KO21)', () {
+    const comment =
+        '(Minden hónap első péntekén a szentmise után Jézus Szíve '
+        'litánia.)';
+
+    /// Pumps a card the whole width of a screen [width] wide at [textScale],
+    /// the way the list holds it: the tooltip is laid out over the screen,
+    /// not the card. The card stands down the list, with room above it for
+    /// the tooltip.
+    Future<void> pumpOnScreen(
+      WidgetTester tester, {
+      String detail = comment,
+      double width = 320,
+      double textScale = 1,
+      TargetPlatform platform = TargetPlatform.android,
+      Brightness brightness = Brightness.light,
+      VoidCallback? onTap,
+    }) async {
+      setScreen(tester, Size(width, 800), textScale: textScale);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: miserendTheme(brightness, platform: platform),
+          home: Scaffold(
+            body: ListView(
+              children: [
+                const SizedBox(height: 300),
+                MassCard(
+                  mass: _mass(),
+                  detail: detail,
+                  thumbnailUrl: Future.value(null),
+                  onTap: onTap,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('stands above the bubble, 4 off it, 16 off the screen '
+                'edges and at most 312 wide, at $width dp and text scale '
+                '$textScale on $platform in $brightness', (tester) async {
+              await pumpOnScreen(
+                tester,
+                width: width,
+                textScale: textScale,
+                platform: platform,
+                brightness: brightness,
+              );
+
+              await tester.tap(_bubble());
+              await tester.pump(const Duration(milliseconds: 200));
+
+              expect(tester.takeException(), isNull);
+              final bubble = tester.getRect(_bubble());
+              final box = tester.getRect(tooltipBox(comment));
+              expect(box.bottom, moreOrLessEquals(bubble.top - Spacing.xs));
+              expect(box.left, greaterThanOrEqualTo(Spacing.l));
+              expect(box.right, lessThanOrEqualTo(width - Spacing.l));
+              expect(box.width, lessThanOrEqualTo(Tooltips.maxWidth));
+            });
+          }
+        }
+      }
+    }
+
+    testWidgets('stays past 1.5 s, until another touch', (tester) async {
+      await pumpOnScreen(tester);
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(seconds: 5));
+      expect(tooltipText(comment), findsOneWidget);
+
+      await tester.tapAt(const Offset(160, 780));
+      await tester.pumpAndSettle();
+      expect(tooltipText(comment), findsNothing);
+    });
+
+    testWidgets('goes after 10 s', (tester) async {
+      await pumpOnScreen(tester);
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(milliseconds: 9900));
+      expect(tooltipText(comment), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      expect(tooltipText(comment), findsNothing);
+    });
+
+    testWidgets('goes on a scroll', (tester) async {
+      await pumpOnScreen(tester);
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(seconds: 1));
+      expect(tooltipText(comment), findsOneWidget);
+
+      await tester.dragFrom(const Offset(160, 100), const Offset(0, -100));
+      await tester.pumpAndSettle();
+      expect(tooltipText(comment), findsNothing);
+    });
+
+    testWidgets('tapped again, starts its 10 s over', (tester) async {
+      await pumpOnScreen(tester);
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(seconds: 8));
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(seconds: 8));
+      expect(tooltipText(comment), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(tooltipText(comment), findsNothing);
+    });
+
+    for (final textScale in eh4TextScales) {
+      testWidgets('is there exactly when the text is cut off, at text scale '
+          '$textScale', (tester) async {
+        const label = '(a Mária-kápolnában)';
+
+        final both = <bool>{};
+        for (var width = 280.0; width <= 800; width += 4) {
+          await pumpOnScreen(
+            tester,
+            detail: label,
+            width: width,
+            textScale: textScale,
+          );
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.descendant(of: _bubble(), matching: find.byType(RichText)),
+          );
+          final hasTooltip =
+              find
+                  .descendant(of: _bubble(), matching: find.byType(Tooltip))
+                  .evaluate()
+                  .isNotEmpty;
+          expect(hasTooltip, paragraph.didExceedMaxLines, reason: '$width');
+          both.add(hasTooltip);
+        }
+        // The widths run from cut off to shown in full.
+        expect(both, {true, false});
+      });
+    }
+
+    testWidgets('a long comment cut off at 320 dp has one', (tester) async {
+      await pumpOnScreen(tester);
+
+      expect(
+        find.descendant(of: _bubble(), matching: find.byType(Tooltip)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a short bubble in full at 430 dp has none, and tapping it '
+        'opens the church', (tester) async {
+      var taps = 0;
+      await pumpOnScreen(
+        tester,
+        detail: 'Csendes',
+        width: 430,
+        onTap: () => taps++,
+      );
+
+      expect(
+        find.descendant(of: _bubble(), matching: find.byType(Tooltip)),
+        findsNothing,
+      );
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(taps, 1);
+      expect(tooltipText('Csendes'), findsNothing);
+    });
   });
 
   group('design', () {

@@ -106,6 +106,31 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
         borderRadius: BorderRadius.all(Radius.circular(Radii.xs)),
       ),
     ),
+    // M3's plain tooltip, solid, on both platforms (KO21, PL1). The margin is
+    // horizontal only, as a vertical one would move the tooltip off its
+    // element; the box's constraints take it in, so the widest box is
+    // [Tooltips.maxWidth] and stays 16 off a narrower screen's edges. The
+    // text is complete here, as `Tooltip` does not localize it: the
+    // [base.textTheme] has no sizes yet. Shown and hidden for Flutter's
+    // defaults, 1.5 s after a long press, fading in 150 ms and out 75 ms.
+    tooltipTheme: TooltipThemeData(
+      constraints: const BoxConstraints(
+        minHeight: Tooltips.minHeight,
+        maxWidth: Tooltips.maxWidth + 2 * Spacing.l,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: Spacing.l),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s,
+        vertical: Spacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.inverseSurface,
+        borderRadius: const BorderRadius.all(Radius.circular(Radii.xs)),
+      ),
+      textStyle: base.typography.englishLike.bodySmall!
+          .merge(base.textTheme.bodySmall)
+          .copyWith(color: scheme.onInverseSurface),
+    ),
   );
 }
 

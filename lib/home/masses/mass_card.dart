@@ -216,8 +216,11 @@ class _MassDetailBubbles extends StatelessWidget {
 
 /// One part of the mass detail (CONTEXT.md, „Mise jellemzője"): a type as its
 /// icon and its word, a language or a comment as written. A comment too long
-/// for the card is cut off with an ellipsis; tapped, the bubble shows its
-/// whole text above it, and does not open the church.
+/// for the card is cut off with an ellipsis; tapped, that bubble shows its
+/// whole text above it until another touch or a scroll, for at most 10 s, and
+/// does not open the church. A
+/// bubble shown in full is the card's: tapping it opens the church (DESIGN.md
+/// KO21, spec 0011).
 class MassDetailBubble extends StatelessWidget {
   const MassDetailBubble({super.key, required this.part});
 
@@ -225,15 +228,41 @@ class MassDetailBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: part.label,
-      triggerMode: TooltipTriggerMode.tap,
-      preferBelow: false,
-      // The bubble's text reads the same.
-      excludeFromSemantics: true,
-      child: _BubbleSurface(part: part),
+    // Whether the text is cut off is asked again on every layout, as the
+    // width, the text size and the screen's turn all change it.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final surface = _BubbleSurface(part: part);
+        if (!constraints.hasBoundedWidth ||
+            !surface.cutsOffIn(context, constraints.maxWidth)) {
+          return surface;
+        }
+        // No ripple or highlight: the ellipsis tells it is tappable (KO4).
+        return Tooltip(
+          message: part.label,
+          triggerMode: TooltipTriggerMode.tap,
+          preferBelow: false,
+          showDuration: Tooltips.chipShowDuration,
+          positionDelegate: _aboveBubble,
+          // The bubble's text reads the same.
+          excludeFromSemantics: true,
+          child: surface,
+        );
+      },
     );
   }
+
+  /// [Spacing.xs] off the bubble, at whatever height the text size makes it:
+  /// over it, as the tooltip prefers, and below only if there is no room
+  /// above.
+  static Offset _aboveBubble(TooltipPositionContext context) =>
+      positionDependentBox(
+        size: context.overlaySize,
+        childSize: context.tooltipSize,
+        target: context.target,
+        verticalOffset: context.targetSize.height / 2 + Spacing.xs,
+        preferBelow: context.preferBelow,
+      );
 }
 
 /// The surface of a [MassDetailBubble], a data chip in the mass detail's
@@ -247,6 +276,39 @@ class _BubbleSurface extends StatelessWidget {
   /// A chip's icon size (IK3).
   static const double _iconSize = 18;
 
+  /// The bubble's inner padding, either side of its content.
+  static const EdgeInsets _padding = EdgeInsets.symmetric(
+    horizontal: Spacing.s,
+    vertical: Spacing.xs,
+  );
+
+  TextStyle? _labelStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.textTheme.labelLarge?.copyWith(
+      color: theme.colorScheme.onSecondaryContainer,
+    );
+  }
+
+  /// Whether the label, on one line, is cut off in a bubble [maxWidth] wide.
+  /// It is measured as [Text] draws it, bold when the phone asks for bold
+  /// text.
+  bool cutsOffIn(BuildContext context, double maxWidth) {
+    final iconRoom = part.iconAsset == null ? 0 : _iconSize + Spacing.s;
+    var style = DefaultTextStyle.of(context).style.merge(_labelStyle(context));
+    if (MediaQuery.boldTextOf(context)) {
+      style = style.merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: part.label, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width > maxWidth - _padding.horizontal - iconRoom;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -259,10 +321,7 @@ class _BubbleSurface extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s,
-          vertical: Spacing.xs,
-        ),
+        padding: _padding,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -279,9 +338,7 @@ class _BubbleSurface extends StatelessWidget {
             Flexible(
               child: Text(
                 part.label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: scheme.onSecondaryContainer,
-                ),
+                style: _labelStyle(context),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,

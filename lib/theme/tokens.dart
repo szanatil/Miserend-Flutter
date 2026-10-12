@@ -23,6 +23,22 @@ abstract final class Radii {
   static const OutlinedBorder full = StadiumBorder();
 }
 
+/// The tooltip's own sizes and time (DESIGN.md KO21); its look is the theme's
+/// `tooltipTheme`.
+abstract final class Tooltips {
+  /// The widest a tooltip's box is when the screen leaves room for it; a
+  /// longer text wraps. Wider than M3's 200, which would make a chip's whole
+  /// text a narrow column at a large text size.
+  static const double maxWidth = 312;
+
+  /// The least height of a tooltip's box.
+  static const double minHeight = 24;
+
+  /// How long a cut-off chip's tooltip stays after a tap, unless another
+  /// touch or a scroll dismisses it sooner.
+  static const Duration chipShowDuration = Duration(seconds: 10);
+}
+
 /// The soft shadows of the map's own marks, the one place outside the M3
 /// elevations that has a shadow of its own (DESIGN.md MÉ2, KO17): they lift
 /// the mark off any tile without a card under it.

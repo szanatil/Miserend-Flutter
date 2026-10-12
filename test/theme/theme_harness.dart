@@ -51,6 +51,22 @@ TextStyle drawnStyle(WidgetTester tester, Finder text) {
   return DefaultTextStyle.of(tester.element(text)).style.merge(widget.style);
 }
 
+/// The text of the tooltip on show with [message]: the tooltip writes it as a
+/// rich text, unlike the plain text of the element it stands for.
+Finder tooltipText(String message) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Text &&
+      widget.data == null &&
+      widget.textSpan?.toPlainText() == message,
+);
+
+/// The visible box of the tooltip on show with [message], inside its margin
+/// (DESIGN.md KO21).
+Finder tooltipBox(String message) =>
+    find
+        .ancestor(of: tooltipText(message), matching: find.byType(DecoratedBox))
+        .first;
+
 /// The platforms every screen and card is checked on for size (DESIGN.md
 /// EH4); the app's theme follows the platform the variant sets.
 final TargetPlatformVariant eh4Platforms = TargetPlatformVariant(const {
