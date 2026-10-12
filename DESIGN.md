@@ -21,6 +21,7 @@ Kapcsolódó források: fogalmak a [CONTEXT.md](CONTEXT.md)-ben, a platformstrat
 | **Badge** | **Állapotot** jelző elem: valami *most* más, mint általában, vagy figyelmet kér. Soha nem interaktív. Ld. KO6. |
 | **Időblokk** | Az alkalom idejének vizuális formája (kezdés vagy időablak). A formáját külön spec rögzíti; addig az időpont-chip (KO3) áll a helyén. |
 | **Szalag** | A lista vagy a képernyő tetején, teljes szélességben álló állapotsáv (nincs kapcsolat, szerverhiba, helyzet nem elérhető). |
+| **Tooltip** | Egy elem rövid, ideiglenes felirata, amely fölötte vagy alatta lebeg (az M3 *plain tooltip*-je). Nem interaktív. Ld. KO21. |
 | **Lebegő elem** | A tartalom fölött, attól elválva megjelenő elem: térképi kártya, FAB, menü. |
 | **Modális elem** | A fülek fölé nyíló, a navigációt eltakaró elem: dialógus, sheet, teljes képernyős fotó, feladatfolyamat-űrlap, nyitóképernyő. |
 | **Adaptív elem** | Olyan elem, amely Androidon és iOS-en mást mutat vagy másképp viselkedik (PL2). |
@@ -159,7 +160,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 | Gomb, keresősáv | `full` |
 | Bottom sheet felső sarkai | `xl` |
 | Dialógus (Android) | `xl` (iOS-en a rendszer rajzolja) |
-| Menü, snackbar | `xs` |
+| Menü, snackbar, tooltip | `xs` |
 | Fotó a részletező lap fejlécében | nincs lekerekítés |
 | Fotó a galériában | `m` |
 | Bélyegkép csempében (pl. a keresési javaslat fotója, ikonja) | `s` |
@@ -243,7 +244,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 ## MO. Mozgás
 
-**MO1 — Időtartamok.** Kis állapotváltás `Durations.short3` (150 ms), elem be- és kilépése `Durations.medium1` (250 ms), képernyőnyi átmenet `Durations.medium3` (350 ms). Más időtartam nincs.
+**MO1 — Időtartamok.** Kis állapotváltás `Durations.short3` (150 ms), elem be- és kilépése `Durations.medium1` (250 ms), képernyőnyi átmenet `Durations.medium3` (350 ms). Más időtartam nincs; kivétel a tooltip kiúszása (KO21).
 
 **MO2 — Görbék.** Belépés `Easing.emphasizedDecelerate`, kilépés `Easing.emphasizedAccelerate`, helyben maradó állapotváltás `Easing.standard`.
 
@@ -303,6 +304,16 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 
 **KO20 — Lebegő számláló** (pl. a részletes kereső „8 / 42 találat" felirata, spec 0010). Nem badge (nem állapot) és nem chip (nem egy elem adata), hanem a lista egészéről szóló, ideiglenes lebegő felirat. Alul középen, a biztonságos területtől `Spacing.l`-re; háttér `inverseSurface`, szöveg `onInverseSurface` `labelLarge`, táblázatos számjegyekkel, forma `Radii.full`, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Görgetés közben látszik, a görgetés vége után 1,5 s-mal `Durations.medium1` alatt elhalványul. Nem interaktív, árnyéka nincs.
 
+**KO21 — Tooltip** (az M3 plain tooltipje). Két esetre: az ikongomb felirata hosszú nyomásra (AM5), és egy levágott chip teljes szövege koppintásra (pl. a mise jellemzőjének buboréka, spec 0011). Csak a levágott chip kap tooltipet; a teljesen látszó chip koppintása a kártyáé (KO1). A levágottságot az ellipszis jelzi, ripple és kiemelés nincs (KO4). Mindkét platformon ugyanaz (PL1), a téma `tooltipTheme`-jéből.
+
+- **Megjelenés**: háttér `inverseSurface`, telt, átlátszóság nélkül; szöveg `onInverseSurface` `bodySmall`; forma `Radii.xs`; belső térköz vízszintesen `Spacing.s`, függőlegesen `Spacing.xs`; legalább 24 dp magas; árnyéka nincs (MÉ2).
+- **Hely**: a chip tooltipje fölötte, a chiptől `Spacing.xs`-re; az ikongombé a Flutter alapértelmezése szerint. A képernyő szélétől legalább `Spacing.l` (TK2).
+- **Szélesség**: legfeljebb a képernyő szélessége mínusz 2 × `Spacing.l`, de legfeljebb 312 dp; a hosszabb szöveg több sorba tördel. Eltérés az M3 200 dp-jétől: a chip teljes szövege (pl. egy hosszú megjegyzés) 200 dp-n, 2,0-s szövegnagyításnál keskeny, hosszú oszlop lenne.
+- **Időzítés**: hosszú nyomásra az elengedés után 1,5 s-ig látszik; koppintásra egy másik érintésig vagy görgetésig, legfeljebb 10 s-ig. Ugyanarra a chipre újra koppintva a 10 s elölről indul.
+- **Mozgás**: a Flutter beépített áttűnése, be 150 ms (`Durations.short3`), ki 75 ms; csökkentett mozgásnál is ez (az MO3 legfeljebb 150 ms áttűnést enged). A 75 ms-os kiúszás kivétel az MO1 alól: a `Tooltip` áttűnése nem állítható, és egy saját tooltip az ikongombok beépített `tooltip`-jét is kiváltaná.
+
+A tooltip nem hordoz kattintható tartalmat (linket, gombot).
+
 ## AM. Akadálymentesség
 
 **AM1 — WCAG 2.2 AA.** Szöveg kontrasztja legalább 4,5:1, nagy szövegé (`titleLarge` és felette) és ikoné legalább 3:1, világos és sötét módban is.
@@ -313,7 +324,7 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 
 **AM4 — Szövegnagyítás.** A rendszer szövegméretét követjük, nem korlátozzuk (`textScaler` nincs lezárva). 2,0-s nagyításnál, 320 dp szélességen sem vágódik le és nem lóg ki tartalom. Kivétel: a fülsáv (KO16) felirata legfeljebb 1,3-szorosára nő, mindkét platformon, mint az M3 `NavigationBar`-é.
 
-**AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
+**AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je (KO21) vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
 
 **AM6 — Gesztus csak kényelmi.** Minden funkció koppintással is elérhető; a húzás, hosszú nyomás csak gyorsítás.
 
@@ -353,4 +364,4 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 
 ## Átállás állapota
 
-A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat.
+A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat. A KO21 (tooltip) 2026-10-12-én került be, eltérését a #71 viszi.
