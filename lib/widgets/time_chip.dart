@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:miserend/extentions.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/tokens.dart';
@@ -107,12 +110,85 @@ class TimeChip extends StatelessWidget {
     );
 
     final onTap = this.onTap;
-    return Material(
-      color: background,
-      shape: _shape,
-      clipBehavior: Clip.antiAlias,
-      // A chip that opens nothing gives no touch feedback (KO4).
-      child: onTap == null ? content : InkWell(onTap: onTap, child: content),
+    // A chip that opens nothing gives no touch feedback (KO4).
+    if (onTap == null) return _surface(background, content);
+    // Read out as one button, as large as the area it takes taps in.
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: _TapTarget(
+          child: _surface(background, InkWell(onTap: onTap, child: content)),
+        ),
+      ),
+    );
+  }
+
+  Widget _surface(Color background, Widget child) => Material(
+    color: background,
+    shape: _shape,
+    clipBehavior: Clip.antiAlias,
+    child: child,
+  );
+}
+
+/// Takes taps on at least 48 × 48 around a chip drawn smaller (DESIGN.md
+/// AM3), as Material pads its buttons: the chip stays centred at its own size,
+/// and a tap in the room around it lands on the chip.
+class _TapTarget extends SingleChildRenderObjectWidget {
+  const _TapTarget({required Widget super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderTapTarget();
+}
+
+class _RenderTapTarget extends RenderShiftedBox {
+  _RenderTapTarget() : super(null);
+
+  static const double _min = kMinInteractiveDimension;
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      math.max(super.computeMinIntrinsicWidth(height), _min);
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      math.max(super.computeMaxIntrinsicWidth(height), _min);
+
+  @override
+  double computeMinIntrinsicHeight(double width) =>
+      math.max(super.computeMinIntrinsicHeight(width), _min);
+
+  @override
+  double computeMaxIntrinsicHeight(double width) =>
+      math.max(super.computeMaxIntrinsicHeight(width), _min);
+
+  Size _grown(Size chip, BoxConstraints constraints) => constraints.constrain(
+    Size(math.max(chip.width, _min), math.max(chip.height, _min)),
+  );
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) =>
+      _grown(child!.getDryLayout(constraints), constraints);
+
+  @override
+  void performLayout() {
+    final child = this.child!;
+    child.layout(constraints, parentUsesSize: true);
+    size = _grown(child.size, constraints);
+    (child.parentData! as BoxParentData).offset = Alignment.center.alongOffset(
+      size - child.size as Offset,
+    );
+  }
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (super.hitTest(result, position: position)) return true;
+    if (!size.contains(position)) return false;
+    final centre = child!.size.center(Offset.zero);
+    return result.addWithRawTransform(
+      transform: MatrixUtils.forceToPoint(centre),
+      position: centre,
+      hitTest: (result, position) => child!.hitTest(result, position: centre),
     );
   }
 }

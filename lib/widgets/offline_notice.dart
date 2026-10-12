@@ -98,6 +98,9 @@ class OfflineInfoButton extends StatelessWidget {
     required this.asOf,
   });
 
+  /// Its name to the screen reader, also where a card takes it as an action.
+  static const String tooltip = 'Nem friss adat';
+
   final ApiFailure failure;
   final DateTime? asOf;
 
@@ -106,8 +109,7 @@ class OfflineInfoButton extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.info_outline_rounded),
       color: failure.iconColor(context),
-      tooltip: 'Nem friss adat',
-      visualDensity: VisualDensity.compact,
+      tooltip: tooltip,
       onPressed: () => OfflineNotice.show(context, failure, asOf),
     );
   }

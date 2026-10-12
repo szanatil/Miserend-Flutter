@@ -68,7 +68,8 @@ class _ExpandableInfoTileState extends State<ExpandableInfoTile> {
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
                     minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    // Drawn this small, it still takes taps on 48 (AM3).
+                    tapTargetSize: MaterialTapTargetSize.padded,
                   ),
                   onPressed: () => setState(() => _expanded = !_expanded),
                   icon: Icon(

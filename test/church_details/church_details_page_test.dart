@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -176,7 +177,11 @@ void main() {
   // clock, which fails the test that happens to be running when it fires.
   late FavoritesService favorites;
 
+  late Directory tileCache;
+
   setUpAll(() async {
+    tileCache = Directory.systemTemp.createTempSync('miserend_tiles');
+    addTearDown(() => tileCache.deleteSync(recursive: true));
     favorites = FavoritesService();
     for (var i = 0; i < 400 && !favorites.loaded; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -274,6 +279,77 @@ void main() {
     expect(find.text('18:30'), findsWidgets);
     expect(find.text('9:00'), findsNothing);
   });
+
+  testWidgets('a time chip that opens something takes taps on 48 × 48, '
+      'and stands in line with one that does not (AM3)', (tester) async {
+    final handle = tester.ensureSemantics();
+    final days = _scheduleWith(_todayAt(9, 0), info: 'Diákmise');
+    days[0].add(
+      CachedMass(
+        id: null,
+        apiMassId: null,
+        churchId: 38,
+        time: _todayAt(18, 30),
+        info: null,
+        source: MassSource.nearbyMasses,
+      ),
+    );
+    final page = _page(days);
+    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+    Finder chip(String time) =>
+        find
+            .ancestor(of: find.text(time), matching: find.byType(TimeChip))
+            .first;
+    final target = tester.getSemantics(chip('9:00')).rect;
+    expect(target.width, greaterThanOrEqualTo(48));
+    expect(target.height, greaterThanOrEqualTo(48));
+    expect(
+      tester.getCenter(chip('9:00')).dy,
+      tester.getCenter(chip('18:30')).dy,
+    );
+    handle.dispose();
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      final days = _scheduleWith(_todayAt(9, 0), info: 'Diákmise');
+      days[1].addAll(_scheduleWith(_todayAt(18, 30))[0]);
+      final page = _page(
+        days,
+        church: _details(
+          description: _longText,
+          email: 'plebania@example.com',
+          languages: const ['magyar'],
+          hasConfession: true,
+        ),
+        scheduleIsFresh: true,
+      );
+      // The contrast check lets real time pass, in which the map's tile
+      // cache asks where to keep its files.
+      const pathProvider = MethodChannel('plugins.flutter.io/path_provider');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        pathProvider,
+        (call) async => tileCache.path,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          pathProvider,
+          null,
+        ),
+      );
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+        width: 430,
+        height: 3000,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
 
   testWidgets('a mass going on now has its chip in the filled orange, a '
       'later one not (KO3)', (tester) async {

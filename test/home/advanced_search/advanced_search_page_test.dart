@@ -261,6 +261,26 @@ void main() {
     }
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the conditions and the results meet the '
+        'accessibility guidelines (AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 3; i++) churchEntry(i)]),
+          resultPage(const []),
+        ]),
+        brightness: brightness,
+      );
+      await expectAccessibilityGuidelines(tester);
+
+      await tester.enterText(field('Település'), 'Pécs');
+      await search(tester);
+      expect(find.text('Templom 1'), findsOneWidget);
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
   group('fits (EH4)', () {
     for (final width in eh4Widths) {
       for (final textScale in eh4TextScales) {

@@ -57,7 +57,6 @@ class PositionUnavailableBanner extends StatelessWidget {
           icon: Icon(SystemIcon.close.of(context)),
           color: Theme.of(context).colorScheme.onSurfaceVariant,
           tooltip: 'Bezárás',
-          visualDensity: VisualDensity.compact,
           onPressed: onClose,
         ),
       ],

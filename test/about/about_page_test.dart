@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/about/about_page.dart';
@@ -303,6 +304,19 @@ void main() {
         scheme.primary,
       );
     });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        brightness: brightness,
+        platform: defaultTargetPlatform,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
   }
 
   group('fits (EH4)', () {

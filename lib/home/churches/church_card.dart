@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
@@ -64,155 +65,189 @@ class ChurchCard extends StatelessWidget {
     // chips promise a mass (CONTEXT.md, „Napi miserend").
     final masses = entry.masses.where(isMass).toList();
     final km = straightLineKm(position, entry.lat, entry.lon);
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final scheme = theme.colorScheme;
-
     final failure = this.failure;
+    final favoritesService = context.watch<FavoritesService>();
+    final favorite = favoritesService.isFavorite(entry.id);
+    void toggleFavorite() => favoritesService.toggle(entry.id);
 
+    // Read out as one unit, today's masses first (DESIGN.md AM5). The
+    // buttons on it, merged into it, would lose their own tap: they are the
+    // card's actions instead.
     return Center(
-      child: Card(
-        color: failure?.cardTint(context),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => openChurchDetails(context, entry),
-          // The text sets the card's height; the photo is laid over the
-          // third left free for it, so that it takes that height instead of
-          // setting it (DESIGN.md EL2).
-          child: Stack(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: _textFlex,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  Spacing.l,
-                                  Spacing.l,
-                                  Spacing.l,
-                                  0,
-                                ),
-                                // The slot keeps both lines even for a short
-                                // name, so that everything below stands at
-                                // the same height on every card.
-                                child: ReservedRoom.lines(
-                                  lines: _nameLines,
-                                  style: textTheme.titleMedium,
-                                  child: Text(
-                                    entry.name ?? '',
-                                    style: textTheme.titleMedium,
-                                    maxLines: _nameLines,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (failure != null)
-                              OfflineInfoButton(
-                                failure: failure,
-                                asOf: dataAsOf,
-                              ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            Spacing.l,
-                            Spacing.s,
-                            Spacing.l,
-                            Spacing.m,
-                          ),
-                          // An empty text still takes its line; a long one
-                          // wraps (DESIGN.md EL2).
-                          child: Text(
-                            entry.commonName ?? '',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            Spacing.l,
-                            0,
-                            Spacing.l,
-                            Spacing.s,
-                          ),
-                          child: _MassChips(masses: masses, now: clock()),
-                        ),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: scheme.outlineVariant,
-                        ),
-                        Consumer<FavoritesService>(
-                          builder: (context, favoritesService, child) {
-                            final favorite = favoritesService.isFavorite(
-                              entry.id,
-                            );
-                            return IconButton(
-                              icon:
-                                  favorite
-                                      ? const Icon(Icons.favorite_rounded)
-                                      : const Icon(
-                                        Icons.favorite_border_rounded,
-                                      ),
-                              color:
-                                  favorite
-                                      ? scheme.primary
-                                      : scheme.onSurfaceVariant,
-                              tooltip:
-                                  favorite
-                                      ? 'Törlés a kedvencek közül'
-                                      : 'Kedvencekhez',
-                              onPressed:
-                                  () => favoritesService.toggle(entry.id),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(flex: _photoFlex),
-                ],
-              ),
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: FractionallySizedBox(
-                    widthFactor: _photoFlex / (_textFlex + _photoFlex),
-                    heightFactor: 1,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _photo(),
-                        // Over the photo rather than in the text column, so
-                        // that a card without it has nothing moved.
-                        if (km != null)
-                          Positioned(
-                            right: Spacing.s,
-                            bottom: Spacing.s,
-                            child: DistanceChip(km: km),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      child: MergeSemantics(
+        child: Semantics(
+          label:
+              masses.isEmpty
+                  ? null
+                  : masses
+                      .map(
+                        (mass) => TimeOfDay.fromDateTime(mass.time).to24hours(),
+                      )
+                      .join(', '),
+          customSemanticsActions: {
+            CustomSemanticsAction(label: _favoriteLabel(favorite)):
+                toggleFavorite,
+            if (failure != null)
+              const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
+                  () => OfflineNotice.show(context, failure, dataAsOf),
+          },
+          child: _card(context, masses, km, favorite, toggleFavorite),
         ),
       ),
     );
   }
+
+  Widget _card(
+    BuildContext context,
+    List<CachedMass> masses,
+    double? km,
+    bool favorite,
+    VoidCallback toggleFavorite,
+  ) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final scheme = theme.colorScheme;
+    final failure = this.failure;
+
+    return Card(
+      color: failure?.cardTint(context),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openChurchDetails(context, entry),
+        // The text sets the card's height; the photo is laid over the
+        // third left free for it, so that it takes that height instead of
+        // setting it (DESIGN.md EL2).
+        child: Stack(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: _textFlex,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                Spacing.l,
+                                Spacing.l,
+                                Spacing.l,
+                                0,
+                              ),
+                              // The slot keeps both lines even for a short
+                              // name, so that everything below stands at
+                              // the same height on every card.
+                              child: ReservedRoom.lines(
+                                lines: _nameLines,
+                                style: textTheme.titleMedium,
+                                child: Text(
+                                  entry.name ?? '',
+                                  style: textTheme.titleMedium,
+                                  maxLines: _nameLines,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (failure != null)
+                            ExcludeSemantics(
+                              child: OfflineInfoButton(
+                                failure: failure,
+                                asOf: dataAsOf,
+                              ),
+                            ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          Spacing.s,
+                          Spacing.l,
+                          Spacing.m,
+                        ),
+                        // An empty text still takes its line; a long one
+                        // wraps (DESIGN.md EL2).
+                        child: Text(
+                          entry.commonName ?? '',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          0,
+                          Spacing.l,
+                          Spacing.s,
+                        ),
+                        // Read out first, on the card's own label.
+                        child: ExcludeSemantics(
+                          child: _MassChips(masses: masses, now: clock()),
+                        ),
+                      ),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: scheme.outlineVariant,
+                      ),
+                      ExcludeSemantics(
+                        child: IconButton(
+                          icon:
+                              favorite
+                                  ? const Icon(Icons.favorite_rounded)
+                                  : const Icon(Icons.favorite_border_rounded),
+                          color:
+                              favorite
+                                  ? scheme.primary
+                                  : scheme.onSurfaceVariant,
+                          tooltip: _favoriteLabel(favorite),
+                          onPressed: toggleFavorite,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(flex: _photoFlex),
+              ],
+            ),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FractionallySizedBox(
+                  widthFactor: _photoFlex / (_textFlex + _photoFlex),
+                  heightFactor: 1,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _photo(),
+                      // Over the photo rather than in the text column, so
+                      // that a card without it has nothing moved.
+                      if (km != null)
+                        Positioned(
+                          right: Spacing.s,
+                          bottom: Spacing.s,
+                          child: DistanceChip(km: km),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// What the heart does, on its tooltip and as the card's action.
+  static String _favoriteLabel(bool favorite) =>
+      favorite ? 'Törlés a kedvencek közül' : 'Kedvencekhez';
 
   /// The photo strip, as tall as the card.
   Widget _photo() {
@@ -229,6 +264,7 @@ class ChurchCard extends StatelessWidget {
           'assets/images/church_blurred.png',
           fit: BoxFit.cover,
           cacheHeight: decodeHeight,
+          excludeFromSemantics: true,
         );
         final photo = entry.photo;
         return photo != null && photo.isNotEmpty

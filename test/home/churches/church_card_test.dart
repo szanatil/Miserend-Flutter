@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
@@ -83,6 +84,85 @@ void main() {
       ),
     );
   }
+
+  group('screen reader (AM5)', () {
+    SemanticsNode card(WidgetTester tester) => tester.getSemantics(
+      find
+          .descendant(
+            of: find.byType(ChurchCard),
+            matching: find.byType(MergeSemantics),
+          )
+          .first,
+    );
+
+    String? customAction(SemanticsNode node) {
+      final ids = node.getSemanticsData().customSemanticsActionIds ?? [];
+      return ids.isEmpty
+          ? null
+          : CustomSemanticsAction.getAction(ids.single)!.label;
+    }
+
+    testWidgets('reads the card as one unit: the masses, the church, the '
+        'distance', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpCard(
+        tester,
+        _entry(masses: [_mass(8, 0), _mass(18, 30)]),
+        position: _position,
+      );
+
+      final node = card(tester);
+      expect(node.mergeAllDescendantsIntoThisNode, isTrue);
+      final label = node.getSemanticsData().label;
+      expect(label, startsWith('8:00'));
+      expect(label, contains('18:30'));
+      expect(label, contains('Nagytemplom'));
+      expect(label, contains('300 m'));
+      expect(label.indexOf('18:30'), lessThan(label.indexOf('Nagytemplom')));
+      expect(label.indexOf('Nagytemplom'), lessThan(label.indexOf('300 m')));
+      expect(node.getSemanticsData().flagsCollection.isImage, isFalse);
+      handle.dispose();
+    });
+
+    testWidgets('opens the church on a tap', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpCard(tester, _entry());
+
+      expect(
+        card(tester).getSemanticsData().hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      handle.dispose();
+    });
+
+    testWidgets('the heart is an action of the card, named for what it does', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpCard(tester, _entry());
+      final wasFavorite = favorites.isFavorite(1);
+      String name(bool favorite) =>
+          favorite ? 'Törlés a kedvencek közül' : 'Kedvencekhez';
+
+      final node = card(tester);
+      expect(customAction(node), name(wasFavorite));
+      node.owner!.performAction(
+        node.id,
+        SemanticsAction.customAction,
+        node.getSemanticsData().customSemanticsActionIds!.single,
+      );
+      for (var i = 0; i < 400 && favorites.isFavorite(1) == wasFavorite; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+      }
+      await tester.pump();
+
+      expect(favorites.isFavorite(1), !wasFavorite);
+      expect(customAction(card(tester)), name(!wasFavorite));
+      handle.dispose();
+    });
+  });
 
   group('distance', () {
     testWidgets('shows the straight-line distance from the position', (

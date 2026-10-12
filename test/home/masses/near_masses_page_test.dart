@@ -382,6 +382,21 @@ void main() {
     });
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        _FakeLoader([
+          [_mass(start: _at(18, 30))],
+        ]),
+        brightness: brightness,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
   group('card', () {
     for (final brightness in Brightness.values) {
       testWidgets('in $brightness, the list sits on the page\'s own surface, '

@@ -90,3 +90,17 @@ void expectCentredContent(
   expect(rect.width, ContentWidth.maxWidth);
   expect(rect.center.dx, screenWidth / 2);
 }
+
+/// Checks the screen on show against the platforms' accessibility guidelines
+/// (DESIGN.md AM1, AM3, AM5): tap targets of at least 48 × 48 on either
+/// platform (the Android check is run on iOS too, and covers iOS's own 44), a
+/// label on every tap target, and legible text.
+Future<void> expectAccessibilityGuidelines(WidgetTester tester) async {
+  final handle = tester.ensureSemantics();
+  await tester.pump();
+  await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(textContrastGuideline));
+  handle.dispose();
+}

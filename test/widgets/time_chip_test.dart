@@ -10,9 +10,13 @@ const _chipShape = RoundedRectangleBorder(
 );
 
 /// The chip's surface.
-Material _surface(WidgetTester tester) => tester.widget<Material>(
-  find.descendant(of: find.byType(TimeChip), matching: find.byType(Material)),
+final Finder _surfaceFinder = find.descendant(
+  of: find.byType(TimeChip),
+  matching: find.byType(Material),
 );
+
+Material _surface(WidgetTester tester) =>
+    tester.widget<Material>(_surfaceFinder);
 
 void main() {
   const time = TimeOfDay(hour: 18, minute: 30);
@@ -121,6 +125,78 @@ void main() {
     await tester.tap(find.byType(TimeChip));
 
     expect(taps, 1);
+  });
+
+  group('a tappable chip (AM3)', () {
+    testWidgets('takes taps on at least 48 × 48', (tester) async {
+      await pumpThemed(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: TimeChip(time: time, hasInfo: true, onTap: () {}),
+        ),
+      );
+
+      final target = tester.getSize(find.byType(TimeChip));
+      expect(target.width, greaterThanOrEqualTo(48));
+      expect(target.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('keeps the size it is drawn at, centred in the target', (
+      tester,
+    ) async {
+      await pumpThemed(
+        tester,
+        const Align(alignment: Alignment.topLeft, child: TimeChip(time: time)),
+      );
+      final plain = tester.getSize(_surfaceFinder);
+
+      await pumpThemed(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: TimeChip(time: time, onTap: () {}),
+        ),
+      );
+
+      expect(tester.getSize(_surfaceFinder), plain);
+      expect(
+        tester.getCenter(_surfaceFinder),
+        tester.getCenter(find.byType(TimeChip)),
+      );
+    });
+
+    testWidgets('a tap beside the drawn chip, within the target, opens it', (
+      tester,
+    ) async {
+      var taps = 0;
+      await pumpThemed(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: TimeChip(time: time, onTap: () => taps++),
+        ),
+      );
+
+      final surface = tester.getRect(_surfaceFinder);
+      final target = tester.getRect(find.byType(TimeChip));
+      expect(target.bottom, greaterThan(surface.bottom));
+      await tester.tapAt(Offset(surface.center.dx, target.bottom - 1));
+
+      expect(taps, 1);
+    });
+
+    testWidgets('a chip that opens nothing keeps its own size', (tester) async {
+      await pumpThemed(
+        tester,
+        const Align(alignment: Alignment.topLeft, child: TimeChip(time: time)),
+      );
+
+      expect(
+        tester.getSize(find.byType(TimeChip)),
+        tester.getSize(_surfaceFinder),
+      );
+    });
   });
 
   testWidgets('widthOf is the width the chip is drawn at', (tester) async {

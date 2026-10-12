@@ -494,6 +494,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Wrap(
         spacing: Spacing.s,
         runSpacing: Spacing.s,
+        // A chip that opens something takes taps on more room than it is
+        // drawn on (AM3); the chips beside it stand in line with its middle.
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [for (final mass in masses) _timeChip(mass)],
       ),
     );
@@ -561,13 +564,19 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
               Text(DayLabel.date.format(dateTime)),
               const SizedBox(height: Spacing.s),
               // On one line, so that every day's card is as tall as the
-              // others; the strip scrolls sideways for a wide one.
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: Spacing.s,
-                children: [
-                  for (final mass in _masses[dayOffset]) _timeChip(mass),
-                ],
+              // others; the strip scrolls sideways for a wide one. The line
+              // keeps a tappable chip's room (AM3) on a day without one too.
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: kMinInteractiveDimension,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: Spacing.s,
+                  children: [
+                    for (final mass in _masses[dayOffset]) _timeChip(mass),
+                  ],
+                ),
               ),
             ],
           ),
@@ -660,29 +669,37 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GestureDetector(
-            onTap: _showLocationOnMap,
-            child: LayoutBuilder(
-              builder:
-                  (context, constraints) => SizedBox(
-                    height: _mapHeightFor(
-                      constraints.maxWidth,
-                      MediaQuery.sizeOf(context),
-                    ),
-                    child: MiserendMap(
-                      interactive: false,
-                      initialCenter: _location(),
-                      initialZoom: 17,
-                      compactAttribution: true,
-                      apiKey: const String.fromEnvironment('CARTO_API_KEY'),
-                      markers: [
-                        MiserendMapMarker(
-                          id: widget.church.id,
-                          point: _location(),
+          // A picture of where the church is, read out as the button it is
+          // (AM5).
+          Semantics(
+            button: true,
+            label: 'Megnyitás térképalkalmazásban',
+            child: GestureDetector(
+              onTap: _showLocationOnMap,
+              child: ExcludeSemantics(
+                child: LayoutBuilder(
+                  builder:
+                      (context, constraints) => SizedBox(
+                        height: _mapHeightFor(
+                          constraints.maxWidth,
+                          MediaQuery.sizeOf(context),
                         ),
-                      ],
-                    ),
-                  ),
+                        child: MiserendMap(
+                          interactive: false,
+                          initialCenter: _location(),
+                          initialZoom: 17,
+                          compactAttribution: true,
+                          apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+                          markers: [
+                            MiserendMapMarker(
+                              id: widget.church.id,
+                              point: _location(),
+                            ),
+                          ],
+                        ),
+                      ),
+                ),
+              ),
             ),
           ),
           if (gettingThere.isNotEmpty)
@@ -694,14 +711,27 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             padding: EdgeInsets.only(top: Spacing.s),
             child: Divider(height: 1),
           ),
-          GestureDetector(
-            onTap: _showDirectionsOnMap,
-            child: Padding(
-              padding: const EdgeInsets.only(top: Spacing.s),
-              child: Text(
-                'ÚTVONAL',
-                style: Theme.of(context).textTheme.titleMedium!.apply(
-                  color: Theme.of(context).colorScheme.primary,
+          Semantics(
+            button: true,
+            // Taps on the whole line, at least 48 tall (AM3), with the touch
+            // feedback a button gives (PL2).
+            child: InkWell(
+              onTap: _showDirectionsOnMap,
+              child: Padding(
+                padding: const EdgeInsets.only(top: Spacing.s),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: kMinInteractiveDimension,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'ÚTVONAL',
+                      style: Theme.of(context).textTheme.titleMedium!.apply(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

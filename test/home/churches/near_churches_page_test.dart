@@ -597,6 +597,34 @@ void main() {
     });
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([
+          [
+            _entry('Közelebbi'),
+            ChurchListEntry(
+              id: 2,
+              name: 'Távolabbi',
+              commonName: 'Szent Anna',
+              city: 'Budapest',
+              lat: 47.5,
+              lon: 19.04,
+              photo: null,
+              masses: [_row(8, 'Szentmise', MassSource.bootstrap)],
+            ),
+          ],
+        ]),
+        FakeLocationProvider([found]),
+        brightness: brightness,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
   group('size', () {
     final crowded = [
       for (var i = 0; i < 3; i++)

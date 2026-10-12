@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
+import 'package:miserend/extentions.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
@@ -18,6 +19,10 @@ import 'package:miserend/widgets/reserved_room.dart';
 /// down. The room is reserved in the text size the lines are drawn in, and a
 /// line too long for it wraps, so a larger text size or a long city makes the
 /// card taller rather than overflow it (DESIGN.md EL2).
+///
+/// The screen reader reads it as one unit, the start first, though the card
+/// does not show it: one card is read at a time, without its header
+/// (DESIGN.md AM5).
 class MassCard extends StatelessWidget {
   const MassCard({
     super.key,
@@ -52,6 +57,15 @@ class MassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Semantics(
+        label: TimeOfDay.fromDateTime(mass.start).to24hours(),
+        child: _card(context),
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -156,6 +170,7 @@ class MassCard extends StatelessWidget {
           _placeholder,
           fit: BoxFit.cover,
           cacheHeight: decodeHeight,
+          excludeFromSemantics: true,
         );
 
         return FutureBuilder<String?>(

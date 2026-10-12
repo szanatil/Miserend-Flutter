@@ -87,6 +87,37 @@ void main() {
     await tester.pump();
   }
 
+  group('screen reader (AM5)', () {
+    testWidgets('reads the card as one unit: the start, the church, the '
+        'distance', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpCard(tester, _mass(start: _at(18, 30)), detail: 'gitáros');
+
+      final card = tester.getSemantics(find.byType(MassCard));
+      expect(card.mergeAllDescendantsIntoThisNode, isTrue);
+      final label = card.getSemanticsData().label;
+      expect(label, startsWith('18:30'));
+      expect(label, contains('Szent Miklós-templom'));
+      expect(label, contains('1,2 km'));
+      handle.dispose();
+    });
+
+    testWidgets('leaves the photo out', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpCard(tester, _mass());
+
+      expect(
+        tester
+            .getSemantics(find.byType(MassCard))
+            .getSemanticsData()
+            .flagsCollection
+            .isImage,
+        isFalse,
+      );
+      handle.dispose();
+    });
+  });
+
   testWidgets('leaves the start to the header above it', (tester) async {
     await pumpCard(tester, _mass(start: _at(18, 0)));
 

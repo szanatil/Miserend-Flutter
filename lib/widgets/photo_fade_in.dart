@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 /// [placeholder] until it arrives. Every photo comes in with the same motion
 /// (DESIGN.md MO1, MO2): the placeholder leaves in `Durations.short3`, the
 /// photo enters in `Durations.medium1`. With reduced motion the photo takes
-/// the placeholder's place at once (MO3).
+/// the placeholder's place at once (MO3). The photo is decoration to the
+/// screen reader, as is the placeholder: the church's name stands beside it
+/// (DESIGN.md AM5).
 class PhotoFadeIn extends StatelessWidget {
   const PhotoFadeIn({
     super.key,
@@ -33,6 +35,7 @@ class PhotoFadeIn extends StatelessWidget {
         fit: BoxFit.cover,
         cacheHeight: imageCacheHeight,
         errorBuilder: imageErrorBuilder,
+        excludeFromSemantics: true,
         frameBuilder:
             (context, child, frame, wasSynchronouslyLoaded) =>
                 frame == null ? _placeholder() : child,
@@ -49,6 +52,7 @@ class PhotoFadeIn extends StatelessWidget {
       imageErrorBuilder: imageErrorBuilder,
       imageCacheHeight: imageCacheHeight,
       placeholderCacheHeight: placeholderCacheHeight,
+      excludeFromSemantics: true,
     );
   }
 
@@ -56,5 +60,6 @@ class PhotoFadeIn extends StatelessWidget {
     placeholder,
     fit: BoxFit.cover,
     cacheHeight: placeholderCacheHeight,
+    excludeFromSemantics: true,
   );
 }
