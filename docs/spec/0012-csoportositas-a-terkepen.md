@@ -68,4 +68,4 @@ A térkép **minden zoomszinten csoportosít**, amíg a tűk átfednék egymást
 ## Further Notes
 
 - Ez a spec felülírja a spec 0006 „Sűrűség-küszöb" szakaszát.
-- Az Android app csoportjai lila háttérrel és egyedi tűikonnal jelentek meg; a csoportra koppintva a csoport elemeire közelített (`docs/ANDROID-OSSZEHASONLITAS.md`, „Térképi csoportosítás").
+- Az Android app csoportjai lila háttérrel és egyedi tűikonnal jelentek meg; a csoportra koppintva a csoport elemeire közelített.

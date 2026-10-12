@@ -140,7 +140,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 
 ## Further Notes
 
-- A funkció a régi Android app „Részletes kereső"-jének utódja, de szándékosan eltér tőle: ott a mise-feltétel mise-listát adott, a település pontos kiválasztás nélkül szövegrészre illeszkedett (ezt megtartjuk), és a nap alapból „ez a vasárnap" volt (nálunk nincs alapértelmezett nap). Összehasonlítás: `docs/ANDROID-OSSZEHASONLITAS.md`.
+- A funkció a régi Android app „Részletes kereső"-jének utódja, de szándékosan eltér tőle: ott a mise-feltétel mise-listát adott, a település pontos kiválasztás nélkül szövegrészre illeszkedett (ezt megtartjuk), és a nap alapból „ez a vasárnap" volt (nálunk nincs alapértelmezett nap).
 - A Dátum… választó tartománya nincs megbeszélve; javasolt alapérték: a mai naptól 90 napig.
 - **Nyitott kérdés — nyelvi adat a gyorsítótárban.** A `nyelvek` mezőt sem a kezdeti feltöltés, sem a listák `minimal` válasza nem hozza; csak a teljes (`full`) válasz, vagyis a részletező és a térképi kártya frissítése. Így a nyelvlista és a nyelvszűrés csak a már megnyitott templomokat ismeri. Megoldásához döntés kell (pl. `full` válasz a lapok `Church` hívásához, vagy egyszeri nyelvi feltöltés).
 - Fogalmak: CONTEXT.md, „Részletes kereső", „Helyi gyorsítótár", „Nincs kapcsolat", „Szerverhiba", „Légvonal-távolság", „Mise vs. egyéb alkalom", „Liturgikus nyelv jelölése".

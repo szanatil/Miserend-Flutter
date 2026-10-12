@@ -1,7 +1,5 @@
 # Névjegy és impresszum
 
-> Háttér és források: [docs/MENU-ES-IMPRESSZUM.md](../MENU-ES-IMPRESSZUM.md) (kutatás és a karbantartó 2026-09-18-i döntései)
-
 ## Problem Statement
 
 Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név túl általános, és az ikon oldalsó menüt (drawer) sejtet, ami az appban nincs. Az appban nem volt impresszum sem: nem derült ki belőle, ki fejleszti, és hol a forráskód.

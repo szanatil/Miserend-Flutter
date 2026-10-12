@@ -139,7 +139,5 @@ A munka menete a skillekkel:
 - [docs/adr/](docs/adr/): az architektúra nehezen visszafordítható döntései.
 - [docs/spec/](docs/spec/): az egyes funkciók specifikációi.
 - [docs/FEATURE-COVERAGE.md](docs/FEATURE-COVERAGE.md): mit tud jelenleg az app, képernyőnként.
-- [docs/ANDROID-OSSZEHASONLITAS.md](docs/ANDROID-OSSZEHASONLITAS.md): ez az app és a natív Miserend-Android app funkcionális összehasonlítása.
-- [docs/MENU-ES-IMPRESSZUM.md](docs/MENU-ES-IMPRESSZUM.md): kutatási jegyzet a „Menü” pont elnevezéséről és az Impresszum tartalmáról.
 
 A fejlesztés részben AI-ügynökökkel folyik. Az ügynököknek szóló utasítások a [CLAUDE.md](CLAUDE.md)-ben és a [docs/agents/](docs/agents/) mappában vannak.
