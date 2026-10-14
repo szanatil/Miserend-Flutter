@@ -178,7 +178,7 @@ jobs:
     if: needs.bump.result == 'success'
     runs-on: ubuntu-latest
     env:
-      CHANNEL: ${{ needs.detect.outputs.channel == 'beta' && 'beta' || 'deploy' }}
+      FASTLANE_CHANNEL: ${{ needs.detect.outputs.channel == 'beta' && 'beta' || 'deploy' }}
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -203,7 +203,8 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: false
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -229,7 +230,7 @@ jobs:
 
       - name: Fastlane deploy
         working-directory: android
-        run: bundle exec fastlane "$CHANNEL"
+        run: bundle exec fastlane "$FASTLANE_CHANNEL"
 
   deploy-ios:
     name: Deploy iOS
