@@ -204,7 +204,7 @@ jobs:
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: false
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
