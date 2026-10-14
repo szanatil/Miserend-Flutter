@@ -22,7 +22,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.frama.miserend.hu.miserend"
+    namespace = "com.frama.miserend.hu"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
@@ -32,8 +32,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.frama.miserend.hu.miserend"
+        // A meglévő Play-lista (a régi Miserend app) azonosítója; a Flutter
+        // app ezt veszi át, nem külön alkalmazásként jelenik meg.
+        applicationId = "com.frama.miserend.hu"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
