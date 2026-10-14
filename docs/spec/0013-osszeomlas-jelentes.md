@@ -57,5 +57,5 @@ Az app a **release buildben** a nem kezelt hibákat és az összeomlásokat auto
 
 ## Further Notes
 
-- A Firebase Android-app regisztrációja a csomagazonosítóhoz kötött. A Play Áruház-azonosság (a régi `com.frama.miserend.hu` átvétele vagy a mai `com.frama.miserend.hu.miserend` megtartása) nyitott kérdés; ha később változik az azonosító, az Android appot a Firebase-projektben újra kell regisztrálni, és a konfigurációs fájlt cserélni.
+- A Firebase Android-app regisztrációja a csomagazonosítóhoz kötött. A csomagazonosító `com.frama.miserend.hu` (ADR-0005): a Flutter app a meglévő Play-listát veszi át, így a Firebase-projektben is ezen a néven kell regisztrálni az Android appot.
 - Az emberi lépésekhez a `/wizard` skill készíthet végigvezető szkriptet.
