@@ -10,6 +10,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
@@ -254,6 +255,42 @@ void main() {
       expect(tester.getTopLeft(find.byType(IconButton)).dy, heart.dy);
     });
 
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('a church without a mass today keeps the chips\' line: '
+              'the line and the heart stand where they do with one, at '
+              '$width dp, text scale $textScale, on $platform (EH4)', (
+            tester,
+          ) async {
+            Future<void> pump(ChurchListEntry entry) => pumpThemed(
+              tester,
+              ChangeNotifierProvider<FavoritesService>.value(
+                value: favorites,
+                child: ChurchCard(entry: entry),
+              ),
+              platform: platform,
+              width: width,
+              textScale: textScale,
+            );
+
+            await pump(_entry(masses: [_mass(8, 0)]));
+            final line = tester.getTopLeft(find.byType(Divider)).dy;
+            final heart = tester.getTopLeft(find.byType(IconButton)).dy;
+            final height = tester.getSize(find.byType(Card)).height;
+
+            await pump(_entry());
+
+            expect(tester.takeException(), isNull);
+            expect(find.byType(TimeChip), findsNothing);
+            expect(tester.getTopLeft(find.byType(Divider)).dy, line);
+            expect(tester.getTopLeft(find.byType(IconButton)).dy, heart);
+            expect(tester.getSize(find.byType(Card)).height, height);
+          });
+        }
+      }
+    }
+
     testWidgets('a card without a common name is as tall as one with a short '
         'one', (tester) async {
       await pumpCard(tester, _entry());
@@ -282,6 +319,118 @@ void main() {
       expect(photo.top, surface.top);
       expect(photo.bottom, surface.bottom);
       expect(photo.right, surface.right);
+    });
+
+    group('in a row of cards (EL3)', () {
+      Future<void> pumpRow(
+        WidgetTester tester,
+        List<ChurchListEntry> entries, {
+        double columnWidth = 400,
+        Brightness brightness = Brightness.light,
+        TargetPlatform platform = TargetPlatform.android,
+        double textScale = 1,
+      }) => pumpThemed(
+        tester,
+        ChangeNotifierProvider<FavoritesService>.value(
+          value: favorites,
+          child: CardRow.of(entries.length, [
+            for (final entry in entries)
+              ChurchCard(entry: entry, position: _position),
+          ]),
+        ),
+        brightness: brightness,
+        platform: platform,
+        width:
+            entries.length * columnWidth +
+            (entries.length - 1) * CardRow.listGap,
+        textScale: textScale,
+      );
+
+      List<Rect> rects(WidgetTester tester, Finder finder) => [
+        for (var i = 0; i < finder.evaluate().length; i++)
+          tester.getRect(finder.at(i)),
+      ];
+
+      Finder surfaces() => find.descendant(
+        of: find.byType(Card),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Material && widget.type == MaterialType.card,
+        ),
+      );
+
+      void expectLevel(WidgetTester tester, int columns) {
+        expect(tester.takeException(), isNull);
+        final cards = rects(tester, surfaces());
+        expect(cards, hasLength(columns));
+        expect({for (final card in cards) card.height}, hasLength(1));
+        expect({
+          for (final line in rects(tester, find.byType(Divider))) line.top,
+        }, hasLength(1));
+        expect({
+          for (final heart in rects(tester, find.byType(IconButton))) heart.top,
+        }, hasLength(1));
+        final photos = rects(tester, find.byType(Image));
+        for (final (index, card) in cards.indexed) {
+          expect(photos[index].top, card.top);
+          expect(photos[index].bottom, card.bottom);
+        }
+      }
+
+      List<ChurchListEntry> mixed(int columns) => [
+        _entry(masses: [_mass(8, 0)]),
+        _entry(commonName: longCommonName),
+        if (columns == 3) _entry(commonName: null),
+      ];
+
+      for (final columns in [2, 3]) {
+        testWidgets('in $columns columns the cards are as tall, and the '
+            'line and the heart stand level, with and without masses and a '
+            'long common name', (tester) async {
+          await pumpRow(tester, mixed(columns));
+
+          expectLevel(tester, columns);
+        });
+      }
+
+      for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+        for (final brightness in Brightness.values) {
+          for (final columnWidth in eh4Widths) {
+            for (final textScale in eh4TextScales) {
+              testWidgets(
+                'the cards stand level at $columnWidth dp a column, '
+                'text scale $textScale, $brightness, on $platform (EH3, EH4)',
+                (tester) async {
+                  await pumpRow(
+                    tester,
+                    mixed(2),
+                    columnWidth: columnWidth,
+                    brightness: brightness,
+                    platform: platform,
+                    textScale: textScale,
+                  );
+
+                  expectLevel(tester, 2);
+                },
+              );
+            }
+          }
+        }
+      }
+
+      testWidgets('the extra room goes under the common name: the names keep '
+          'to the top', (tester) async {
+        await pumpRow(tester, [
+          _entry(name: 'Rövid', commonName: 'Egy sor'),
+          _entry(commonName: longCommonName),
+        ]);
+
+        final card = rects(tester, surfaces()).first;
+        expect(tester.getTopLeft(find.text('Rövid')).dy - card.top, Spacing.l);
+        expect(
+          tester.getTopLeft(find.text('Egy sor')).dy,
+          tester.getTopLeft(find.text(longCommonName)).dy,
+        );
+      });
     });
 
     testWidgets('masses that do not fit on one line give way to a „…" chip', (

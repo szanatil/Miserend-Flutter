@@ -73,25 +73,35 @@ class ChurchCard extends StatelessWidget {
     // Read out as one unit, today's masses first (DESIGN.md AM5). The
     // buttons on it, merged into it, would lose their own tap: they are the
     // card's actions instead.
-    return Center(
-      child: MergeSemantics(
-        child: Semantics(
-          label:
-              masses.isEmpty
-                  ? null
-                  : masses
-                      .map(
-                        (mass) => TimeOfDay.fromDateTime(mass.time).to24hours(),
-                      )
-                      .join(', '),
-          customSemanticsActions: {
-            CustomSemanticsAction(label: _favoriteLabel(favorite)):
+    return MergeSemantics(
+      child: Semantics(
+        label:
+            masses.isEmpty
+                ? null
+                : masses
+                    .map(
+                      (mass) => TimeOfDay.fromDateTime(mass.time).to24hours(),
+                    )
+                    .join(', '),
+        customSemanticsActions: {
+          CustomSemanticsAction(label: _favoriteLabel(favorite)):
+              toggleFavorite,
+          if (failure != null)
+            const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
+                () => OfflineNotice.show(context, failure, dataAsOf),
+        },
+        // A row of cards gives each the height of the tallest (DESIGN.md
+        // EL3); elsewhere the card is as tall as its content (EL2).
+        child: LayoutBuilder(
+          builder:
+              (context, constraints) => _card(
+                context,
+                masses,
+                km,
+                favorite,
                 toggleFavorite,
-            if (failure != null)
-              const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
-                  () => OfflineNotice.show(context, failure, dataAsOf),
-          },
-          child: _card(context, masses, km, favorite, toggleFavorite),
+                stretched: constraints.hasTightHeight,
+              ),
         ),
       ),
     );
@@ -102,8 +112,9 @@ class ChurchCard extends StatelessWidget {
     List<CachedMass> masses,
     double? km,
     bool favorite,
-    VoidCallback toggleFavorite,
-  ) {
+    VoidCallback toggleFavorite, {
+    required bool stretched,
+  }) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final scheme = theme.colorScheme;
@@ -116,11 +127,17 @@ class ChurchCard extends StatelessWidget {
         onTap: () => openChurchDetails(context, entry),
         // The text sets the card's height; the photo is laid over the
         // third left free for it, so that it takes that height instead of
-        // setting it (DESIGN.md EL2).
+        // setting it (DESIGN.md EL2). Stretched, the room left over goes
+        // under the common name, so that the chips, the line and the heart
+        // stand level across the row.
         child: Stack(
+          fit: stretched ? StackFit.expand : StackFit.loose,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  stretched
+                      ? CrossAxisAlignment.stretch
+                      : CrossAxisAlignment.start,
               children: [
                 Expanded(
                   flex: _textFlex,
@@ -179,6 +196,7 @@ class ChurchCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (stretched) const Spacer(),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(
                           Spacing.l,
@@ -320,20 +338,25 @@ class _MassChips extends StatelessWidget {
           }
         }
 
-        return Row(
-          children: [
-            for (var i = 0; i < fitting; i++) ...[
-              if (i > 0) const SizedBox(width: _spacing),
-              TimeChip(
-                time: times[i],
-                ongoing: isOngoingStart(masses[i].time, now),
-              ),
+        // A day without a mass keeps the line, so that the line and the heart
+        // below stand where they do on every card (DESIGN.md EL2).
+        return ConstrainedBox(
+          constraints: BoxConstraints(minHeight: TimeChip.heightOf(context)),
+          child: Row(
+            children: [
+              for (var i = 0; i < fitting; i++) ...[
+                if (i > 0) const SizedBox(width: _spacing),
+                TimeChip(
+                  time: times[i],
+                  ongoing: isOngoingStart(masses[i].time, now),
+                ),
+              ],
+              if (fitting < times.length) ...[
+                if (fitting > 0) const SizedBox(width: _spacing),
+                const TimeChip.more(),
+              ],
             ],
-            if (fitting < times.length) ...[
-              if (fitting > 0) const SizedBox(width: _spacing),
-              const TimeChip.more(),
-            ],
-          ],
+          ),
         );
       },
     );

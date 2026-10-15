@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -33,7 +34,11 @@ const _locations = [
   ChurchLocation(id: 2, lat: 47.2600, lon: 19.7600),
 ];
 
-ChurchListEntry _entry(int id, String name) => ChurchListEntry(
+ChurchListEntry _entry(
+  int id,
+  String name, {
+  List<CachedMass> masses = const [],
+}) => ChurchListEntry(
   id: id,
   name: name,
   commonName: null,
@@ -41,7 +46,7 @@ ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   lat: 47.2537,
   lon: 19.7523,
   photo: null,
-  masses: const [],
+  masses: masses,
 );
 
 /// Close enough for [_locations] to be separate pins, both on screen.
@@ -414,6 +419,75 @@ void main() {
       expect(find.byType(ChurchCard), findsOneWidget);
       expect(find.byType(DistanceChip), findsNothing);
     });
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('the card spans the map, is as tall as its content, and '
+            'keeps the chips\' line without a mass, at $width dp and text '
+            'scale $textScale (EH4)', (tester) async {
+          setScreen(tester, Size(width, 640));
+          final answer = Completer<ChurchList>();
+          await pumpPage(
+            tester,
+            _MapLoader(
+              [
+                [_entry(1, 'Templom')],
+              ],
+              refreshed: [answer],
+            ),
+            textScale: textScale,
+          );
+
+          Rect surface() => tester.getRect(
+            find
+                .descendant(
+                  of: find.byType(Card),
+                  matching: find.byType(Material),
+                )
+                .first,
+          );
+          double heartFromTop() =>
+              tester.getTopLeft(find.byType(IconButton)).dy - surface().top;
+
+          await tapMarker(tester, 1);
+          expect(tester.takeException(), isNull);
+          final map = tester.getRect(find.byType(MiserendMap));
+          final card = tester.getRect(find.byType(Card));
+          expect(card.left - map.left, Spacing.l);
+          expect(map.right - card.right, Spacing.l);
+          // Nothing under the heart: the card is not stretched to the room.
+          expect(
+            tester.getRect(find.byType(IconButton)).bottom,
+            surface().bottom,
+          );
+          final withoutMass = heartFromTop();
+
+          // The answer brings today's mass.
+          answer.complete(
+            listOf([
+              _entry(
+                1,
+                'Templom',
+                masses: [
+                  CachedMass(
+                    id: null,
+                    apiMassId: null,
+                    churchId: 1,
+                    time: DateTime(2026, 9, 15, 8, 0),
+                    info: null,
+                    source: MassSource.bootstrap,
+                  ),
+                ],
+              ),
+            ]),
+          );
+          await tester.pump();
+          await tester.pump();
+          expect(find.text('8:00'), findsOneWidget);
+          expect(heartFromTop(), withoutMass);
+        }, variant: eh4Platforms);
+      }
+    }
 
     for (final (size, textScale) in [
       for (final width in eh4Widths)

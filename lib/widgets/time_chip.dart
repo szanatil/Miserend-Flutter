@@ -60,16 +60,28 @@ class TimeChip extends StatelessWidget {
 
   /// The width a chip without the (i) marker takes for [label], so that a row
   /// can fit chips by width before laying them out.
-  static double widthOf(BuildContext context, String label) {
+  static double widthOf(BuildContext context, String label) =>
+      _sizeOf(context, label).width;
+
+  /// The height a chip without the (i) marker and a tap target takes —
+  /// whatever its label, all on one line — so that a row of them keeps its
+  /// line with no chip in it.
+  static double heightOf(BuildContext context) =>
+      _sizeOf(context, moreLabel).height;
+
+  static Size _sizeOf(BuildContext context, String label) {
     final painter = TextPainter(
       text: TextSpan(text: label, style: _textStyle(context)),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
     )..layout();
-    final width = painter.width + _padding.horizontal;
+    final size = Size(
+      painter.width + _padding.horizontal,
+      painter.height + _padding.vertical,
+    );
     painter.dispose();
-    return width;
+    return size;
   }
 
   /// As strong as the church name beside it and bolder, so that the time

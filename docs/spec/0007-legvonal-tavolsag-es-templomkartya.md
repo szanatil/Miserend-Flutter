@@ -79,6 +79,8 @@ A templomkártya 192 px magas lesz. A név és az ismertnév fix sorszámot kap 
 
 > **Módosítva (2026-10-09, #67): DESIGN.md EL2–EL3.** A kártyának nincs fix magassága, a `ChurchCard.height` konstans megszűnt: a magasság a szövegoszlopból jön, a fotó a kártya harmadát kitöltve annak teljes magasságát veszi fel. Az ismertnév nem vágódik le egy sorban, hanem tördel; a helye üres ismertnévnél is egy sor. A név két sora továbbra is le van foglalva, ezért rövid és hosszú névnél, egysoros ismertnévvel, a mise-chipek, az elválasztó és a szív ugyanott áll; hosszabb ismertnév vagy nagyobb betűméret a kártyát magasítja. A mise-chipek egy sora és a `…` chip marad (EL2 kivétel). A térképen a „helyzetem" gomb nem a konstansból számolt eltolással áll, hanem az elrendezés a kártya fölé teszi, `Spacing.l` távolságra; ha a kártya nem fér el (nagy betűméret, fekvő tájolás), a kártya görgethető (EL5). 600 dp feletti szélességen a lista legfeljebb 640 dp széles, középre igazítva (EL3).
 
+> **Módosítva (2026-10-15, #75): DESIGN.md EL2–EL3.** Mise nélkül is fenntartott a mise-chipek sora, üresen (egy chip magasságában), így az elválasztó és a szív minden kártyán ugyanott áll; addig a sor mise nélkül eltűnt, és a kártya alacsonyabb lett. Ez a térképi kártyára is áll: mise nélküli templomnál egy chip-sornyival magasabb, mint addig, és markerek közti váltáskor nem ugrál. Széles képernyőn egy sor kártyái egyforma magasak: a megnyúlt kártyán a többlet a közismert név alá kerül, a chipek, az elválasztó és a szív a sor kártyáin egy vonalban áll, a fotó a teljes magasságot kitölti. Az üres chip-sorban nincs szöveg (#77).
+
 ### Fájlok, amik érintettek
 
 - `lib/home/churches/church_card.dart`: elrendezés, távolság-chip, magasság-konstans
