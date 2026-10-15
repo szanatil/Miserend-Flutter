@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
 import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
@@ -9,6 +12,7 @@ import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
 import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/list_status_view.dart';
@@ -625,18 +629,13 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     }
 
     final last = _pages.last;
-    final position = _criteria?.distanceOrderFrom;
-    return Stack(
-      children: [
-        ContentWidth(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.l,
-            _listPadding,
-            Spacing.l,
-            0,
-          ),
-          builder:
-              (context, padding) => CustomScrollView(
+    return ContentColumns(
+      padding: const EdgeInsets.fromLTRB(Spacing.l, _listPadding, Spacing.l, 0),
+      gap: CardRow.listGap,
+      builder:
+          (context, padding, columns) => Stack(
+            children: [
+              CustomScrollView(
                 // Folding the conditions without a search puts the list back
                 // where it was.
                 key: const PageStorageKey('results'),
@@ -644,38 +643,51 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                 slivers: [
                   SliverPadding(
                     padding: padding,
-                    // Each card as tall as its content (DESIGN.md EL2).
+                    // Each card as tall as its content (DESIGN.md EL2), as
+                    // tall as its row's on a wide screen (EL3).
                     sliver: SliverList(
                       key: _resultList,
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => ChurchCard(
-                          entry: churches[index],
-                          position: position,
-                        ),
-                        childCount: churches.length,
+                        (context, row) => _row(churches, row, columns),
+                        childCount: (churches.length / columns).ceil(),
                       ),
                     ),
                   ),
                   SliverToBoxAdapter(child: _listEnd(last)),
                 ],
               ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: Spacing.l,
-          child: Center(
-            child: ResultCounter(
-              controller: _scroll,
-              list: _resultList,
-              shown: churches.length,
-              found: last.found,
-              foundIsFinal: last.foundIsFinal,
-            ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: Spacing.l,
+                child: Center(
+                  child: ResultCounter(
+                    controller: _scroll,
+                    list: _resultList,
+                    columns: columns,
+                    shown: churches.length,
+                    found: last.found,
+                    foundIsFinal: last.foundIsFinal,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
     );
+  }
+
+  /// The churches of the results' [row], [columns] to a row, in their order
+  /// (DESIGN.md EL3).
+  Widget _row(List<ChurchListEntry> churches, int row, int columns) {
+    final position = _criteria?.distanceOrderFrom;
+    final first = row * columns;
+    return CardRow.of(columns, [
+      for (final entry in churches.sublist(
+        first,
+        min(first + columns, churches.length),
+      ))
+        ChurchCard(entry: entry, position: position),
+    ]);
   }
 
   /// The spinner only while a page is on its way; the space it takes is kept

@@ -14,6 +14,7 @@ class ResultCounter extends StatefulWidget {
     super.key,
     required this.controller,
     required this.list,
+    required this.columns,
     required this.shown,
     required this.found,
     required this.foundIsFinal,
@@ -29,6 +30,11 @@ class ResultCounter extends StatefulWidget {
   /// their content (DESIGN.md EL2), so the count reads where each one ends
   /// off the list itself.
   final GlobalKey list;
+
+  /// The cards in each of the list's rows: on a wide screen they stand side
+  /// by side, a row's ending together (DESIGN.md EL3); the last row may hold
+  /// fewer.
+  final int columns;
 
   /// The cards in the list.
   final int shown;
@@ -88,7 +94,7 @@ class _ResultCounterState extends State<ResultCounter> {
   int _shownLastSeen = 0;
 
   /// The number of the last card seen whole: the cards scrolled past and
-  /// those whose bottom is on the screen.
+  /// those whose bottom is on the screen, a row's at once.
   int _lastSeen() {
     final list = widget.list.currentContext?.findRenderObject();
     if (list is! RenderSliverMultiBoxAdaptor) return 0;
@@ -97,13 +103,14 @@ class _ResultCounterState extends State<ResultCounter> {
         constraints.scrollOffset + constraints.remainingPaintExtent;
     var child = list.firstChild;
     if (child == null) return 0;
-    // The cards above the first one laid out are all scrolled past.
-    var seen = list.indexOf(child);
+    final columns = widget.columns;
+    // The rows above the first one laid out are all scrolled past.
+    var seen = list.indexOf(child) * columns;
     while (child != null) {
       if (list.childScrollOffset(child)! + child.size.height > visibleEnd) {
         break;
       }
-      seen = list.indexOf(child) + 1;
+      seen = (list.indexOf(child) + 1) * columns;
       child = list.childAfter(child);
     }
     return seen.clamp(0, widget.shown);

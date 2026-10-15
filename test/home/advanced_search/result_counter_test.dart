@@ -19,6 +19,7 @@ Widget _host({bool disableAnimations = false}) {
             ResultCounter(
               controller: controller,
               list: GlobalKey(),
+              columns: 1,
               shown: 8,
               found: 42,
               foundIsFinal: true,

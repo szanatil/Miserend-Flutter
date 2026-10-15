@@ -9,6 +9,7 @@ import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
@@ -339,7 +340,7 @@ void main() {
   }, variant: eh4Platforms);
 
   for (final width in const [el3Width, threeColumnWidth]) {
-    testWidgets('on a $width dp screen the conditions and the results are '
+    testWidgets('on a $width dp screen the conditions and the summary are '
         'at most 640 wide and centred (EL3)', (tester) async {
       setScreen(tester, Size(width, 800));
       await pumpPage(
@@ -358,11 +359,15 @@ void main() {
       await tester.enterText(field('Település'), 'Pécs');
       await search(tester);
 
-      expectCentredContent(
-        tester,
-        find.ancestor(of: find.text('Templom 1'), matching: find.byType(Card)),
-        screenWidth: width,
-      );
+      if (width == el3Width) {
+        expectCentredContent(
+          tester,
+          find.ancestor(
+            of: find.text('Templom 1'),
+            matching: find.byType(Card),
+          ),
+        );
+      }
       expectCentredContent(
         tester,
         // The summary's surface, inside the margin that centres it.
@@ -373,6 +378,203 @@ void main() {
       );
     });
   }
+
+  group('in columns (EL3)', () {
+    Future<void> searchWide(
+      WidgetTester tester,
+      double width,
+      FakeAdvancedSearchLoader loader, {
+      double height = 1200,
+      double textScale = 1,
+      Brightness brightness = Brightness.light,
+    }) async {
+      setScreen(tester, Size(width, height), textScale: textScale);
+      await pumpPage(tester, loader, brightness: brightness);
+      await tester.enterText(field('Település'), 'Pécs');
+      await search(tester);
+    }
+
+    Rect cardOf(WidgetTester tester, int id) => tester.getRect(
+      find.ancestor(of: find.text('Templom $id'), matching: find.byType(Card)),
+    );
+
+    testWidgets('on a 1300 dp screen the results stand three to a row, as '
+        'tall as each other', (tester) async {
+      await searchWide(
+        tester,
+        threeColumnWidth,
+        FakeAdvancedSearchLoader([
+          resultPage([
+            churchEntry(1, commonName: _longCommonName),
+            churchEntry(2),
+            churchEntry(3),
+            churchEntry(4),
+          ]),
+        ]),
+      );
+
+      final cards = [for (var i = 1; i <= 4; i++) cardOf(tester, i)];
+      // 8 between the cards (TK2).
+      expect(cards[1].left - cards[0].right, CardRow.listGap);
+      expect(cards[2].left - cards[1].right, CardRow.listGap);
+      expect([cards[1].top, cards[2].top], everyElement(cards[0].top));
+      expect([cards[1].height, cards[2].height], everyElement(cards[0].height));
+      expect(cards[3].left, cards[0].left);
+      expect(cards[3].top, cards[0].bottom);
+      expect(cards[3].width, cards[0].width);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('on a 1000 dp screen the results stand two to a row', (
+      tester,
+    ) async {
+      await searchWide(
+        tester,
+        twoColumnWidth,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 3; i++) churchEntry(i)]),
+        ]),
+      );
+
+      expect(cardOf(tester, 2).top, cardOf(tester, 1).top);
+      expect(cardOf(tester, 3).left, cardOf(tester, 1).left);
+      expect(cardOf(tester, 3).top, cardOf(tester, 1).bottom);
+    });
+
+    testWidgets('the count names the last card seen whole', (tester) async {
+      await searchWide(
+        tester,
+        twoColumnWidth,
+        FakeAdvancedSearchLoader([
+          resultPage([
+            for (var i = 1; i <= 40; i++)
+              churchEntry(i, commonName: i % 3 == 0 ? _longCommonName : null),
+          ]),
+        ]),
+        height: 800,
+      );
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
+      await tester.pump();
+      await tester.pump();
+
+      final viewport = tester.getRect(find.byType(CustomScrollView));
+      var lastWhole = 0;
+      for (var i = 1; i <= 40; i++) {
+        final card = find.text('Templom $i');
+        if (card.evaluate().isEmpty) continue;
+        if (cardOf(tester, i).bottom <= viewport.bottom) lastWhole = i;
+      }
+      expect(lastWhole, greaterThan(2));
+      expect(lastWhole.isEven, isTrue, reason: 'a whole row');
+      expect(find.text('$lastWhole / 40 találat'), findsOneWidget);
+    });
+
+    testWidgets('scrolled to the end, the count takes in a short last row', (
+      tester,
+    ) async {
+      await searchWide(
+        tester,
+        threeColumnWidth,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 31; i++) churchEntry(i)]),
+        ]),
+        height: 800,
+      );
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -6000));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('31 / 31 találat'), findsOneWidget);
+    });
+
+    testWidgets('on a 2000 dp screen the three columns are each at most 640 '
+        'wide, the rest empty on both sides', (tester) async {
+      await searchWide(
+        tester,
+        2000,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 3; i++) churchEntry(i)]),
+        ]),
+      );
+
+      final cards = [for (var i = 1; i <= 3; i++) cardOf(tester, i)];
+      expect(cards.map((card) => card.width), everyElement(640));
+      expect((cards[0].left + cards[2].right) / 2, 1000);
+    });
+
+    testWidgets('scrolling towards the end asks for the next page', (
+      tester,
+    ) async {
+      final loader = FakeAdvancedSearchLoader([
+        resultPage(
+          [for (var i = 1; i <= 30; i++) churchEntry(i)],
+          hasMore: true,
+          found: 35,
+        ),
+        resultPage([for (var i = 31; i <= 35; i++) churchEntry(i)], found: 35),
+      ]);
+      await searchWide(tester, threeColumnWidth, loader, height: 800);
+      expect(loader.asked.map((a) => a.$2), [0]);
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -3000));
+      await tester.pumpAndSettle();
+
+      expect(loader.asked.map((a) => a.$2), [0, 1]);
+      expect(find.text('Nincs több találat · 35 találat'), findsOneWidget);
+    });
+
+    testWidgets('scrolled, then unfolded and folded again, the list is where '
+        'it was', (tester) async {
+      await searchWide(
+        tester,
+        threeColumnWidth,
+        FakeAdvancedSearchLoader([
+          resultPage([for (var i = 1; i <= 60; i++) churchEntry(i)]),
+        ]),
+        height: 800,
+      );
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+      expect(find.text('Templom 1'), findsNothing);
+
+      await tester.tap(find.text('Pécs'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Összecsukás'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Templom 1'), findsNothing);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('fits in $brightness at $width dp and text scale '
+              '$textScale (EH3, EH4)', (tester) async {
+            await searchWide(
+              tester,
+              width,
+              FakeAdvancedSearchLoader([
+                resultPage([
+                  for (var i = 1; i <= 5; i++)
+                    churchEntry(i, commonName: _longCommonName),
+                ]),
+              ]),
+              height: 800,
+              textScale: textScale,
+              brightness: brightness,
+            );
+
+            expect(find.text('Templom 1'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
 
   group('pages', () {
     testWidgets('scrolling towards the end asks for the next page', (
