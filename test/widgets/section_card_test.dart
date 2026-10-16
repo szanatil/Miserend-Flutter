@@ -64,6 +64,44 @@ void main() {
     expect(content.top - title.bottom, Spacing.s);
   });
 
+  testWidgets('content may reach into the padding and over the title by '
+      'its bleed, and takes taps there', (tester) async {
+    var taps = 0;
+    await pumpThemed(
+      tester,
+      SectionCard(
+        title: 'Nyelvek',
+        bleed: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => taps++,
+          child: const SizedBox(height: 48),
+        ),
+      ),
+      width: 360,
+    );
+
+    final title = tester.getRect(find.text('Nyelvek'));
+    final card = tester.getRect(
+      find
+          .descendant(of: find.byType(Card), matching: find.byType(Material))
+          .first,
+    );
+    final content = tester.getRect(find.byType(GestureDetector));
+    expect(content.left, title.left - 12);
+    expect(content.right, card.right - Spacing.l + 12);
+    expect(content.top, title.bottom + Spacing.s - 15);
+    expect(card.bottom - content.bottom, Spacing.l - 15);
+
+    // Over the title, and in the padding at either side and below; not in
+    // the card's corners, which its rounded shape keeps for itself.
+    await tester.tapAt(content.topCenter + const Offset(0, 1));
+    await tester.tapAt(content.centerLeft + const Offset(1, 0));
+    await tester.tapAt(content.centerRight - const Offset(1, 0));
+    await tester.tapAt(content.bottomCenter - const Offset(0, 1));
+    expect(taps, 4);
+  });
+
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     for (final width in eh4Widths) {
       for (final textScale in eh4TextScales) {

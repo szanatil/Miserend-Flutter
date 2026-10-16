@@ -20,6 +20,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -1116,6 +1117,29 @@ void main() {
     expect(find.text('TL'), findsNothing);
     expect(find.bySemanticsLabel('latin'), findsOneWidget);
     expect(find.bySemanticsLabel('tagalog'), findsOneWidget);
+  });
+
+  testWidgets('a tapped flag names its language, and another flag swaps it '
+      '(KO21)', (tester) async {
+    final data = _page(_emptyDays(), church: _details(languages: ['va', 'de']));
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+    Finder flag(String code) => find.byWidgetPredicate(
+      (widget) => widget is LanguageFlag && widget.code == code,
+    );
+
+    await tester.tap(flag('va'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tooltipText('latin'), findsOneWidget);
+    final box = tester.getRect(tooltipBox('latin'));
+    expect(
+      box.bottom,
+      moreOrLessEquals(tester.getRect(flag('va')).top - Spacing.xs),
+    );
+
+    await tester.tap(flag('de'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(tooltipText('latin'), findsNothing);
+    expect(tooltipText('német'), findsOneWidget);
   });
 
   testWidgets('a code with no flag falls back to text rather than vanishing', (

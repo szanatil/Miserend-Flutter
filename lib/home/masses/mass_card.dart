@@ -7,6 +7,7 @@ import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/reserved_room.dart';
+import 'package:miserend/widgets/tap_tooltip.dart';
 
 /// One of the nearest masses, the church card's sibling: the same card and
 /// distance chip (spec 0008). The start is not on it: the list
@@ -238,31 +239,10 @@ class MassDetailBubble extends StatelessWidget {
           return surface;
         }
         // No ripple or highlight: the ellipsis tells it is tappable (KO4).
-        return Tooltip(
-          message: part.label,
-          triggerMode: TooltipTriggerMode.tap,
-          preferBelow: false,
-          showDuration: Tooltips.chipShowDuration,
-          positionDelegate: _aboveBubble,
-          // The bubble's text reads the same.
-          excludeFromSemantics: true,
-          child: surface,
-        );
+        return TapTooltip(message: part.label, child: surface);
       },
     );
   }
-
-  /// [Spacing.xs] off the bubble, at whatever height the text size makes it:
-  /// over it, as the tooltip prefers, and below only if there is no room
-  /// above.
-  static Offset _aboveBubble(TooltipPositionContext context) =>
-      positionDependentBox(
-        size: context.overlaySize,
-        childSize: context.tooltipSize,
-        target: context.target,
-        verticalOffset: context.targetSize.height / 2 + Spacing.xs,
-        preferBelow: context.preferBelow,
-      );
 }
 
 /// The surface of a [MassDetailBubble], a data chip in the mass detail's

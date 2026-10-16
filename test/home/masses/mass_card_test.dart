@@ -475,6 +475,8 @@ void main() {
                   thumbnailUrl: Future.value(null),
                   onTap: onTap,
                 ),
+                // Room to scroll the card to the top of the screen.
+                const SizedBox(height: 800),
               ],
             ),
           ),
@@ -513,6 +515,25 @@ void main() {
         }
       }
     }
+
+    testWidgets('with no room above, stands below the bubble, 4 off it', (
+      tester,
+    ) async {
+      await pumpOnScreen(tester);
+      // The bubble a hair under the top of the screen.
+      tester
+          .state<ScrollableState>(find.byType(Scrollable))
+          .position
+          .jumpTo(tester.getRect(_bubble()).top - 2);
+      await tester.pump();
+
+      await tester.tap(_bubble());
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final bubble = tester.getRect(_bubble());
+      final box = tester.getRect(tooltipBox(comment));
+      expect(box.top, moreOrLessEquals(bubble.bottom + Spacing.xs));
+    });
 
     testWidgets('stays past 1.5 s, until another touch', (tester) async {
       await pumpOnScreen(tester);

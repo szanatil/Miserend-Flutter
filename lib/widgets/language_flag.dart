@@ -40,6 +40,10 @@ class LanguageFlag extends StatelessWidget {
 
   final String code;
 
+  /// The size a flag is drawn at.
+  static const double width = 24;
+  static const double height = 18;
+
   @override
   Widget build(BuildContext context) {
     final name = languageNames[code];
@@ -54,8 +58,8 @@ class LanguageFlag extends StatelessWidget {
       label: name,
       image: true,
       child: Container(
-        width: 24,
-        height: 18,
+        width: width,
+        height: height,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           // Several of these flags run to white at the edge — the English one
