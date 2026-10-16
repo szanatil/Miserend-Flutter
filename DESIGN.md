@@ -85,6 +85,7 @@ A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) é
 | Alkalom időpontja | `occasionTimeContainer` / `onOccasionTimeContainer`; épp most tartónál `occasionTime` / `onOccasionTime` |
 | Mise jellemzője | `secondaryContainer` / `onSecondaryContainer` |
 | Távolság, nyelv és más kiegészítő adat | `surfaceContainerHighest` / `onSurfaceVariant` |
+| Üres nap a napi sávban (CONTEXT.md, „Üres nap") | `surface` háttér, `outlineVariant` keret, `onSurfaceVariant` szöveg (KO1) |
 | Gomb, link, kiválasztás, fókusz, navigációs indikátor | `primary` és családja (`primaryContainer`, `secondaryContainer` az M3 alapértelmezése szerint) |
 | Nincs kapcsolat, helyzet nem elérhető | `surfaceContainerHighest` / `onSurfaceVariant` |
 | Szerverhiba | `serverErrorContainer` / `onServerErrorContainer` / `serverErrorIcon` |
@@ -95,7 +96,7 @@ A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) é
 
 A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem narancs. A narancs szövegként felületen (`surface`, `surfaceContainer*`) nem állhat, mert ott nem éri el az AA kontrasztot; az időpont mindig a saját konténerében áll.
 
-**SZ5 — Felületek.** Az oldal háttere `surface`, a kártyáé `surfaceContainerLow`, a keresősávé `surfaceContainerHigh`, az elválasztóé `outlineVariant`. Szöveg: elsődleges `onSurface`, másodlagos `onSurfaceVariant`. Átlátszósággal halványított szöveg (`withAlpha`, `withOpacity`) nincs.
+**SZ5 — Felületek.** Az oldal háttere `surface`, a kártyáé `surfaceContainerLow` (kivétel az üres nap: SZ4, KO1), a keresősávé `surfaceContainerHigh`, az elválasztóé `outlineVariant`. Szöveg: elsődleges `onSurface`, másodlagos `onSurfaceVariant`. Átlátszósággal halványított szöveg (`withAlpha`, `withOpacity`) nincs.
 
 **SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs, a fotógalériáé sem: az is a `surface`-en áll.
 
@@ -168,9 +169,9 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 ## MÉ. Mélység és árnyék
 
-**MÉ1 — A kártya az M3 elevated kártyája.** `surfaceContainerLow` színnel és `elevation: 1` alacsony árnyékkal válik el a `surface` háttértől. A tónus egyedül kevés: a `surfaceContainerLow` és a `surface` között a világosságkülönbség csak kb. 1,05:1, ezért a kártyának nem volna széle. Fix szürke (`Colors.black12`, `#F2F2F2`) vagy fehér laphátter nincs: a lap háttere a `Scaffold` `surface`-e (SZ5).
+**MÉ1 — A kártya az M3 elevated kártyája.** `surfaceContainerLow` színnel és `elevation: 1` alacsony árnyékkal válik el a `surface` háttértől. A tónus egyedül kevés: a `surfaceContainerLow` és a `surface` között a világosságkülönbség csak kb. 1,05:1, ezért a kártyának nem volna széle. Kivétel a templom-részletező napi sávjának üres napja, amely keretes kártya (KO1). Fix szürke (`Colors.black12`, `#F2F2F2`) vagy fehér laphátter nincs: a lap háttere a `Scaffold` `surface`-e (SZ5).
 
-**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel az iOS-es rádiógomb (`1`, PL2), valamint a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
+**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel az iOS-es rádiógomb (`1`, PL2), a templom-részletező napi sávjának üres napja (`0`, KO1), valamint a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
 
 **MÉ3 — A címsor görgetéskor tónust kap.** `elevation: 0`, `scrolledUnderElevation: 3` (M3 alapértelmezés), árnyék nélkül.
 
@@ -183,7 +184,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 - A templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
 - A templomkártya mise-chipjei egy sorban állnak; ami nem fér ki, azt a sor végén egy `…` chip jelzi (spec 0007). Mise nélkül is fenntartott a chip-sor helye, üresen, így a chipek, az elválasztó és a kedvenc gomb minden kártyán ugyanott áll. A részletező minden misét mutat.
 - A mise jellemzőjének buborékja a misekártyán egy sorban, `ellipsis`-szel áll; koppintásra a teljes szöveg látszik (spec 0011).
-- A templom-részletező napi kártyáinak mise-chipjei egy sorban állnak: sok misés napon a kártya szélesebb lesz, nem magasabb, hogy a sáv kártyái egyforma magasak legyenek. A sáv vízszintesen görgethető, így semmi nem vész el (spec 0003).
+- A templom-részletező napi kártyáinak mise-chipjei egy sorban állnak: sok misés napon a kártya szélesebb lesz, nem magasabb. Az üres nap szövege a kártya legkisebb szélességén belül tördel. A sáv minden kártyája a legmagasabbhoz nyúlik, és felül egy vonalban áll. A sáv vízszintesen görgethető, így semmi nem vész el (spec 0003).
 
 **EL3 — Széles képernyőn oszlopok.** Az űrlap (Hibajelentés, a Részletes kereső feltételei és összegzése) és a Névjegy tartalma 600 dp feletti szélességen is legfeljebb **640** dp széles, középre igazítva. A templom-részletező, a Templomok, Misék lista és a Részletes kereső találatainak kártyái 840 dp alatt egy, legfeljebb **640** dp-s oszlopban állnak középen; 840 dp-től **két**, 1200 dp-től **három** oszlopban, többen nem. Egy oszlop legfeljebb 640 dp; ami ezen felül marad, az két oldalt egyenlően üres. A listán a kártyák sorokban, balról jobbra és felülről lefelé követik egymást, egy sor kártyái egyforma magasak, a rövid utolsó sor kártyái sem szélesebbek; a Misék időfejléce a teljes tartalomszélességben áll, a csoportja új sorban kezdődik. A megnyúlt templomkártyán a többlet a közismert név alá kerül: a mise-chipek, az elválasztó és a kedvenc gomb a sor kártyáin egy vonalban áll, a fotó a teljes magasságot kitölti. A templom-részletezőn a név, a gombok és a misék a teljes tartalomszélességben állnak, alattuk a szakaszok téma szerint oszlopokban; üres téma nem hagy üres oszlopot (spec 0003). A térkép és a fotó kitölti a teljes szélességet. A templom-részletező Megközelítés térképe a saját szélességéhez 3:2 arányú, de legfeljebb a látható magasság fele (a fotófejlécé: KO19).
 
@@ -254,7 +255,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 ## KO. Komponensek
 
-**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card` a téma `cardTheme`-jével: szín `surfaceContainerLow`, `elevation: 1` (MÉ1), forma `Radii.m`, belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5).
+**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card` a téma `cardTheme`-jével: szín `surfaceContainerLow`, `elevation: 1` (MÉ1), forma `Radii.m`, belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5). Kivétel a templom-részletező napi sávjának **üres napja**: az M3 outlined kártyája, háttere `surface` (azonos a lappal), 1 dp-s `outlineVariant` kerettel, `elevation: 0`, forma `Radii.m`; a fejléce (napnév vagy „Holnap") a misés napéval azonos, a dátum és a szöveg `onSurfaceVariant`, világos és sötét módban (SZ4). Egy egységként olvasódik fel, pl. „Holnap, 2026. 10. 19., Erre a napra a miserend.hu-n nincs információ" (AM5). A `surfaceContainerHighest` itt nem jó: sötét módban jóval világosabb a misés kártyánál, így az üres nap lenne a sáv legfeltűnőbb eleme.
 
 **KO2 — Címsor.** Háttér `surface`, előtér `onSurface`, cím `titleLarge`, `elevation: 0`, `scrolledUnderElevation: 3`. Lila vagy más színes háttér nincs.
 
@@ -364,4 +365,4 @@ A tooltip nem hordoz kattintható tartalmat (linket, gombot).
 
 ## Átállás állapota
 
-A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat. A KO21 (tooltip) 2026-10-12-én került be, eltérését a #71 viszi. A KO21 harmadik esete (a liturgikus nyelv zászlója), az „alatta, ha fölötte nincs hely" kitétel és a takarásról szóló mondat 2026-10-16-án került be, a #78-cal együtt.
+A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat. A KO21 (tooltip) 2026-10-12-én került be, eltérését a #71 viszi. A KO21 harmadik esete (a liturgikus nyelv zászlója), az „alatta, ha fölötte nincs hely" kitétel és a takarásról szóló mondat 2026-10-16-án került be, a #78-cal együtt. Az üres nap (SZ4, MÉ2, KO1, EL2) ugyanekkor, a #79-cel.

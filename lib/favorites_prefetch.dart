@@ -106,7 +106,11 @@ class FavoritesPrefetch {
           // timeout per favorite would only hold the phone's radio awake.
           return;
         case ApiSuccess(:final value):
-          await cache.replaceMassesForChurch(id, value);
+          await cache.replaceMassesForChurch(
+            id,
+            value.masses,
+            keepFrom: value.unknownFrom(today),
+          );
       }
     }
 

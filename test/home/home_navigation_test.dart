@@ -113,7 +113,7 @@ final ChurchPageData _fullPage = ChurchPageData(
         ),
     ],
   ),
-  scheduleIsFresh: true,
+  freshDays: ChurchScheduleLoader.scheduleDays,
   confessionLive: false,
 );
 

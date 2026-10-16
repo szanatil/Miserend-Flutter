@@ -100,6 +100,13 @@ ChurchDetails _details({
   );
 }
 
+/// Every day of the window covered by a whole NearbyMasses response.
+const int _allFresh = ChurchScheduleLoader.scheduleDays;
+
+/// The grey day cards' texts (CONTEXT.md, „Üres nap").
+const String _noInfo = 'Erre a napra a miserend.hu-n nincs információ';
+const String _notDownloaded = 'Erre a napra nincs letöltött információ';
+
 List<List<CachedMass>> _emptyDays() =>
     List.generate(ChurchScheduleLoader.scheduleDays, (_) => <CachedMass>[]);
 
@@ -121,7 +128,7 @@ List<List<CachedMass>> _scheduleWith(DateTime time, {String? info}) {
 ChurchPageData _page(
   List<List<CachedMass>> masses, {
   ChurchDetails? church,
-  bool scheduleIsFresh = false,
+  int freshDays = 0,
   bool confessionLive = false,
   ApiFailure? failure,
   DateTime? dataAsOf,
@@ -129,7 +136,7 @@ ChurchPageData _page(
   return ChurchPageData(
     church: church,
     massesByDay: masses,
-    scheduleIsFresh: scheduleIsFresh,
+    freshDays: freshDays,
     confessionLive: confessionLive,
     failure: failure,
     dataAsOf: dataAsOf,
@@ -325,7 +332,7 @@ void main() {
           languages: const ['magyar'],
           hasConfession: true,
         ),
-        scheduleIsFresh: true,
+        freshDays: _allFresh,
       );
       // The contrast check lets real time pass, in which the map's tile
       // cache asks where to keep its files.
@@ -407,10 +414,9 @@ void main() {
     });
   }
 
-  testWidgets('the day headings are section titles, titleMedium w600 (TI2)', (
+  testWidgets('the day heading is a section title, titleMedium w600 (TI2)', (
     tester,
   ) async {
-    // A Wednesday, so that both "Ma" and "Most vasárnap" are shown.
     final page = _page(_emptyDays());
     await pumpPage(
       tester,
@@ -418,13 +424,11 @@ void main() {
       clock: () => DateTime(2026, 10, 7, 9),
     );
 
-    for (final heading in ['Ma', 'Most vasárnap']) {
-      final titleMedium =
-          Theme.of(tester.element(find.text(heading))).textTheme.titleMedium!;
-      final style = tester.widget<Text>(find.text(heading)).style!;
-      expect(style.fontSize, titleMedium.fontSize, reason: heading);
-      expect(style.fontWeight, FontWeight.w600, reason: heading);
-    }
+    final titleMedium =
+        Theme.of(tester.element(find.text('Ma'))).textTheme.titleMedium!;
+    final style = tester.widget<Text>(find.text('Ma')).style!;
+    expect(style.fontSize, titleMedium.fontSize);
+    expect(style.fontWeight, FontWeight.w600);
   });
 
   for (final brightness in Brightness.values) {
@@ -912,25 +916,39 @@ void main() {
     }),
   );
 
-  testWidgets('an empty day without a response reads as missing data, not as '
-      'no mass', (tester) async {
+  /// The day strip's cards, left to right: the day each is headed with.
+  List<String> stripDates(WidgetTester tester) {
+    final dates = find.textContaining(RegExp(r'^\d{4}\. \d{2}\. \d{2}\.$'));
+    return [
+      for (final element in dates.evaluate()) (element.widget as Text).data!,
+    ];
+  }
+
+  CachedMass massAt(DateTime time) => CachedMass(
+    id: null,
+    apiMassId: null,
+    churchId: 38,
+    time: time,
+    info: null,
+    source: MassSource.nearbyMasses,
+  );
+
+  testWidgets('without a response, no empty day claims miserend.hu has '
+      'nothing for it', (tester) async {
     final empty = _page(_emptyDays());
     await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
 
-    // The two rows word it differently, and on a Sunday the "Most vasárnap"
-    // row is not drawn at all because it would repeat "Ma".
-    expect(find.text('Nincs adat a mai miserendről'), findsOneWidget);
-    expect(find.text('Ezen a napon nincs mise'), findsNothing);
-    expect(
-      find.text('Nincs adat erről a napról'),
-      DateTime.now().weekday == DateTime.sunday ? findsNothing : findsOneWidget,
-    );
+    expect(find.text('Mára nincs letöltött információ'), findsOneWidget);
+    expect(find.text(_notDownloaded), findsNWidgets(19));
+    expect(find.textContaining('miserend.hu-n nincs'), findsNothing);
+    expect(find.textContaining('nincs mise'), findsNothing);
   });
 
-  testWidgets('an empty day with a response reads as no mass', (tester) async {
+  testWidgets('after a whole response, an empty day says miserend.hu has '
+      'nothing for it', (tester) async {
     final loader = _FakeLoader(
       cached: _page(_emptyDays()),
-      refreshed: _page(_emptyDays(), scheduleIsFresh: true),
+      refreshed: _page(_emptyDays(), freshDays: _allFresh),
     );
 
     await pumpPage(tester, loader);
@@ -938,42 +956,190 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Ezen a napon nincs mise'), findsWidgets);
-    expect(find.text('Nincs adat a mai miserendről'), findsNothing);
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    expect(find.text(_noInfo), findsNWidgets(19));
+    expect(find.text(_notDownloaded), findsNothing);
   });
 
-  testWidgets('the day strip skips days with no masses', (tester) async {
-    // Not this Sunday: the "Most vasárnap" row would show the mass a second
-    // time.
-    final day = DateTime.sunday - DateTime.now().weekday == 3 ? 2 : 3;
+  testWidgets('past where a cut-off response reaches, an empty day says '
+      'nothing was downloaded', (tester) async {
     final masses = _emptyDays();
-    masses[day].add(
-      CachedMass(
-        id: null,
-        apiMassId: null,
-        churchId: 38,
-        time: _todayAt(7, 30).add(Duration(days: day)),
-        info: null,
-        source: MassSource.nearbyMasses,
-      ),
-    );
-    final data = _page(masses, scheduleIsFresh: true);
+    masses[4].add(massAt(_todayAt(18, 0).add(const Duration(days: 4))));
+    final data = _page(masses, freshDays: 5);
 
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
-    // One card, for the only day that has anything.
-    expect(find.text('7:30'), findsOneWidget);
-    expect(find.byType(Card), findsWidgets);
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    // Days 1–3 within reach, 5–19 past it.
+    expect(find.text(_noInfo), findsNWidgets(3));
+    expect(find.text(_notDownloaded), findsNWidgets(15));
   });
+
+  testWidgets('the day strip shows every day from tomorrow to the end of the '
+      'window, each once, and no "Most vasárnap"', (tester) async {
+    // A Wednesday with masses every day: each day used to appear twice.
+    final masses = _emptyDays();
+    for (var day = 0; day < masses.length; day++) {
+      masses[day].add(massAt(DateTime(2026, 10, 7 + day, 18, 0)));
+    }
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 7, 9),
+    );
+
+    expect(find.text('Most vasárnap'), findsNothing);
+    expect(stripDates(tester), [
+      for (var day = 8; day <= 26; day++)
+        '2026. 10. ${day.toString().padLeft(2, '0')}.',
+    ]);
+    // Today's mass and one per day in the strip, each shown once.
+    expect(find.text('18:00'), findsNWidgets(20));
+  });
+
+  testWidgets('opened on a Sunday with masses only from the next one, the '
+      'strip runs on through the empty days in grey (#79)', (tester) async {
+    // Budakalász, recorded live: nothing between 10.01. and 10.24.
+    final masses = _emptyDays();
+    for (var day = 7; day < masses.length; day++) {
+      final date = DateTime(2026, 10, 18 + day);
+      if (date.weekday == DateTime.sunday) {
+        masses[day].addAll([
+          massAt(DateTime(2026, 10, 18 + day, 8, 0)),
+          massAt(DateTime(2026, 10, 18 + day, 18, 0)),
+        ]);
+      }
+    }
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 18, 9),
+    );
+
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    expect(stripDates(tester).take(7), [
+      for (var day = 19; day <= 25; day++) '2026. 10. $day.',
+    ]);
+    Finder cardOf(String date) =>
+        find.ancestor(of: find.text(date), matching: find.byType(Card));
+    for (var day = 19; day <= 24; day++) {
+      expect(
+        find.descendant(
+          of: cardOf('2026. 10. $day.'),
+          matching: find.text(_noInfo),
+        ),
+        findsOneWidget,
+        reason: '10.$day.',
+      );
+    }
+    final sunday = cardOf('2026. 10. 25.');
+    expect(
+      find.descendant(of: sunday, matching: find.text('Vasárnap')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sunday, matching: find.text('8:00')),
+      findsOneWidget,
+    );
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, an empty day is an outlined card on the '
+        'page\'s own colour, its text secondary (SZ4)', (tester) async {
+      final empty = _page(_emptyDays(), freshDays: _allFresh);
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: empty, refreshed: empty),
+        brightness: brightness,
+        clock: () => DateTime(2026, 10, 18, 9),
+      );
+
+      final scheme = miserendTheme(brightness).colorScheme;
+      final card = tester.widget<Card>(
+        find.ancestor(
+          of: find.text(_noInfo).first,
+          matching: find.byType(Card),
+        ),
+      );
+      expect(card.color, scheme.surface);
+      expect(card.elevation, 0);
+      final shape = card.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, scheme.outlineVariant);
+      expect(shape.side.width, 1);
+      expect(
+        shape.borderRadius,
+        const BorderRadius.all(Radius.circular(Radii.m)),
+      );
+      for (final text in [
+        find.text('2026. 10. 19.'),
+        find.text(_noInfo).first,
+      ]) {
+        expect(tester.widget<Text>(text).style?.color, scheme.onSurfaceVariant);
+      }
+    });
+  }
+
+  testWidgets('an empty day is read out as one unit (AM5)', (tester) async {
+    final handle = tester.ensureSemantics();
+    final empty = _page(_emptyDays(), freshDays: _allFresh);
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: empty, refreshed: empty),
+      clock: () => DateTime(2026, 10, 18, 9),
+    );
+
+    expect(
+      tester.getSemantics(find.text(_noInfo).first),
+      matchesSemantics(label: 'Holnap, 2026. 10. 19., $_noInfo'),
+    );
+    handle.dispose();
+  });
+
+  for (final width in [320.0, 430.0]) {
+    for (final textScale in [1.0, 2.0]) {
+      for (final brightness in Brightness.values) {
+        testWidgets('at $width dp, text scale $textScale, $brightness, an '
+            'empty day\'s card is as tall as a mass day\'s, and in line with '
+            'it', (tester) async {
+          final masses = _emptyDays();
+          masses[2].add(massAt(_todayAt(7, 30).add(const Duration(days: 2))));
+          final data = _page(masses, freshDays: _allFresh);
+
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: data, refreshed: data),
+            width: width,
+            textScale: textScale,
+            brightness: brightness,
+          );
+
+          Rect cardOf(Finder inside) => tester.getRect(
+            find.ancestor(of: inside, matching: find.byType(Card)).first,
+          );
+          final empty = cardOf(find.text(_noInfo).first);
+          final full = cardOf(find.text('7:30'));
+          expect(empty.height, full.height);
+          expect(empty.top, full.top);
+          // The text wraps within the card's least width.
+          expect(
+            empty.width,
+            lessThanOrEqualTo(
+              ChurchDetailsPage.dayCardMinWidth * textScale + 2 * Spacing.l,
+            ),
+          );
+        }, variant: TargetPlatformVariant.mobile());
+      }
+    }
+  }
 
   testWidgets('a day with many masses grows wider, not taller: its times '
       'stay on one line, its card as tall as the others', (tester) async {
-    // Not this Sunday: the "Most vasárnap" row would show the masses again.
-    final sunday = DateTime.sunday - DateTime.now().weekday;
-    final [few, many] =
-        [
-          for (var d = 1; d < 7; d++) d,
-        ].where((d) => d != sunday).take(2).toList();
+    const few = 1;
+    const many = 2;
     CachedMass at(int day, int hour) => CachedMass(
       id: null,
       apiMassId: null,
@@ -987,7 +1153,7 @@ void main() {
     masses[many].addAll([
       for (final h in [6, 8, 10, 12, 19]) at(many, h),
     ]);
-    final data = _page(masses, scheduleIsFresh: true);
+    final data = _page(masses, freshDays: _allFresh);
 
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
@@ -1021,7 +1187,7 @@ void main() {
     final masses = _emptyDays();
     masses[17].add(at(DateTime(2026, 10, 25, 10, 0)));
     masses[18].add(at(DateTime(2026, 10, 26, 7, 30)));
-    final data = _page(masses, scheduleIsFresh: true);
+    final data = _page(masses, freshDays: _allFresh);
 
     await pumpPage(
       tester,
@@ -1029,10 +1195,23 @@ void main() {
       clock: () => DateTime(2026, 10, 8, 10, 0),
     );
 
-    expect(find.text('Vasárnap'), findsOneWidget);
-    expect(find.text('2026. 10. 25.'), findsOneWidget);
-    expect(find.text('Hétfő'), findsOneWidget);
-    expect(find.text('2026. 10. 26.'), findsOneWidget);
+    expect(stripDates(tester), [
+      for (var day = 9; day <= 27; day++)
+        '2026. 10. ${day.toString().padLeft(2, '0')}.',
+    ]);
+    Finder cardOf(String date) =>
+        find.ancestor(of: find.text(date), matching: find.byType(Card));
+    expect(
+      find.descendant(
+        of: cardOf('2026. 10. 25.'),
+        matching: find.text('10:00'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cardOf('2026. 10. 26.'), matching: find.text('7:30')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('no confession tile without a live response', (tester) async {
@@ -1254,7 +1433,7 @@ void main() {
     testWidgets('nothing is marked after a successful refresh', (tester) async {
       await refreshWith(
         tester,
-        _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true),
+        _page(_scheduleWith(_todayAt(9, 0)), freshDays: _allFresh),
       );
 
       expect(find.byType(OfflineBanner), findsNothing);
@@ -1476,7 +1655,7 @@ void main() {
         _page(
           _scheduleWith(_todayAt(9, 0)),
           church: _details(),
-          scheduleIsFresh: true,
+          freshDays: _allFresh,
           dataAsOf: DateTime(2026, 9, 3, 17, 45),
         ),
       );
@@ -1539,7 +1718,7 @@ void main() {
       refreshed: ChurchPageData(
         church: null,
         massesByDay: _emptyDays(),
-        scheduleIsFresh: false,
+        freshDays: 0,
         confessionLive: false,
         churchGone: true,
       ),
@@ -1555,8 +1734,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('9:00'), findsNothing);
-    expect(find.text('Nincs adat a mai miserendről'), findsNothing);
-    expect(find.text('Most vasárnap'), findsNothing);
+    expect(find.text('Mára nincs letöltött információ'), findsNothing);
+    expect(find.text(_notDownloaded), findsNothing);
     expect(find.byType(ChurchDetailsPage), findsOneWidget);
     // The name the page was opened with stays readable.
     expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);

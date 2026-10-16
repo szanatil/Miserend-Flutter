@@ -585,7 +585,7 @@ void main() {
   });
 
   group('fetchMassesForChurch', () {
-    Future<List<CachedMass>> fetchWith(
+    Future<ChurchMasses> answerWith(
       http.Response response, {
       int churchId = 38,
     }) async {
@@ -599,8 +599,65 @@ void main() {
         from: DateTime(2026, 9, 10),
         until: DateTime(2026, 9, 29),
       );
-      return (result as ApiSuccess<List<CachedMass>>).value;
+      return (result as ApiSuccess<ChurchMasses>).value;
     }
+
+    Future<List<CachedMass>> fetchWith(
+      http.Response response, {
+      int churchId = 38,
+    }) async => (await answerWith(response, churchId: churchId)).masses;
+
+    /// An answer of [churchIds.length] items, one a day for each church in
+    /// turn, in the order the API groups them: by church, nearest first.
+    http.Response answerOf(List<int> churchIds) {
+      final body = jsonEncode({
+        'error': 0,
+        'sum': churchIds.length,
+        'misek': [
+          for (final (i, id) in churchIds.indexed)
+            {
+              'id': i,
+              'start_date': '2026-09-${10 + i % 19}T18:00:00+02:00',
+              'title': 'Szentmise',
+              'church': {'id': id},
+            },
+        ],
+      });
+      return http.Response.bytes(utf8.encode(body), 200);
+    }
+
+    test('an answer under the limit is complete', () async {
+      final answer = await answerWith(answerOf(List.filled(99, 38)));
+
+      expect(answer.complete, isTrue);
+    });
+
+    test('an answer at the limit is complete when another church follows '
+        'the church\'s own items', () async {
+      final answer = await answerWith(
+        answerOf([...List.filled(60, 38), ...List.filled(40, 99)]),
+      );
+
+      expect(answer.complete, isTrue);
+    });
+
+    test('an answer at the limit is cut short when the church\'s items come '
+        'last', () async {
+      final answer = await answerWith(
+        answerOf([...List.filled(40, 99), ...List.filled(60, 38)]),
+      );
+
+      expect(answer.complete, isFalse);
+      expect(answer.masses, hasLength(60));
+    });
+
+    test('an answer at the limit is cut short when it holds none of the '
+        'church\'s items', () async {
+      final answer = await answerWith(answerOf(List.filled(100, 99)));
+
+      expect(answer.complete, isFalse);
+      expect(answer.masses, isEmpty);
+    });
 
     test('maps every occurrence of the nearby-masses response', () async {
       final masses = await fetchWith(_fixtureResponse('nearbymasses_38.json'));

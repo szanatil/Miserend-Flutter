@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
@@ -37,7 +39,7 @@ class ChurchScheduleLoader {
     return _read(
       churchId,
       today,
-      scheduleIsFresh: false,
+      freshDays: 0,
       confessionLive: false,
       failure: null,
     );
@@ -64,7 +66,7 @@ class ChurchScheduleLoader {
           return ChurchPageData(
             church: null,
             massesByDay: _groupByDay(const [], today),
-            scheduleIsFresh: false,
+            freshDays: 0,
             confessionLive: false,
             churchGone: true,
           );
@@ -76,7 +78,7 @@ class ChurchScheduleLoader {
         churchFailure = failure;
     }
 
-    var scheduleIsFresh = false;
+    var freshDays = 0;
     ApiFailure? scheduleFailure;
     final lat = church.lat;
     final lon = church.lon;
@@ -90,10 +92,19 @@ class ChurchScheduleLoader {
       );
       switch (masses) {
         case ApiSuccess(:final value):
-          // An empty answer is an answer: the church holds no mass in the
-          // window, and the stored schedule has to stop saying otherwise.
-          await cache.replaceMassesForChurch(church.id, value);
-          scheduleIsFresh = true;
+          // An empty answer is an answer: miserend.hu holds no mass in the
+          // window, and the stored schedule has to stop saying otherwise —
+          // up to where a cut-off answer stops.
+          final unknownFrom = value.unknownFrom(today);
+          await cache.replaceMassesForChurch(
+            church.id,
+            value.masses,
+            keepFrom: unknownFrom,
+          );
+          freshDays =
+              unknownFrom == null
+                  ? scheduleDays
+                  : min(unknownFrom.calendarDaysSince(today), scheduleDays);
         case ApiFailed(:final failure):
           scheduleFailure = failure;
       }
@@ -102,7 +113,7 @@ class ChurchScheduleLoader {
     return _read(
       church.id,
       today,
-      scheduleIsFresh: scheduleIsFresh,
+      freshDays: freshDays,
       // Only a response from this call may light the confession tile.
       confessionLive: details?.hasConfession ?? false,
       failure: scheduleFailure ?? churchFailure,
@@ -112,7 +123,7 @@ class ChurchScheduleLoader {
   Future<ChurchPageData> _read(
     int churchId,
     DateTime today, {
-    required bool scheduleIsFresh,
+    required int freshDays,
     required bool confessionLive,
     required ApiFailure? failure,
   }) async {
@@ -126,7 +137,7 @@ class ChurchScheduleLoader {
     return ChurchPageData(
       church: church,
       massesByDay: _groupByDay(cached, today),
-      scheduleIsFresh: scheduleIsFresh,
+      freshDays: freshDays,
       confessionLive: confessionLive,
       failure: failure,
       dataAsOf: church?.localSyncedAt ?? await cache.bootstrappedAt(),

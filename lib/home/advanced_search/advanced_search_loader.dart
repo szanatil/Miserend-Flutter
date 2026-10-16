@@ -334,10 +334,14 @@ class AdvancedSearchLoader {
     )) {
       case ApiFailed(:final failure):
         return failure;
+      // Cut off at the limit, the answer may lack some of the day: the cache
+      // keeps what it has.
+      case ApiSuccess(:final value) when !value.complete:
+        return null;
       case ApiSuccess(:final value):
         // An empty answer is an answer: the church holds nothing that day.
         await cache.replaceDailyMasses(church.id, start, [
-          for (final mass in value)
+          for (final mass in value.masses)
             if (!mass.time.isBefore(start) && mass.time.isBefore(next)) mass,
         ]);
         return null;

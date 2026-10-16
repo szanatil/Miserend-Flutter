@@ -40,21 +40,25 @@ CachedMass _mass(DateTime time, String info) => CachedMass(
   source: MassSource.nearbyMasses,
 );
 
-String _nearbyMassesAt(List<DateTime> times) {
+/// The church's masses at [times], after [nearer] items of a church that
+/// stands nearer: the API groups its answer by church, nearest first.
+String _nearbyMassesAt(List<DateTime> times, {int nearer = 0}) {
   String two(int n) => n.toString().padLeft(2, '0');
+  Map<String, Object> item(int id, DateTime time) => {
+    'id': 129807,
+    'start_date':
+        '${time.year}-${two(time.month)}-${two(time.day)}'
+        'T${two(time.hour)}:${two(time.minute)}:00+02:00',
+    'title': 'Szentmise',
+    'church': {'id': id},
+  };
   return jsonEncode({
     'error': 0,
-    'sum': times.length,
+    'sum': nearer + times.length,
     'misek': [
-      for (final time in times)
-        {
-          'id': 129807,
-          'start_date':
-              '${time.year}-${two(time.month)}-${two(time.day)}'
-              'T${two(time.hour)}:${two(time.minute)}:00+02:00',
-          'title': 'Szentmise',
-          'church': {'id': 38},
-        },
+      for (var i = 0; i < nearer; i++)
+        item(99, DateTime(2026, 9, 10, 6, 0).add(Duration(minutes: i))),
+      for (final time in times) item(38, time),
     ],
   });
 }
@@ -86,6 +90,7 @@ http.Response _churchResponse({bool? confession}) {
 /// [massTimes]; [failure] makes every call fail that way.
 MiserendApiClient _api({
   List<DateTime> massTimes = const [],
+  int nearer = 0,
   ApiFailure? failure,
   bool? confession,
 }) {
@@ -101,7 +106,7 @@ MiserendApiClient _api({
       }
       if (request.url.path.endsWith('nearbymasses')) {
         return http.Response.bytes(
-          utf8.encode(_nearbyMassesAt(massTimes)),
+          utf8.encode(_nearbyMassesAt(massTimes, nearer: nearer)),
           200,
         );
       }
@@ -195,6 +200,19 @@ void main() {
       expect(days, hasLength(ChurchScheduleLoader.scheduleDays));
       expect(days.expand((day) => day), isEmpty);
     });
+
+    test('is fresh on no day: only the cache speaks', () async {
+      await cache.replaceMassesForChurch(38, [
+        _mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise'),
+      ]);
+
+      final page = await ChurchScheduleLoader(
+        cache: cache,
+        api: _api(),
+      ).loadCached(38, _today);
+
+      expect(page.freshDays, 0);
+    });
   });
 
   group('refresh', () {
@@ -257,7 +275,7 @@ void main() {
       final page = await loader.refresh(_church, _today);
 
       expect(page.massesByDay[0].map((m) => m.info), ['Bootstrap mise']);
-      expect(page.scheduleIsFresh, isFalse);
+      expect(page.freshDays, 0);
       expect(page.failure, ApiFailure.noConnection);
     });
 
@@ -275,7 +293,7 @@ void main() {
         final page = await loader.refresh(_church, _today);
 
         expect(page.massesByDay[0].map((m) => m.info), ['Bootstrap mise']);
-        expect(page.scheduleIsFresh, isFalse);
+        expect(page.freshDays, 0);
         expect(page.failure, ApiFailure.serverError);
       },
     );
@@ -290,7 +308,7 @@ void main() {
 
       // A successful empty answer says the church holds no mass in the window.
       expect(page.massesByDay.expand((day) => day), isEmpty);
-      expect(page.scheduleIsFresh, isTrue);
+      expect(page.freshDays, ChurchScheduleLoader.scheduleDays);
       expect(page.failure, isNull);
     });
 
@@ -359,6 +377,58 @@ void main() {
       expect(await cache.getChurch(38), isNotNull);
     });
 
+    test('an answer cut off at the limit is fresh only to the church\'s last '
+        'day in it', () async {
+      // 40 items of a nearer church, then the church's own 60, up to 09.15.
+      final times = [
+        for (var day = 10; day <= 15; day++)
+          for (var hour = 8; hour < 18; hour++) DateTime(2026, 9, day, hour),
+      ];
+      final loader = ChurchScheduleLoader(
+        cache: cache,
+        api: _api(massTimes: times, nearer: 40),
+      );
+
+      final page = await loader.refresh(_church, _today);
+
+      expect(page.freshDays, 6);
+      expect(page.massesByDay[5], hasLength(10));
+    });
+
+    test(
+      'an answer a nearer church fills to the limit is fresh on no day',
+      () async {
+        final loader = ChurchScheduleLoader(
+          cache: cache,
+          api: _api(nearer: 100),
+        );
+
+        final page = await loader.refresh(_church, _today);
+
+        expect(page.freshDays, 0);
+        expect(page.failure, isNull);
+      },
+    );
+
+    test('a cut-off answer keeps what the cache holds past the cut-off, and '
+        'replaces what lies before it', () async {
+      await cache.replaceMassesForChurch(38, [
+        _mass(DateTime(2026, 9, 10, 9, 0), 'Régi mai mise'),
+        _mass(DateTime(2026, 9, 12, 9, 0), 'Bootstrap mise'),
+      ]);
+      final loader = ChurchScheduleLoader(
+        cache: cache,
+        api: _api(massTimes: [DateTime(2026, 9, 11, 18, 0)], nearer: 99),
+      );
+
+      final page = await loader.refresh(_church, _today);
+
+      expect(page.freshDays, 2);
+      expect(page.massesByDay[0], isEmpty);
+      expect(page.massesByDay[1].map((m) => m.info), ['Szentmise']);
+      expect(page.massesByDay[2].map((m) => m.info), ['Bootstrap mise']);
+    });
+
     test('a successful refresh carries no failure', () async {
       final loader = ChurchScheduleLoader(
         cache: cache,
@@ -367,7 +437,7 @@ void main() {
 
       final page = await loader.refresh(_church, _today);
 
-      expect(page.scheduleIsFresh, isTrue);
+      expect(page.freshDays, ChurchScheduleLoader.scheduleDays);
       expect(page.failure, isNull);
     });
 

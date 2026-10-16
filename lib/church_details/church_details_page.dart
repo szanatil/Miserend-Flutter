@@ -54,6 +54,11 @@ class ChurchDetailsPage extends StatefulWidget {
   /// The time now, for today and the masses going on. Injected by tests.
   final DateTime Function() clock;
 
+  /// A day card's least width in the strip at text scale 1.0; a day with
+  /// more masses grows wider instead of taller, an empty day's text wraps
+  /// within it.
+  static const double dayCardMinWidth = 160;
+
   @override
   State<ChurchDetailsPage> createState() => _ChurchDetailsPageState();
 }
@@ -66,10 +71,6 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// margins ([SectionCard.margin], `l` each), so that the cards stand `s`
   /// apart across, as they do down (DESIGN.md TK2).
   static const double _columnGap = Spacing.s - 2 * Spacing.l;
-
-  /// A day card's least width in the strip at text scale 1.0; a day with
-  /// more masses grows wider instead of taller.
-  static const double _dayCardMinWidth = 160;
 
   /// The Megközelítés map's shape: as wide as its card, 3:2.
   static const double _mapAspectRatio = 3 / 2;
@@ -423,24 +424,13 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     }
 
     final note = MiserendText.normalize(_details?.massScheduleNote);
-    final sundayOffset = DateTime.sunday - _today.weekday;
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('Ma', style: Theme.of(context).textTheme.sectionTitle),
-          _massListWidgetForDay(0),
-          // On a Sunday the two headings would name the same day, and the
-          // section would repeat itself.
-          if (sundayOffset != 0) ...[
-            const SizedBox(height: Spacing.s),
-            Text(
-              'Most vasárnap',
-              style: Theme.of(context).textTheme.sectionTitle,
-            ),
-            _massListWidgetForDay(sundayOffset),
-          ],
+          _todayMasses(),
           if (note.isNotEmpty) ...[
             const SizedBox(height: Spacing.s),
             ExpandableInfoTile(
@@ -456,32 +446,29 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-  /// The chips for one day, or a sentence saying which kind of nothing this is.
-  ///
-  /// An empty day means "no mass" only once a response has actually arrived;
-  /// before that it means "not downloaded yet", and on a mass-times app the two
-  /// must not look alike.
-  Widget _massListWidgetForDay(int offset) {
-    final masses =
-        offset >= 0 && offset < _masses.length
-            ? _masses[offset]
-            : const <CachedMass>[];
+  /// What an empty day says: where the information is missing from. Within
+  /// a response's reach miserend.hu holds nothing for it; past it, nothing
+  /// has been downloaded for it (CONTEXT.md, „Üres nap").
+  String _missingInformation(int offset) {
+    final fresh = _data?.isFresh(offset) ?? false;
+    return switch ((offset == 0, fresh)) {
+      (true, true) => 'Mára a miserend.hu-n nincs információ',
+      (true, false) => 'Mára nincs letöltött információ',
+      (false, true) => 'Erre a napra a miserend.hu-n nincs információ',
+      (false, false) => 'Erre a napra nincs letöltött információ',
+    };
+  }
+
+  /// Today's chips, or a sentence saying where the information is missing
+  /// from: the app never knows that no mass is held.
+  Widget _todayMasses() {
+    final masses = _masses.isEmpty ? const <CachedMass>[] : _masses[0];
 
     if (masses.isEmpty) {
-      final fresh = _data?.scheduleIsFresh ?? false;
-      final String text;
-      if (fresh) {
-        text = 'Ezen a napon nincs mise';
-      } else {
-        text =
-            offset == 0
-                ? 'Nincs adat a mai miserendről'
-                : 'Nincs adat erről a napról';
-      }
       return Padding(
         padding: const EdgeInsets.only(top: Spacing.s),
         child: Text(
-          text,
+          _missingInformation(0),
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.apply(color: _secondaryText),
@@ -512,16 +499,13 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
     );
   }
 
-  /// One card per day that actually has masses. Days we know nothing about get
-  /// no card at all, so the strip never shows an empty box that reads as "no
-  /// mass held" — the bootstrap import only fills seven days, while the strip
-  /// used to draw nineteen.
+  /// One card for every day from tomorrow to the end of the loaded window,
+  /// an empty one included, so that a gap in the schedule shows as one
+  /// rather than hiding (#79). The cards stretch to the tallest and stand in
+  /// line at the top.
   Widget _dayStrip() {
-    final days = <int>[
-      for (var offset = 1; offset < _masses.length; offset++)
-        if (_masses[offset].isNotEmpty) offset,
-    ];
-    if (days.isEmpty) {
+    // A church gone from miserend.hu has no schedule left to show a gap in.
+    if (_masses.length < 2 || (_data?.churchGone ?? false)) {
       return const SizedBox.shrink();
     }
 
@@ -533,38 +517,53 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
         horizontal: Spacing.l - Spacing.xs,
         vertical: Spacing.xs,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [for (final offset in days) _getMassListCardForDay(offset)],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var offset = 1; offset < _masses.length; offset++)
+              _masses[offset].isEmpty
+                  ? _emptyDayCard(offset)
+                  : _massDayCard(offset),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _getMassListCardForDay(int dayOffset) {
-    final dateTime = _today.addCalendarDays(dayOffset);
+  /// A day card's least width at the current text size.
+  double get _dayCardWidth =>
+      MediaQuery.textScalerOf(context).scale(ChurchDetailsPage.dayCardMinWidth);
+
+  /// The weekday or "Holnap" over the date, as every day card starts.
+  List<Widget> _dayHeading(DateTime day, {Color? dateColor}) => [
+    Text(
+      DayLabel.forDate(day, _today),
+      style: Theme.of(context).textTheme.titleLarge,
+    ),
+    Text(
+      DayLabel.date.format(day),
+      style: Theme.of(context).textTheme.bodyMedium?.apply(color: dateColor),
+    ),
+    const SizedBox(height: Spacing.s),
+  ];
+
+  Widget _massDayCard(int dayOffset) {
     return Card(
       // Half the gap between cards on either side (TK2).
       margin: const EdgeInsets.symmetric(horizontal: Spacing.xs),
       child: ConstrainedBox(
         // Grows with the text, so that a short day's card is not a sliver at
         // any text size.
-        constraints: BoxConstraints(
-          minWidth: MediaQuery.textScalerOf(context).scale(_dayCardMinWidth),
-        ),
+        constraints: BoxConstraints(minWidth: _dayCardWidth),
         child: Padding(
           padding: const EdgeInsets.all(Spacing.l),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                DayLabel.forDate(dateTime, _today),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              Text(DayLabel.date.format(dateTime)),
-              const SizedBox(height: Spacing.s),
-              // On one line, so that every day's card is as tall as the
-              // others; the strip scrolls sideways for a wide one. The line
+              ..._dayHeading(_today.addCalendarDays(dayOffset)),
+              // On one line, so that a day with many masses grows wider, not
+              // taller; the strip scrolls sideways for a wide one. The line
               // keeps a tappable chip's room (AM3) on a day without one too.
               ConstrainedBox(
                 constraints: const BoxConstraints(
@@ -579,6 +578,53 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A day the app knows no mass for: outlined, on the page's own colour, so
+  /// that it reads as a gap rather than as the strip's loudest card (SZ4,
+  /// KO1). It says where the information is missing from, and wraps within
+  /// the least width.
+  Widget _emptyDayCard(int dayOffset) {
+    final colors = Theme.of(context).colorScheme;
+    final day = _today.addCalendarDays(dayOffset);
+    final text = _missingInformation(dayOffset);
+    // M3's outlined card, drawn here: `Card.outlined` would still take the
+    // theme's colour and elevation.
+    return Card(
+      // Half the gap between cards on either side (TK2).
+      margin: const EdgeInsets.symmetric(horizontal: Spacing.xs),
+      color: colors.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(Radii.m)),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      // One unit, in the order it reads (AM5).
+      child: Semantics(
+        label:
+            '${DayLabel.forDate(day, _today)}, '
+            '${DayLabel.date.format(day)}, $text',
+        excludeSemantics: true,
+        child: SizedBox(
+          width: _dayCardWidth,
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.l),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._dayHeading(day, dateColor: _secondaryText),
+                Text(
+                  text,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.apply(color: _secondaryText),
+                ),
+              ],
+            ),
           ),
         ),
       ),

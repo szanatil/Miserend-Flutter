@@ -293,12 +293,24 @@ class CacheDatabase {
     });
   }
 
+  /// Puts [masses] in place of the church's cached rows; from the start of
+  /// [keepFrom] on, if given, the cached rows stay: an answer cut off there
+  /// says nothing about them.
   Future<void> replaceMassesForChurch(
     int churchId,
-    List<CachedMass> masses,
-  ) async {
+    List<CachedMass> masses, {
+    DateTime? keepFrom,
+  }) async {
     final batch = db.batch();
-    batch.delete(massesTable, where: 'church_id = ?', whereArgs: [churchId]);
+    if (keepFrom == null) {
+      batch.delete(massesTable, where: 'church_id = ?', whereArgs: [churchId]);
+    } else {
+      batch.delete(
+        massesTable,
+        where: 'church_id = ? AND idopont < ?',
+        whereArgs: [churchId, _dayBounds(keepFrom).$1],
+      );
+    }
     for (final mass in masses) {
       batch.insert(massesTable, _massRow(mass));
     }

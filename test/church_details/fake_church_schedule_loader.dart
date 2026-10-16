@@ -16,7 +16,7 @@ class FakeChurchScheduleLoader extends ChurchScheduleLoader {
               ChurchScheduleLoader.scheduleDays,
               (_) => <CachedMass>[],
             ),
-            scheduleIsFresh: false,
+            freshDays: 0,
             confessionLive: false,
           );
 
