@@ -256,37 +256,39 @@ void main() {
     });
 
     for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
-      for (final width in eh4Widths) {
-        for (final textScale in eh4TextScales) {
-          testWidgets('a church without a mass today keeps the chips\' line: '
-              'the line and the heart stand where they do with one, at '
-              '$width dp, text scale $textScale, on $platform (EH4)', (
-            tester,
-          ) async {
-            Future<void> pump(ChurchListEntry entry) => pumpThemed(
-              tester,
-              ChangeNotifierProvider<FavoritesService>.value(
-                value: favorites,
-                child: ChurchCard(entry: entry),
-              ),
-              platform: platform,
-              width: width,
-              textScale: textScale,
-            );
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('a church without a mass today keeps the chips\' '
+                'line: the line and the heart stand where they do with one, '
+                'at $width dp, text scale $textScale, $brightness, on '
+                '$platform (EH3, EH4)', (tester) async {
+              Future<void> pump(ChurchListEntry entry) => pumpThemed(
+                tester,
+                ChangeNotifierProvider<FavoritesService>.value(
+                  value: favorites,
+                  child: ChurchCard(entry: entry),
+                ),
+                brightness: brightness,
+                platform: platform,
+                width: width,
+                textScale: textScale,
+              );
 
-            await pump(_entry(masses: [_mass(8, 0)]));
-            final line = tester.getTopLeft(find.byType(Divider)).dy;
-            final heart = tester.getTopLeft(find.byType(IconButton)).dy;
-            final height = tester.getSize(find.byType(Card)).height;
+              await pump(_entry(masses: [_mass(8, 0)]));
+              final line = tester.getTopLeft(find.byType(Divider)).dy;
+              final heart = tester.getTopLeft(find.byType(IconButton)).dy;
+              final height = tester.getSize(find.byType(Card)).height;
 
-            await pump(_entry());
+              await pump(_entry());
 
-            expect(tester.takeException(), isNull);
-            expect(find.byType(TimeChip), findsNothing);
-            expect(tester.getTopLeft(find.byType(Divider)).dy, line);
-            expect(tester.getTopLeft(find.byType(IconButton)).dy, heart);
-            expect(tester.getSize(find.byType(Card)).height, height);
-          });
+              expect(tester.takeException(), isNull);
+              expect(find.byType(TimeChip), findsNothing);
+              expect(tester.getTopLeft(find.byType(Divider)).dy, line);
+              expect(tester.getTopLeft(find.byType(IconButton)).dy, heart);
+              expect(tester.getSize(find.byType(Card)).height, height);
+            });
+          }
         }
       }
     }
@@ -369,6 +371,9 @@ void main() {
         expect({
           for (final heart in rects(tester, find.byType(IconButton))) heart.top,
         }, hasLength(1));
+        expect({
+          for (final chip in rects(tester, find.byType(TimeChip))) chip.top,
+        }, hasLength(1));
         final photos = rects(tester, find.byType(Image));
         for (final (index, card) in cards.indexed) {
           expect(photos[index].top, card.top);
@@ -376,16 +381,18 @@ void main() {
         }
       }
 
+      // Two cards with masses, one stretched and one not, so the chips can
+      // be held level; the one between them has no mass.
       List<ChurchListEntry> mixed(int columns) => [
         _entry(masses: [_mass(8, 0)]),
         _entry(commonName: longCommonName),
-        if (columns == 3) _entry(commonName: null),
+        if (columns == 3) _entry(commonName: null, masses: [_mass(18, 0)]),
       ];
 
       for (final columns in [2, 3]) {
         testWidgets('in $columns columns the cards are as tall, and the '
-            'line and the heart stand level, with and without masses and a '
-            'long common name', (tester) async {
+            'chips, the line and the heart stand level, with and without '
+            'masses and a long common name', (tester) async {
           await pumpRow(tester, mixed(columns));
 
           expectLevel(tester, columns);
@@ -402,14 +409,14 @@ void main() {
                 (tester) async {
                   await pumpRow(
                     tester,
-                    mixed(2),
+                    mixed(3),
                     columnWidth: columnWidth,
                     brightness: brightness,
                     platform: platform,
                     textScale: textScale,
                   );
 
-                  expectLevel(tester, 2);
+                  expectLevel(tester, 3);
                 },
               );
             }

@@ -398,6 +398,16 @@ void main() {
       find.ancestor(of: find.text('Templom $id'), matching: find.byType(Card)),
     );
 
+    /// The first row's cards stand side by side, as tall as each other.
+    void expectFirstRowLevel(WidgetTester tester, int columns) {
+      final cards = [for (var i = 1; i <= columns; i++) cardOf(tester, i)];
+      for (final card in cards.skip(1)) {
+        expect(card.left, greaterThan(cards.first.right));
+        expect(card.top, cards.first.top);
+        expect(card.height, cards.first.height);
+      }
+    }
+
     testWidgets('on a 1300 dp screen the results stand three to a row, as '
         'tall as each other', (tester) async {
       await searchWide(
@@ -425,18 +435,21 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('on a 1000 dp screen the results stand two to a row', (
-      tester,
-    ) async {
+    testWidgets('on a 1000 dp screen the results stand two to a row, as tall '
+        'as each other', (tester) async {
       await searchWide(
         tester,
         twoColumnWidth,
         FakeAdvancedSearchLoader([
-          resultPage([for (var i = 1; i <= 3; i++) churchEntry(i)]),
+          resultPage([
+            churchEntry(1, commonName: _longCommonName),
+            churchEntry(2),
+            churchEntry(3),
+          ]),
         ]),
       );
 
-      expect(cardOf(tester, 2).top, cardOf(tester, 1).top);
+      expectFirstRowLevel(tester, 2);
       expect(cardOf(tester, 3).left, cardOf(tester, 1).left);
       expect(cardOf(tester, 3).top, cardOf(tester, 1).bottom);
     });
@@ -552,15 +565,20 @@ void main() {
     for (final brightness in Brightness.values) {
       for (final width in const [twoColumnWidth, threeColumnWidth]) {
         for (final textScale in eh4TextScales) {
-          testWidgets('fits in $brightness at $width dp and text scale '
-              '$textScale (EH3, EH4)', (tester) async {
+          testWidgets('fits, the rows as tall as each other, in $brightness '
+              'at $width dp and text scale $textScale (EH3, EH4)', (
+            tester,
+          ) async {
             await searchWide(
               tester,
               width,
               FakeAdvancedSearchLoader([
                 resultPage([
                   for (var i = 1; i <= 5; i++)
-                    churchEntry(i, commonName: _longCommonName),
+                    churchEntry(
+                      i,
+                      commonName: i.isOdd ? _longCommonName : null,
+                    ),
                 ]),
               ]),
               height: 800,
@@ -568,8 +586,8 @@ void main() {
               brightness: brightness,
             );
 
-            expect(find.text('Templom 1'), findsOneWidget);
             expect(tester.takeException(), isNull);
+            expectFirstRowLevel(tester, width == twoColumnWidth ? 2 : 3);
           }, variant: eh4Platforms);
         }
       }

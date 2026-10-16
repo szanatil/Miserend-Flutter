@@ -143,13 +143,14 @@ void main() {
     LocationProvider? location,
     double zoom = _pinsZoom,
     double textScale = 1,
+    Brightness brightness = Brightness.light,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
-          theme: miserendTheme(Brightness.light),
+          theme: miserendTheme(brightness),
           builder:
               (context, child) => MediaQuery(
                 data: MediaQuery.of(
@@ -420,72 +421,75 @@ void main() {
       expect(find.byType(DistanceChip), findsNothing);
     });
 
-    for (final width in eh4Widths) {
-      for (final textScale in eh4TextScales) {
-        testWidgets('the card spans the map, is as tall as its content, and '
-            'keeps the chips\' line without a mass, at $width dp and text '
-            'scale $textScale (EH4)', (tester) async {
-          setScreen(tester, Size(width, 640));
-          final answer = Completer<ChurchList>();
-          await pumpPage(
-            tester,
-            _MapLoader(
-              [
-                [_entry(1, 'Templom')],
-              ],
-              refreshed: [answer],
-            ),
-            textScale: textScale,
-          );
-
-          Rect surface() => tester.getRect(
-            find
-                .descendant(
-                  of: find.byType(Card),
-                  matching: find.byType(Material),
-                )
-                .first,
-          );
-          double heartFromTop() =>
-              tester.getTopLeft(find.byType(IconButton)).dy - surface().top;
-
-          await tapMarker(tester, 1);
-          expect(tester.takeException(), isNull);
-          final map = tester.getRect(find.byType(MiserendMap));
-          final card = tester.getRect(find.byType(Card));
-          expect(card.left - map.left, Spacing.l);
-          expect(map.right - card.right, Spacing.l);
-          // Nothing under the heart: the card is not stretched to the room.
-          expect(
-            tester.getRect(find.byType(IconButton)).bottom,
-            surface().bottom,
-          );
-          final withoutMass = heartFromTop();
-
-          // The answer brings today's mass.
-          answer.complete(
-            listOf([
-              _entry(
-                1,
-                'Templom',
-                masses: [
-                  CachedMass(
-                    id: null,
-                    apiMassId: null,
-                    churchId: 1,
-                    time: DateTime(2026, 9, 15, 8, 0),
-                    info: null,
-                    source: MassSource.bootstrap,
-                  ),
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('the card spans the map, is as tall as its content, and '
+              'keeps the chips\' line without a mass, at $width dp, text '
+              'scale $textScale, $brightness (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 640));
+            final answer = Completer<ChurchList>();
+            await pumpPage(
+              tester,
+              _MapLoader(
+                [
+                  [_entry(1, 'Templom')],
                 ],
+                refreshed: [answer],
               ),
-            ]),
-          );
-          await tester.pump();
-          await tester.pump();
-          expect(find.text('8:00'), findsOneWidget);
-          expect(heartFromTop(), withoutMass);
-        }, variant: eh4Platforms);
+              textScale: textScale,
+              brightness: brightness,
+            );
+
+            Rect surface() => tester.getRect(
+              find
+                  .descendant(
+                    of: find.byType(Card),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            );
+            double heartFromTop() =>
+                tester.getTopLeft(find.byType(IconButton)).dy - surface().top;
+
+            await tapMarker(tester, 1);
+            expect(tester.takeException(), isNull);
+            final map = tester.getRect(find.byType(MiserendMap));
+            final card = tester.getRect(find.byType(Card));
+            expect(card.left - map.left, Spacing.l);
+            expect(map.right - card.right, Spacing.l);
+            // Nothing under the heart: the card is not stretched to the room.
+            expect(
+              tester.getRect(find.byType(IconButton)).bottom,
+              surface().bottom,
+            );
+            final withoutMass = heartFromTop();
+
+            // The answer brings today's mass.
+            answer.complete(
+              listOf([
+                _entry(
+                  1,
+                  'Templom',
+                  masses: [
+                    CachedMass(
+                      id: null,
+                      apiMassId: null,
+                      churchId: 1,
+                      time: DateTime(2026, 9, 15, 8, 0),
+                      info: null,
+                      source: MassSource.bootstrap,
+                    ),
+                  ],
+                ),
+              ]),
+            );
+            await tester.pump();
+            await tester.pump();
+            expect(find.text('8:00'), findsOneWidget);
+            expect(heartFromTop(), withoutMass);
+          }, variant: eh4Platforms);
+        }
       }
     }
 
