@@ -31,6 +31,7 @@ class ChurchCard extends StatelessWidget {
     this.position,
     this.failure,
     this.dataAsOf,
+    this.rowsChosen = false,
     this.clock = DateTime.now,
   });
 
@@ -48,6 +49,11 @@ class ChurchCard extends StatelessWidget {
   /// How old the church's data is, for the (i) explanation.
   final DateTime? dataAsOf;
 
+  /// Set where the screen has already chosen the rows to show: the
+  /// Részletes kereső's, by the occasion categories searched for (spec 0010,
+  /// „Találatok"). Elsewhere the card keeps the masses alone.
+  final bool rowsChosen;
+
   /// The time now, for marking the masses going on. Injected by tests.
   final DateTime Function() clock;
 
@@ -62,8 +68,10 @@ class ChurchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Confession, adoration and the hours come back among the rows too; the
-    // chips promise a mass (CONTEXT.md, „Napi miserend").
-    final masses = entry.masses.where(isMass).toList();
+    // chips promise a mass (CONTEXT.md, „Napi miserend"), unless the screen
+    // chose the rows itself.
+    final masses =
+        rowsChosen ? entry.masses : entry.masses.where(isMass).toList();
     final km = straightLineKm(position, entry.lat, entry.lon);
     final failure = this.failure;
     final favoritesService = context.watch<FavoritesService>();

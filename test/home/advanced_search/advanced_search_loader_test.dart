@@ -12,6 +12,7 @@ import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
+import 'package:miserend/mass_kind.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// A Sunday morning.
@@ -60,13 +61,18 @@ ChurchDetails _church(
   isGreek: null,
 );
 
-CachedMass _cached(int churchId, DateTime time, {String? info}) => CachedMass(
+CachedMass _cached(
+  int churchId,
+  DateTime time, {
+  String? info,
+  MassSource source = MassSource.bootstrap,
+}) => CachedMass(
   id: null,
   apiMassId: null,
   churchId: churchId,
   time: time,
   info: info,
-  source: MassSource.bootstrap,
+  source: source,
 );
 
 /// A seeded church as the `Church` endpoint answers with it, with no mass
@@ -319,6 +325,47 @@ void main() {
       expect(page.failure, isNull);
       expect(noCall.requests, isEmpty);
     });
+
+    test(
+      'each church shows today\'s masses alone, as other lists do',
+      () async {
+        await cache.importChurches(const [], [
+          _cached(1, DateTime(2026, 9, 20, 8, 0)),
+          _cached(
+            1,
+            DateTime(2026, 9, 20, 9, 0),
+            info: 'Római katolikus Gyóntatás',
+            source: MassSource.dailyList,
+          ),
+        ]);
+
+        final page = await loaderWith(
+          noCall,
+        ).loadPage(const AdvancedSearchCriteria(name: 'matyas'), 0);
+
+        expect(page.churches.single.masses.map((m) => m.time), [
+          DateTime(2026, 9, 20, 8, 0),
+        ]);
+      },
+    );
+
+    test('the categories narrow nothing', () async {
+      await cache.importChurches(const [], [
+        _cached(1, DateTime(2026, 9, 20, 8, 0)),
+      ]);
+
+      final page = await loaderWith(noCall).loadPage(
+        const AdvancedSearchCriteria(
+          name: 'matyas',
+          categories: {OccasionCategory.confession},
+        ),
+        0,
+      );
+
+      expect(page.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 20, 8, 0),
+      ]);
+    });
   });
 
   group('pages', () {
@@ -487,6 +534,57 @@ void main() {
           api: api,
         ),
         isEmpty,
+      );
+    });
+
+    test('a search for adoration finds the churches holding one in the '
+        'window, with its times and not the masses\'', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T09:00:00+02:00'),
+          _occurrence(1, '2026-09-21T10:00:00+02:00', title: 'Szentségimádás'),
+          _occurrence(1, '2026-09-21T13:00:00+02:00', title: 'Szentségimádás'),
+          _occurrence(2, '2026-09-21T10:00:00+02:00'),
+          _occurrence(2, '2026-09-21T11:00:00+02:00', title: 'Gyóntatás'),
+        ],
+      );
+
+      final page = await loaderWith(api).loadPage(
+        AdvancedSearchCriteria(
+          city: 'Budapest',
+          day: _monday,
+          from: const TimeOfDay(hour: 9, minute: 0),
+          until: const TimeOfDay(hour: 12, minute: 0),
+          categories: const {OccasionCategory.adoration},
+        ),
+        0,
+      );
+
+      expect(page.churches.map((c) => c.id), [1]);
+      expect(page.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 21, 10, 0),
+      ]);
+    });
+
+    test('a search for every category counts every occasion, one of an '
+        'unknown kind too', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T08:00:00+02:00', title: 'Ismeretlen'),
+          _occurrence(2, '2026-09-21T17:00:00+02:00', title: 'Gyóntatás'),
+        ],
+      );
+
+      expect(
+        await idsFound(
+          AdvancedSearchCriteria(
+            city: 'Budapest',
+            day: _monday,
+            categories: OccasionCategory.values.toSet(),
+          ),
+          api: api,
+        ),
+        [1, 2],
       );
     });
 

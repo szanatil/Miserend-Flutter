@@ -1,5 +1,6 @@
 Újdonságok
 – iPhone-on a párbeszédablakok, a választók, a kapcsolók és a lapok közötti átmenet az iOS megszokott formáját követik.
+– A részletes keresőben szentségimádásra, gyóntatásra és egyéb imaalkalomra is kereshetsz, nem csak misére.
 – Tableten és széles ablakban a templom adatlapja, a templomlista és a miselista kártyái két vagy három oszlopba rendeződnek, így egyszerre több látszik belőlük.
 
 Javítások

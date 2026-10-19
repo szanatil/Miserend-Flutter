@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
@@ -9,6 +10,7 @@ import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/mass_kind.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
@@ -33,6 +35,15 @@ enum DayChoice {
   final String label;
 }
 
+/// The occasion categories' chips, with their label on the chip and in the
+/// summary.
+const Map<OccasionCategory, (String chip, String summary)> _categoryLabels = {
+  OccasionCategory.mass: ('Mise', 'mise'),
+  OccasionCategory.adoration: ('Szentségimádás', 'szentségimádás'),
+  OccasionCategory.confession: ('Gyóntatás', 'gyóntatás'),
+  OccasionCategory.other: ('Egyéb', 'egyéb imaalkalom'),
+};
+
 /// What the conditions' form holds, kept so that closing it without a search
 /// can put back the conditions the results were found by.
 class _Conditions {
@@ -45,6 +56,7 @@ class _Conditions {
     required this.wholeDay,
     required this.from,
     required this.until,
+    required this.categories,
   });
 
   final String name;
@@ -55,6 +67,7 @@ class _Conditions {
   final bool wholeDay;
   final TimeOfDay from;
   final TimeOfDay until;
+  final Set<OccasionCategory> categories;
 }
 
 /// The Részletes kereső (CONTEXT.md, „Részletes kereső"; spec 0010): the
@@ -131,6 +144,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   bool _wholeDay = true;
   TimeOfDay _from = _defaultFrom;
   TimeOfDay _until = _defaultUntil;
+  Set<OccasionCategory> _categories = AdvancedSearchCriteria.defaultCategories;
 
   LatLng? _position;
 
@@ -216,6 +230,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     wholeDay: _wholeDay,
     from: _from,
     until: _until,
+    categories: _categories,
   );
 
   AdvancedSearchCriteria _criteriaOf(_Conditions conditions) {
@@ -228,6 +243,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       day: day,
       from: window ? conditions.from : null,
       until: window ? conditions.until : null,
+      categories: conditions.categories,
       position: _position,
     );
   }
@@ -261,6 +277,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       _wholeDay = applied.wholeDay;
       _from = applied.from;
       _until = applied.until;
+      _categories = applied.categories;
       _expanded = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _fillScreen());
@@ -399,6 +416,13 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                             ),
                           ],
                         ),
+                      const SizedBox(height: Spacing.l),
+                      Text(
+                        'Alkalom',
+                        style: Theme.of(context).textTheme.sectionTitle,
+                      ),
+                      const SizedBox(height: Spacing.s),
+                      _categoryChips(),
                     ],
                     const SizedBox(height: Spacing.l),
                     FilledButton(
@@ -570,6 +594,32 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     setState(() => _dayChoice = choice);
   }
 
+  /// Any number of categories, at least one: the last one chosen stays on
+  /// (CONTEXT.md, „Alkalom kategóriája").
+  Widget _categoryChips() {
+    return Wrap(
+      spacing: Spacing.s,
+      children: [
+        for (final MapEntry(key: category, value: (label, _))
+            in _categoryLabels.entries)
+          FilterChip(
+            label: Text(label),
+            selected: _categories.contains(category),
+            onSelected: (selected) {
+              if (!selected && _categories.length == 1) return;
+              setState(
+                () =>
+                    _categories =
+                        selected
+                            ? {..._categories, category}
+                            : _categories.difference({category}),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
   Widget _timeField(
     String label,
     TimeOfDay value,
@@ -686,7 +736,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         first,
         min(first + columns, churches.length),
       ))
-        ChurchCard(entry: entry, position: position),
+        ChurchCard(entry: entry, position: position, rowsChosen: true),
     ]);
   }
 
@@ -721,7 +771,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     );
   }
 
-  /// „Pécs · vasárnap 9–12 · latin": what the results were found by.
+  /// „Pécs · vasárnap 9–12 · szentségimádás · latin": what the results were
+  /// found by. The categories only count with a day, and are named only when
+  /// they are not the default, masses alone.
   String _summary() {
     final applied = _applied!;
     final name = applied.name.trim();
@@ -740,6 +792,18 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           if (!applied.wholeDay)
             '${_shortTime(applied.from)}–${_shortTime(applied.until)}',
         ].join(' '),
+      if (day != null &&
+          !setEquals(
+            applied.categories,
+            AdvancedSearchCriteria.defaultCategories,
+          ))
+        applied.categories.length == _categoryLabels.length
+            ? 'minden alkalom'
+            : [
+              for (final MapEntry(key: category, value: (_, word))
+                  in _categoryLabels.entries)
+                if (applied.categories.contains(category)) word,
+            ].join(', '),
       if (language != null) languageName(language),
     ].join(' · ');
   }

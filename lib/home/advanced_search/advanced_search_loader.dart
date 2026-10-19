@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
@@ -22,8 +23,15 @@ class AdvancedSearchCriteria {
     this.day,
     this.from,
     this.until,
+    this.categories = defaultCategories,
     this.position,
   });
+
+  /// What a search asks for unless told otherwise: masses only, as it did
+  /// before the categories could be chosen (spec 0010, „Egyezés").
+  static const Set<OccasionCategory> defaultCategories = {
+    OccasionCategory.mass,
+  };
 
   /// A part of the name, the common name or an alternative name.
   final String? name;
@@ -35,13 +43,17 @@ class AdvancedSearchCriteria {
   /// A `nyelvek` code (CONTEXT.md, „Liturgikus nyelv jelölése").
   final String? language;
 
-  /// The day the church has to hold a mass on; null asks for no mass at all.
+  /// The day the church has to hold an occasion on; null asks for none.
   final DateTime? day;
 
-  /// The time window on [day] a mass has to start in, both ends included;
-  /// null ends leave the whole day open on that side.
+  /// The time window on [day] an occasion has to start in, both ends
+  /// included; null ends leave the whole day open on that side.
   final TimeOfDay? from;
   final TimeOfDay? until;
+
+  /// The categories an occasion on [day] counts in (CONTEXT.md, „Alkalom
+  /// kategóriája"). Like the window, they mean nothing without a day.
+  final Set<OccasionCategory> categories;
 
   /// The user's position, known or not. It orders the churches when no city
   /// is given, and stands in for a name or a city as the condition that
@@ -75,11 +87,20 @@ class AdvancedSearchCriteria {
       other.day == day &&
       other.from == from &&
       other.until == until &&
+      setEquals(other.categories, categories) &&
       other.position == position;
 
   @override
-  int get hashCode =>
-      Object.hash(_name, _city, language, day, from, until, position);
+  int get hashCode => Object.hash(
+    _name,
+    _city,
+    language,
+    day,
+    from,
+    until,
+    Object.hashAllUnordered(categories),
+    position,
+  );
 }
 
 /// One page of the Részletes kereső's results.
@@ -94,8 +115,10 @@ class AdvancedSearchResultPage {
   });
 
   /// The churches of the page that meet every condition, in the results'
-  /// order. Each one's masses are why it matched: with a day, the masses
-  /// starting in the window; without one, today's rows, as on other lists.
+  /// order. Each one's masses are why it matched: with a day, the occasions
+  /// of the categories asked for starting in the window; without one,
+  /// today's masses, as on other lists. The cards show these rows as they
+  /// are.
   final List<ChurchListEntry> churches;
 
   /// Whether there are candidates left to look at.
@@ -118,8 +141,9 @@ class AdvancedSearchResultPage {
 /// Finds the churches of the Részletes kereső a page at a time (spec 0010,
 /// „Betöltés"). The candidates — by name, city and language — come from the
 /// cache. With a day, each page asks the API for its candidates' masses on
-/// that day only, writes them through, and keeps the churches holding a mass
-/// in the window; so the API is only asked for what the user scrolls to.
+/// that day only, writes them through, and keeps the churches holding an
+/// occasion of the categories asked for in the window; so the API is only
+/// asked for what the user scrolls to.
 class AdvancedSearchLoader {
   AdvancedSearchLoader({
     CacheDatabase? cache,
@@ -162,7 +186,10 @@ class AdvancedSearchLoader {
     final day = criteria.day;
     if (day == null) {
       return AdvancedSearchResultPage(
-        churches: await _read(cache, slice, clock()),
+        churches: [
+          for (final church in await _read(cache, slice, clock()))
+            _withMasses(church, church.masses.where(isMass).toList()),
+        ],
         hasMore: hasMore,
         found: candidates.length,
         foundIsFinal: true,
@@ -174,18 +201,9 @@ class AdvancedSearchLoader {
     final failure = await _refreshDay(cache, slice, day);
     final churches = [
       for (final church in await _read(cache, slice, day))
-        if (_massesInWindow(church.masses, criteria) case final masses
+        if (_occasionsInWindow(church.masses, criteria) case final masses
             when masses.isNotEmpty)
-          ChurchListEntry(
-            id: church.id,
-            name: church.name,
-            commonName: church.commonName,
-            city: church.city,
-            lat: church.lat,
-            lon: church.lon,
-            photo: church.photo,
-            masses: masses,
-          ),
+          _withMasses(church, masses),
     ];
     final foundBefore =
         page > 0 && page <= _foundThrough.length ? _foundThrough[page - 1] : 0;
@@ -348,11 +366,11 @@ class AdvancedSearchLoader {
     }
   }
 
-  /// The masses of [rows] starting in the criteria's window, both ends
-  /// included (spec 0010, „Egyezés"). Only masses count: confession or
-  /// vespers are no answer to a search for a mass (CONTEXT.md, „Mise vs.
-  /// egyéb liturgikus esemény").
-  static List<CachedMass> _massesInWindow(
+  /// The occasions of [rows] starting in the criteria's window, both ends
+  /// included, in the categories asked for (spec 0010, „Egyezés"): vespers
+  /// are no answer to a search for a mass (CONTEXT.md, „Alkalom
+  /// kategóriája").
+  static List<CachedMass> _occasionsInWindow(
     List<CachedMass> rows,
     AdvancedSearchCriteria criteria,
   ) {
@@ -367,9 +385,25 @@ class AdvancedSearchLoader {
 
     return [
       for (final row in rows)
-        if (isMass(row) && inWindow(row)) row,
+        if (criteria.categories.contains(occasionCategory(row)) &&
+            inWindow(row))
+          row,
     ];
   }
+
+  static ChurchListEntry _withMasses(
+    ChurchListEntry church,
+    List<CachedMass> masses,
+  ) => ChurchListEntry(
+    id: church.id,
+    name: church.name,
+    commonName: church.commonName,
+    city: church.city,
+    lat: church.lat,
+    lon: church.lon,
+    photo: church.photo,
+    masses: masses,
+  );
 
   Future<DateTime?> _dataAsOf(CacheDatabase cache) async =>
       await cache.syncTime(_syncKey) ?? await cache.bootstrappedAt();

@@ -101,7 +101,7 @@ Ami egy mise leírásában a fajtája után áll: „Csendes", „latin nyelven"
 _Avoid_: "címke" / "tag" a teljes jellemzőre (zárt készletet sugall — csak a misetípusok azok); a jellemzőt a mise fajtájának tekinteni (a „Szentmise, Csendes" fajtája szentmise).
 
 **Részletes kereső (advanced search)**:
-**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **miséje** — csak misének, más alkalom nem számít — egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem misealkalom. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
+**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **alkalma** a választott **kategóriákban** (alapból csak mise) egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem misealkalom. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
 _Avoid_: "misekereső" (a találat templom); "szűrő" (a lista nem egy meglévő lista szűkítése); "összetett keresés".
 
 **Gyóntatás (confession)**:

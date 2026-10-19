@@ -23,12 +23,58 @@ bool isMass(CachedMass row) {
   }
 }
 
+/// The miserend.hu's four groups, one of which every occasion belongs to
+/// (CONTEXT.md, „Alkalom kategóriája"): the values of the `search` endpoint's
+/// `categories`, `MASS`, `ADORATION`, `CONFESSION` and `OTHER`.
+enum OccasionCategory { mass, adoration, confession, other }
+
+/// The kinds that make an occasion adoration or confession; any other kind
+/// that is not a mass, an unknown one too, is another prayer.
+const String _adoration = 'Szentségimádás';
+const String _confession = 'Gyóntatás';
+
+/// Which category a cached row's occasion belongs to, decided by its kind.
+/// A mass is what [isMass] says it is, so that searching for masses alone
+/// finds what it always did.
+OccasionCategory occasionCategory(CachedMass row) {
+  if (isMass(row)) return OccasionCategory.mass;
+  final text = row.info;
+  if (text == null) return OccasionCategory.other;
+  final kind = _withoutDenomination(text);
+  if (_restAfterKind(kind, _adoration) != null) {
+    return OccasionCategory.adoration;
+  }
+  if (_restAfterKind(kind, _confession) != null) {
+    return OccasionCategory.confession;
+  }
+  return OccasionCategory.other;
+}
+
 /// The denominations a list answer puts in front of the event's kind.
 const List<String> _denominations = ['Római katolikus ', 'Görögkatolikus '];
 
 /// What may follow the kind in a list answer's `informacio`: a comma or, as
 /// live answers show, a space or a parenthesis.
 const List<String> _afterKind = [',', ' ', '('];
+
+/// [info] trimmed, with the denomination in front of its kind left out.
+String _withoutDenomination(String info) {
+  final text = info.trim();
+  for (final denomination in _denominations) {
+    if (text.startsWith(denomination)) {
+      return text.substring(denomination.length);
+    }
+  }
+  return text;
+}
+
+/// What follows [kind] at the start of [text]; null when [text] does not
+/// start with that kind — "Szentmisék" is no "Szentmise".
+String? _restAfterKind(String text, String kind) {
+  if (!text.startsWith(kind)) return null;
+  final rest = text.substring(kind.length);
+  return rest.isEmpty || _afterKind.any(rest.startsWith) ? rest : null;
+}
 
 /// A list answer's `informacio` — "Római katolikus Szentmise, Csendes" — read
 /// as a mass: its [title] among [massTitles], and the mass detail after it
@@ -39,17 +85,10 @@ const List<String> _afterKind = [',', ' ', '('];
 /// and the card shows the Greek Catholic one by its title.
 ({String title, String? detail})? describeMass(String? info) {
   if (info == null) return null;
-  var text = info.trim();
-  for (final denomination in _denominations) {
-    if (text.startsWith(denomination)) {
-      text = text.substring(denomination.length);
-      break;
-    }
-  }
+  final text = _withoutDenomination(info);
   for (final title in massTitles) {
-    if (!text.startsWith(title)) continue;
-    final rest = text.substring(title.length);
-    if (rest.isNotEmpty && !_afterKind.any(rest.startsWith)) continue;
+    final rest = _restAfterKind(text, title);
+    if (rest == null) continue;
     final detail = rest.replaceFirst(RegExp(r'^[,\s]+'), '');
     return (title: title, detail: detail.isEmpty ? null : detail);
   }

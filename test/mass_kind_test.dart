@@ -86,6 +86,56 @@ void main() {
     });
   });
 
+  group('the occasion category', () {
+    test('of a bootstrap row is always mass', () {
+      expect(
+        occasionCategory(_row(MassSource.bootstrap, 'Szentségimádás')),
+        OccasionCategory.mass,
+      );
+    });
+
+    const nearby = {
+      'Szentmise': OccasionCategory.mass,
+      'Szent Liturgia': OccasionCategory.mass,
+      'Régi rítusú szentmise': OccasionCategory.mass,
+      'Szentségimádás': OccasionCategory.adoration,
+      'Görögkatolikus Szentségimádás': OccasionCategory.adoration,
+      'Gyóntatás': OccasionCategory.confession,
+      'Vecsernye': OccasionCategory.other,
+      'Rózsafüzér ima': OccasionCategory.other,
+      'Ismeretlen': OccasionCategory.other,
+      null: OccasionCategory.other,
+    };
+    for (final MapEntry(key: title, value: category) in nearby.entries) {
+      test('of the NearbyMasses row "$title" is ${category.name}', () {
+        expect(
+          occasionCategory(_row(MassSource.nearbyMasses, title)),
+          category,
+        );
+      });
+    }
+
+    const listed = {
+      'Római katolikus Szentmise, Csendes': OccasionCategory.mass,
+      'Görögkatolikus Szent Liturgia': OccasionCategory.mass,
+      'Római katolikus Szentségimádás': OccasionCategory.adoration,
+      'Római katolikus Szentségimádás, Csendes': OccasionCategory.adoration,
+      'Görögkatolikus Szentségimádás': OccasionCategory.adoration,
+      'Római katolikus Gyóntatás ukrán nyelven': OccasionCategory.confession,
+      'Római katolikus Gyóntatás': OccasionCategory.confession,
+      'Római katolikus Zsolozsma (Laudes)': OccasionCategory.other,
+      'Görögkatolikus Vecsernye': OccasionCategory.other,
+      'Római katolikus Szentségimádások': OccasionCategory.other,
+      'Római katolikus Ismeretlen esemény': OccasionCategory.other,
+      null: OccasionCategory.other,
+    };
+    for (final MapEntry(key: info, value: category) in listed.entries) {
+      test('of the list answer row "$info" is ${category.name}', () {
+        expect(occasionCategory(_row(MassSource.dailyList, info)), category);
+      });
+    }
+  });
+
   group('a mass description', () {
     // Live descriptions from the Church answer for central Budapest,
     // 2026-09-17.

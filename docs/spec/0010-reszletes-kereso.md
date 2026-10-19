@@ -10,7 +10,9 @@ A régi Android app (`bmaczak/Miserend-Android`) ezt a „Részletes kereső" k�
 
 ## Solution
 
-A keresősáv javaslatlistájának alján mindig ott áll a **Részletes kereső** sor. Megnyitja a Részletes keresőt a főképernyőn belül — a keresősáv és az alsó navigáció a helyén marad —, ahol a felhasználó egyszerre több feltételt adhat meg: a templom nevét, a települést, a liturgikus nyelvet, és hogy a templomnak **legyen miséje** egy adott napon, egy adott időablakban. A találat a feltételeknek **mind** megfelelő templomok listája, templomkártyákon. A lista fölött egy összegző sor mutatja, milyen feltételekre keresett, a kártyákon pedig látszik, mivel felel meg a templom: a keresett időablak miséi.
+A keresősáv javaslatlistájának alján mindig ott áll a **Részletes kereső** sor. Megnyitja a Részletes keresőt a főképernyőn belül — a keresősáv és az alsó navigáció a helyén marad —, ahol a felhasználó egyszerre több feltételt adhat meg: a templom nevét, a települést, a liturgikus nyelvet, és hogy a templomnak **legyen miséje** egy adott napon, egy adott időablakban.
+
+> **Módosítva (2026-10-19, #83).** A nap-feltétel nem csak misére kérdezhet: a felhasználó választja, milyen **kategóriájú** alkalomra keres (mise, szentségimádás, gyóntatás, egyéb imaalkalom, vagy ezek bármely kombinációja; CONTEXT.md, „Alkalom kategóriája"). Alapból csak mise, így aki nem nyúl hozzá, annak a működés nem változik. A kártyákon nap-feltételnél a választott kategóriák időablakba eső alkalmai látszanak. A találat a feltételeknek **mind** megfelelő templomok listája, templomkártyákon. A lista fölött egy összegző sor mutatja, milyen feltételekre keresett, a kártyákon pedig látszik, mivel felel meg a templom: a keresett időablak miséi.
 
 A lista görgetés közben töltődik: a névre, településre és nyelvre szűrt jelöltek a **helyi gyorsítótárból** jönnek, és az API-t csak akkor és csak annyi templomra hívja az app, amennyit a felhasználó legörget, és csak ha van nap-feltétel.
 
@@ -31,7 +33,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 13. Mint felhasználó, ha napot választok, alapból az egész napra szeretnék keresni, és csak ha akarom, szűkíteni időablakra.
 14. Mint felhasználó, időablakot szeretnék megadni (pl. 9:00–12:00), és egy 12:00-kor kezdődő misét is találatnak szeretnék látni.
 15. Mint felhasználó, nap megadása nélkül is szeretnék keresni, csak névre, településre vagy nyelvre.
-16. Mint felhasználó, csak misét szeretnék találatként látni az időpont-feltételnél: a gyóntatás, a vecsernye vagy a szentségimádás nem számít.
+16. ~~Mint felhasználó, csak misét szeretnék találatként látni az időpont-feltételnél: a gyóntatás, a vecsernye vagy a szentségimádás nem számít.~~ **Felülírva** (#83) a 44–47. történettel: alapból továbbra is csak a mise számít, de a felhasználó más kategóriát is választhat.
 17. Mint felhasználó, csak olyan templomot szeretnék a találatok között látni, amely **minden** megadott feltételnek megfelel.
 18. Mint felhasználó, ha nem adtam meg sem nevet, sem települést, és az app sem tudja a helyzetemet, szeretném érteni, miért nem kereshetek még: a Keresés gomb inaktív, és alatta rövid magyarázat áll.
 19. Mint felhasználó, ha csak nyelvet és napot adok meg, a környékemen szeretnék keresni, a hozzám legközelebbi templomokkal elöl.
@@ -59,6 +61,10 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 41. Mint felhasználó, egy új keresésnél nem szeretném viszontlátni az előző keresés feltételeit.
 42. Mint felhasználó, a feltételek kitöltése közben a billentyűzet csak addig legyen nyitva, amíg írok, hogy a feltételeket át tudjam látni.
 43. Mint felhasználó, ha egy találat részletezőjéből visszalépek, ugyanott szeretném folytatni, ahol abbahagytam.
+44. Mint szentségimádásra vagy gyóntatásra készülő hívő, egy adott napra és időablakra szentségimádást vagy gyóntatást szeretnék keresni, nem csak misét. (#83)
+45. Mint felhasználó, egyszerre több kategóriát is szeretnék választani, vagy mindet („minden alkalom"), és egy ismeretlen fajtájú alkalom is számítson, ha az egyéb imaalkalmat is választottam. (#83)
+46. Mint felhasználó, ha nem nyúlok a kategóriákhoz, ugyanazt szeretném kapni, mint eddig: csak misét. (#83)
+47. Mint felhasználó, az összegző sorban látni szeretném, ha nem misére kerestem („Pécs · vasárnap 9–12 · szentségimádás"). (#83)
 
 ## Implementation Decisions
 
@@ -82,7 +88,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 ### Oldal
 
 - **Egy oldal**: fent a feltételek, alattuk a találatok. Megnyitáskor a feltételek ki vannak nyitva, találat még nincs.
-- Keresés után a feltételek egy **összegző kártyává** csukódnak („Pécs · vasárnap 9–12 · latin", előtte szűrő ikon, jobb szélen lefelé nyíl), amely a lista fölött **rögzítve** marad; a lista alatta görög. Az összegző kártya egyben a „milyen feltételekre kerestem" jelzése. Alatta áll, ha van, a Nincs kapcsolat / Szerverhiba csík, alatta a lista.
+- Keresés után a feltételek egy **összegző kártyává** csukódnak („Pécs · vasárnap 9–12 · latin", előtte szűrő ikon, jobb szélen lefelé nyíl; a kategória a nap után áll, csak ha eltér az alapértelmezéstől: „Pécs · vasárnap 9–12 · szentségimádás", több kategóriánál vesszővel, „… · szentségimádás, gyóntatás", mind a négynél „… · minden alkalom" — #83), amely a lista fölött **rögzítve** marad; a lista alatta görög. Az összegző kártya egyben a „milyen feltételekre kerestem" jelzése. Alatta áll, ha van, a Nincs kapcsolat / Szerverhiba csík, alatta a lista.
 - Az összegző kártyára koppintva a feltételek kinyílnak, és **a teljes törzset** elfoglalják: a régi találatok és a darabszám-számláló nem látszanak. A Keresés gomb újra összecsukja és új listát tölt. A kinyitott feltételek tetején felfelé nyíl csukja össze keresés nélkül: ekkor a módosítás **elvész**, és visszajön a legutóbbi keresés feltételei és találatai — az összegző kártya mindig azt mutatja, amire a lista ténylegesen keresett.
 - A feltételek egy `SectionCard`-ban állnak, a részletező szakaszainak megjelenésével:
   - **Név**: szövegmező (a Hibajelentés oldal mezőinek stílusával). Szövegrész, ékezet- és kis-nagybetű-független, a név, az ismert név és az alternatív nevek között — ugyanaz a szabály, mint a keresősáv beküldött keresésénél.
@@ -90,6 +96,7 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
   - **Liturgikus nyelv**: egy választás, egy „Nyelv: bármelyik" sorral; rákoppintva alsó lap (bottom sheet) nyílik zászló + magyar név sorokkal, legfelül „Bármelyik". A lista a gyorsítótárban ténylegesen előforduló `nyelvek` kódokból áll, a magyar nélkül (CONTEXT.md, „Liturgikus nyelv jelölése" — a kódok nem ISO 639 kódok).
   - **Nap**: alapból nincs. Egy sor választó chip: Ma / Holnap / Vasárnap / Dátum…; a kijelölt chipre újra koppintva a kijelölés megszűnik. A Dátum… chipen választás után a dátum áll („okt. 4."). Vasárnapon a „Vasárnap" a mait jelenti (ugyanúgy, mint a részletező „Ma" chipje vasárnap).
   - **Időablak**: csak nap mellett látszik. Alapból bekapcsolt „Egész nap" kapcsoló; kikapcsolva két időpontmező (-tól / -ig), a rendszer időválasztójával. Az ablak sosem fordul meg: ha az egyik végét a másikon túl állítják, a másik vele mozdul.
+  - **Alkalom** (#83): csak nap mellett látszik, az időablak alatt, „Alkalom" címmel. Négy többválasztós szűrő-chip (DESIGN.md KO5), tördelve (EL2): **Mise**, **Szentségimádás**, **Gyóntatás**, **Egyéb**. Alapból csak a Mise van bejelölve; legalább egy mindig bejelölve marad, az utolsót nem lehet kikapcsolni. „Minden alkalom" = mind a négy.
   - **Keresés**: teljes szélességű gomb a feltételek alján.
 - **Kötelező**: legalább egy a következők közül: név, település, vagy ismert **helyzet**. Ha egyik sincs, a Keresés gomb inaktív, alatta rövid, szürke magyarázat.
 - **Billentyűzet**: csak szövegmezőre koppintva nyílik, megnyitáskor nem. Eltűnik, ha a felhasználó a mezőn kívül bárhová koppint, a Kész gombot nyomja, vagy településjavaslatot választ — hogy a feltételek újra átláthatók legyenek. A név mező billentyűzet-gombja „Tovább" (a település mezőre ugrik), a településé „Kész". A keresés nem a billentyűzetről indul, csak a Keresés gombbal.
@@ -99,9 +106,11 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 - **ÉS kapcsolat**: minden megadott feltételnek teljesülnie kell; részleges egyezés nem találat.
 - Nap-feltételnél a templomnak legyen legalább egy **miséje** (CONTEXT.md, „Mise vs. egyéb alkalom" — ugyanaz a szabály, mint a templomkártya chipjeinél), amelynek **kezdése** az időablakba esik, **mindkét vége zárt** (9:00 és 12:00 is benne van).
 
+  > **Módosítva (2026-10-19, #83).** Nem csak a mise számít, hanem a választott **kategóriák** bármelyikébe tartozó alkalom (alapból csak a mise). A kategória az alkalom **fajtájából** dől el, helyben, mindhárom sorforrásra (CONTEXT.md, „Alkalom kategóriája"): a mise az, amit a „Mise vs. egyéb alkalom" misének mond (a kezdeti feltöltés sora mindig mise); a *Szentségimádás* szentségimádás, a *Gyóntatás* gyóntatás, felekezeti előtaggal is („Görögkatolikus Szentségimádás"); minden más, az ismeretlen cím is, egyéb imaalkalom. Szentségimádásként csak a `misek` mezőben, illetve a `NearbyMasses` válaszban érkező alkalom számít, az `adoraciok` időablakai nem. Nap-feltétel nélkül a kategória nem szűkít, ahogy az időablak sem. A szűrés nem a `search` végpont `categories` paraméterével történik.
+
 ### Találatok
 
-- **Templomkártyák**, a templomkártya meglévő megjelenésével. A chipeken a napi miserend helyett a **keresett nap, időablakba eső miséi**; nap-feltétel nélkül a napi miserend, ahogy más listákon. A kártyán **nincs nyelvzászló**: nyelvfeltételnél minden találat ugyanazt a nyelvet hordaná, ez nem mond semmit; a nyelv az összegző kártyán látszik.
+- **Templomkártyák**, a templomkártya meglévő megjelenésével. A chipeken a napi miserend helyett a **keresett nap, időablakba eső miséi** (#83 óta: a választott kategóriák alkalmai, egyforma időpont-chipekkel); nap-feltétel nélkül a napi miserend, ahogy más listákon. A kártyán **nincs nyelvzászló**: nyelvfeltételnél minden találat ugyanazt a nyelvet hordaná, ez nem mond semmit; a nyelv az összegző kártyán látszik.
 - **Sorrend**: van település-feltétel → település, azon belül név szerint; nincs település, de ismert a helyzet → légvonal-távolság, a kártyán a távolsággal; egyébként név szerint.
 - **Darabszám-számláló** (DESIGN.md, KO20 — lebegő számláló): alul középen; görgetés közben látszik, és 1,5 mp-cel a görgetés vége után elhalványul (nem takar ki állandóan a kártyákból, és nem ül a fotó sarkában álló távolságra). Alakja „8 / 42 találat", ahol az első szám az utolsó teljesen látható kártya sorszáma. Nap-feltétel nélkül az összes pontos. Nap-feltétellel a találatok száma csak a jelöltek végignézése után ismert, ezért amíg van még lap, „8 / 12+ találat" (az eddig talált, „+" jellel); a végére érve a „+" eltűnik. Az összeset nem kérdezzük le csak a számért (31. történet).
 
@@ -122,8 +131,9 @@ A lista görgetés közben töltődik: a névre, településre és nyelvre szűr
 ## Testing Decisions
 
 - Jó teszt a **külső viselkedést** nézi: adott feltételekre, adott gyorsítótár-tartalomra és API-válaszra milyen templomok jönnek, milyen sorrendben, milyen bizonyítékkal és állapottal — nem azt, milyen SQL fut vagy hány belső lépés történik. Az API-hívások számát csak ott ellenőrizzük, ahol az a felhasználónak ígért viselkedés (nap-feltétel nélkül nincs hívás; lapot csak kérésre).
-- **Fő határ: az új betöltő.** Valódi, memóriabeli SQLite gyorsítótárral (sqflite ffi) és hamis HTTP klienssel, az élő API-ból mentett fixture-ökkel. Esetek: ÉS kapcsolat; szövegrész-egyezés településre („Buda", „Budapest" a kerületekre); ékezetfüggetlen név; nyelvszűrés; időablak zárt végei; nem-mise esemény nem ad találatot; a három sorrend; nap nélkül nincs API-hívás; lapozás és „van még lap"; kevés találatnál a következő lap; Nincs kapcsolat és Szerverhiba gyorsítótár-tartalékkal; hiányzó templom.
-- **Widget-tesztek, kevés**: a javaslatnézet láblécében mindig ott a Részletes kereső, és viszi a beírt szöveget; a Részletes kereső mellett látszik az alsó navigáció, és fülre koppintva bezárul; új keresés a keresősávból törli a korábbi feltételeket; a Keresés gomb inaktív állapota és magyarázata; keresés után összecsukódó feltételek és összegző kártya; keresés nélküli összecsukás visszaállítja a legutóbbi feltételeket; görgetésre új lap; a darabszám „+" jele nap-feltétellel, amíg van még lap. Hamis betöltővel.
+- **Fő határ: az új betöltő.** Valódi, memóriabeli SQLite gyorsítótárral (sqflite ffi) és hamis HTTP klienssel, az élő API-ból mentett fixture-ökkel. Esetek: ÉS kapcsolat; szövegrész-egyezés településre („Buda", „Budapest" a kerületekre); ékezetfüggetlen név; nyelvszűrés; időablak zárt végei; nem-mise esemény nem ad találatot (alapértelmezésnél); szentségimádásra keresve csak a szentségimádás ad találatot és bizonyítékot; mind a négy kategóriával az ismeretlen fajta is számít; nap nélkül a kategória nem szűkít (#83); a három sorrend; nap nélkül nincs API-hívás; lapozás és „van még lap"; kevés találatnál a következő lap; Nincs kapcsolat és Szerverhiba gyorsítótár-tartalékkal; hiányzó templom.
+- **A kategória-besorolás** (#83) egységtesztje (`mass_kind_test.dart`) mindhárom sorforrásra lefedi a négy kategóriát, a felekezeti előtagot és az ismeretlen címet.
+- **Widget-tesztek, kevés**: a javaslatnézet láblécében mindig ott a Részletes kereső, és viszi a beírt szöveget; a Részletes kereső mellett látszik az alsó navigáció, és fülre koppintva bezárul; új keresés a keresősávból törli a korábbi feltételeket; a Keresés gomb inaktív állapota és magyarázata; keresés után összecsukódó feltételek és összegző kártya; keresés nélküli összecsukás visszaállítja a legutóbbi feltételeket; görgetésre új lap; a darabszám „+" jele nap-feltétellel, amíg van még lap; a kategória-chipek (#83): csak nap mellett, alapból csak a Mise, az utolsó nem kapcsolható ki, az összegző sor szövege, és EH3–EH4 szerint mindkét platformon, világos és sötét módban, 320 és 430 dp-n, 1,0 és 2,0 szövegnagyítással tördelve, 48 dp-s érintési területtel. Hamis betöltővel.
 - Előzmény: a templomlista-betöltő tesztje, a keresési találatok widget-tesztje és hamis betöltője, a javaslatlista és a keresési javaslatok tesztjei, a templomkártya tesztje.
 
 ## Out of Scope

@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
+import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
 import 'package:miserend/home/advanced_search/advanced_search_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/mass_kind.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/card_columns.dart';
@@ -843,6 +846,176 @@ void main() {
       TargetPlatform.iOS,
     }),
   );
+
+  group('the occasion categories', () {
+    const labels = ['Mise', 'Szentségimádás', 'Gyóntatás', 'Egyéb'];
+
+    Finder chip(String label) => find.widgetWithText(FilterChip, label);
+
+    bool selected(WidgetTester tester, String label) =>
+        tester.widget<FilterChip>(chip(label)).selected;
+
+    Future<void> tapChip(WidgetTester tester, String label) async {
+      await tester.ensureVisible(chip(label));
+      await tester.pump();
+      await tester.tap(chip(label));
+      await tester.pump();
+    }
+
+    /// Opens the page with a city typed and Sunday chosen.
+    Future<FakeAdvancedSearchLoader> onSunday(
+      WidgetTester tester, {
+      Brightness brightness = Brightness.light,
+    }) async {
+      final loader = FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1)]),
+      ]);
+      await pumpPage(tester, loader, brightness: brightness);
+      await tester.enterText(field('Település'), 'Pécs');
+      // Below the fold on a narrow screen with large text.
+      final sunday = find.widgetWithText(ChoiceChip, 'Vasárnap');
+      await tester.ensureVisible(sunday);
+      await tester.pumpAndSettle();
+      await tester.tap(sunday);
+      await tester.pump();
+      return loader;
+    }
+
+    testWidgets('stand only beside a day, as the time window does', (
+      tester,
+    ) async {
+      await pumpPage(tester, FakeAdvancedSearchLoader(const []));
+
+      expect(find.byType(FilterChip), findsNothing);
+    });
+
+    testWidgets('open with only Mise chosen, which searches for masses and '
+        'leaves the summary as it was', (tester) async {
+      final loader = await onSunday(tester);
+
+      expect(
+        [for (final label in labels) selected(tester, label)],
+        [true, false, false, false],
+      );
+      await search(tester);
+
+      expect(find.text('Pécs · vasárnap'), findsOneWidget);
+      expect(loader.asked.single.$1.categories, {OccasionCategory.mass});
+    });
+
+    testWidgets('the last one chosen cannot be turned off', (tester) async {
+      await onSunday(tester);
+
+      await tapChip(tester, 'Mise');
+
+      expect(selected(tester, 'Mise'), isTrue);
+    });
+
+    testWidgets('chosen apart from the default, are searched for and named in '
+        'the summary', (tester) async {
+      final loader = await onSunday(tester);
+
+      await tapChip(tester, 'Szentségimádás');
+      await tapChip(tester, 'Gyóntatás');
+      await tapChip(tester, 'Mise');
+      await search(tester);
+
+      expect(
+        find.text('Pécs · vasárnap · szentségimádás, gyóntatás'),
+        findsOneWidget,
+      );
+      expect(loader.asked.single.$1.categories, {
+        OccasionCategory.adoration,
+        OccasionCategory.confession,
+      });
+    });
+
+    testWidgets('all four chosen, the summary says every occasion', (
+      tester,
+    ) async {
+      final loader = await onSunday(tester);
+
+      for (final label in labels.skip(1)) {
+        await tapChip(tester, label);
+      }
+      await search(tester);
+
+      expect(find.text('Pécs · vasárnap · minden alkalom'), findsOneWidget);
+      expect(
+        loader.asked.single.$1.categories,
+        OccasionCategory.values.toSet(),
+      );
+    });
+
+    testWidgets('the results\' cards show every occasion the loader found, '
+        'adoration too', (tester) async {
+      await pumpPage(
+        tester,
+        FakeAdvancedSearchLoader([
+          resultPage([
+            ChurchListEntry(
+              id: 1,
+              name: 'Templom 1',
+              commonName: null,
+              city: 'Pécs',
+              lat: 46.07,
+              lon: 18.23,
+              photo: null,
+              masses: [
+                CachedMass(
+                  id: null,
+                  apiMassId: null,
+                  churchId: 1,
+                  time: DateTime(2026, 9, 20, 10, 30),
+                  info: 'Római katolikus Szentségimádás',
+                  source: MassSource.dailyList,
+                ),
+              ],
+            ),
+          ]),
+        ]),
+      );
+      await tester.enterText(field('Település'), 'Pécs');
+      await tester.tap(find.text('Vasárnap'));
+      await tester.pump();
+      await tapChip(tester, 'Szentségimádás');
+      await search(tester);
+
+      expect(find.text('10:30'), findsOneWidget);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'fit, wrapping, each with a 48 dp target (EL2, AM3)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+
+            await onSunday(tester, brightness: brightness);
+
+            expect(tester.takeException(), isNull);
+            for (final label in labels) {
+              await tester.ensureVisible(chip(label));
+              await tester.pump();
+              final size = tester.getSize(chip(label));
+              expect(size.height, greaterThanOrEqualTo(48), reason: label);
+              expect(size.width, greaterThanOrEqualTo(48), reason: label);
+              expect(
+                tester.getRect(chip(label)).right,
+                lessThanOrEqualTo(width),
+                reason: label,
+              );
+            }
+            // The search button, just turned on, fades into its colour.
+            await tester.pumpAndSettle();
+            await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
 
   group('the time window', () {
     /// Picks [hour] o'clock in the [field]'s M3 time picker.
