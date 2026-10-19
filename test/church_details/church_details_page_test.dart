@@ -1095,6 +1095,62 @@ void main() {
     });
   }
 
+  for (final brightness in Brightness.values) {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('in $brightness at $width dp, text scale $textScale, the '
+            'Ma, Szentségimádás and mass day cards are outlined in dark mode '
+            'only, the empty day in both (KO1, MÉ1, EH3, EH4)', (tester) async {
+          final masses = _emptyDays();
+          masses[0].add(massAt(DateTime(2026, 10, 18, 10, 0)));
+          masses[1].add(massAt(DateTime(2026, 10, 19, 10, 0)));
+          final data = _page(
+            masses,
+            freshDays: _allFresh,
+            church: _details(
+              adorations: [
+                Adoration(
+                  start: DateTime(2026, 10, 18, 15, 0),
+                  end: DateTime(2026, 10, 18, 16, 0),
+                  kind: 'csendes',
+                  info: null,
+                ),
+              ],
+            ),
+          );
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: data, refreshed: data),
+            brightness: brightness,
+            width: width,
+            textScale: textScale,
+            clock: () => DateTime(2026, 10, 18, 9),
+          );
+
+          final scheme = miserendTheme(brightness).colorScheme;
+          BorderSide edgeOf(Finder content) {
+            final surface = tester.widget<Material>(
+              find.ancestor(of: content, matching: find.byType(Material)).first,
+            );
+            return (surface.shape! as RoundedRectangleBorder).side;
+          }
+
+          final outline =
+              brightness == Brightness.dark
+                  ? BorderSide(color: scheme.outlineVariant)
+                  : BorderSide.none;
+          expect(edgeOf(find.text('Ma')), outline);
+          expect(edgeOf(find.text('Szentségimádás')), outline);
+          expect(edgeOf(find.text('Holnap')), outline);
+          expect(
+            edgeOf(_emptyDay(_noInfo).first),
+            BorderSide(color: scheme.outlineVariant),
+          );
+        }, variant: eh4Platforms);
+      }
+    }
+  }
+
   testWidgets('an empty day is read out as one unit (AM5)', (tester) async {
     final handle = tester.ensureSemantics();
     final empty = _page(_emptyDays(), freshDays: _allFresh);

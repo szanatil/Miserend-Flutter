@@ -397,6 +397,42 @@ void main() {
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
 
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('floats over the map without an outline at $width dp, '
+              'text scale $textScale, $brightness (KO18, MÉ1, EH3, EH4)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 640));
+            await pumpPage(
+              tester,
+              _MapLoader([
+                [_entry(1, 'Tárolt templom')],
+              ]),
+              textScale: textScale,
+              brightness: brightness,
+            );
+
+            await tapMarker(tester, 1);
+
+            final surface = tester.widget<Material>(
+              find
+                  .descendant(
+                    of: find.byType(ChurchCard),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            );
+            expect(
+              (surface.shape! as RoundedRectangleBorder).side,
+              BorderSide.none,
+            );
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
     testWidgets('shows how far the church is while the position is known, '
         'and not once it is lost', (tester) async {
       // About 300 m north of the church.

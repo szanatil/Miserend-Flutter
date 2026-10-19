@@ -7,9 +7,8 @@ import '../theme/theme_harness.dart';
 
 void main() {
   for (final brightness in Brightness.values) {
-    testWidgets('is a theme card, raised 1, in $brightness (KO1, MÉ1)', (
-      tester,
-    ) async {
+    testWidgets('is a theme card, raised 1, outlined in dark mode only, in '
+        '$brightness (KO1, MÉ1)', (tester) async {
       await pumpThemed(
         tester,
         const SectionCard(title: 'Elérhetőség', child: Text('Tartalom')),
@@ -28,8 +27,12 @@ void main() {
       expect(surface.elevation, 1);
       expect(
         surface.shape,
-        const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+        RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(Radii.m)),
+          side:
+              brightness == Brightness.dark
+                  ? BorderSide(color: schemeOf(brightness).outlineVariant)
+                  : BorderSide.none,
         ),
       );
     });

@@ -672,9 +672,8 @@ void main() {
       group('in $brightness', () {
         final scheme = schemeOf(brightness);
 
-        testWidgets('the card is the theme card, raised 1 (KO1, MÉ1)', (
-          tester,
-        ) async {
+        testWidgets('the card is the theme card, raised 1, outlined in dark '
+            'mode only (KO1, MÉ1)', (tester) async {
           await pumpDesigned(tester, brightness: brightness);
 
           final surface = tester.widget<Material>(
@@ -689,8 +688,12 @@ void main() {
           expect(surface.elevation, 1);
           expect(
             surface.shape,
-            const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+            RoundedRectangleBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(Radii.m)),
+              side:
+                  brightness == Brightness.dark
+                      ? BorderSide(color: scheme.outlineVariant)
+                      : BorderSide.none,
             ),
           );
         });

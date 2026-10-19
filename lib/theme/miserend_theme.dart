@@ -67,15 +67,21 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
       scrolledUnderElevation: 3,
     ),
     // M3's elevated card: the tone alone hardly sets a card apart from the
-    // page, so a low shadow does (KO1, MÉ1). No card overrides this but the
-    // church card under a server error (SZ4). Half the gap above and half
-    // below puts cards on a list 8 apart (TK2); the list's own padding keeps
-    // them off the screen edge.
+    // page, so a low shadow does (KO1, MÉ1). In dark mode the shadow does not
+    // show, so an outline is the card's edge. No card overrides this but the
+    // church card under a server error (SZ4), the map's (KO18) and the
+    // detail page's empty day (KO1). Half the gap above and half below puts
+    // cards on a list 8 apart (TK2); the list's own padding keeps them off
+    // the screen edge.
     cardTheme: CardThemeData(
       color: scheme.surfaceContainerLow,
       elevation: 1,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(Radii.m)),
+        side:
+            brightness == Brightness.dark
+                ? BorderSide(color: scheme.outlineVariant)
+                : BorderSide.none,
       ),
       margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
     ),
@@ -133,6 +139,16 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
     ),
   );
 }
+
+/// [theme] for the card that floats over the map (KO18): it stands on the
+/// map, not on the page, so it has no outline in dark mode either (MÉ1).
+ThemeData mapCardTheme(ThemeData theme) => theme.copyWith(
+  cardTheme: theme.cardTheme.copyWith(
+    shape: (theme.cardTheme.shape! as RoundedRectangleBorder).copyWith(
+      side: BorderSide.none,
+    ),
+  ),
+);
 
 /// A text field's outline in [color] (KO12).
 OutlineInputBorder _fieldBorder(Color color, {double width = 1}) =>

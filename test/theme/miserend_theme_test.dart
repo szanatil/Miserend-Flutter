@@ -79,7 +79,9 @@ void main() {
       });
 
       testWidgets('a card is surfaceContainerLow, raised 1, with 12 '
-          'corners, 8 apart (KO1, MÉ1, FO2)', (tester) async {
+          'corners, outlined in dark mode only, 8 apart (KO1, MÉ1, FO2)', (
+        tester,
+      ) async {
         await tester.pumpWidget(
           MaterialApp(
             theme: theme,
@@ -106,8 +108,14 @@ void main() {
         expect(surface.elevation, 1);
         expect(
           surface.shape,
-          const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(Radii.m)),
+          RoundedRectangleBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(Radii.m)),
+            // In dark mode the shadow does not show, so the outline is the
+            // card's edge (MÉ1).
+            side:
+                brightness == Brightness.dark
+                    ? BorderSide(color: scheme.outlineVariant)
+                    : BorderSide.none,
           ),
         );
         Rect surfaceOf(Finder card) => tester.getRect(

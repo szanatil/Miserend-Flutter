@@ -7,6 +7,7 @@ import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
@@ -206,12 +207,15 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   /// the retry that the strip drives elsewhere hangs off the card itself —
   /// and only while the card is actually marked as stale.
   Widget _cardWithRetry(ChurchListEntry entry, ChurchList card) {
-    final child = ChurchCard(
-      entry: entry,
-      // The position as of now: the distance goes and comes with the mark.
-      position: _userPosition,
-      failure: card.failure,
-      dataAsOf: card.dataAsOf,
+    final child = Theme(
+      data: mapCardTheme(Theme.of(context)),
+      child: ChurchCard(
+        entry: entry,
+        // The position as of now: the distance goes and comes with the mark.
+        position: _userPosition,
+        failure: card.failure,
+        dataAsOf: card.dataAsOf,
+      ),
     );
     if (card.failure == null) return child;
     return StaleDataRetry(onRetry: _refreshCard, child: child);
