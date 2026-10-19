@@ -70,11 +70,12 @@ void main() {
           brightness: brightness,
         );
 
-        final icon = tester.widget<Icon>(
-          find.byIcon(Icons.info_outline_rounded),
+        final marker = find.byIcon(Icons.info_outline_rounded);
+        expect(tester.getSize(marker), const Size(18, 18));
+        expect(
+          tester.widget<Icon>(marker).color,
+          colors.onOccasionTimeContainer,
         );
-        expect(icon.size, 18);
-        expect(icon.color, colors.onOccasionTimeContainer);
       });
     });
   }

@@ -254,7 +254,7 @@ class _BubbleSurface extends StatelessWidget {
   final MassDetailPart part;
 
   /// A chip's icon size (IK3).
-  static const double _iconSize = 18;
+  static const double _iconSize = IconSizes.small;
 
   /// The bubble's inner padding, either side of its content.
   static const EdgeInsets _padding = EdgeInsets.symmetric(

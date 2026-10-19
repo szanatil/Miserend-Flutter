@@ -48,10 +48,10 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 - `miserend_theme.dart`: a `ThemeData` világos és sötét változata.
 - `miserend_colors.dart`: a `MiserendColors` `ThemeExtension` (SZ3).
-- `tokens.dart`: a `Spacing` (TK1) és a `Radii` (FO1) osztály, és a térkép jelölőinek árnyéka, `MapShadows` (MÉ2, KO17).
+- `tokens.dart`: a `Spacing` (TK1), a `Radii` (FO1) és az `IconSizes` (IK3) osztály, és a térkép jelölőinek árnyéka, `MapShadows` (MÉ2, KO17).
 - `adaptive.dart`: az adaptív elemek segédfüggvényei (PL3).
 
-A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
+A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, az `Icon`-nak átadott `size:` (IK3), és nyers `Duration` animációhoz.
 
 ## SZ. Szín
 
@@ -272,7 +272,7 @@ A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem nara
 
 Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai címkéje van („Épp most tart", „3 új").
 
-**KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. Színek: SZ4.
+**KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. A gombok a szöveg mellett, a szalag végén állnak, amíg a belső térközön belüli szélesség felénél nem foglalnak többet; különben a szöveg alá kerülnek, a szalag végére igazítva, és ha egy sorban nem férnek el, tördelnek (EL2). Színek: SZ4.
 
 **KO8 — Állapotnézetek** (betöltés, üres, hiba). Betöltés: középre igazított `CircularProgressIndicator.adaptive`. Üres és hiba: ikon `48` `onSurfaceVariant`, alatta `titleMedium` cím, `bodyMedium` magyarázat (SV2), és ha van teendő, egy `FilledButton.tonal` („Újra"). Elemek között `Spacing.l`. A meglévő `LoadingView`, `MessageView`, `PositionUnavailableView` ezt valósítja meg.
 

@@ -307,6 +307,20 @@ void main() {
   }
 
   for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the source code link is bodyMedium in '
+        'primary, like the text around it (TI2, SZ4)', (tester) async {
+      await pumpPage(tester, brightness: brightness);
+      final link = find.text('A projekt a GitHubon');
+      final theme = Theme.of(tester.element(link));
+
+      expect(
+        tester.widget<Text>(link).style,
+        theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary),
+      );
+    });
+  }
+
+  for (final brightness in Brightness.values) {
     testWidgets('in $brightness, meets the accessibility guidelines '
         '(AM1, AM3, AM5)', (tester) async {
       await pumpPage(
@@ -319,26 +333,28 @@ void main() {
     }, variant: eh4Platforms);
   }
 
-  group('fits (EH4)', () {
+  group('fits (EH3, EH4)', () {
     for (final platform in eh4Platforms.values) {
-      for (final width in eh4Widths) {
-        for (final textScale in eh4TextScales) {
-          testWidgets('at $width dp and text scale $textScale on $platform', (
-            tester,
-          ) async {
-            await pumpPage(
-              tester,
-              size: Size(width, 3000),
-              platform: platform,
-              textScale: textScale,
-              churchOfTheDay: _FakeChurchOfTheDay(
-                cached: _withDescription('A templom története'),
-              ),
-            );
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('at $width dp and text scale $textScale on $platform '
+                'in $brightness', (tester) async {
+              await pumpPage(
+                tester,
+                size: Size(width, 3000),
+                platform: platform,
+                brightness: brightness,
+                textScale: textScale,
+                churchOfTheDay: _FakeChurchOfTheDay(
+                  cached: _withDescription('A templom története'),
+                ),
+              );
 
-            expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
-            expect(tester.takeException(), isNull);
-          });
+              expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+              expect(tester.takeException(), isNull);
+            });
+          }
         }
       }
     }

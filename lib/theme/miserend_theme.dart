@@ -82,7 +82,7 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
     // A text button's icon is a regular one, 24, not M3's 18: 18 is for
     // chips and strips only (IK3).
     textButtonTheme: const TextButtonThemeData(
-      style: ButtonStyle(iconSize: WidgetStatePropertyAll(24)),
+      style: ButtonStyle(iconSize: WidgetStatePropertyAll(IconSizes.standard)),
     ),
     // Text fields are outlined and the outline has to show: Material's
     // default border was once drawn white on white, and the problem

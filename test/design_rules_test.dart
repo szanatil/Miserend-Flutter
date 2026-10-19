@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The mechanical half of DESIGN.md (EH2): raw design values outside
-/// `lib/theme/` (TO1) and non-rounded icons (IK1). The other rules are left
-/// to the review.
+/// `lib/theme/` (TO1), non-rounded icons (IK1) and icon sizes given to the
+/// icon rather than taken from the theme (IK3). The other rules are left to
+/// the review.
 final Map<String, RegExp> _rules = {
   'color': RegExp(
     r'\bColors\.(?!transparent\b)[a-zA-Z]|\bColor\(0x|\bColor\.fromARGB|\bCustomColors\.|\.withAlpha\(|\.withOpacity\(|\.primaryColor\b',
@@ -18,6 +19,12 @@ final Map<String, RegExp> _rules = {
   'icon': RegExp(r'\bIcons\.(?![a-z_]+_rounded\b)[a-z_]+'),
 };
 
+/// The rules an expression can spread over several lines for: each match
+/// counts as one line.
+final Map<String, RegExp> _expressionRules = {
+  'iconSize': RegExp(r'\bIcon\((?:[^()]|\([^()]*\))*?\bsize\s*:'),
+};
+
 /// The known deviations found by the design audit of 2026-10-07, as the
 /// number of offending lines per file and rule, each with the issue that
 /// removes it. A count may only fall: a new deviation fails the test, and a
@@ -26,7 +33,8 @@ final Map<String, RegExp> _rules = {
 const Map<String, Map<String, (int, String)>> _knownDeviations = {};
 
 /// Counts the lines of each `lib/` file outside `lib/theme/` that match a
-/// rule, skipping comment lines.
+/// rule, and the expressions that match an expression rule, skipping comment
+/// lines.
 Map<String, Map<String, int>> _scan() {
   final found = <String, Map<String, int>>{};
   final files = Directory('lib')
@@ -35,7 +43,18 @@ Map<String, Map<String, int>> _scan() {
       .where((f) => f.path.endsWith('.dart'))
       .where((f) => !f.path.startsWith('lib/theme/'));
   for (final file in files) {
-    for (final line in file.readAsLinesSync()) {
+    final lines = file.readAsLinesSync();
+    final source = lines
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    for (final rule in _expressionRules.entries) {
+      final count = rule.value.allMatches(source).length;
+      if (count > 0) {
+        final counts = found.putIfAbsent(file.path, () => {});
+        counts[rule.key] = (counts[rule.key] ?? 0) + count;
+      }
+    }
+    for (final line in lines) {
       if (line.trimLeft().startsWith('//')) continue;
       for (final rule in _rules.entries) {
         if (rule.value.hasMatch(line)) {
@@ -62,7 +81,7 @@ void main() {
         if (count > allowed) {
           problems.add(
             '$path: $count "$rule" line(s), $allowed allowed '
-            '(DESIGN.md TO1/IK1; new deviations are not allowed)',
+            '(DESIGN.md TO1/IK1/IK3; new deviations are not allowed)',
           );
         } else if (count < allowed) {
           problems.add(

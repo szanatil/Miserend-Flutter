@@ -39,9 +39,6 @@ class TimeChip extends StatelessWidget {
     borderRadius: BorderRadius.all(Radius.circular(Radii.s)),
   );
 
-  /// The (i) marker's size, a chip's icon size (IK3).
-  static const double _iconSize = 18;
-
   final TimeOfDay? time;
 
   final String? _label;
@@ -111,10 +108,10 @@ class TimeChip extends StatelessWidget {
                 children: [
                   label,
                   const SizedBox(width: Spacing.s),
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: _iconSize,
-                    color: foreground,
+                  // A chip's icon size (IK3).
+                  IconTheme.merge(
+                    data: const IconThemeData(size: IconSizes.small),
+                    child: Icon(Icons.info_outline_rounded, color: foreground),
                   ),
                 ],
               )

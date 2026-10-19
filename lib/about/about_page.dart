@@ -177,7 +177,8 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _externalLink(String label, Uri uri) {
-    final color = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
     return InkWell(
       onTap: () => launchExternal(context, uri, launch: widget.openLink),
       child: Padding(
@@ -186,7 +187,12 @@ class _AboutPageState extends State<AboutPage> {
           mainAxisSize: MainAxisSize.min,
           spacing: Spacing.s,
           children: [
-            Flexible(child: Text(label, style: TextStyle(color: color))),
+            Flexible(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(color: color),
+              ),
+            ),
             Icon(Icons.open_in_new_rounded, color: color),
           ],
         ),

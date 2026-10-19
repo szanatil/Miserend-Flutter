@@ -11,6 +11,16 @@ abstract final class Spacing {
   static const double xxl = 32;
 }
 
+/// The icon sizes (DESIGN.md IK3); a component's icon takes its size from its
+/// own theme or an `IconTheme`, not from a `size:` of its own.
+abstract final class IconSizes {
+  /// The default size.
+  static const double standard = 24;
+
+  /// In a chip and in a strip.
+  static const double small = 18;
+}
+
 /// The corner radius scale (DESIGN.md FO1); where each step goes is FO2.
 abstract final class Radii {
   static const double xs = 4;
