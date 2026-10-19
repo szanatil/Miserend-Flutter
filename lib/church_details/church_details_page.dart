@@ -586,12 +586,12 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
 
   /// A day the app knows no mass for: outlined, on the page's own colour, so
   /// that it reads as a gap rather than as the strip's loudest card (SZ4,
-  /// KO1). It says where the information is missing from, and wraps within
-  /// the least width.
+  /// KO1). It shows only its day: a run of empty days each saying where the
+  /// information is missing from would crowd the strip (#81). Only the screen
+  /// reader says it.
   Widget _emptyDayCard(int dayOffset) {
     final colors = Theme.of(context).colorScheme;
     final day = _today.addCalendarDays(dayOffset);
-    final text = _missingInformation(dayOffset);
     // M3's outlined card, drawn here: `Card.outlined` would still take the
     // theme's colour and elevation.
     return Card(
@@ -607,23 +607,16 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
       child: Semantics(
         label:
             '${DayLabel.forDate(day, _today)}, '
-            '${DayLabel.date.format(day)}, $text',
+            '${DayLabel.date.format(day)}, ${_missingInformation(dayOffset)}',
         excludeSemantics: true,
-        child: SizedBox(
-          width: _dayCardWidth,
+        child: ConstrainedBox(
+          // At least a day card's least width, as a mass day's card.
+          constraints: BoxConstraints(minWidth: _dayCardWidth),
           child: Padding(
             padding: const EdgeInsets.all(Spacing.l),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ..._dayHeading(day, dateColor: _secondaryText),
-                Text(
-                  text,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.apply(color: _secondaryText),
-                ),
-              ],
+              children: _dayHeading(day, dateColor: _secondaryText),
             ),
           ),
         ),

@@ -103,9 +103,16 @@ ChurchDetails _details({
 /// Every day of the window covered by a whole NearbyMasses response.
 const int _allFresh = ChurchScheduleLoader.scheduleDays;
 
-/// The grey day cards' texts (CONTEXT.md, „Üres nap").
+/// What an empty day's card reads out (CONTEXT.md, „Üres nap"). It is not
+/// shown on the card (#81).
 const String _noInfo = 'Erre a napra a miserend.hu-n nincs információ';
 const String _notDownloaded = 'Erre a napra nincs letöltött információ';
+
+/// The empty days' cards in the strip, found by what they read out.
+Finder _emptyDay(String text) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Semantics && (widget.properties.label?.endsWith(text) ?? false),
+);
 
 List<List<CachedMass>> _emptyDays() =>
     List.generate(ChurchScheduleLoader.scheduleDays, (_) => <CachedMass>[]);
@@ -939,7 +946,8 @@ void main() {
     await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
 
     expect(find.text('Mára nincs letöltött információ'), findsOneWidget);
-    expect(find.text(_notDownloaded), findsNWidgets(19));
+    expect(_emptyDay(_notDownloaded), findsNWidgets(19));
+    expect(_emptyDay(_noInfo), findsNothing);
     expect(find.textContaining('miserend.hu-n nincs'), findsNothing);
     expect(find.textContaining('nincs mise'), findsNothing);
   });
@@ -957,8 +965,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
-    expect(find.text(_noInfo), findsNWidgets(19));
-    expect(find.text(_notDownloaded), findsNothing);
+    expect(_emptyDay(_noInfo), findsNWidgets(19));
+    expect(_emptyDay(_notDownloaded), findsNothing);
   });
 
   testWidgets('past where a cut-off response reaches, an empty day says '
@@ -971,8 +979,8 @@ void main() {
 
     expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
     // Days 1–3 within reach, 5–19 past it.
-    expect(find.text(_noInfo), findsNWidgets(3));
-    expect(find.text(_notDownloaded), findsNWidgets(15));
+    expect(_emptyDay(_noInfo), findsNWidgets(3));
+    expect(_emptyDay(_notDownloaded), findsNWidgets(15));
   });
 
   testWidgets('the day strip shows every day from tomorrow to the end of the '
@@ -1000,7 +1008,8 @@ void main() {
   });
 
   testWidgets('opened on a Sunday with masses only from the next one, the '
-      'strip runs on through the empty days in grey (#79)', (tester) async {
+      'strip runs on through the empty days, which show only their day '
+      '(#79, #81)', (tester) async {
     // Budakalász, recorded live: nothing between 10.01. and 10.24.
     final masses = _emptyDays();
     for (var day = 7; day < masses.length; day++) {
@@ -1027,15 +1036,20 @@ void main() {
     Finder cardOf(String date) =>
         find.ancestor(of: find.text(date), matching: find.byType(Card));
     for (var day = 19; day <= 24; day++) {
+      final card = cardOf('2026. 10. $day.');
       expect(
-        find.descendant(
-          of: cardOf('2026. 10. $day.'),
-          matching: find.text(_noInfo),
-        ),
+        find.descendant(of: card, matching: _emptyDay(_noInfo)),
         findsOneWidget,
         reason: '10.$day.',
       );
+      // The day's name and its date, nothing else.
+      expect(
+        find.descendant(of: card, matching: find.byType(Text)),
+        findsNWidgets(2),
+        reason: '10.$day.',
+      );
     }
+    expect(find.text(_noInfo), findsNothing);
     final sunday = cardOf('2026. 10. 25.');
     expect(
       find.descendant(of: sunday, matching: find.text('Vasárnap')),
@@ -1049,7 +1063,7 @@ void main() {
 
   for (final brightness in Brightness.values) {
     testWidgets('in $brightness, an empty day is an outlined card on the '
-        'page\'s own colour, its text secondary (SZ4)', (tester) async {
+        'page\'s own colour, its date secondary (SZ4)', (tester) async {
       final empty = _page(_emptyDays(), freshDays: _allFresh);
       await pumpPage(
         tester,
@@ -1061,7 +1075,7 @@ void main() {
       final scheme = miserendTheme(brightness).colorScheme;
       final card = tester.widget<Card>(
         find.ancestor(
-          of: find.text(_noInfo).first,
+          of: _emptyDay(_noInfo).first,
           matching: find.byType(Card),
         ),
       );
@@ -1074,12 +1088,10 @@ void main() {
         shape.borderRadius,
         const BorderRadius.all(Radius.circular(Radii.m)),
       );
-      for (final text in [
-        find.text('2026. 10. 19.'),
-        find.text(_noInfo).first,
-      ]) {
-        expect(tester.widget<Text>(text).style?.color, scheme.onSurfaceVariant);
-      }
+      expect(
+        tester.widget<Text>(find.text('2026. 10. 19.')).style?.color,
+        scheme.onSurfaceVariant,
+      );
     });
   }
 
@@ -1093,7 +1105,7 @@ void main() {
     );
 
     expect(
-      tester.getSemantics(find.text(_noInfo).first),
+      tester.getSemantics(_emptyDay(_noInfo).first),
       matchesSemantics(label: 'Holnap, 2026. 10. 19., $_noInfo'),
     );
     handle.dispose();
@@ -1103,8 +1115,8 @@ void main() {
     for (final textScale in [1.0, 2.0]) {
       for (final brightness in Brightness.values) {
         testWidgets('at $width dp, text scale $textScale, $brightness, an '
-            'empty day\'s card is as tall as a mass day\'s, and in line with '
-            'it', (tester) async {
+            'empty day\'s card is as wide and as tall as a mass day\'s, and '
+            'in line with it', (tester) async {
           final masses = _emptyDays();
           masses[2].add(massAt(_todayAt(7, 30).add(const Duration(days: 2))));
           final data = _page(masses, freshDays: _allFresh);
@@ -1120,17 +1132,12 @@ void main() {
           Rect cardOf(Finder inside) => tester.getRect(
             find.ancestor(of: inside, matching: find.byType(Card)).first,
           );
-          final empty = cardOf(find.text(_noInfo).first);
+          final empty = cardOf(_emptyDay(_noInfo).first);
           final full = cardOf(find.text('7:30'));
+          expect(find.text(_noInfo), findsNothing);
+          expect(empty.width, full.width);
           expect(empty.height, full.height);
           expect(empty.top, full.top);
-          // The text wraps within the card's least width.
-          expect(
-            empty.width,
-            lessThanOrEqualTo(
-              ChurchDetailsPage.dayCardMinWidth * textScale + 2 * Spacing.l,
-            ),
-          );
         }, variant: TargetPlatformVariant.mobile());
       }
     }
@@ -1735,7 +1742,7 @@ void main() {
     );
     expect(find.text('9:00'), findsNothing);
     expect(find.text('Mára nincs letöltött információ'), findsNothing);
-    expect(find.text(_notDownloaded), findsNothing);
+    expect(_emptyDay(_notDownloaded), findsNothing);
     expect(find.byType(ChurchDetailsPage), findsOneWidget);
     // The name the page was opened with stays readable.
     expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);
