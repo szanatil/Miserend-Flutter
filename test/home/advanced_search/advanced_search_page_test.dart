@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -13,6 +14,7 @@ import 'package:miserend/mass_kind.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/card_columns.dart';
+import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/fake_favorites_service.dart';
@@ -1015,6 +1017,312 @@ void main() {
         }
       }
     }
+  });
+
+  group('without a connection', () {
+    const note =
+        'Kapcsolat nélkül csak név, település és nyelv szerint lehet keresni.';
+
+    ChoiceChip dayChip(WidgetTester tester, String label) =>
+        tester.widget(find.widgetWithText(ChoiceChip, label));
+
+    testWidgets('the day chips are off, saying why, with a retry', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        FakeAdvancedSearchLoader(
+          const [],
+          lastFailure: ApiFailure.noConnection,
+        ),
+      );
+
+      for (final day in DayChoice.values) {
+        expect(
+          dayChip(tester, day.label).onSelected,
+          isNull,
+          reason: day.label,
+        );
+      }
+      expect(find.text(note), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Újrapróbálom'), findsOneWidget);
+    });
+
+    testWidgets('a retry that gets an answer turns the day chips on', (
+      tester,
+    ) async {
+      final loader = FakeAdvancedSearchLoader(
+        const [],
+        lastFailure: ApiFailure.serverError,
+      );
+      await pumpPage(tester, loader);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Újrapróbálom'));
+      await tester.pump();
+
+      expect(loader.checks, 1);
+      expect(dayChip(tester, 'Ma').onSelected, isNotNull);
+      expect(find.text(note), findsNothing);
+    });
+
+    testWidgets('a retry that gets no answer leaves them off', (tester) async {
+      final loader = FakeAdvancedSearchLoader(
+        const [],
+        lastFailure: ApiFailure.noConnection,
+        checkFinds: ApiFailure.noConnection,
+      );
+      await pumpPage(tester, loader);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Újrapróbálom'));
+      await tester.pump();
+
+      expect(dayChip(tester, 'Ma').onSelected, isNull);
+      expect(find.text(note), findsOneWidget);
+    });
+
+    testWidgets('any other call answered turns them on', (tester) async {
+      final loader = FakeAdvancedSearchLoader(
+        const [],
+        lastFailure: ApiFailure.noConnection,
+      );
+      await pumpPage(tester, loader);
+
+      loader.connection.value = null;
+      await tester.pump();
+
+      expect(dayChip(tester, 'Ma').onSelected, isNotNull);
+      expect(find.text(note), findsNothing);
+    });
+
+    testWidgets('a day chosen before the connection went is not searched by, '
+        'and the rest of the search is', (tester) async {
+      final loader = FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1)]),
+      ]);
+      await pumpPage(tester, loader);
+      await tester.enterText(field('Település'), 'Pécs');
+      await tester.tap(find.text('Vasárnap'));
+      await tester.pump();
+
+      loader.connection.value = ApiFailure.noConnection;
+      await tester.pump();
+      expect(find.text('Egész nap'), findsNothing);
+      expect(find.byType(FilterChip), findsNothing);
+      await search(tester);
+
+      expect(loader.asked.single.$1.day, isNull);
+      expect(find.text('Pécs'), findsOneWidget);
+      expect(find.text('Templom 1'), findsOneWidget);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'the note and its retry fit, the retry 48 dp tall (AM3)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              FakeAdvancedSearchLoader(
+                const [],
+                lastFailure: ApiFailure.noConnection,
+              ),
+              brightness: brightness,
+            );
+
+            expect(tester.takeException(), isNull);
+            final retry = find.widgetWithText(TextButton, 'Újrapróbálom');
+            await tester.ensureVisible(retry);
+            await tester.pump();
+            expect(tester.getSize(retry).height, greaterThanOrEqualTo(48));
+            expect(tester.getRect(retry).right, lessThanOrEqualTo(width));
+            await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
+
+  group('a search the API stopped answering', () {
+    /// Searches Pécs on Sunday, its first page found by [first], its second
+    /// stopped by [failure].
+    Future<FakeAdvancedSearchLoader> stopped(
+      WidgetTester tester, {
+      List<ChurchListEntry> first = const [],
+      ApiFailure failure = ApiFailure.noConnection,
+      Brightness brightness = Brightness.light,
+    }) async {
+      final loader = FakeAdvancedSearchLoader([
+        if (first.isNotEmpty)
+          resultPage(first, hasMore: true, foundIsFinal: false),
+        resultPage(
+          const [],
+          hasMore: true,
+          found: first.length,
+          foundIsFinal: false,
+          failure: failure,
+        ),
+      ]);
+      await pumpPage(tester, loader, brightness: brightness);
+      await tester.enterText(field('Település'), 'Pécs');
+      await tester.tap(find.text('Vasárnap'));
+      await search(tester);
+      return loader;
+    }
+
+    testWidgets('with churches found, keeps them, says the list is not whole, '
+        'and goes no further', (tester) async {
+      final loader = await stopped(tester, first: [churchEntry(1)]);
+
+      expect(
+        find.text('A keresés megszakadt, a lista nem teljes.'),
+        findsOneWidget,
+      );
+      expect(find.text('Templom 1'), findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(loader.asked.map((a) => a.$2), [0, 1]);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.textContaining('Nincs több találat'), findsNothing);
+    });
+
+    testWidgets('the count keeps its „+"', (tester) async {
+      await stopped(
+        tester,
+        first: [for (var i = 1; i <= 20; i++) churchEntry(i)],
+      );
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+      await tester.pump();
+
+      expect(find.textContaining(RegExp(r'^\d+ / 20\+ találat$')), findsOne);
+    });
+
+    testWidgets('with nothing found, says the search failed for want of a '
+        'connection', (tester) async {
+      await stopped(tester);
+
+      expect(
+        find.text('A keresés nem sikerült, nincs kapcsolat.'),
+        findsOneWidget,
+      );
+      expect(find.text('Nincs találat'), findsNothing);
+      expect(find.text('Keresés...'), findsNothing);
+    });
+
+    testWidgets('with nothing found, says the search failed for the server', (
+      tester,
+    ) async {
+      await stopped(tester, failure: ApiFailure.serverError);
+
+      expect(
+        find.text('A keresés nem sikerült, a miserend.hu nem elérhető.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the (i) says how to go on', (tester) async {
+      await stopped(tester, first: [churchEntry(1)]);
+
+      await tester.tap(find.byTooltip('Bővebben'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Kapcsolat nélkül a keresés nem folytatható. Ha újra van '
+          'kapcsolat, indítsd újra az Újra gombbal.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Újra starts the same search over from its start', (
+      tester,
+    ) async {
+      final loader = await stopped(tester, first: [churchEntry(1)]);
+      final criteria = loader.asked.first.$1;
+
+      await tester.tap(find.widgetWithText(TextButton, 'Újra'));
+      await tester.pumpAndSettle();
+
+      expect(loader.asked.map((a) => a.$2), [0, 1, 0, 1]);
+      expect(loader.asked[2].$1, criteria);
+      expect(loader.asked[2].$1.day, isNotNull);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'the strip fits, its buttons 48 dp (KO7, AM3)', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await stopped(
+              tester,
+              first: [churchEntry(1, commonName: _longCommonName)],
+              brightness: brightness,
+            );
+
+            expect(tester.takeException(), isNull);
+            for (final button in [
+              find.widgetWithText(TextButton, 'Újra'),
+              find.ancestor(
+                of: find.byTooltip('Bővebben'),
+                matching: find.byType(IconButton),
+              ),
+            ]) {
+              final rect = tester.getRect(button);
+              expect(rect.height, greaterThanOrEqualTo(48));
+              expect(rect.width, greaterThanOrEqualTo(48));
+              expect(rect.right, lessThanOrEqualTo(width));
+            }
+            await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
+
+  testWidgets('the results\' cards mark the chips that have a description', (
+    tester,
+  ) async {
+    CachedMass row(int hour, String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 1,
+      time: DateTime(2026, 9, 20, hour, 0),
+      info: info,
+      source: MassSource.dailyList,
+    );
+    await pumpPage(
+      tester,
+      FakeAdvancedSearchLoader([
+        resultPage([
+          ChurchListEntry(
+            id: 1,
+            name: 'Templom 1',
+            commonName: null,
+            city: 'Pécs',
+            lat: 46.07,
+            lon: 18.23,
+            photo: null,
+            masses: [
+              row(9, 'Római katolikus Szentmise'),
+              row(10, 'Római katolikus Szentségimádás'),
+            ],
+          ),
+        ]),
+      ]),
+    );
+    await tester.enterText(field('Település'), 'Pécs');
+    await search(tester);
+
+    TimeChip chip(String time) => tester.widget(
+      find.ancestor(of: find.text(time), matching: find.byType(TimeChip)),
+    );
+    expect(chip('9:00').hasInfo, isFalse);
+    expect(chip('10:00').hasInfo, isTrue);
   });
 
   group('the time window', () {

@@ -55,10 +55,25 @@ class TimeChip extends StatelessWidget {
   /// turns the filled orange.
   final bool ongoing;
 
-  /// The width a chip without the (i) marker takes for [label], so that a row
-  /// can fit chips by width before laying them out.
-  static double widthOf(BuildContext context, String label) =>
-      _sizeOf(context, label).width;
+  /// The width a chip takes for [label], so that a row can fit chips by width
+  /// before laying them out. A [tappable] one has the (i) marker and takes
+  /// taps on at least [kMinInteractiveDimension].
+  static double widthOf(
+    BuildContext context,
+    String label, {
+    bool tappable = false,
+  }) {
+    final width = _sizeOf(context, label).width;
+    if (!tappable) return width;
+    return math.max(
+      width + Spacing.s + IconSizes.small,
+      kMinInteractiveDimension,
+    );
+  }
+
+  /// The height a tappable chip takes, its tap target included.
+  static double tappableHeightOf(BuildContext context) =>
+      math.max(heightOf(context), kMinInteractiveDimension);
 
   /// The height a chip without the (i) marker and a tap target takes —
   /// whatever its label, all on one line — so that a row of them keeps its

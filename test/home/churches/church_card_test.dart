@@ -165,6 +165,270 @@ void main() {
     });
   });
 
+  group('the occasions\' descriptions (KO1, KO3)', () {
+    final adoration = CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 1,
+      time: DateTime(2026, 9, 15, 10, 30),
+      info: 'Római katolikus Szentségimádás',
+      source: MassSource.dailyList,
+    );
+    final mass = CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 1,
+      time: DateTime(2026, 9, 15, 8, 0),
+      info: 'Római katolikus Szentmise',
+      source: MassSource.dailyList,
+    );
+
+    Future<void> pumpDescribed(
+      WidgetTester tester,
+      ChurchListEntry entry, {
+      double width = 400,
+      Brightness brightness = Brightness.light,
+      TargetPlatform platform = TargetPlatform.android,
+      double textScale = 1,
+      List<NavigatorObserver> observers = const [],
+    }) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider<FavoritesService>.value(
+          value: favorites,
+          child: MaterialApp(
+            theme: miserendTheme(brightness).copyWith(platform: platform),
+            navigatorObservers: observers,
+            home: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+              child: Scaffold(
+                body: Align(
+                  alignment: Alignment.topLeft,
+                  child: SizedBox(
+                    width: width,
+                    child: ChurchCard(
+                      entry: entry,
+                      rowsChosen: true,
+                      describesOccasions: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    /// Every marked chip takes taps on at least 48 × 48: its button's
+    /// semantics node is as large as the area it takes taps in.
+    void expectTapTargets(WidgetTester tester, {bool anyShown = true}) {
+      final handle = tester.ensureSemantics();
+      final chips = find.byWidgetPredicate(
+        (widget) => widget is TimeChip && widget.onTap != null,
+      );
+      if (anyShown) expect(chips, findsWidgets);
+      for (final element in chips.evaluate()) {
+        final size =
+            tester.getSemantics(find.byWidget(element.widget)).rect.size;
+        expect(size.width, greaterThanOrEqualTo(48));
+        expect(size.height, greaterThanOrEqualTo(48));
+      }
+      handle.dispose();
+    }
+
+    TimeChip chipOf(WidgetTester tester, String time) => tester.widget(
+      find.ancestor(of: find.text(time), matching: find.byType(TimeChip)),
+    );
+
+    testWidgets('an occasion with more to it than a mass has its chip marked, '
+        'and a plain mass has not', (tester) async {
+      await pumpDescribed(tester, _entry(masses: [mass, adoration]));
+
+      expect(chipOf(tester, '10:30').hasInfo, isTrue);
+      expect(chipOf(tester, '10:30').onTap, isNotNull);
+      expect(chipOf(tester, '8:00').hasInfo, isFalse);
+      expect(chipOf(tester, '8:00').onTap, isNull);
+    });
+
+    testWidgets('the marked chip opens the description, not the church', (
+      tester,
+    ) async {
+      final pushed = <Route<dynamic>>[];
+      await pumpDescribed(
+        tester,
+        _entry(masses: [mass, adoration]),
+        observers: [_PushRecorder(pushed)],
+      );
+      pushed.clear();
+
+      await tester.tap(find.text('10:30'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Római katolikus Szentségimádás'), findsOneWidget);
+      expect(pushed.whereType<MaterialPageRoute<dynamic>>(), isEmpty);
+    });
+
+    testWidgets('the marked chip takes taps on 48 × 48 (AM3)', (tester) async {
+      await pumpDescribed(tester, _entry(masses: [adoration]));
+
+      expectTapTargets(tester);
+    });
+
+    testWidgets('the description is an action of the card (AM5)', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpDescribed(tester, _entry(masses: [mass, adoration]));
+
+      final node = tester.getSemantics(
+        find
+            .descendant(
+              of: find.byType(ChurchCard),
+              matching: find.byType(MergeSemantics),
+            )
+            .first,
+      );
+      final labels = [
+        for (final id
+            in node.getSemanticsData().customSemanticsActionIds ?? <int>[])
+          CustomSemanticsAction.getAction(id)!.label,
+      ];
+      expect(labels, contains('10:30 leírása'));
+      expect(
+        labels.where((label) => label?.contains('8:00') ?? false),
+        isEmpty,
+      );
+      handle.dispose();
+    });
+
+    testWidgets('other lists\' cards mark no chip', (tester) async {
+      await pumpCard(
+        tester,
+        _entry(
+          masses: [
+            CachedMass(
+              id: null,
+              apiMassId: null,
+              churchId: 1,
+              time: DateTime(2026, 9, 15, 8, 0),
+              info: 'Római katolikus Szentmise, Csendes',
+              source: MassSource.dailyList,
+            ),
+          ],
+        ),
+      );
+
+      expect(chipOf(tester, '8:00').hasInfo, isFalse);
+      expect(chipOf(tester, '8:00').onTap, isNull);
+    });
+
+    for (final columns in [2, 3]) {
+      testWidgets('in $columns columns, a card taller for a marked chip has '
+          'its row as tall (EL3)', (tester) async {
+        await pumpThemed(
+          tester,
+          ChangeNotifierProvider<FavoritesService>.value(
+            value: favorites,
+            child: CardRow.of(columns, [
+              ChurchCard(
+                entry: _entry(masses: [adoration]),
+                rowsChosen: true,
+                describesOccasions: true,
+              ),
+              for (var i = 1; i < columns; i++)
+                ChurchCard(
+                  entry: _entry(masses: [mass]),
+                  rowsChosen: true,
+                  describesOccasions: true,
+                ),
+            ]),
+          ),
+          width: columns * 400 + (columns - 1) * CardRow.listGap,
+        );
+
+        expect(tester.takeException(), isNull);
+        final heights = {
+          for (final element in find.byType(Card).evaluate())
+            tester.getSize(find.byWidget(element.widget)).height,
+        };
+        expect(heights, hasLength(1));
+        final hearts = {
+          for (final element in find.byType(IconButton).evaluate())
+            tester.getTopLeft(find.byWidget(element.widget)).dy,
+        };
+        expect(hearts, hasLength(1));
+      });
+    }
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('marked chips fit at $width dp, text scale '
+                '$textScale, $brightness, on $platform (EH3, EH4)', (
+              tester,
+            ) async {
+              await pumpDescribed(
+                tester,
+                _entry(
+                  masses: [
+                    for (var hour = 6; hour < 20; hour++)
+                      CachedMass(
+                        id: null,
+                        apiMassId: null,
+                        churchId: 1,
+                        time: DateTime(2026, 9, 15, hour, 30),
+                        info: 'Római katolikus Szentségimádás',
+                        source: MassSource.dailyList,
+                      ),
+                  ],
+                ),
+                width: width,
+                brightness: brightness,
+                platform: platform,
+                textScale: textScale,
+              );
+
+              expect(tester.takeException(), isNull);
+              final photo = tester.getRect(find.byType(Image));
+              for (final element in find.byType(TimeChip).evaluate()) {
+                expect(
+                  tester.getRect(find.byWidget(element.widget)).right,
+                  lessThanOrEqualTo(photo.left),
+                );
+              }
+              // A marked chip too wide for the line gives way to the „…"
+              // one (EL2).
+              expectTapTargets(tester, anyShown: false);
+            });
+
+            testWidgets('a marked chip takes taps on 48 × 48, or gives way '
+                'to a plain one where it would leave no time on the line, at '
+                '$width dp, text scale $textScale, $brightness, on $platform '
+                '(AM3, TI3, EH3, EH4)', (tester) async {
+              await pumpDescribed(
+                tester,
+                _entry(masses: [adoration]),
+                width: width,
+                brightness: brightness,
+                platform: platform,
+                textScale: textScale,
+              );
+
+              expect(tester.takeException(), isNull);
+              expect(find.text('10:30'), findsOneWidget);
+              // Only the narrowest phone at the largest text has no room for
+              // the marker.
+              final marked = !(width == eh4Widths.first && textScale == 2);
+              expect(chipOf(tester, '10:30').hasInfo, marked);
+              expectTapTargets(tester, anyShown: marked);
+            });
+          }
+        }
+      }
+    }
+  });
+
   group('distance', () {
     testWidgets('shows the straight-line distance from the position', (
       tester,
@@ -730,4 +994,15 @@ void main() {
       );
     });
   });
+}
+
+/// Records the routes pushed.
+class _PushRecorder extends NavigatorObserver {
+  _PushRecorder(this.pushed);
+
+  final List<Route<dynamic>> pushed;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      pushed.add(route);
 }

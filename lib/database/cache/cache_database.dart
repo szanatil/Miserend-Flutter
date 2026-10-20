@@ -196,6 +196,13 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
+  /// The lowest id the cache holds, for a call that asks about a church only
+  /// to see whether the API answers; null when the cache is empty.
+  Future<int?> firstChurchId() async {
+    final rows = await db.rawQuery('SELECT MIN(id) AS id FROM $churchesTable');
+    return rows.first['id'] as int?;
+  }
+
   /// Churches with at least one photo; the Névjegy page's recommendation shows
   /// one, so a church without is never picked.
   static const String _photographed = "photos IS NOT NULL AND photos <> '[]'";

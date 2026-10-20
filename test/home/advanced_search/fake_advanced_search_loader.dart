@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
@@ -9,13 +10,32 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
     this.pages, {
     this.cityNames = const [],
     this.languageCodes = const [],
-  });
+    ApiFailure? lastFailure,
+    this.checkFinds,
+  }) : connection = ValueNotifier(lastFailure);
 
   final List<AdvancedSearchResultPage> pages;
   final List<String> cityNames;
   final List<String> languageCodes;
 
   final List<(AdvancedSearchCriteria, int)> asked = [];
+
+  /// How the app's last API call ended, as the page is told.
+  final ValueNotifier<ApiFailure?> connection;
+
+  /// What a connection check ends with; null when it gets an answer.
+  ApiFailure? checkFinds;
+
+  int checks = 0;
+
+  @override
+  ValueListenable<ApiFailure?> get lastFailure => connection;
+
+  @override
+  Future<void> checkConnection() async {
+    checks++;
+    connection.value = checkFinds;
+  }
 
   @override
   Future<AdvancedSearchResultPage> loadPage(
@@ -45,7 +65,6 @@ AdvancedSearchResultPage resultPage(
   found: found ?? churches.length,
   foundIsFinal: foundIsFinal,
   failure: failure,
-  dataAsOf: null,
 );
 
 ChurchListEntry churchEntry(int id, {String? name, String? commonName}) =>

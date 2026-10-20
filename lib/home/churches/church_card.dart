@@ -14,6 +14,7 @@ import 'package:miserend/mass_kind.dart';
 import 'package:miserend/straight_line_distance.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
+import 'package:miserend/widgets/mass_info.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/photo_fade_in.dart';
@@ -32,6 +33,7 @@ class ChurchCard extends StatelessWidget {
     this.failure,
     this.dataAsOf,
     this.rowsChosen = false,
+    this.describesOccasions = false,
     this.clock = DateTime.now,
   });
 
@@ -53,6 +55,12 @@ class ChurchCard extends StatelessWidget {
   /// Részletes kereső's, by the occasion categories searched for (spec 0010,
   /// „Találatok"). Elsewhere the card keeps the masses alone.
   final bool rowsChosen;
+
+  /// Set where the rows are of mixed kinds — the Részletes kereső's — so that
+  /// a chip tells which is which: one carrying more than a plain mass is
+  /// marked and opens its description, as on the details page (DESIGN.md
+  /// KO1, KO3). Elsewhere the chips open nothing.
+  final bool describesOccasions;
 
   /// The time now, for marking the masses going on. Injected by tests.
   final DateTime Function() clock;
@@ -77,6 +85,11 @@ class ChurchCard extends StatelessWidget {
     final favoritesService = context.watch<FavoritesService>();
     final favorite = favoritesService.isFavorite(entry.id);
     void toggleFavorite() => favoritesService.toggle(entry.id);
+    final described = [
+      if (describesOccasions)
+        for (final mass in masses)
+          if (MassInfo.isMeaningful(mass.info)) mass,
+    ];
 
     // Read out as one unit, today's masses first (DESIGN.md AM5). The
     // buttons on it, merged into it, would lose their own tap: they are the
@@ -97,6 +110,10 @@ class ChurchCard extends StatelessWidget {
           if (failure != null)
             const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
                 () => OfflineNotice.show(context, failure, dataAsOf),
+          for (final mass in described)
+            CustomSemanticsAction(
+              label: '${TimeOfDay.fromDateTime(mass.time).to24hours()} leírása',
+            ): () => MassInfo.show(context, mass),
         },
         // A row of cards gives each the height of the tallest (DESIGN.md
         // EL3); elsewhere the card is as tall as its content (EL2).
@@ -214,7 +231,11 @@ class ChurchCard extends StatelessWidget {
                         ),
                         // Read out first, on the card's own label.
                         child: ExcludeSemantics(
-                          child: _MassChips(masses: masses, now: clock()),
+                          child: _MassChips(
+                            masses: masses,
+                            now: clock(),
+                            describes: describesOccasions,
+                          ),
                         ),
                       ),
                       Divider(
@@ -311,14 +332,49 @@ class ChurchCard extends StatelessWidget {
 /// [TimeChip.more]; how many fit depends on the card's actual width, which
 /// differs from phone to phone.
 class _MassChips extends StatelessWidget {
-  const _MassChips({required this.masses, required this.now});
+  const _MassChips({
+    required this.masses,
+    required this.now,
+    required this.describes,
+  });
 
   final List<CachedMass> masses;
+
+  /// Whether a chip with a description opens it (ChurchCard.describesOccasions).
+  final bool describes;
 
   /// For marking the masses going on (CONTEXT.md, „Épp most tartó mise").
   final DateTime now;
 
   static const double _spacing = Spacing.s;
+
+  /// How many of [times] fit on a line [available] wide, [tappable] ones
+  /// marked (none when null), leaving room for the „…" chip when not all of
+  /// them do.
+  static int _fitting(
+    BuildContext context,
+    List<TimeOfDay> times,
+    List<bool>? tappable,
+    double available,
+  ) {
+    double chipWidth(String label, {bool tappable = false}) =>
+        TimeChip.widthOf(context, label, tappable: tappable);
+    final widths = [
+      for (final (i, time) in times.indexed)
+        chipWidth(time.to24hours(), tappable: tappable?[i] ?? false),
+    ];
+    final all = widths.fold(0.0, (sum, w) => sum + w + _spacing) - _spacing;
+    if (times.isEmpty || all <= available) return times.length;
+    final room = available - chipWidth(TimeChip.moreLabel);
+    var used = 0.0;
+    var fitting = 0;
+    while (fitting < times.length &&
+        used + widths[fitting] + _spacing <= room) {
+      used += widths[fitting] + _spacing;
+      fitting++;
+    }
+    return fitting;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -326,30 +382,35 @@ class _MassChips extends StatelessWidget {
       for (final mass in masses) TimeOfDay.fromDateTime(mass.time),
     ];
 
-    double chipWidth(String label) => TimeChip.widthOf(context, label);
+    final described = [
+      for (final mass in masses) describes && MassInfo.isMeaningful(mass.info),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final available = constraints.maxWidth;
-        final widths = [for (final time in times) chipWidth(time.to24hours())];
-
-        var fitting = times.length;
-        final all = widths.fold(0.0, (sum, w) => sum + w + _spacing) - _spacing;
-        if (times.isNotEmpty && all > available) {
-          final room = available - chipWidth(TimeChip.moreLabel);
-          var used = 0.0;
-          fitting = 0;
-          while (fitting < times.length &&
-              used + widths[fitting] + _spacing <= room) {
-            used += widths[fitting] + _spacing;
-            fitting++;
-          }
-        }
+        final marked = _fitting(context, times, described, available);
+        final plain = _fitting(context, times, null, available);
+        // The time leads the card (TI3): where the marker would leave fewer
+        // times on the line, the chips go without it. The description is
+        // still the card's action, and on the details page.
+        final (fitting, tappable) =
+            plain > marked
+                ? (plain, [for (final _ in times) false])
+                : (marked, described);
 
         // A day without a mass keeps the line, so that the line and the heart
-        // below stand where they do on every card (DESIGN.md EL2).
+        // below stand where they do on every card (DESIGN.md EL2). A chip
+        // that opens something takes taps on more room than it is drawn on
+        // (AM3), and the line grows to it; the chips beside it stand in line
+        // with its middle.
         return ConstrainedBox(
-          constraints: BoxConstraints(minHeight: TimeChip.heightOf(context)),
+          constraints: BoxConstraints(
+            minHeight:
+                tappable.take(fitting).contains(true)
+                    ? TimeChip.tappableHeightOf(context)
+                    : TimeChip.heightOf(context),
+          ),
           child: Row(
             children: [
               for (var i = 0; i < fitting; i++) ...[
@@ -357,6 +418,11 @@ class _MassChips extends StatelessWidget {
                 TimeChip(
                   time: times[i],
                   ongoing: isOngoingStart(masses[i].time, now),
+                  hasInfo: tappable[i],
+                  onTap:
+                      tappable[i]
+                          ? () => MassInfo.show(context, masses[i])
+                          : null,
                 ),
               ],
               if (fitting < times.length) ...[

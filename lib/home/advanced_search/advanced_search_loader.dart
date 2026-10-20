@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/foundation.dart' show ValueListenable, setEquals;
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
@@ -111,14 +111,13 @@ class AdvancedSearchResultPage {
     required this.found,
     required this.foundIsFinal,
     required this.failure,
-    required this.dataAsOf,
   });
 
   /// The churches of the page that meet every condition, in the results'
-  /// order. Each one's masses are why it matched: with a day, the occasions
+  /// order. Each one's rows are why it matched: with a day, the occasions
   /// of the categories asked for starting in the window; without one,
-  /// today's masses, as on other lists. The cards show these rows as they
-  /// are.
+  /// today's occasions of every kind, as on other lists. The cards show
+  /// these rows as they are.
   final List<ChurchListEntry> churches;
 
   /// Whether there are candidates left to look at.
@@ -130,12 +129,11 @@ class AdvancedSearchResultPage {
   final int found;
   final bool foundIsFinal;
 
-  /// Why the API gave no answer for this page, which was then decided from
-  /// the cached masses; null when it answered or was not asked.
+  /// Why the API gave no answer for this page, even after [AdvancedSearchLoader
+  /// .retryDelays]: the search stopped here, with nothing found on the page,
+  /// and goes on only when started over (CONTEXT.md, „Részletes kereső",
+  /// megszakadt keresés). Null when it answered or was not asked.
   final ApiFailure? failure;
-
-  /// The last successful search, or the bootstrap import before one.
-  final DateTime? dataAsOf;
 }
 
 /// Finds the churches of the Részletes kereső a page at a time (spec 0010,
@@ -149,6 +147,7 @@ class AdvancedSearchLoader {
     CacheDatabase? cache,
     MiserendApiClient? api,
     this.clock = DateTime.now,
+    this.wait = Future.delayed,
     this.onChurchesGone,
   }) : _cache = cache,
        _api = api ?? MiserendApiClient();
@@ -157,14 +156,41 @@ class AdvancedSearchLoader {
   /// mobile data, enough to fill a screen more often than not.
   static const int pageSize = 20;
 
+  /// The waits before each retry of a page the API gave no answer for: a
+  /// moving phone — on a train — loses its signal for moments, and gets it
+  /// back within a quarter of a minute or not soon. Past the last one the
+  /// search stops (CONTEXT.md, „Részletes kereső").
+  static const List<Duration> retryDelays = [
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+    Duration(seconds: 8),
+  ];
+
   CacheDatabase? _cache;
   final MiserendApiClient _api;
   final DateTime Function() clock;
+
+  /// Waits out a retry's delay. Injected by tests, which do not wait.
+  final Future<void> Function(Duration) wait;
 
   /// Told when an answer reports churches removed from miserend.hu.
   final ChurchesGone? onChurchesGone;
 
   Future<CacheDatabase> _db() async => _cache ??= await CacheDatabase.create();
+
+  /// Why the app's last API call got no answer, null when it got one —
+  /// whichever screen made it. While it is set, the day condition is not
+  /// offered: the cached days may be out of date (CONTEXT.md, „Részletes
+  /// kereső").
+  ValueListenable<ApiFailure?> get lastFailure => _api.status;
+
+  /// Asks the API about one church, only to see whether it answers; the
+  /// answer reaches [lastFailure].
+  Future<void> checkConnection() async {
+    final id = await (await _db()).firstChurchId();
+    if (id == null) return;
+    await _api.fetchChurches([id]);
+  }
 
   /// The page [page] (from 0) of the results for [criteria]. The pages are
   /// asked for in order; asking for the first one again starts over.
@@ -174,6 +200,7 @@ class AdvancedSearchLoader {
   ) async {
     final cache = await _db();
     if (page == 0 || criteria != _criteria) {
+      _searchId++;
       _criteria = criteria;
       _candidates = await _candidatesFor(cache, criteria);
       _foundThrough.clear();
@@ -186,28 +213,53 @@ class AdvancedSearchLoader {
     final day = criteria.day;
     if (day == null) {
       return AdvancedSearchResultPage(
-        churches: [
-          for (final church in await _read(cache, slice, clock()))
-            _withMasses(church, church.masses.where(isMass).toList()),
-        ],
+        churches: await _read(cache, slice, clock()),
         hasMore: hasMore,
         found: candidates.length,
         foundIsFinal: true,
         failure: null,
-        dataAsOf: await _dataAsOf(cache),
       );
     }
 
-    final failure = await _refreshDay(cache, slice, day);
+    final searchId = _searchId;
+    final foundBefore =
+        page > 0 && page <= _foundThrough.length ? _foundThrough[page - 1] : 0;
+    var failure = await _refreshDay(cache, slice, day);
+    for (final delay in retryDelays) {
+      if (failure == null) break;
+      await wait(delay);
+      failure = await _refreshDay(cache, slice, day);
+    }
+    if (failure != null) {
+      // The cached day may be out of date: what is known not to be up to
+      // date is no answer (CONTEXT.md, „Részletes kereső", megszakadt
+      // keresés).
+      return AdvancedSearchResultPage(
+        churches: const [],
+        hasMore: hasMore,
+        found: foundBefore,
+        foundIsFinal: false,
+        failure: failure,
+      );
+    }
     final churches = [
       for (final church in await _read(cache, slice, day))
         if (_occasionsInWindow(church.masses, criteria) case final masses
             when masses.isNotEmpty)
           _withMasses(church, masses),
     ];
-    final foundBefore =
-        page > 0 && page <= _foundThrough.length ? _foundThrough[page - 1] : 0;
     final found = foundBefore + churches.length;
+    // Started over while this page waited out its retries: the counts are
+    // the newer search's.
+    if (searchId != _searchId) {
+      return AdvancedSearchResultPage(
+        churches: churches,
+        hasMore: hasMore,
+        found: found,
+        foundIsFinal: !hasMore,
+        failure: null,
+      );
+    }
     if (_foundThrough.length > page) _foundThrough.length = page;
     _foundThrough.add(found);
     return AdvancedSearchResultPage(
@@ -215,8 +267,7 @@ class AdvancedSearchLoader {
       hasMore: hasMore,
       found: found,
       foundIsFinal: !hasMore,
-      failure: failure,
-      dataAsOf: await _dataAsOf(cache),
+      failure: null,
     );
   }
 
@@ -233,11 +284,12 @@ class AdvancedSearchLoader {
 
   static const String _hungarian = 'hu';
 
-  /// Names the search, whose last successful answer dates the data shown.
-  static const String _syncKey = 'list:advancedSearch';
-
   /// The search the candidates below are for.
   AdvancedSearchCriteria? _criteria;
+
+  /// Bumped per search started, so that a page still waiting out its
+  /// retries can tell it has been overtaken.
+  int _searchId = 0;
   List<ChurchListEntry> _candidates = const [];
 
   /// How many churches were found up to each page loaded so far.
@@ -305,8 +357,7 @@ class AdvancedSearchLoader {
   /// [day], and writes the answers through. The masses come from the same
   /// call the details page builds its schedule with (ADR-0002, spec 0003);
   /// the `Church` call is what reports a church removed from miserend.hu.
-  /// Returns why an answer did not come, if one did not; the churches it
-  /// concerns keep their cached rows.
+  /// Returns why an answer did not come, if one did not.
   Future<ApiFailure?> _refreshDay(
     CacheDatabase cache,
     List<ChurchListEntry> slice,
@@ -331,9 +382,7 @@ class AdvancedSearchLoader {
         if (ChurchLocation.isKnown(church.lat, church.lon))
           _refreshMasses(cache, church, day),
     ]);
-    final failure = failures.nonNulls.firstOrNull;
-    if (failure == null) await cache.setSyncTime(_syncKey, now);
-    return failure;
+    return failures.nonNulls.firstOrNull;
   }
 
   Future<ApiFailure?> _refreshMasses(
@@ -404,7 +453,4 @@ class AdvancedSearchLoader {
     photo: church.photo,
     masses: masses,
   );
-
-  Future<DateTime?> _dataAsOf(CacheDatabase cache) async =>
-      await cache.syncTime(_syncKey) ?? await cache.bootstrappedAt();
 }

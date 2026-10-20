@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miserend/church_details/widgets/mass_info.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/widgets/mass_info.dart';
 
-import '../../theme/theme_harness.dart';
+import '../theme/theme_harness.dart';
 
 final CachedMass _mass = CachedMass(
   id: 1,

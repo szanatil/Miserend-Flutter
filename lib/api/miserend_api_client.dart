@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/calendar_days.dart';
@@ -102,8 +103,12 @@ class MiserendApiClient {
 
   final http.Client _client;
 
-  MiserendApiClient({http.Client? client})
-    : _client = client ?? IOClient(newHttpClient());
+  /// Told how every call ended.
+  final ApiStatus status;
+
+  MiserendApiClient({http.Client? client, ApiStatus? status})
+    : _client = client ?? IOClient(newHttpClient()),
+      status = status ?? ApiStatus.shared;
 
   /// The connection every call goes through unless a test hands in its own
   /// client.
@@ -368,19 +373,24 @@ class MiserendApiClient {
 
   /// Reads a successful body with [read]; a body [read] cannot make sense of
   /// (it returns null) is a server error like any other malformed answer.
+  /// Every call ends here, so here the status learns how it ended.
   ApiResult<T> _map<T>(
     ApiResult<Map<String, dynamic>> result,
     T? Function(Map<String, dynamic> body) read,
   ) {
+    final ApiResult<T> mapped;
     switch (result) {
       case ApiFailed(:final failure):
-        return ApiFailed(failure);
+        mapped = ApiFailed(failure);
       case ApiSuccess(:final value):
-        final mapped = read(value);
-        return mapped == null
-            ? const ApiFailed(ApiFailure.serverError)
-            : ApiSuccess(mapped);
+        final body = read(value);
+        mapped =
+            body == null
+                ? const ApiFailed(ApiFailure.serverError)
+                : ApiSuccess(body);
     }
+    status.record(mapped);
+    return mapped;
   }
 
   /// What makes two `NearbyMasses` items one occurrence (spec 0004,

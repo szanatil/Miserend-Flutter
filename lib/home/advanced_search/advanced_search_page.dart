@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
+import 'package:miserend/home/advanced_search/widgets/interrupted_search_banner.dart';
 import 'package:miserend/home/advanced_search/widgets/result_counter.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/widgets/section_bar.dart';
@@ -18,7 +19,6 @@ import 'package:miserend/widgets/card_columns.dart';
 import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/list_status_view.dart';
-import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/section_card.dart';
 import 'package:provider/provider.dart';
 
@@ -165,17 +165,23 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   /// Bumped per search so that a slow page cannot land in a newer search.
   int _loadId = 0;
 
+  /// Whether a connection check is on its way, so that it is not asked
+  /// twice.
+  bool _checking = false;
+
   @override
   void initState() {
     super.initState();
     _name.addListener(_conditionsChanged);
     _city.addListener(_conditionsChanged);
     _scroll.addListener(_fillScreen);
+    _loader.lastFailure.addListener(_conditionsChanged);
     _findPosition();
   }
 
   @override
   void dispose() {
+    _loader.lastFailure.removeListener(_conditionsChanged);
     _name.dispose();
     _city.dispose();
     _cityFocus.dispose();
@@ -183,8 +189,22 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     super.dispose();
   }
 
-  /// The Search button depends on the name and the city being filled in.
+  /// The Search button depends on the name and the city being filled in,
+  /// the day chips on the connection.
   void _conditionsChanged() => setState(() {});
+
+  /// Whether the day condition is offered: not while the app's last API call
+  /// got no answer, as the cached days may be out of date (CONTEXT.md,
+  /// „Részletes kereső").
+  bool get _online => _loader.lastFailure.value == null;
+
+  Future<void> _checkConnection() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    await _loader.checkConnection();
+    if (!mounted) return;
+    setState(() => _checking = false);
+  }
 
   Future<void> _findPosition() async {
     switch (await _location.currentPosition()) {
@@ -221,11 +241,12 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     };
   }
 
+  /// What the form holds; a day chosen while the day chips are off is none.
   _Conditions get _conditions => _Conditions(
     name: _name.text,
     city: _city.text,
     language: _language,
-    dayChoice: _dayChoice,
+    dayChoice: _online ? _dayChoice : null,
     date: _date,
     wholeDay: _wholeDay,
     from: _from,
@@ -248,9 +269,11 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     );
   }
 
-  void _search() {
+  void _search() => _searchBy(_conditions);
+
+  /// [conditions]' search, from its start.
+  void _searchBy(_Conditions conditions) {
     FocusScope.of(context).unfocus();
-    final conditions = _conditions;
     setState(() {
       _loadId++;
       _applied = conditions;
@@ -285,7 +308,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
 
   void _expand() => setState(() => _expanded = true);
 
-  bool get _hasMore => _pages.isEmpty || _pages.last.hasMore;
+  /// Whether there are pages left to ask for: none once the search stopped,
+  /// until it is started over (CONTEXT.md, „Részletes kereső").
+  bool get _hasMore =>
+      _pages.isEmpty || (_pages.last.hasMore && _pages.last.failure == null);
 
   Future<void> _loadNext() async {
     final criteria = _criteria;
@@ -313,27 +339,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     }
   }
 
-  /// Loads the pages shown so far again, for the banner's retries: they swap
-  /// in together, so the list does not jump while it heals.
-  Future<void> _retry() async {
-    final criteria = _criteria;
-    if (criteria == null || _loading) return;
-    final loadId = _loadId;
-    final count = _pages.length;
-    setState(() => _loading = true);
-    final pages = <AdvancedSearchResultPage>[];
-    for (var page = 0; page < count; page++) {
-      pages.add(await _loader.loadPage(criteria, page));
-      if (!mounted || loadId != _loadId) return;
-    }
-    setState(() {
-      _pages
-        ..clear()
-        ..addAll(pages);
-      _loading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -346,7 +351,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
 
   Widget _form() {
     final canSearch = _criteriaOf(_conditions).canSearch;
-    final day = _dayOf(_dayChoice);
+    final day = _online ? _dayOf(_dayChoice) : null;
     return ContentWidth(
       padding: const EdgeInsets.symmetric(vertical: Spacing.s),
       builder:
@@ -386,6 +391,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     ),
                     const SizedBox(height: Spacing.s),
                     _dayChips(),
+                    if (!_online) _offlineNote(),
                     if (day != null) ...[
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
@@ -561,10 +567,34 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         for (final MapEntry(key: choice, value: label) in labels.entries)
           ChoiceChip(
             label: Text(label),
-            selected: _dayChoice == choice,
-            onSelected: (_) => _chooseDay(choice),
+            selected: _online && _dayChoice == choice,
+            onSelected: _online ? (_) => _chooseDay(choice) : null,
           ),
       ],
+    );
+  }
+
+  /// Why the day chips are off, and the way to try the connection again.
+  Widget _offlineNote() {
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: Spacing.s,
+        children: [
+          Text(
+            'Kapcsolat nélkül csak név, település és nyelv szerint lehet '
+            'keresni.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          TextButton(
+            onPressed: _checking ? null : _checkConnection,
+            child: const Text('Újrapróbálom'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -641,23 +671,25 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   // ---- Results -----------------------------------------------------------
 
   Widget _results() {
-    final failure = _pages.map((page) => page.failure).nonNulls.firstOrNull;
+    final failure = _pages.lastOrNull?.failure;
+    final churches = [for (final page in _pages) ...page.churches];
     return Column(
       children: [
         _Summary(text: _summary(), onTap: _expand),
         if (failure != null)
-          OfflineBanner(
+          InterruptedSearchBanner(
             failure: failure,
-            asOf: _pages.last.dataAsOf,
-            onRetry: _retry,
+            foundAny: churches.isNotEmpty,
+            onRestart: () => _searchBy(_applied!),
           ),
-        Expanded(child: _list()),
+        Expanded(child: _list(churches, stopped: failure != null)),
       ],
     );
   }
 
-  Widget _list() {
-    final churches = [for (final page in _pages) ...page.churches];
+  Widget _list(List<ChurchListEntry> churches, {required bool stopped}) {
+    // The strip above says the search failed; there is nothing to show.
+    if (churches.isEmpty && stopped) return const SizedBox.shrink();
     if (churches.isEmpty && (_loading || _hasMore)) {
       // An empty page with more to come is asked for on the next frame.
       WidgetsBinding.instance.addPostFrameCallback((_) => _fillScreen());
@@ -736,14 +768,19 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         first,
         min(first + columns, churches.length),
       ))
-        ChurchCard(entry: entry, position: position, rowsChosen: true),
+        ChurchCard(
+          entry: entry,
+          position: position,
+          rowsChosen: true,
+          describesOccasions: true,
+        ),
     ]);
   }
 
   /// The spinner only while a page is on its way; the space it takes is kept
   /// between pages, so the end of the list does not jump.
   Widget _listEnd(AdvancedSearchResultPage last) {
-    if (!_loading && last.hasMore) {
+    if (!_loading && (last.hasMore || last.failure != null)) {
       return const SizedBox(
         height: _listEndPadding + _spinnerSize + _listEndPadding,
       );

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/api/problem_type.dart';
@@ -336,6 +337,41 @@ void main() {
             ApiFailure.serverError,
           );
         });
+
+        test('the status keeps the failure until an answer comes', () async {
+          final status = ApiStatus();
+          var answer = http.Response('', 500);
+          final api = MiserendApiClient(
+            client: MockClient((_) async => answer),
+            status: status,
+          );
+
+          await call(api);
+          expect(status.value, ApiFailure.serverError);
+
+          // Every endpoint finds what it reads in this body, empty.
+          answer = http.Response('{"templomok":[],"misek":[],"error":0}', 200);
+          await call(api);
+          expect(status.value, isNull);
+        });
+
+        test(
+          'an answer that does not read is a failure to the status',
+          () async {
+            final status = ApiStatus();
+            await call(
+              MiserendApiClient(
+                client: MockClient((_) async => http.Response('{}', 200)),
+                status: status,
+              ),
+            );
+
+            expect(
+              status.value,
+              name == 'report' ? isNull : ApiFailure.serverError,
+            );
+          },
+        );
       });
     }
 
