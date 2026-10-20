@@ -1170,7 +1170,7 @@ void main() {
     }
 
     Future<void> searchFurther(WidgetTester tester) async {
-      final button = find.widgetWithText(TextButton, 'Keresés tovább');
+      final button = find.widgetWithText(FilledButton, 'Keresés tovább');
       await tester.ensureVisible(button);
       await tester.pump();
       await tester.tap(button);
@@ -1189,7 +1189,7 @@ void main() {
 
       expect(loader.asked.map((a) => a.$2), [0]);
       expect(find.text(within25), findsOneWidget);
-      expect(find.widgetWithText(TextButton, 'Keresés tovább'), findsOne);
+      expect(find.widgetWithText(FilledButton, 'Keresés tovább'), findsOne);
       expect(find.textContaining('Nincs több találat'), findsNothing);
     });
 
@@ -1243,6 +1243,50 @@ void main() {
       expect(loader.asked.map((a) => a.$2), [0, 1]);
       expect(find.text('Templom 2'), findsOneWidget);
     });
+
+    for (final brightness in Brightness.values) {
+      for (final (place, churches) in [
+        ('at the list\'s end', [churchEntry(1)]),
+        ('beside Feltételek módosítása', <ChurchListEntry>[]),
+      ]) {
+        testWidgets('in $brightness, Keresés tovább is the same tonal button '
+            '$place, ${Spacing.l} below the note (KO8)', (tester) async {
+          final tonal =
+              miserendTheme(brightness).colorScheme.secondaryContainer;
+          Color? colorOf(Finder button) =>
+              tester
+                  .widget<Material>(
+                    find.descendant(
+                      of: button,
+                      matching: find.byType(Material),
+                    ),
+                  )
+                  .color;
+          final further = find.widgetWithText(FilledButton, 'Keresés tovább');
+          await searchNearby(tester, [
+            resultPage(churches, ring: SearchRing.within25Km),
+          ], brightness: brightness);
+          await tester.ensureVisible(further);
+          await tester.pumpAndSettle();
+
+          expect(colorOf(further), tonal);
+          expect(
+            tester.getTopLeft(further).dy -
+                tester.getBottomLeft(find.text(within25)).dy,
+            Spacing.l,
+          );
+          expect(find.byType(TextButton), findsNothing);
+          if (churches.isEmpty) {
+            expect(
+              colorOf(
+                find.widgetWithText(FilledButton, 'Feltételek módosítása'),
+              ),
+              tonal,
+            );
+          }
+        });
+      }
+    }
 
     testWidgets('the summary names the ring before the day and the '
         'categories', (tester) async {
@@ -1342,7 +1386,7 @@ void main() {
             await searchNearby(tester, [
               resultPage([churchEntry(1)], ring: SearchRing.within25Km),
             ], brightness: brightness);
-            final button = find.widgetWithText(TextButton, 'Keresés tovább');
+            final button = find.widgetWithText(FilledButton, 'Keresés tovább');
             await tester.ensureVisible(button);
             await tester.pumpAndSettle();
 
@@ -1369,7 +1413,7 @@ void main() {
 
             expect(tester.takeException(), isNull);
             for (final button in [
-              find.widgetWithText(TextButton, 'Keresés tovább'),
+              find.widgetWithText(FilledButton, 'Keresés tovább'),
               find.widgetWithText(FilledButton, 'Feltételek módosítása'),
             ]) {
               final rect = tester.getRect(button);

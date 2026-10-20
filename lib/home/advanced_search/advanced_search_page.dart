@@ -326,14 +326,15 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     return last.hasMore || last.ring != _criteria?.searchRing;
   }
 
-  /// The ring the user may go on to, at the end of the one looked through;
-  /// null while there is more of it, and past the last.
-  SearchRing? get _widerRing {
+  /// The ring looked through to its end, when a wider one is left for the
+  /// user to go on to; null while there is more of it, and past the last.
+  SearchRing? get _endedRing {
     final last = _pages.lastOrNull;
     if (last == null || _loading || _hasMore || last.failure != null) {
       return null;
     }
-    return last.ring?.wider;
+    final ring = last.ring;
+    return ring?.wider == null ? null : ring;
   }
 
   /// „Keresés tovább": the same search in the next ring, from the page after
@@ -740,15 +741,15 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       return LoadingView(message: 'Keresés...', progress: _ringProgress);
     }
     if (churches.isEmpty) {
-      final wider = _widerRing;
+      final ended = _endedRing;
       return Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const MessageView(message: 'Nincs találat'),
-              if (wider != null) ...[
-                _ringEndNote(),
+              if (ended != null) ...[
+                _ringEndNote(ended),
                 const SizedBox(height: Spacing.l),
               ],
               Wrap(
@@ -760,7 +761,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     onPressed: _expand,
                     child: const Text('Feltételek módosítása'),
                   ),
-                  if (wider != null) _searchFurtherButton(),
+                  if (ended != null) _searchFurtherButton(),
                 ],
               ),
             ],
@@ -863,13 +864,13 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         height: _listEndPadding + _spinnerSize + _listEndPadding,
       );
     }
-    if (_widerRing != null) {
+    if (_endedRing case final ended?) {
       return Padding(
-        padding: const EdgeInsets.only(top: _listEndPadding),
+        padding: const EdgeInsets.all(_listEndPadding),
         child: Column(
           children: [
-            _ringEndNote(),
-            const SizedBox(height: Spacing.s),
+            _ringEndNote(ended),
+            const SizedBox(height: Spacing.l),
             _searchFurtherButton(),
           ],
         ),
@@ -887,10 +888,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     );
   }
 
-  /// „25 km-en belül nincs több találat…": why the list stopped, and that
-  /// going on may take a while (spec 0010, „Lista alja").
-  Widget _ringEndNote() {
-    final ring = _pages.last.ring!;
+  /// „25 km-en belül nincs több találat…": why the list stopped at [ring]'s
+  /// end, and that going on may take a while (spec 0010, „Lista alja").
+  Widget _ringEndNote(SearchRing ring) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.l),
       child: Text(
@@ -904,7 +904,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     );
   }
 
-  Widget _searchFurtherButton() => TextButton(
+  /// The ring's end's call to action, the same tonal button at the list's
+  /// end and in the „Nincs találat" view (DESIGN.md KO8).
+  Widget _searchFurtherButton() => FilledButton.tonal(
     onPressed: _searchFurther,
     child: const Text('Keresés tovább'),
   );
