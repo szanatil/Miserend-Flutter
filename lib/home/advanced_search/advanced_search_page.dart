@@ -768,12 +768,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         first,
         min(first + columns, churches.length),
       ))
-        ChurchCard(
-          entry: entry,
-          position: position,
-          rowsChosen: true,
-          describesOccasions: true,
-        ),
+        ChurchCard(entry: entry, position: position, describesOccasions: true),
     ]);
   }
 

@@ -165,6 +165,137 @@ void main() {
     });
   });
 
+  group('today\'s occasions, whatever their kind (#77)', () {
+    CachedMass occasion(int hour, int minute, String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 1,
+      time: DateTime(2026, 9, 15, hour, minute),
+      info: info,
+      source: MassSource.dailyList,
+    );
+
+    Future<void> pumpAt(
+      WidgetTester tester,
+      ChurchListEntry entry, {
+      DateTime? now,
+      double width = 400,
+    }) => pumpThemed(
+      tester,
+      ChangeNotifierProvider<FavoritesService>.value(
+        value: favorites,
+        child: ChurchCard(
+          entry: entry,
+          clock: () => now ?? DateTime(2026, 9, 15, 12, 0),
+        ),
+      ),
+      width: width,
+    );
+
+    testWidgets('an adoration alone today has its chip, and is read out', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpAt(
+        tester,
+        _entry(masses: [occasion(18, 0, 'Római katolikus Szentségimádás')]),
+      );
+
+      expect(find.byType(TimeChip), findsOneWidget);
+      expect(find.text('18:00'), findsOneWidget);
+      final label =
+          tester
+              .getSemantics(
+                find
+                    .descendant(
+                      of: find.byType(ChurchCard),
+                      matching: find.byType(MergeSemantics),
+                    )
+                    .first,
+              )
+              .getSemanticsData()
+              .label;
+      expect(label, startsWith('18:00'));
+      handle.dispose();
+    });
+
+    testWidgets('masses and a confession stand in time order, in alike chips', (
+      tester,
+    ) async {
+      await pumpAt(
+        tester,
+        _entry(
+          masses: [
+            occasion(8, 0, 'Római katolikus Szentmise'),
+            occasion(17, 0, 'Római katolikus Gyóntatás'),
+            occasion(18, 0, 'Római katolikus Szentmise'),
+          ],
+        ),
+        width: 600,
+      );
+
+      final chips = tester.widgetList<TimeChip>(find.byType(TimeChip)).toList();
+      expect(
+        [for (final chip in chips) chip.time],
+        const [
+          TimeOfDay(hour: 8, minute: 0),
+          TimeOfDay(hour: 17, minute: 0),
+          TimeOfDay(hour: 18, minute: 0),
+        ],
+      );
+      for (final chip in chips) {
+        expect(chip.hasInfo, isFalse);
+        expect(chip.onTap, isNull);
+      }
+    });
+
+    testWidgets('a confession begun 5 minutes ago is going on (KO3)', (
+      tester,
+    ) async {
+      await pumpAt(
+        tester,
+        _entry(masses: [occasion(17, 0, 'Római katolikus Gyóntatás')]),
+        now: DateTime(2026, 9, 15, 17, 5),
+      );
+
+      expect(tester.widget<TimeChip>(find.byType(TimeChip)).ongoing, isTrue);
+    });
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('an adoration\'s chip stands where a mass\'s does, at '
+                '$width dp, text scale $textScale, $brightness, on $platform '
+                '(EH3, EH4)', (tester) async {
+              Future<void> pump(CachedMass row) => pumpThemed(
+                tester,
+                ChangeNotifierProvider<FavoritesService>.value(
+                  value: favorites,
+                  child: ChurchCard(entry: _entry(masses: [row])),
+                ),
+                brightness: brightness,
+                platform: platform,
+                width: width,
+                textScale: textScale,
+              );
+
+              await pump(occasion(18, 0, 'Római katolikus Szentmise'));
+              final chip = tester.getRect(find.byType(TimeChip));
+              final heart = tester.getTopLeft(find.byType(IconButton)).dy;
+
+              await pump(occasion(18, 0, 'Római katolikus Szentségimádás'));
+
+              expect(tester.takeException(), isNull);
+              expect(tester.getRect(find.byType(TimeChip)), chip);
+              expect(tester.getTopLeft(find.byType(IconButton)).dy, heart);
+            });
+          }
+        }
+      }
+    }
+  });
+
   group('the occasions\' descriptions (KO1, KO3)', () {
     final adoration = CachedMass(
       id: null,
@@ -205,11 +336,7 @@ void main() {
                   alignment: Alignment.topLeft,
                   child: SizedBox(
                     width: width,
-                    child: ChurchCard(
-                      entry: entry,
-                      rowsChosen: true,
-                      describesOccasions: true,
-                    ),
+                    child: ChurchCard(entry: entry, describesOccasions: true),
                   ),
                 ),
               ),
@@ -332,13 +459,11 @@ void main() {
             child: CardRow.of(columns, [
               ChurchCard(
                 entry: _entry(masses: [adoration]),
-                rowsChosen: true,
                 describesOccasions: true,
               ),
               for (var i = 1; i < columns; i++)
                 ChurchCard(
                   entry: _entry(masses: [mass]),
-                  rowsChosen: true,
                   describesOccasions: true,
                 ),
             ]),

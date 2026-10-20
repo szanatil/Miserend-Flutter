@@ -14,7 +14,7 @@ class ChurchListEntry {
   final String? photo;
 
   /// The church's cached rows for the day the list was read for, masses or
-  /// not; the row picks the masses out.
+  /// not: the card shows them all (CONTEXT.md, „Napi alkalmak").
   final List<CachedMass> masses;
 
   const ChurchListEntry({

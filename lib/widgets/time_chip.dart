@@ -18,8 +18,8 @@ class TimeChip extends StatelessWidget {
     this.ongoing = false,
   }) : _label = null;
 
-  /// Stands in for the masses a row has no room for. It opens nothing of its
-  /// own: whatever the row sits on leads to where every mass is listed.
+  /// Stands in for the times a row has no room for. It opens nothing of its
+  /// own: whatever the row sits on leads to where every one is listed.
   const TimeChip.more({super.key})
     : time = null,
       onTap = null,

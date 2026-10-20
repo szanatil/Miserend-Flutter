@@ -10,7 +10,6 @@ import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/extentions.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
-import 'package:miserend/mass_kind.dart';
 import 'package:miserend/straight_line_distance.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
@@ -22,8 +21,8 @@ import 'package:miserend/widgets/reserved_room.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
-/// One church of a list read from the cache: its names, today's masses, its
-/// first photo and, where the screen knows the position, how far it is.
+/// One church of a list read from the cache: its names, today's occasions,
+/// its first photo and, where the screen knows the position, how far it is.
 /// Tapping it opens the details page.
 class ChurchCard extends StatelessWidget {
   const ChurchCard({
@@ -32,7 +31,6 @@ class ChurchCard extends StatelessWidget {
     this.position,
     this.failure,
     this.dataAsOf,
-    this.rowsChosen = false,
     this.describesOccasions = false,
     this.clock = DateTime.now,
   });
@@ -51,18 +49,14 @@ class ChurchCard extends StatelessWidget {
   /// How old the church's data is, for the (i) explanation.
   final DateTime? dataAsOf;
 
-  /// Set where the screen has already chosen the rows to show: the
-  /// Részletes kereső's, by the occasion categories searched for (spec 0010,
-  /// „Találatok"). Elsewhere the card keeps the masses alone.
-  final bool rowsChosen;
-
-  /// Set where the rows are of mixed kinds — the Részletes kereső's — so that
-  /// a chip tells which is which: one carrying more than a plain mass is
-  /// marked and opens its description, as on the details page (DESIGN.md
-  /// KO1, KO3). Elsewhere the chips open nothing.
+  /// Set where the rows were searched for by kind — the Részletes kereső's —
+  /// so that a chip tells which is which: one carrying more than a plain
+  /// mass is marked and opens its description, as on the details page
+  /// (DESIGN.md KO1, KO3). Elsewhere the chips open nothing, and which is
+  /// which the details page tells (#77).
   final bool describesOccasions;
 
-  /// The time now, for marking the masses going on. Injected by tests.
+  /// The time now, for marking the occasions going on. Injected by tests.
   final DateTime Function() clock;
 
   /// Lines the name may take; a third would take the common name's place, and
@@ -75,11 +69,9 @@ class ChurchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Confession, adoration and the hours come back among the rows too; the
-    // chips promise a mass (CONTEXT.md, „Napi miserend"), unless the screen
-    // chose the rows itself.
-    final masses =
-        rowsChosen ? entry.masses : entry.masses.where(isMass).toList();
+    // Every occasion of the day, a mass or not (CONTEXT.md, „Napi
+    // alkalmak"): which is which the details page tells.
+    final occasions = entry.masses;
     final km = straightLineKm(position, entry.lat, entry.lon);
     final failure = this.failure;
     final favoritesService = context.watch<FavoritesService>();
@@ -87,21 +79,22 @@ class ChurchCard extends StatelessWidget {
     void toggleFavorite() => favoritesService.toggle(entry.id);
     final described = [
       if (describesOccasions)
-        for (final mass in masses)
-          if (MassInfo.isMeaningful(mass.info)) mass,
+        for (final occasion in occasions)
+          if (MassInfo.isMeaningful(occasion.info)) occasion,
     ];
 
-    // Read out as one unit, today's masses first (DESIGN.md AM5). The
+    // Read out as one unit, today's occasions first (DESIGN.md AM5). The
     // buttons on it, merged into it, would lose their own tap: they are the
     // card's actions instead.
     return MergeSemantics(
       child: Semantics(
         label:
-            masses.isEmpty
+            occasions.isEmpty
                 ? null
-                : masses
+                : occasions
                     .map(
-                      (mass) => TimeOfDay.fromDateTime(mass.time).to24hours(),
+                      (occasion) =>
+                          TimeOfDay.fromDateTime(occasion.time).to24hours(),
                     )
                     .join(', '),
         customSemanticsActions: {
@@ -110,10 +103,11 @@ class ChurchCard extends StatelessWidget {
           if (failure != null)
             const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
                 () => OfflineNotice.show(context, failure, dataAsOf),
-          for (final mass in described)
+          for (final occasion in described)
             CustomSemanticsAction(
-              label: '${TimeOfDay.fromDateTime(mass.time).to24hours()} leírása',
-            ): () => MassInfo.show(context, mass),
+              label:
+                  '${TimeOfDay.fromDateTime(occasion.time).to24hours()} leírása',
+            ): () => MassInfo.show(context, occasion),
         },
         // A row of cards gives each the height of the tallest (DESIGN.md
         // EL3); elsewhere the card is as tall as its content (EL2).
@@ -121,7 +115,7 @@ class ChurchCard extends StatelessWidget {
           builder:
               (context, constraints) => _card(
                 context,
-                masses,
+                occasions,
                 km,
                 favorite,
                 toggleFavorite,
@@ -134,7 +128,7 @@ class ChurchCard extends StatelessWidget {
 
   Widget _card(
     BuildContext context,
-    List<CachedMass> masses,
+    List<CachedMass> occasions,
     double? km,
     bool favorite,
     VoidCallback toggleFavorite, {
@@ -231,8 +225,8 @@ class ChurchCard extends StatelessWidget {
                         ),
                         // Read out first, on the card's own label.
                         child: ExcludeSemantics(
-                          child: _MassChips(
-                            masses: masses,
+                          child: _OccasionChips(
+                            occasions: occasions,
                             now: clock(),
                             describes: describesOccasions,
                           ),
@@ -328,22 +322,22 @@ class ChurchCard extends StatelessWidget {
   }
 }
 
-/// Today's masses on a single line. Those that do not fit give way to one
+/// Today's occasions on a single line. Those that do not fit give way to one
 /// [TimeChip.more]; how many fit depends on the card's actual width, which
 /// differs from phone to phone.
-class _MassChips extends StatelessWidget {
-  const _MassChips({
-    required this.masses,
+class _OccasionChips extends StatelessWidget {
+  const _OccasionChips({
+    required this.occasions,
     required this.now,
     required this.describes,
   });
 
-  final List<CachedMass> masses;
+  final List<CachedMass> occasions;
 
   /// Whether a chip with a description opens it (ChurchCard.describesOccasions).
   final bool describes;
 
-  /// For marking the masses going on (CONTEXT.md, „Épp most tartó mise").
+  /// For marking the occasions going on (CONTEXT.md, „Épp most tartó mise").
   final DateTime now;
 
   static const double _spacing = Spacing.s;
@@ -379,11 +373,12 @@ class _MassChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final times = [
-      for (final mass in masses) TimeOfDay.fromDateTime(mass.time),
+      for (final occasion in occasions) TimeOfDay.fromDateTime(occasion.time),
     ];
 
     final described = [
-      for (final mass in masses) describes && MassInfo.isMeaningful(mass.info),
+      for (final occasion in occasions)
+        describes && MassInfo.isMeaningful(occasion.info),
     ];
 
     return LayoutBuilder(
@@ -399,11 +394,11 @@ class _MassChips extends StatelessWidget {
                 ? (plain, [for (final _ in times) false])
                 : (marked, described);
 
-        // A day without a mass keeps the line, so that the line and the heart
-        // below stand where they do on every card (DESIGN.md EL2). A chip
-        // that opens something takes taps on more room than it is drawn on
-        // (AM3), and the line grows to it; the chips beside it stand in line
-        // with its middle.
+        // A day without an occasion keeps the line, so that the line and the
+        // heart below stand where they do on every card (DESIGN.md EL2). A
+        // chip that opens something takes taps on more room than it is drawn
+        // on (AM3), and the line grows to it; the chips beside it stand in
+        // line with its middle.
         return ConstrainedBox(
           constraints: BoxConstraints(
             minHeight:
@@ -417,11 +412,11 @@ class _MassChips extends StatelessWidget {
                 if (i > 0) const SizedBox(width: _spacing),
                 TimeChip(
                   time: times[i],
-                  ongoing: isOngoingStart(masses[i].time, now),
+                  ongoing: isOngoingStart(occasions[i].time, now),
                   hasInfo: tappable[i],
                   onTap:
                       tappable[i]
-                          ? () => MassInfo.show(context, masses[i])
+                          ? () => MassInfo.show(context, occasions[i])
                           : null,
                 ),
               ],

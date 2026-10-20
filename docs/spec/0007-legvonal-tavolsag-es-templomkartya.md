@@ -81,6 +81,8 @@ A templomkártya 192 px magas lesz. A név és az ismertnév fix sorszámot kap 
 
 > **Módosítva (2026-10-15, #75): DESIGN.md EL2–EL3.** Mise nélkül is fenntartott a mise-chipek sora, üresen (egy chip magasságában), így az elválasztó és a szív minden kártyán ugyanott áll; addig a sor mise nélkül eltűnt, és a kártya alacsonyabb lett. Ez a térképi kártyára is áll: mise nélküli templomnál egy chip-sornyival magasabb, mint addig, és markerek közti váltáskor nem ugrál. Széles képernyőn egy sor kártyái egyforma magasak: a megnyúlt kártyán a többlet a közismert név alá kerül, a chipek, az elválasztó és a szív a sor kártyáin egy vonalban áll, a fotó a teljes magasságot kitölti. Az üres chip-sorban nincs szöveg (#77).
 
+> **Módosítva (2026-10-20, #77): DESIGN.md EL2.** A chipek a templom **napi alkalmait** mutatják (CONTEXT.md), nem csak a miséit: ha ma csak szentségimádás vagy gyóntatás van, az is chipként áll, egyforma időpont-chipen, (i) és fajta-jelölés nélkül. Az épp most tartó jelölés és a felolvasott címke minden alkalomra vonatkozik, időrendben. Az üres chip-sor továbbra is szöveg nélkül marad, a helye fenntartva: a kártya nem különbözteti meg, hogy ma nincs alkalom, vagy nincs letöltött információ, mert egy rövid szöveg a kártyán vagy félrevezetne („nincs mise", pedig csak az adat hiányzik), vagy minden üres kártyán ugyanazt a bizonytalanságot ismételné. A különbség a templom-részletezőn látszik („Ma" blokk és felolvasott címke, #79, #81). A Részletes kereső találatai a spec 0010 szerint működnek.
+
 ### Fájlok, amik érintettek
 
 - `lib/home/churches/church_card.dart`: elrendezés, távolság-chip, magasság-konstans

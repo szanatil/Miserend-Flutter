@@ -183,7 +183,7 @@ void main() {
       expect(find.text('230 m'), findsOneWidget);
     });
 
-    testWidgets('a row shows masses only, not confession or adoration', (
+    testWidgets('a row shows today\'s occasions, confession too (#77)', (
       tester,
     ) async {
       await pumpPage(
@@ -203,9 +203,9 @@ void main() {
         FakeLocationProvider([found]),
       );
 
-      expect(find.byType(TimeChip), findsNWidgets(2));
+      expect(find.byType(TimeChip), findsNWidgets(3));
       expect(find.text('7:00'), findsOneWidget);
-      expect(find.text('9:00'), findsNothing);
+      expect(find.text('9:00'), findsOneWidget);
       expect(find.text('18:00'), findsOneWidget);
     });
   });

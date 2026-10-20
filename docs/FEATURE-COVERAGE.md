@@ -72,7 +72,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 
 ### Shared list (`church_list_view.dart`, `church_card.dart`)
 - Offline banner above the list after a failed refresh, and pull-to-refresh, which restarts the background call.
-- Card showing the first cached photo (blurred placeholder otherwise), name, common name, **today's masses** as time chips — only masses: confession, adoration and other events are left out (`mass_kind.dart`) — and a favorite toggle wired to `FavoritesService`.
+- Card showing the first cached photo (blurred placeholder otherwise), name, common name, **today's occasions** as alike time chips — masses, confession, adoration and the rest, though not the `adoraciok` windows (#77) — and a favorite toggle wired to `FavoritesService`.
 - Tapping the card opens `ChurchDetailsPage`.
 
 ## Masses tab
