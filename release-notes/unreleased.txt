@@ -1,4 +1,5 @@
 Újdonságok
+– Az alkalmazás sötét módban is használható: ha a telefonodon sötét mód van beállítva, a Miserend is sötét színekkel jelenik meg.
 – iPhone-on a párbeszédablakok, a választók, a kapcsolók és a lapok közötti átmenet az iOS megszokott formáját követik.
 – A részletes keresőben szentségimádásra, gyóntatásra és egyéb imaalkalomra is kereshetsz, nem csak misére.
 – A részletes kereső találatain az (i) jellel megjelölt időpontra koppintva látszik az alkalom leírása, így vegyes keresésnél is kiderül, melyik időpont mise és melyik szentségimádás.
