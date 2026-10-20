@@ -430,6 +430,106 @@ void main() {
     });
   });
 
+  group('with only a position', () {
+    setUp(() async {
+      // Some 34 km from Budakeszi: in the second ring.
+      await seed([_church(6, 'Bazilika', 'Esztergom', lat: 47.79, lon: 18.74)]);
+    });
+
+    const nearby = AdvancedSearchCriteria(position: _budakeszi);
+
+    test('the first ring holds the churches within 25 km, nearest first, and '
+        'ends there', () async {
+      final page = await loaderWith(noCall).loadPage(nearby, 0);
+
+      expect(page.churches.map((c) => c.id), [3, 1, 2]);
+      expect(page.ring, SearchRing.within25Km);
+      expect(page.hasMore, isFalse);
+      expect((page.found, page.foundIsFinal), (3, true));
+      expect((page.lookedAt, page.candidates), (3, 3));
+    });
+
+    test('a wider ring, asked for, goes on from the next page with the '
+        'churches not yet seen, the count going on too', () async {
+      final loader = loaderWith(noCall);
+      await loader.loadPage(nearby, 0);
+
+      final second = await loader.loadPage(nearby.widened(), 1);
+      final third = await loader.loadPage(nearby.widened().widened(), 2);
+
+      expect(second.churches.map((c) => c.id), [6]);
+      expect(second.ring, SearchRing.within100Km);
+      expect((second.found, second.lookedAt, second.candidates), (4, 1, 1));
+      expect(second.hasMore, isFalse);
+      // Szeged, then the church of no position, last.
+      expect(third.churches.map((c) => c.id), [4, 5]);
+      expect(third.ring, SearchRing.country);
+      expect((third.found, third.lookedAt, third.candidates), (6, 2, 2));
+    });
+
+    test('with a day, the API is asked about the ring\'s churches alone, and '
+        'the wider ring\'s finds add to the count', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T08:00:00+02:00'),
+          _occurrence(6, '2026-09-21T09:00:00+02:00'),
+        ],
+      );
+      final loader = loaderWith(api);
+      final monday = AdvancedSearchCriteria(position: _budakeszi, day: _monday);
+
+      final first = await loader.loadPage(monday, 0);
+      final askedFirst = api.to('church').single.body;
+      // Nothing past the ring is asked about.
+      expect(api.to('nearbymasses'), hasLength(3));
+      final second = await loader.loadPage(monday.widened(), 1);
+
+      expect((jsonDecode(askedFirst) as Map)['ids'], [3, 1, 2]);
+      expect(first.churches.map((c) => c.id), [1]);
+      expect(
+        (first.found, first.foundIsFinal, first.hasMore),
+        (1, true, false),
+      );
+      expect((jsonDecode(api.to('church').last.body) as Map)['ids'], [6]);
+      expect(second.churches.map((c) => c.id), [6]);
+      expect((second.found, second.foundIsFinal), (2, true));
+    });
+
+    test(
+      'each page says how far through the ring\'s candidates it got',
+      () async {
+        await seed([
+          for (var i = 1; i <= 25; i++)
+            _church(100 + i, 'Templom $i', 'Budakeszi', lat: 47.5, lon: 18.9),
+        ]);
+        final loader = loaderWith(noCall);
+
+        final first = await loader.loadPage(nearby, 0);
+        final second = await loader.loadPage(nearby, 1);
+
+        // The 25 above and the three of the setUp within 25 km.
+        expect(
+          (first.lookedAt, first.candidates, first.hasMore),
+          (20, 28, true),
+        );
+        expect(
+          (second.lookedAt, second.candidates, second.hasMore),
+          (28, 28, false),
+        );
+      },
+    );
+
+    test('a name or a city searches with no ring', () async {
+      final page = await loaderWith(noCall).loadPage(
+        const AdvancedSearchCriteria(name: 'templom', position: _budakeszi),
+        0,
+      );
+
+      expect(page.ring, isNull);
+      expect(page.churches.map((c) => c.id), [3, 1, 4, 5]);
+    });
+  });
+
   group('with a day', () {
     test('a church holding a mass that day is found, with that day\'s masses '
         'as the reason', () async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
@@ -28,6 +30,9 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
 
   int checks = 0;
 
+  /// Pages that stay on their way until their completer completes.
+  final Map<int, Completer<void>> held = {};
+
   @override
   ValueListenable<ApiFailure?> get lastFailure => connection;
 
@@ -43,6 +48,7 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
     int page,
   ) async {
     asked.add((criteria, page));
+    await held[page]?.future;
     return page < pages.length ? pages[page] : resultPage(const []);
   }
 
@@ -59,12 +65,18 @@ AdvancedSearchResultPage resultPage(
   int? found,
   bool foundIsFinal = true,
   ApiFailure? failure,
+  SearchRing? ring,
+  int lookedAt = 0,
+  int candidates = 0,
 }) => AdvancedSearchResultPage(
   churches: churches,
   hasMore: hasMore,
   found: found ?? churches.length,
   foundIsFinal: foundIsFinal,
   failure: failure,
+  ring: ring,
+  lookedAt: lookedAt,
+  candidates: candidates,
 );
 
 ChurchListEntry churchEntry(int id, {String? name, String? commonName}) =>

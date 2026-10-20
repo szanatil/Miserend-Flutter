@@ -13,6 +13,35 @@ import 'package:miserend/database/cache/search_text.dart';
 import 'package:miserend/mass_kind.dart';
 import 'package:miserend/straight_line_distance.dart';
 
+/// The rings a search by the position alone looks through, nearest first, a
+/// wider one only when the user asks for it (CONTEXT.md, „Részletes kereső",
+/// keresési kör): who searches around themselves means to go to what they
+/// find, and a rare occasion looked for across the country took minutes of
+/// API calls. 25 km is the surroundings, 100 km a trip still made for one
+/// occasion; the maintainer set both (#84).
+enum SearchRing {
+  within25Km(25),
+  within100Km(100),
+  country(null);
+
+  const SearchRing(this.maxKm);
+
+  /// How far from the position the ring reaches, in straight-line km (CONTEXT
+  /// .md, „Légvonal-távolság"), its far edge included; null for no limit.
+  final double? maxKm;
+
+  /// The ring „Keresés tovább" goes on to; null past the last one.
+  SearchRing? get wider => index + 1 < values.length ? values[index + 1] : null;
+
+  /// Whether a church [km] away belongs to this ring and not a narrower one.
+  /// A church of no position is in the last ring alone.
+  bool holds(double? km) {
+    if (km == null) return maxKm == null;
+    final inner = index == 0 ? null : values[index - 1].maxKm;
+    return (inner == null || km > inner) && (maxKm == null || km <= maxKm!);
+  }
+}
+
 /// What the Részletes kereső looks for (CONTEXT.md, „Részletes kereső"). Every
 /// condition given has to hold; a null or blank one is not a condition.
 class AdvancedSearchCriteria {
@@ -25,6 +54,7 @@ class AdvancedSearchCriteria {
     this.until,
     this.categories = defaultCategories,
     this.position,
+    this.ring = SearchRing.within25Km,
   });
 
   /// What a search asks for unless told otherwise: masses only, as it did
@@ -56,9 +86,38 @@ class AdvancedSearchCriteria {
   final Set<OccasionCategory> categories;
 
   /// The user's position, known or not. It orders the churches when no city
-  /// is given, and stands in for a name or a city as the condition that
-  /// narrows the search to the user's surroundings.
+  /// is given; with neither a name nor a city it is what the search goes by,
+  /// and [ring] says how far around it.
   final LatLng? position;
+
+  /// The ring looked through when the position alone is searched by; it
+  /// means nothing otherwise (see [searchRing]).
+  final SearchRing ring;
+
+  /// The ring the search looks through: null when a name or a city is given,
+  /// as a city narrows by itself, and a name asks for a church anywhere
+  /// (spec 0010, „Betöltés").
+  SearchRing? get searchRing =>
+      _name == null && _city == null && position != null ? ring : null;
+
+  /// The same search, gone on to the next ring.
+  AdvancedSearchCriteria widened() => _withRing(ring.wider ?? ring);
+
+  AdvancedSearchCriteria _withRing(SearchRing ring) => AdvancedSearchCriteria(
+    name: name,
+    city: city,
+    language: language,
+    day: day,
+    from: from,
+    until: until,
+    categories: categories,
+    position: position,
+    ring: ring,
+  );
+
+  /// Whether [other] asks for the same churches, perhaps in another ring.
+  bool _sameSearchAs(AdvancedSearchCriteria other) =>
+      _withRing(other.ring) == other;
 
   String? get _name => _given(name);
   String? get _city => _given(city);
@@ -88,7 +147,8 @@ class AdvancedSearchCriteria {
       other.from == from &&
       other.until == until &&
       setEquals(other.categories, categories) &&
-      other.position == position;
+      other.position == position &&
+      other.ring == ring;
 
   @override
   int get hashCode => Object.hash(
@@ -100,6 +160,7 @@ class AdvancedSearchCriteria {
     until,
     Object.hashAllUnordered(categories),
     position,
+    ring,
   );
 }
 
@@ -111,6 +172,9 @@ class AdvancedSearchResultPage {
     required this.found,
     required this.foundIsFinal,
     required this.failure,
+    required this.ring,
+    required this.lookedAt,
+    required this.candidates,
   });
 
   /// The churches of the page that meet every condition, in the results'
@@ -120,14 +184,27 @@ class AdvancedSearchResultPage {
   /// these rows as they are.
   final List<ChurchListEntry> churches;
 
-  /// Whether there are candidates left to look at.
+  /// Whether there are candidates of the [ring] left to look at. Past the
+  /// ring's last page there are none, even when a wider ring is left: that
+  /// one comes only when asked for.
   final bool hasMore;
 
-  /// The churches found up to and including this page. Without a day it is
-  /// every candidate, known at once; with one, only the candidates looked at
-  /// so far are counted, and [foundIsFinal] says whether that was all of them.
+  /// The churches found up to and including this page, in every ring looked
+  /// through so far. Without a day it is every candidate, known at once; with
+  /// one, only the candidates looked at so far are counted, and [foundIsFinal]
+  /// says whether that was all of the ring's.
   final int found;
   final bool foundIsFinal;
+
+  /// The ring the page was looked for in; null when the search has no rings
+  /// (AdvancedSearchCriteria.searchRing).
+  final SearchRing? ring;
+
+  /// How many of the ring's [candidates] — of the whole search's when it has
+  /// no rings — have been looked at up to and including this page: how far
+  /// the search has got.
+  final int lookedAt;
+  final int candidates;
 
   /// Why the API gave no answer for this page, even after [AdvancedSearchLoader
   /// .retryDelays]: the search stopped here, with nothing found on the page,
@@ -193,37 +270,61 @@ class AdvancedSearchLoader {
   }
 
   /// The page [page] (from 0) of the results for [criteria]. The pages are
-  /// asked for in order; asking for the first one again starts over.
+  /// asked for in order; asking for the first one again starts over. Asked
+  /// for in a wider ring, the next page is the wider ring's first, and the
+  /// count goes on from the narrower one's.
   Future<AdvancedSearchResultPage> loadPage(
     AdvancedSearchCriteria criteria,
     int page,
   ) async {
     final cache = await _db();
-    if (page == 0 || criteria != _criteria) {
+    final previous = _criteria;
+    if (page == 0 || previous == null || !criteria._sameSearchAs(previous)) {
       _searchId++;
-      _criteria = criteria;
       _candidates = await _candidatesFor(cache, criteria);
       _foundThrough.clear();
+      _ringStart = 0;
+      _foundBeforeRing = 0;
+    } else if (criteria.ring != previous.ring) {
+      _candidates = await _candidatesFor(cache, criteria);
+      _ringStart = page;
+      _foundBeforeRing = _foundBefore(page);
     }
+    _criteria = criteria;
     final candidates = _candidates;
-    final start = page * pageSize;
+    final start = (page - _ringStart) * pageSize;
     final slice = candidates.skip(start).take(pageSize).toList();
-    final hasMore = start + slice.length < candidates.length;
+    final lookedAt = start + slice.length;
+    final hasMore = lookedAt < candidates.length;
+    AdvancedSearchResultPage result(
+      List<ChurchListEntry> churches, {
+      required int found,
+      required bool foundIsFinal,
+      ApiFailure? failure,
+    }) => AdvancedSearchResultPage(
+      churches: churches,
+      hasMore: hasMore,
+      found: found,
+      foundIsFinal: foundIsFinal,
+      failure: failure,
+      ring: criteria.searchRing,
+      lookedAt: lookedAt,
+      candidates: candidates.length,
+    );
 
     final day = criteria.day;
     if (day == null) {
-      return AdvancedSearchResultPage(
-        churches: await _read(cache, slice, clock()),
-        hasMore: hasMore,
-        found: candidates.length,
+      final found = _foundBeforeRing + candidates.length;
+      _recordFound(page, found);
+      return result(
+        await _read(cache, slice, clock()),
+        found: found,
         foundIsFinal: true,
-        failure: null,
       );
     }
 
     final searchId = _searchId;
-    final foundBefore =
-        page > 0 && page <= _foundThrough.length ? _foundThrough[page - 1] : 0;
+    final foundBefore = _foundBefore(page);
     var failure = await _refreshDay(cache, slice, day);
     for (final delay in retryDelays) {
       if (failure == null) break;
@@ -234,9 +335,8 @@ class AdvancedSearchLoader {
       // The cached day may be out of date: what is known not to be up to
       // date is no answer (CONTEXT.md, „Részletes kereső", megszakadt
       // keresés).
-      return AdvancedSearchResultPage(
-        churches: const [],
-        hasMore: hasMore,
+      return result(
+        const [],
         found: foundBefore,
         foundIsFinal: false,
         failure: failure,
@@ -251,24 +351,8 @@ class AdvancedSearchLoader {
     final found = foundBefore + churches.length;
     // Started over while this page waited out its retries: the counts are
     // the newer search's.
-    if (searchId != _searchId) {
-      return AdvancedSearchResultPage(
-        churches: churches,
-        hasMore: hasMore,
-        found: found,
-        foundIsFinal: !hasMore,
-        failure: null,
-      );
-    }
-    if (_foundThrough.length > page) _foundThrough.length = page;
-    _foundThrough.add(found);
-    return AdvancedSearchResultPage(
-      churches: churches,
-      hasMore: hasMore,
-      found: found,
-      foundIsFinal: !hasMore,
-      failure: null,
-    );
+    if (searchId == _searchId) _recordFound(page, found);
+    return result(churches, found: found, foundIsFinal: !hasMore);
   }
 
   /// Cities whose name contains [term], for the city field's suggestions.
@@ -295,9 +379,25 @@ class AdvancedSearchLoader {
   /// How many churches were found up to each page loaded so far.
   final List<int> _foundThrough = [];
 
-  /// The churches meeting the name, city and language, in the results' order
-  /// (spec 0010, „Találatok"): by city and name when a city is given, else
-  /// nearest first when the position is known, else by name.
+  /// The page the ring of [_candidates] began on, and how many churches the
+  /// narrower rings had found by then.
+  int _ringStart = 0;
+  int _foundBeforeRing = 0;
+
+  /// Keeps [found] as the count up to [page], the pages after it let go.
+  void _recordFound(int page, int found) {
+    if (_foundThrough.length > page) _foundThrough.length = page;
+    _foundThrough.add(found);
+  }
+
+  /// How many churches were found up to the page before [page].
+  int _foundBefore(int page) =>
+      page > 0 && page <= _foundThrough.length ? _foundThrough[page - 1] : 0;
+
+  /// The churches meeting the name, city and language — and the ring, when
+  /// the search has one — in the results' order (spec 0010, „Találatok"): by
+  /// city and name when a city is given, else nearest first when the
+  /// position is known, else by name.
   Future<List<ChurchListEntry>> _candidatesFor(
     CacheDatabase cache,
     AdvancedSearchCriteria criteria,
@@ -321,7 +421,11 @@ class AdvancedSearchLoader {
         for (final church in candidates)
           church.id: straightLineKm(position, church.lat, church.lon),
       };
-      return candidates..sort((a, b) {
+      final ring = criteria.searchRing;
+      return [
+        for (final church in candidates)
+          if (ring == null || ring.holds(km[church.id])) church,
+      ]..sort((a, b) {
         final (x, y) = (km[a.id], km[b.id]);
         if (x == null || y == null) {
           // Churches with no position go last; among themselves, by name.

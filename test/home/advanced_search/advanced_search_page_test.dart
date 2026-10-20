@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1139,6 +1141,294 @@ void main() {
             expect(tester.getSize(retry).height, greaterThanOrEqualTo(48));
             expect(tester.getRect(retry).right, lessThanOrEqualTo(width));
             await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
+
+  group('searched by the position alone', () {
+    /// Searches around the user with nothing typed, the loader answering
+    /// [pages].
+    Future<FakeAdvancedSearchLoader> searchNearby(
+      WidgetTester tester,
+      List<AdvancedSearchResultPage> pages, {
+      Brightness brightness = Brightness.light,
+      bool withDay = false,
+      Map<int, Completer<void>> held = const {},
+    }) async {
+      final loader = FakeAdvancedSearchLoader(pages)..held.addAll(held);
+      await pumpPage(
+        tester,
+        loader,
+        location: FakeLocationProvider([_found]),
+        brightness: brightness,
+      );
+      if (withDay) await tester.tap(find.text('Vasárnap'));
+      await search(tester);
+      return loader;
+    }
+
+    Future<void> searchFurther(WidgetTester tester) async {
+      final button = find.widgetWithText(TextButton, 'Keresés tovább');
+      await tester.ensureVisible(button);
+      await tester.pump();
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+    }
+
+    const within25 =
+        '25 km-en belül nincs több találat. A távolabbi templomok átnézése '
+        'eltarthat egy ideig.';
+
+    testWidgets('at the end of the first ring, stops, says so and offers to '
+        'search further', (tester) async {
+      final loader = await searchNearby(tester, [
+        resultPage([churchEntry(1)], ring: SearchRing.within25Km),
+      ]);
+
+      expect(loader.asked.map((a) => a.$2), [0]);
+      expect(find.text(within25), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Keresés tovább'), findsOne);
+      expect(find.textContaining('Nincs több találat'), findsNothing);
+    });
+
+    testWidgets('Keresés tovább goes on to the next ring, and the summary '
+        'with it', (tester) async {
+      final loader = await searchNearby(tester, [
+        resultPage([churchEntry(1)], ring: SearchRing.within25Km),
+        resultPage([churchEntry(2)], found: 2, ring: SearchRing.within100Km),
+        resultPage([churchEntry(3)], found: 3, ring: SearchRing.country),
+      ]);
+      expect(find.text('25 km-en belül'), findsOneWidget);
+
+      await searchFurther(tester);
+
+      expect(loader.asked.map((a) => a.$2), [0, 1]);
+      expect(loader.asked.last.$1.ring, SearchRing.within100Km);
+      expect(find.text('Templom 2'), findsOneWidget);
+      expect(find.text('100 km-en belül'), findsOneWidget);
+      expect(
+        find.text(
+          '100 km-en belül nincs több találat. A távolabbi templomok '
+          'átnézése eltarthat egy ideig.',
+        ),
+        findsOneWidget,
+      );
+
+      await searchFurther(tester);
+
+      expect(loader.asked.last.$1.ring, SearchRing.country);
+      expect(find.text('egész országban'), findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      expect(find.text('Nincs több találat · 3 találat'), findsOneWidget);
+      expect(find.text('Keresés tovább'), findsNothing);
+    });
+
+    testWidgets('with nothing in the first ring, says so beside the way on, '
+        'and asks for no more by itself', (tester) async {
+      final loader = await searchNearby(tester, [
+        resultPage(const [], ring: SearchRing.within25Km),
+        resultPage([churchEntry(2)], ring: SearchRing.within100Km),
+      ]);
+
+      expect(loader.asked.map((a) => a.$2), [0]);
+      expect(find.text('Nincs találat'), findsOneWidget);
+      expect(find.text(within25), findsOneWidget);
+      expect(find.text('Feltételek módosítása'), findsOneWidget);
+
+      await searchFurther(tester);
+
+      expect(loader.asked.map((a) => a.$2), [0, 1]);
+      expect(find.text('Templom 2'), findsOneWidget);
+    });
+
+    testWidgets('the summary names the ring before the day and the '
+        'categories', (tester) async {
+      final loader = FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1)], ring: SearchRing.within25Km),
+      ]);
+      await pumpPage(tester, loader, location: FakeLocationProvider([_found]));
+      await tester.tap(find.text('Vasárnap'));
+      await tester.pump();
+      await tester.tap(find.text('Egyéb'));
+      await tester.tap(find.text('Mise'));
+      await search(tester);
+
+      expect(
+        find.text('25 km-en belül · vasárnap · egyéb imaalkalom'),
+        findsOne,
+      );
+    });
+
+    testWidgets('while the ring is looked through with nothing found yet, the '
+        'loading view says how far it got', (tester) async {
+      final hold = Completer<void>();
+      await searchNearby(
+        tester,
+        [
+          resultPage(
+            const [],
+            hasMore: true,
+            ring: SearchRing.within25Km,
+            lookedAt: 20,
+            candidates: 50,
+          ),
+          resultPage(const [], ring: SearchRing.within25Km),
+        ],
+        held: {1: hold},
+      );
+
+      expect(find.text('Keresés...'), findsOneWidget);
+      expect(find.text('20 / 50 templom átnézve'), findsOneWidget);
+      expect(
+        tester
+            .widget<LinearProgressIndicator>(
+              find.byType(LinearProgressIndicator),
+            )
+            .value,
+        0.4,
+      );
+      hold.complete();
+    });
+
+    testWidgets('while the ring is looked through past the churches found, '
+        'the list\'s end says how far it got', (tester) async {
+      final hold = Completer<void>();
+      await searchNearby(
+        tester,
+        [
+          resultPage(
+            [churchEntry(1)],
+            hasMore: true,
+            ring: SearchRing.within25Km,
+            lookedAt: 20,
+            candidates: 80,
+          ),
+          resultPage(const [], ring: SearchRing.within25Km),
+        ],
+        held: {1: hold},
+      );
+
+      expect(find.text('Templom 1'), findsOneWidget);
+      expect(find.text('20 / 80 templom átnézve'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      hold.complete();
+    });
+
+    testWidgets('a search by a city has no ring and no way on', (tester) async {
+      final loader = FakeAdvancedSearchLoader([
+        resultPage([churchEntry(1)]),
+      ]);
+      await pumpPage(tester, loader, location: FakeLocationProvider([_found]));
+      await tester.enterText(field('Település'), 'Pécs');
+      await search(tester);
+
+      expect(find.text('Pécs'), findsOneWidget);
+      expect(find.text('Nincs több találat · 1 találat'), findsOneWidget);
+      expect(find.text('Keresés tovább'), findsNothing);
+      expect(loader.asked.single.$1.searchRing, isNull);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'the ring\'s end fits, its button 48 dp (EL2, AM3)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await searchNearby(tester, [
+              resultPage([churchEntry(1)], ring: SearchRing.within25Km),
+            ], brightness: brightness);
+            final button = find.widgetWithText(TextButton, 'Keresés tovább');
+            await tester.ensureVisible(button);
+            await tester.pumpAndSettle();
+
+            expect(tester.takeException(), isNull);
+            final rect = tester.getRect(button);
+            expect(rect.height, greaterThanOrEqualTo(48));
+            expect(rect.width, greaterThanOrEqualTo(48));
+            expect(rect.right, lessThanOrEqualTo(width));
+            expect(
+              tester.getRect(find.text(within25)).right,
+              lessThanOrEqualTo(width),
+            );
+            await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'an empty first ring fits, its buttons 48 dp (EL2, AM3)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await searchNearby(tester, [
+              resultPage(const [], ring: SearchRing.within25Km),
+            ], brightness: brightness);
+
+            expect(tester.takeException(), isNull);
+            for (final button in [
+              find.widgetWithText(TextButton, 'Keresés tovább'),
+              find.widgetWithText(FilledButton, 'Feltételek módosítása'),
+            ]) {
+              final rect = tester.getRect(button);
+              expect(rect.height, greaterThanOrEqualTo(48));
+              expect(rect.right, lessThanOrEqualTo(width));
+            }
+            await expectAccessibilityGuidelines(tester);
+          }, variant: eh4Platforms);
+
+          testWidgets('in $brightness at $width dp and text scale $textScale, '
+              'the progress fits in both its places', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            final (second, third) = (Completer<void>(), Completer<void>());
+            void expectFits(String caption) {
+              expect(tester.takeException(), isNull);
+              expect(find.text(caption), findsOneWidget);
+              final bar = tester.getRect(find.byType(LinearProgressIndicator));
+              expect(bar.left, Spacing.l);
+              expect(bar.right, width - Spacing.l);
+              expect(
+                tester.getRect(find.text(caption)).right,
+                lessThanOrEqualTo(width),
+              );
+            }
+
+            await searchNearby(
+              tester,
+              [
+                resultPage(
+                  const [],
+                  hasMore: true,
+                  ring: SearchRing.within25Km,
+                  lookedAt: 120,
+                  candidates: 210,
+                ),
+                resultPage(
+                  [churchEntry(1, commonName: _longCommonName)],
+                  hasMore: true,
+                  ring: SearchRing.within25Km,
+                  lookedAt: 140,
+                  candidates: 210,
+                ),
+                resultPage(const [], ring: SearchRing.within25Km),
+              ],
+              brightness: brightness,
+              held: {1: second, 2: third},
+            );
+            expectFits('120 / 210 templom átnézve');
+
+            second.complete();
+            await tester.pumpAndSettle();
+            await tester.drag(
+              find.byType(CustomScrollView),
+              const Offset(0, -3000),
+            );
+            await tester.pumpAndSettle();
+            expectFits('140 / 210 templom átnézve');
+            await expectAccessibilityGuidelines(tester);
+            third.complete();
           }, variant: eh4Platforms);
         }
       }

@@ -44,6 +44,14 @@ const Map<OccasionCategory, (String chip, String summary)> _categoryLabels = {
   OccasionCategory.other: ('Egyéb', 'egyéb imaalkalom'),
 };
 
+/// What the summary says the search by the position alone looked through
+/// (spec 0010, „Oldal"), and what a ring's end says it found nothing more in.
+const Map<SearchRing, String> _ringLabels = {
+  SearchRing.within25Km: '25 km-en belül',
+  SearchRing.within100Km: '100 km-en belül',
+  SearchRing.country: 'egész országban',
+};
+
 /// What the conditions' form holds, kept so that closing it without a search
 /// can put back the conditions the results were found by.
 class _Conditions {
@@ -309,9 +317,45 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   void _expand() => setState(() => _expanded = true);
 
   /// Whether there are pages left to ask for: none once the search stopped,
-  /// until it is started over (CONTEXT.md, „Részletes kereső").
-  bool get _hasMore =>
-      _pages.isEmpty || (_pages.last.hasMore && _pages.last.failure == null);
+  /// until it is started over (CONTEXT.md, „Részletes kereső"), and none past
+  /// a ring's end until the user asks for the next ring.
+  bool get _hasMore {
+    final last = _pages.lastOrNull;
+    if (last == null) return true;
+    if (last.failure != null) return false;
+    return last.hasMore || last.ring != _criteria?.searchRing;
+  }
+
+  /// The ring the user may go on to, at the end of the one looked through;
+  /// null while there is more of it, and past the last.
+  SearchRing? get _widerRing {
+    final last = _pages.lastOrNull;
+    if (last == null || _loading || _hasMore || last.failure != null) {
+      return null;
+    }
+    return last.ring?.wider;
+  }
+
+  /// „Keresés tovább": the same search in the next ring, from the page after
+  /// the last one.
+  void _searchFurther() {
+    setState(() => _criteria = _criteria!.widened());
+    _loadNext();
+  }
+
+  /// How far through its ring the search has got, while one is being looked
+  /// through; null before the ring's first page is in, when its candidates
+  /// are not yet counted, and for a search with no rings, which goes on as
+  /// it did (#84).
+  LoadingProgress? get _ringProgress {
+    final last = _pages.lastOrNull;
+    final ring = _criteria?.searchRing;
+    if (last == null || ring == null || last.ring != ring) return null;
+    return LoadingProgress(
+      value: last.candidates == 0 ? 1 : last.lookedAt / last.candidates,
+      caption: '${last.lookedAt} / ${last.candidates} templom átnézve',
+    );
+  }
 
   Future<void> _loadNext() async {
     final criteria = _criteria;
@@ -693,19 +737,34 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     if (churches.isEmpty && (_loading || _hasMore)) {
       // An empty page with more to come is asked for on the next frame.
       WidgetsBinding.instance.addPostFrameCallback((_) => _fillScreen());
-      return const LoadingView(message: 'Keresés...');
+      return LoadingView(message: 'Keresés...', progress: _ringProgress);
     }
     if (churches.isEmpty) {
+      final wider = _widerRing;
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MessageView(message: 'Nincs találat'),
-            FilledButton.tonal(
-              onPressed: _expand,
-              child: const Text('Feltételek módosítása'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MessageView(message: 'Nincs találat'),
+              if (wider != null) ...[
+                _ringEndNote(),
+                const SizedBox(height: Spacing.l),
+              ],
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: Spacing.s,
+                runSpacing: Spacing.s,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _expand,
+                    child: const Text('Feltételek módosítása'),
+                  ),
+                  if (wider != null) _searchFurtherButton(),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -772,12 +831,20 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     ]);
   }
 
-  /// The spinner only while a page is on its way; the space it takes is kept
-  /// between pages, so the end of the list does not jump.
+  /// The spinner — or how far through its ring the search has got — only
+  /// while a page is on its way; the space it takes is kept between pages,
+  /// so the end of the list does not jump. At a ring's end, the way on to
+  /// the next.
   Widget _listEnd(AdvancedSearchResultPage last) {
-    if (!_loading && (last.hasMore || last.failure != null)) {
-      return const SizedBox(
-        height: _listEndPadding + _spinnerSize + _listEndPadding,
+    final progress = _ringProgress;
+    if (progress != null && (_loading || _hasMore)) {
+      // The bar keeps its own distance from the screen's edge (DESIGN.md
+      // KO8), and its width centred.
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: _listEndPadding),
+        child: Center(
+          child: Visibility.maintain(visible: _loading, child: progress),
+        ),
       );
     }
     if (_loading) {
@@ -788,6 +855,23 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
             dimension: _spinnerSize,
             child: CircularProgressIndicator.adaptive(strokeWidth: 2),
           ),
+        ),
+      );
+    }
+    if (_hasMore || last.failure != null) {
+      return const SizedBox(
+        height: _listEndPadding + _spinnerSize + _listEndPadding,
+      );
+    }
+    if (_widerRing != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: _listEndPadding),
+        child: Column(
+          children: [
+            _ringEndNote(),
+            const SizedBox(height: Spacing.s),
+            _searchFurtherButton(),
+          ],
         ),
       );
     }
@@ -803,9 +887,32 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     );
   }
 
+  /// „25 km-en belül nincs több találat…": why the list stopped, and that
+  /// going on may take a while (spec 0010, „Lista alja").
+  Widget _ringEndNote() {
+    final ring = _pages.last.ring!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.l),
+      child: Text(
+        '${_ringLabels[ring]} nincs több találat. A távolabbi templomok '
+        'átnézése eltarthat egy ideig.',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _searchFurtherButton() => TextButton(
+    onPressed: _searchFurther,
+    child: const Text('Keresés tovább'),
+  );
+
   /// „Pécs · vasárnap 9–12 · szentségimádás · latin": what the results were
-  /// found by. The categories only count with a day, and are named only when
-  /// they are not the default, masses alone.
+  /// found by; „25 km-en belül · …" by the position alone. The categories
+  /// only count with a day, and are named only when they are not the
+  /// default, masses alone.
   String _summary() {
     final applied = _applied!;
     final name = applied.name.trim();
@@ -815,7 +922,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     return [
       if (name.isNotEmpty) name,
       if (city.isNotEmpty) city,
-      if (name.isEmpty && city.isEmpty) 'a közelben',
+      // Searched by the position alone: the ring the list looked through,
+      // which „Keresés tovább" widens.
+      if (_criteria?.searchRing case final ring?) _ringLabels[ring]!,
       if (day != null)
         [
           applied.dayChoice == DayChoice.date
