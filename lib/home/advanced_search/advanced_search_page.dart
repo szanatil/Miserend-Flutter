@@ -865,8 +865,9 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       );
     }
     if (_endedRing case final ended?) {
+      // The ring's text keeps its own distance from the screen's edge (KO8).
       return Padding(
-        padding: const EdgeInsets.all(_listEndPadding),
+        padding: const EdgeInsets.symmetric(vertical: _listEndPadding),
         child: Column(
           children: [
             _ringEndNote(ended),

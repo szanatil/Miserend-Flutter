@@ -1395,10 +1395,10 @@ void main() {
             expect(rect.height, greaterThanOrEqualTo(48));
             expect(rect.width, greaterThanOrEqualTo(48));
             expect(rect.right, lessThanOrEqualTo(width));
-            expect(
-              tester.getRect(find.text(within25)).right,
-              lessThanOrEqualTo(width),
-            );
+            // The ring's text stands Spacing.l off the screen's edge (KO8).
+            final note = tester.getRect(find.text(within25));
+            expect(note.left, Spacing.l);
+            expect(note.right, width - Spacing.l);
             await expectAccessibilityGuidelines(tester);
           }, variant: eh4Platforms);
 
