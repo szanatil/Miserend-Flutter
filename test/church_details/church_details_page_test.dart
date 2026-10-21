@@ -1886,5 +1886,70 @@ void main() {
       expect(map.userPosition, isNull);
       expect(find.byKey(MiserendMap.userPositionKey), findsNothing);
     });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp, text scale $textScale, '
+              'directions are a text button with a verb, read out as a '
+              'button, at least 48 tall, and plan the route (KO9, SV1, SV3, '
+              'AM3, EH3, EH4)', (tester) async {
+            final calls = <String>[];
+            const launcher = MethodChannel('map_launcher');
+            tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+              launcher,
+              (call) async {
+                calls.add(call.method);
+                return call.method == 'getInstalledMaps'
+                    ? [
+                      {'mapName': 'Google Maps', 'mapType': 'google'},
+                    ]
+                    : null;
+              },
+            );
+            addTearDown(
+              () => tester.binding.defaultBinaryMessenger
+                  .setMockMethodCallHandler(launcher, null),
+            );
+            final handle = tester.ensureSemantics();
+            final empty = _page(_emptyDays());
+            await pumpPage(
+              tester,
+              _FakeLoader(cached: empty, refreshed: empty),
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+
+            final button = find.widgetWithText(
+              TextButton,
+              'Útvonaltervezés ide',
+            );
+            expect(button, findsOneWidget);
+            expect(find.text('ÚTVONAL'), findsNothing);
+            expect(
+              tester.getSemantics(button),
+              isSemantics(
+                label: 'Útvonaltervezés ide',
+                isButton: true,
+                hasTapAction: true,
+              ),
+            );
+            expect(
+              tester.getSize(button).height,
+              greaterThanOrEqualTo(kMinInteractiveDimension),
+            );
+            expect(tester.takeException(), isNull);
+
+            await tester.ensureVisible(button);
+            await tester.tap(button);
+            await tester.pumpAndSettle();
+
+            expect(calls, ['getInstalledMaps', 'showDirections']);
+            handle.dispose();
+          }, variant: eh4Platforms);
+        }
+      }
+    }
   });
 }

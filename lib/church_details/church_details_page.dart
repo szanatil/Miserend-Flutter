@@ -750,28 +750,13 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
             padding: EdgeInsets.only(top: Spacing.s),
             child: Divider(height: 1),
           ),
-          Semantics(
-            button: true,
-            // Taps on the whole line, at least 48 tall (AM3), with the touch
-            // feedback a button gives (PL2).
-            child: InkWell(
-              onTap: _showDirectionsOnMap,
-              child: Padding(
-                padding: const EdgeInsets.only(top: Spacing.s),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: kMinInteractiveDimension,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'ÚTVONAL',
-                      style: Theme.of(context).textTheme.titleMedium!.apply(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.s),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: _showDirectionsOnMap,
+                child: const Text('Útvonaltervezés ide'),
               ),
             ),
           ),

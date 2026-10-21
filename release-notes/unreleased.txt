@@ -17,5 +17,6 @@ Javítások
 – A Részletes kereső név és település nélkül előbb csak a 25 km-en belüli templomok között keres, így ritka alkalomra keresve sem kell perceket várni. A „Keresés tovább” gombbal 100 km-ig, majd az egész országban is kereshetsz, és egy sáv mutatja, hány templomot nézett már át.
 – Ha egy templomban ugyanabban az időpontban két mise is van (például az egyik angolul, egy kápolnában), a Misék fülön egy kártyán, külön sorban látszik mindkettő a saját jellemzőjével, a templom adatlapján pedig a mai napnál koppintásra kiderül, melyik melyik.
 – iPhone-on a hibajelentés választógombjai jól látszanak.
+– A templom adatlapján a térkép alatti „ÚTVONAL” helyett egy „Útvonaltervezés ide” gomb indítja az útvonaltervezést.
 – Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.
 – Képernyőolvasóval a templom- és misekártyák egy egységként olvashatók fel, a koppintható időpontok pedig könnyebben eltalálhatók.

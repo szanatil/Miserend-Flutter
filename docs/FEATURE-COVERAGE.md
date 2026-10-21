@@ -111,7 +111,7 @@ The export is only downloaded when it is missing or of the wrong version — the
 | Next 19 days schedule | A horizontally-scrolling row of day cards ("Holnap" for tomorrow, otherwise the Hungarian weekday name + date), one per day that has masses. |
 | Location card | A non-interactive CARTO Voyager map (`MiserendMap`) centered on the church, with a pin; tapping it opens the location in the device's installed map app (`map_launcher`, always the **first** installed app — no chooser). |
 | Getting-there text | Optional free-text directions field from the dataset (`gettingThere`), HTML-unescaped before display; hidden entirely if absent. |
-| Directions button | "ÚTVONAL" — opens turn-by-turn directions in the same default map app. |
+| Directions button | "Útvonaltervezés ide" — opens turn-by-turn directions in the same default map app. |
 
 ## Report a problem
 
