@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 
 /// Decides whether a mass carries anything worth opening, and shows it.
@@ -24,27 +25,16 @@ class MassInfo {
   }
 
   static void show(BuildContext context, CachedMass mass) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  TimeOfDay.fromDateTime(mass.time).to24hours(),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(MiserendText.normalize(mass.info)),
-              ],
-            ),
-          ),
-        );
-      },
+    showMiserendActionSheet<void>(
+      context,
+      title: Text(
+        TimeOfDay.fromDateTime(mass.time).to24hours(),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+      message: Text(MiserendText.normalize(mass.info)),
     );
   }
 }

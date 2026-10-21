@@ -196,6 +196,13 @@ class CacheDatabase {
     return _toChurch(rows.first);
   }
 
+  /// The lowest id the cache holds, for a call that asks about a church only
+  /// to see whether the API answers; null when the cache is empty.
+  Future<int?> firstChurchId() async {
+    final rows = await db.rawQuery('SELECT MIN(id) AS id FROM $churchesTable');
+    return rows.first['id'] as int?;
+  }
+
   /// Churches with at least one photo; the Névjegy page's recommendation shows
   /// one, so a church without is never picked.
   static const String _photographed = "photos IS NOT NULL AND photos <> '[]'";
@@ -293,12 +300,24 @@ class CacheDatabase {
     });
   }
 
+  /// Puts [masses] in place of the church's cached rows; from the start of
+  /// [keepFrom] on, if given, the cached rows stay: an answer cut off there
+  /// says nothing about them.
   Future<void> replaceMassesForChurch(
     int churchId,
-    List<CachedMass> masses,
-  ) async {
+    List<CachedMass> masses, {
+    DateTime? keepFrom,
+  }) async {
     final batch = db.batch();
-    batch.delete(massesTable, where: 'church_id = ?', whereArgs: [churchId]);
+    if (keepFrom == null) {
+      batch.delete(massesTable, where: 'church_id = ?', whereArgs: [churchId]);
+    } else {
+      batch.delete(
+        massesTable,
+        where: 'church_id = ? AND idopont < ?',
+        whereArgs: [churchId, _dayBounds(keepFrom).$1],
+      );
+    }
     for (final mass in masses) {
       batch.insert(massesTable, _massRow(mass));
     }

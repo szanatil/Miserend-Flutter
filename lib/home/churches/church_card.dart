@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/church_details/church_details_page.dart';
+import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/extentions.dart';
-import 'package:miserend/mass_kind.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/straight_line_distance.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
+import 'package:miserend/widgets/mass_info.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/reserved_room.dart';
 import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 
-/// One church of a list read from the cache: its names, today's masses, its
-/// first photo and, where the screen knows the position, how far it is.
+/// One church of a list read from the cache: its names, today's occasions,
+/// its first photo and, where the screen knows the position, how far it is.
 /// Tapping it opens the details page.
 class ChurchCard extends StatelessWidget {
   const ChurchCard({
@@ -26,11 +31,9 @@ class ChurchCard extends StatelessWidget {
     this.position,
     this.failure,
     this.dataAsOf,
+    this.describesOccasions = false,
+    this.clock = DateTime.now,
   });
-
-  /// The card's fixed height in logical pixels. Fixed, so that a list scrolls
-  /// evenly and the map can keep its buttons clear of the card.
-  static const double height = 192;
 
   final ChurchListEntry entry;
 
@@ -46,35 +49,119 @@ class ChurchCard extends StatelessWidget {
   /// How old the church's data is, for the (i) explanation.
   final DateTime? dataAsOf;
 
+  /// Set where the rows were searched for by kind — the Részletes kereső's —
+  /// so that a chip tells which is which: one carrying more than a plain
+  /// mass is marked and opens its description, as on the details page
+  /// (DESIGN.md KO1, KO3). Elsewhere the chips open nothing, and which is
+  /// which the details page tells (#77).
+  final bool describesOccasions;
+
+  /// The time now, for marking the occasions going on. Injected by tests.
+  final DateTime Function() clock;
+
   /// Lines the name may take; a third would take the common name's place, and
   /// the full name is on the details page.
   static const int _nameLines = 2;
 
+  /// The text takes two thirds of the card, the photo the third beside it.
+  static const int _textFlex = 2;
+  static const int _photoFlex = 1;
+
   @override
   Widget build(BuildContext context) {
-    // Confession, adoration and the hours come back among the rows too; the
-    // chips promise a mass (CONTEXT.md, „Napi miserend").
-    final masses = entry.masses.where(isMass).toList();
+    // Every occasion of the day, a mass or not (CONTEXT.md, „Napi
+    // alkalmak"): which is which the details page tells.
+    final occasions = entry.masses;
     final km = straightLineKm(position, entry.lat, entry.lon);
-    final textTheme = Theme.of(context).textTheme;
+    final failure = this.failure;
+    final favoritesService = context.watch<FavoritesService>();
+    final favorite = favoritesService.isFavorite(entry.id);
+    void toggleFavorite() => favoritesService.toggle(entry.id);
+    final described = [
+      if (describesOccasions)
+        for (final occasion in occasions)
+          if (MassInfo.isMeaningful(occasion.info)) occasion,
+    ];
 
+    // Read out as one unit, today's occasions first (DESIGN.md AM5). The
+    // buttons on it, merged into it, would lose their own tap: they are the
+    // card's actions instead.
+    return MergeSemantics(
+      child: Semantics(
+        label:
+            occasions.isEmpty
+                ? null
+                : occasions
+                    .map(
+                      (occasion) =>
+                          TimeOfDay.fromDateTime(occasion.time).to24hours(),
+                    )
+                    .join(', '),
+        customSemanticsActions: {
+          CustomSemanticsAction(label: _favoriteLabel(favorite)):
+              toggleFavorite,
+          if (failure != null)
+            const CustomSemanticsAction(label: OfflineInfoButton.tooltip):
+                () => OfflineNotice.show(context, failure, dataAsOf),
+          for (final occasion in described)
+            CustomSemanticsAction(
+              label:
+                  '${TimeOfDay.fromDateTime(occasion.time).to24hours()} leírása',
+            ): () => MassInfo.show(context, occasion),
+        },
+        // A row of cards gives each the height of the tallest (DESIGN.md
+        // EL3); elsewhere the card is as tall as its content (EL2).
+        child: LayoutBuilder(
+          builder:
+              (context, constraints) => _card(
+                context,
+                occasions,
+                km,
+                favorite,
+                toggleFavorite,
+                stretched: constraints.hasTightHeight,
+              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _card(
+    BuildContext context,
+    List<CachedMass> occasions,
+    double? km,
+    bool favorite,
+    VoidCallback toggleFavorite, {
+    required bool stretched,
+  }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final scheme = theme.colorScheme;
     final failure = this.failure;
 
-    return Center(
-      child: Card(
-        color: failure?.cardTint,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () => openChurchDetails(context, entry),
-          child: SizedBox(
-            height: height,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Card(
+      color: failure?.cardTint(context),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openChurchDetails(context, entry),
+        // The text sets the card's height; the photo is laid over the
+        // third left free for it, so that it takes that height instead of
+        // setting it (DESIGN.md EL2). Stretched, the room left over goes
+        // under the common name, so that the chips, the line and the heart
+        // stand level across the row.
+        child: Stack(
+          fit: stretched ? StackFit.expand : StackFit.loose,
+          children: [
+            Row(
+              crossAxisAlignment:
+                  stretched
+                      ? CrossAxisAlignment.stretch
+                      : CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 2,
+                  flex: _textFlex,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -83,20 +170,20 @@ class ChurchCard extends StatelessWidget {
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(
-                                8.0,
-                                8.0,
-                                8.0,
-                                4.0,
+                                Spacing.l,
+                                Spacing.l,
+                                Spacing.l,
+                                0,
                               ),
                               // The slot keeps both lines even for a short
-                              // name, so that everything below stands at the
-                              // same height on every card.
+                              // name, so that everything below stands at
+                              // the same height on every card.
                               child: ReservedRoom.lines(
                                 lines: _nameLines,
-                                style: textTheme.titleLarge,
+                                style: textTheme.titleMedium,
                                 child: Text(
                                   entry.name ?? '',
-                                  style: textTheme.titleLarge,
+                                  style: textTheme.titleMedium,
                                   maxLines: _nameLines,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -104,169 +191,241 @@ class ChurchCard extends StatelessWidget {
                             ),
                           ),
                           if (failure != null)
-                            OfflineInfoButton(failure: failure, asOf: dataAsOf),
+                            ExcludeSemantics(
+                              child: OfflineInfoButton(
+                                failure: failure,
+                                asOf: dataAsOf,
+                              ),
+                            ),
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 8.0),
-                        // An empty text still takes its line.
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          Spacing.s,
+                          Spacing.l,
+                          Spacing.m,
+                        ),
+                        // An empty text still takes its line; a long one
+                        // wraps (DESIGN.md EL2).
                         child: Text(
                           entry.commonName ?? '',
-                          style: textTheme.titleMedium?.apply(
-                            color: Colors.grey,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      if (stretched) const Spacer(),
                       Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: _MassChips(masses: masses),
+                        padding: const EdgeInsets.fromLTRB(
+                          Spacing.l,
+                          0,
+                          Spacing.l,
+                          Spacing.s,
+                        ),
+                        // Read out first, on the card's own label.
+                        child: ExcludeSemantics(
+                          child: _OccasionChips(
+                            occasions: occasions,
+                            now: clock(),
+                            describes: describesOccasions,
+                          ),
+                        ),
                       ),
-                      Container(color: Colors.grey, height: 1),
-                      Consumer<FavoritesService>(
-                        builder: (context, favoritesService, child) {
-                          final favorite = favoritesService.isFavorite(
-                            entry.id,
-                          );
-                          return IconButton(
-                            icon:
-                                favorite
-                                    ? const Icon(Icons.favorite)
-                                    : const Icon(Icons.favorite_border),
-                            color: Colors.grey,
-                            tooltip:
-                                favorite
-                                    ? 'Törlés a kedvencek közül'
-                                    : 'Kedvencekhez',
-                            onPressed: () => favoritesService.toggle(entry.id),
-                          );
-                        },
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: scheme.outlineVariant,
+                      ),
+                      ExcludeSemantics(
+                        child: IconButton(
+                          icon:
+                              favorite
+                                  ? const Icon(Icons.favorite_rounded)
+                                  : const Icon(Icons.favorite_border_rounded),
+                          color:
+                              favorite
+                                  ? scheme.primary
+                                  : scheme.onSurfaceVariant,
+                          tooltip: _favoriteLabel(favorite),
+                          onPressed: toggleFavorite,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Expanded(
-                  flex: 1,
+                const Spacer(flex: _photoFlex),
+              ],
+            ),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FractionallySizedBox(
+                  widthFactor: _photoFlex / (_textFlex + _photoFlex),
+                  heightFactor: 1,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      _photo(context),
-                      // Over the photo rather than in the text column, so that
-                      // a card without it has nothing moved.
+                      _photo(),
+                      // Over the photo rather than in the text column, so
+                      // that a card without it has nothing moved.
                       if (km != null)
                         Positioned(
-                          right: 8,
-                          bottom: 8,
+                          right: Spacing.s,
+                          bottom: Spacing.s,
                           child: DistanceChip(km: km),
                         ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _photo(BuildContext context) {
-    final photo = entry.photo;
-    return photo != null && photo.isNotEmpty
-        ? FadeInImage.assetNetwork(
-          image: photo,
-          fit: BoxFit.cover,
-          placeholder: 'assets/images/church_blurred.png',
-          imageErrorBuilder: _errorBuilder,
-          imageCacheHeight: _decodeHeight(context),
-          placeholderCacheHeight: _decodeHeight(context),
-        )
-        : Image.asset(
+  /// What the heart does, on its tooltip and as the card's action.
+  static String _favoriteLabel(bool favorite) =>
+      favorite ? 'Törlés a kedvencek közül' : 'Kedvencekhez';
+
+  /// The photo strip, as tall as the card.
+  Widget _photo() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The strip is a third of the card wide and the full card tall, so
+        // height is the axis [BoxFit.cover] scales by and needs no headroom.
+        final decodeHeight = PhotoDecode.forSlot(
+          context,
+          constraints.maxHeight,
+          tight: true,
+        );
+        final placeholder = Image.asset(
           'assets/images/church_blurred.png',
           fit: BoxFit.cover,
-          cacheHeight: _decodeHeight(context),
+          cacheHeight: decodeHeight,
+          excludeFromSemantics: true,
         );
-  }
-
-  Widget _errorBuilder(
-    BuildContext context,
-    Object error,
-    StackTrace? stackTrace,
-  ) {
-    return Image.asset(
-      'assets/images/church_blurred.png',
-      fit: BoxFit.cover,
-      cacheHeight: _decodeHeight(context),
+        final photo = entry.photo;
+        return photo != null && photo.isNotEmpty
+            ? PhotoFadeIn(
+              image: photo,
+              placeholder: 'assets/images/church_blurred.png',
+              imageErrorBuilder: (context, error, stackTrace) => placeholder,
+              imageCacheHeight: decodeHeight,
+              placeholderCacheHeight: decodeHeight,
+            )
+            : placeholder;
+      },
     );
   }
-
-  /// The photo slot is a third of the card wide and the full card tall, so
-  /// height is the axis [BoxFit.cover] scales by and needs no headroom.
-  int _decodeHeight(BuildContext context) =>
-      PhotoDecode.forSlot(context, height, tight: true);
 }
 
-/// Today's masses on a single line. Those that do not fit give way to one
+/// Today's occasions on a single line. Those that do not fit give way to one
 /// [TimeChip.more]; how many fit depends on the card's actual width, which
 /// differs from phone to phone.
-class _MassChips extends StatelessWidget {
-  const _MassChips({required this.masses});
+class _OccasionChips extends StatelessWidget {
+  const _OccasionChips({
+    required this.occasions,
+    required this.now,
+    required this.describes,
+  });
 
-  final List<CachedMass> masses;
+  final List<CachedMass> occasions;
 
-  static const double _spacing = 4;
+  /// Whether a chip with a description opens it (ChurchCard.describesOccasions).
+  final bool describes;
+
+  /// For marking the occasions going on (CONTEXT.md, „Épp most tartó mise").
+  final DateTime now;
+
+  static const double _spacing = Spacing.s;
+
+  /// How many of [times] fit on a line [available] wide, [tappable] ones
+  /// marked (none when null), leaving room for the „…" chip when not all of
+  /// them do.
+  static int _fitting(
+    BuildContext context,
+    List<TimeOfDay> times,
+    List<bool>? tappable,
+    double available,
+  ) {
+    double chipWidth(String label, {bool tappable = false}) =>
+        TimeChip.widthOf(context, label, tappable: tappable);
+    final widths = [
+      for (final (i, time) in times.indexed)
+        chipWidth(time.to24hours(), tappable: tappable?[i] ?? false),
+    ];
+    final all = widths.fold(0.0, (sum, w) => sum + w + _spacing) - _spacing;
+    if (times.isEmpty || all <= available) return times.length;
+    final room = available - chipWidth(TimeChip.moreLabel);
+    var used = 0.0;
+    var fitting = 0;
+    while (fitting < times.length &&
+        used + widths[fitting] + _spacing <= room) {
+      used += widths[fitting] + _spacing;
+      fitting++;
+    }
+    return fitting;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium;
-    final textScaler = MediaQuery.textScalerOf(context);
     final times = [
-      for (final mass in masses) TimeOfDay.fromDateTime(mass.time),
+      for (final occasion in occasions) TimeOfDay.fromDateTime(occasion.time),
     ];
 
-    double chipWidth(String label) {
-      final painter = TextPainter(
-        text: TextSpan(text: label, style: style),
-        textDirection: TextDirection.ltr,
-        textScaler: textScaler,
-        maxLines: 1,
-      )..layout();
-      final width = painter.width + 2 * TimeChip.padding;
-      painter.dispose();
-      return width;
-    }
+    final described = [
+      for (final occasion in occasions)
+        describes && MassInfo.isMeaningful(occasion.info),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final available = constraints.maxWidth;
-        final widths = [for (final time in times) chipWidth(time.to24hours())];
+        final marked = _fitting(context, times, described, available);
+        final plain = _fitting(context, times, null, available);
+        // The time leads the card (TI3): where the marker would leave fewer
+        // times on the line, the chips go without it. The description is
+        // still the card's action, and on the details page.
+        final (fitting, tappable) =
+            plain > marked
+                ? (plain, [for (final _ in times) false])
+                : (marked, described);
 
-        var fitting = times.length;
-        final all = widths.fold(0.0, (sum, w) => sum + w + _spacing) - _spacing;
-        if (times.isNotEmpty && all > available) {
-          final room = available - chipWidth(TimeChip.moreLabel);
-          var used = 0.0;
-          fitting = 0;
-          while (fitting < times.length &&
-              used + widths[fitting] + _spacing <= room) {
-            used += widths[fitting] + _spacing;
-            fitting++;
-          }
-        }
-
-        return Row(
-          children: [
-            for (var i = 0; i < fitting; i++) ...[
-              if (i > 0) const SizedBox(width: _spacing),
-              TimeChip(time: times[i]),
+        // A day without an occasion keeps the line, so that the line and the
+        // heart below stand where they do on every card (DESIGN.md EL2). A
+        // chip that opens something takes taps on more room than it is drawn
+        // on (AM3), and the line grows to it; the chips beside it stand in
+        // line with its middle.
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight:
+                tappable.take(fitting).contains(true)
+                    ? TimeChip.tappableHeightOf(context)
+                    : TimeChip.heightOf(context),
+          ),
+          child: Row(
+            children: [
+              for (var i = 0; i < fitting; i++) ...[
+                if (i > 0) const SizedBox(width: _spacing),
+                TimeChip(
+                  time: times[i],
+                  ongoing: isOngoingStart(occasions[i].time, now),
+                  hasInfo: tappable[i],
+                  onTap:
+                      tappable[i]
+                          ? () => MassInfo.show(context, occasions[i])
+                          : null,
+                ),
+              ],
+              if (fitting < times.length) ...[
+                if (fitting > 0) const SizedBox(width: _spacing),
+                const TimeChip.more(),
+              ],
             ],
-            if (fitting < times.length) ...[
-              if (fitting > 0) const SizedBox(width: _spacing),
-              const TimeChip.more(),
-            ],
-          ],
+          ),
         );
       },
     );
@@ -274,8 +433,13 @@ class _MassChips extends StatelessWidget {
 }
 
 /// Opens the details page of [entry]. The page loads everything by id; the
-/// entry only seeds the name, the map and the header until then.
-void openChurchDetails(BuildContext context, ChurchListEntry entry) {
+/// entry only seeds the name, the map and the header until then. [loader] is
+/// injected by tests; the page builds its own otherwise.
+void openChurchDetails(
+  BuildContext context,
+  ChurchListEntry entry, {
+  ChurchScheduleLoader? loader,
+}) {
   final church = Church(
     id: entry.id,
     name: entry.name,
@@ -293,6 +457,8 @@ void openChurchDetails(BuildContext context, ChurchListEntry entry) {
   );
   Navigator.push(
     context,
-    MaterialPageRoute(builder: (context) => ChurchDetailsPage(church: church)),
+    MaterialPageRoute(
+      builder: (context) => ChurchDetailsPage(church: church, loader: loader),
+    ),
   );
 }

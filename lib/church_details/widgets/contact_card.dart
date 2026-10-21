@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/section_card.dart';
@@ -53,7 +53,7 @@ class ContactCard extends StatelessWidget {
           if (email.isNotEmpty)
             _row(
               context,
-              icon: Icons.mail_outline,
+              icon: Icons.mail_outline_rounded,
               label: email,
               onTap:
                   () => launchExternal(
@@ -64,7 +64,7 @@ class ContactCard extends StatelessWidget {
           for (final link in links)
             _row(
               context,
-              icon: Icons.link,
+              icon: Icons.link_rounded,
               label: _label(link),
               onTap: () {
                 final uri = Uri.tryParse(link);
@@ -75,7 +75,7 @@ class ContactCard extends StatelessWidget {
             ),
           if (parishText.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: ExpandableInfoTile(text: parishText),
             ),
         ],
@@ -92,17 +92,17 @@ class ContactCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.black54),
-            const SizedBox(width: 12),
+            Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            const SizedBox(width: Spacing.s),
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
+                style: Theme.of(context).textTheme.bodyMedium?.apply(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ],

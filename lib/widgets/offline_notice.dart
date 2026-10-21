@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/adaptive.dart';
+import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 
@@ -10,27 +11,28 @@ import 'package:miserend/widgets/stale_data_retry.dart';
 /// church card and the details page. Their colours and icons are
 /// [OfflineLook]'s.
 class OfflineNotice {
-  static final DateFormat _date = DateFormat('yyyy. MM. dd');
+  static final DateFormat _date = DateFormat('yyyy. MM. dd.');
 
   /// The explanation the (i) opens. [asOf] is how old the data is; null only
   /// when not even the bootstrap import recorded a date.
+  ///
+  /// The date keeps its closing dot (FM2), so it takes no "-i" suffix: the
+  /// sentence says "óta nem frissült" instead.
   static String explanation(ApiFailure failure, DateTime? asOf) {
-    final state = asOf == null ? '' : ', ${_date.format(asOf)}-i';
+    final since =
+        asOf == null ? null : '${_date.format(asOf)} óta nem frissült';
     switch (failure) {
       case ApiFailure.noConnection:
         // No instruction to pull or reopen: the screen retries by itself
         // (StaleDataRetry), so the only thing left for the user to do is to
         // restore the connection.
-        return 'Az adatok a telefonon tárolt$state állapotot mutatják. '
+        return 'Az adatok a telefonon tárolt${since == null ? '' : ', $since'} állapotot mutatják. '
             'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
             'Miserend használhat-e mobilnetet a telefon beállításaiban — '
             'amint újra van kapcsolat, a képernyő magától frissül.';
       case ApiFailure.serverError:
-        return asOf == null
-            ? 'A miserend.hu jelenleg nem elérhető, az adatok a telefonon '
-                'tárolt állapotot mutatják.'
-            : 'A miserend.hu jelenleg nem elérhető, az adatok '
-                '${_date.format(asOf)}-i állapotot mutatnak.';
+        return 'A miserend.hu jelenleg nem elérhető, az adatok a '
+            '${since ?? 'telefonon tárolt'} állapotot mutatják.';
     }
   }
 
@@ -39,18 +41,10 @@ class OfflineNotice {
     ApiFailure failure,
     DateTime? asOf,
   ) {
-    return showDialog<void>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            content: Text(explanation(failure, asOf)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Rendben'),
-              ),
-            ],
-          ),
+    return showMiserendDialog<void>(
+      context,
+      content: explanation(failure, asOf),
+      actions: const [MiserendDialogAction('Rendben', null)],
     );
   }
 }
@@ -61,27 +55,38 @@ class OfflineNotice {
 /// the banners, the (i) buttons and the map's card cannot drift apart.
 extension OfflineLook on ApiFailure {
   /// The background of a strip that marks the data.
-  Color get tint => switch (this) {
-    ApiFailure.noConnection => CustomColors.noticeTint,
-    ApiFailure.serverError => CustomColors.serverErrorTint,
+  Color tint(BuildContext context) => switch (this) {
+    ApiFailure.noConnection =>
+      Theme.of(context).colorScheme.surfaceContainerHighest,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorContainer,
   };
 
   /// The background of the map's church card, which keeps its own colour
   /// unless the server failed.
-  Color? get cardTint => switch (this) {
+  Color? cardTint(BuildContext context) => switch (this) {
     ApiFailure.noConnection => null,
-    ApiFailure.serverError => CustomColors.serverErrorTint,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorContainer,
+  };
+
+  /// The colour of the text on [tint].
+  Color textColor(BuildContext context) => switch (this) {
+    ApiFailure.noConnection => Theme.of(context).colorScheme.onSurfaceVariant,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.onServerErrorContainer,
   };
 
   IconData get icon => switch (this) {
-    ApiFailure.noConnection => Icons.signal_wifi_off,
-    ApiFailure.serverError => Icons.cloud_off,
+    ApiFailure.noConnection => Icons.signal_wifi_off_rounded,
+    ApiFailure.serverError => Icons.cloud_off_rounded,
   };
 
   /// The colour of the icons, readable on [tint].
-  Color get iconColor => switch (this) {
-    ApiFailure.noConnection => Colors.black54,
-    ApiFailure.serverError => CustomColors.serverErrorAccent,
+  Color iconColor(BuildContext context) => switch (this) {
+    ApiFailure.noConnection => Theme.of(context).colorScheme.onSurfaceVariant,
+    ApiFailure.serverError =>
+      Theme.of(context).extension<MiserendColors>()!.serverErrorIcon,
   };
 }
 
@@ -93,16 +98,18 @@ class OfflineInfoButton extends StatelessWidget {
     required this.asOf,
   });
 
+  /// Its name to the screen reader, also where a card takes it as an action.
+  static const String tooltip = 'Nem friss adat';
+
   final ApiFailure failure;
   final DateTime? asOf;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.info_outline),
-      color: failure.iconColor,
-      tooltip: 'Nem friss adat',
-      visualDensity: VisualDensity.compact,
+      icon: const Icon(Icons.info_outline_rounded),
+      color: failure.iconColor(context),
+      tooltip: tooltip,
       onPressed: () => OfflineNotice.show(context, failure, asOf),
     );
   }
@@ -133,9 +140,10 @@ class OfflineBanner extends StatelessWidget {
     return StaleDataRetry(
       onRetry: onRetry,
       child: NoticeStrip(
-        color: failure.tint,
+        color: failure.tint(context),
         icon: failure.icon,
-        iconColor: failure.iconColor,
+        iconColor: failure.iconColor(context),
+        textColor: failure.textColor(context),
         text: switch (failure) {
           ApiFailure.noConnection => 'Nincs kapcsolat, tárolt adatok',
           ApiFailure.serverError => 'A miserend.hu nem elérhető, tárolt adatok',

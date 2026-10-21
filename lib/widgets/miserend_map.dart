@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// A single church to render on a [MiserendMap].
 class MiserendMapMarker {
@@ -90,8 +91,6 @@ class MiserendMap extends StatefulWidget {
   /// Room for the ring and the shadow around [_userDotDiameter], so that the
   /// marker box does not cut them off.
   static const double _userDotBox = 26;
-
-  static const Color _userDotColor = Color(0xFF1A73E8);
 
   static const _freeTileUrlTemplate =
       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
@@ -239,23 +238,25 @@ class _MiserendMapState extends State<MiserendMap> {
   Widget _groupCircle(BuildContext context, List<Marker> markers) =>
       DecoratedBox(
         decoration: BoxDecoration(
-          color: CustomColors.purple,
+          color: Theme.of(context).colorScheme.primary,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 3)],
+          border: Border.all(
+            color: Theme.of(context).colorScheme.onPrimary,
+            width: 2,
+          ),
+          boxShadow: MapShadows.group,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(Spacing.xs),
           // The circle already grew with the text size, up to a limit; past it
           // the count shrinks to fit rather than spill out of the circle.
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               '${markers.length}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -280,7 +281,7 @@ class _MiserendMapState extends State<MiserendMap> {
     widget.onTap?.call();
   }
 
-  Marker _userPositionMarker(LatLng point) => Marker(
+  Marker _userPositionMarker(MiserendColors colors, LatLng point) => Marker(
     key: MiserendMap.userPositionKey,
     point: point,
     width: MiserendMap._userDotBox,
@@ -290,12 +291,10 @@ class _MiserendMapState extends State<MiserendMap> {
         width: MiserendMap._userDotDiameter,
         height: MiserendMap._userDotDiameter,
         decoration: BoxDecoration(
-          color: MiserendMap._userDotColor,
+          color: colors.userLocation,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 1),
-          ],
+          border: Border.all(color: colors.onUserLocation, width: 3),
+          boxShadow: MapShadows.userLocation,
         ),
       ),
     ),
@@ -313,6 +312,7 @@ class _MiserendMapState extends State<MiserendMap> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<MiserendColors>()!;
     final userPosition = widget.userPosition;
     final selected = _selectedMarker;
     return Stack(
@@ -363,20 +363,22 @@ class _MiserendMapState extends State<MiserendMap> {
             // Its own layer, drawn last: the user's mark is never hidden by a
             // church, and a new fix does not touch the church markers.
             if (userPosition != null)
-              MarkerLayer(markers: [_userPositionMarker(userPosition)]),
+              MarkerLayer(markers: [_userPositionMarker(colors, userPosition)]),
           ],
         ),
         Positioned(
-          right: 4,
-          bottom: 4,
+          right: Spacing.xs,
+          bottom: Spacing.xs,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            color: const Color(0xB3FFFFFF),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.xs),
+            color: colors.mapOverlay,
             child: Text(
               widget.compactAttribution
                   ? MiserendMap._compactAttribution
                   : MiserendMap._fullAttribution,
-              style: const TextStyle(fontSize: 10, color: Colors.black87),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ),

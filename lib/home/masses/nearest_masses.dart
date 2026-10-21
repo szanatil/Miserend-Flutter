@@ -36,13 +36,46 @@ List<NearbyMassesItem> selectNearestMasses(
   // "Nearest" picks the churches, and every one of their masses goes on the
   // list, which reads in time order.
   final nearestChurches = _nearestChurchIds(masses);
+  // The response's order settles the rest: the sort is not stable, and a
+  // church's masses starting together would trade places on a mass card
+  // from one minute's re-selection to the next.
+  final position = {for (final (index, mass) in masses.indexed) mass: index};
   return masses.where((m) => nearestChurches.contains(m.churchId)).toList()
     ..sort((a, b) {
       final byStart = a.start.compareTo(b.start);
       if (byStart != 0) return byStart;
       final byDistance = a.distanceKm.compareTo(b.distanceKm);
-      return byDistance != 0 ? byDistance : a.churchId.compareTo(b.churchId);
+      if (byDistance != 0) return byDistance;
+      final byChurch = a.churchId.compareTo(b.churchId);
+      return byChurch != 0 ? byChurch : position[a]!.compareTo(position[b]!);
     });
+}
+
+/// The nearest masses one church holds at one start, which share a mass card
+/// (CONTEXT.md, „Csoportos misekártya"): mostly one mass, more where the
+/// church holds several together.
+class MassGroup {
+  MassGroup(this.masses) : assert(masses.isNotEmpty);
+
+  /// In the order of the list they came from.
+  final List<NearbyMassesItem> masses;
+
+  /// The mass the group stands for where one is enough: its church and
+  /// start are every mass's.
+  NearbyMassesItem get first => masses.first;
+
+  int get churchId => first.churchId;
+  DateTime get start => first.start;
+}
+
+/// [masses], as [selectNearestMasses] orders them, grouped by church and
+/// start; a group stands where its first mass stood.
+List<MassGroup> groupNearestMasses(List<NearbyMassesItem> masses) {
+  final groups = <(int, DateTime), List<NearbyMassesItem>>{};
+  for (final mass in masses) {
+    (groups[(mass.churchId, mass.start)] ??= []).add(mass);
+  }
+  return [for (final group in groups.values) MassGroup(group)];
 }
 
 /// The [nearestChurchLimit] churches nearest the position among those holding
@@ -72,21 +105,43 @@ class MassDetails {
   /// Today's schedule rows of each church asked about.
   final Map<int, List<CachedMass>> _dailyMasses;
 
-  /// The detail of [mass], or null: when it has none, when its church was not
-  /// asked about, or when the schedule does not say which description is its
-  /// own. Of several masses starting together, the one of the same kind as
-  /// the title is taken.
-  String? of(NearbyMassesItem mass) {
+  /// The detail of each mass of [group], in its order, or null: when it has
+  /// none, when its church was not asked about, or when the schedule does not
+  /// say which description is its own.
+  ///
+  /// A mass alone at its start takes the one description there is, or of
+  /// several, the one of the same kind as its title. Masses starting together
+  /// take, kind by kind, the descriptions of their kind in the schedule's
+  /// order, if there are just as many of them; otherwise none.
+  List<String?> of(MassGroup group) {
     final described = [
-      for (final row in _dailyMasses[mass.churchId] ?? const <CachedMass>[])
-        if (row.time == mass.start)
+      for (final row in _dailyMasses[group.churchId] ?? const <CachedMass>[])
+        if (row.time == group.start)
           if (describeMass(row.info) case final description?) description,
     ];
-    final candidates =
-        described.length > 1
-            ? described.where((d) => d.title == mass.title).toList()
-            : described;
-    return candidates.length == 1 ? candidates.single.detail : null;
+    if (group.masses.length == 1) {
+      final candidates =
+          described.length > 1
+              ? described.where((d) => d.title == group.first.title)
+              : described;
+      return [candidates.length == 1 ? candidates.single.detail : null];
+    }
+
+    final details = <String?>[];
+    // How many masses of each kind have had their turn, so that the n-th mass
+    // of a kind takes the n-th description of it.
+    final turns = <String?, int>{};
+    for (final mass in group.masses) {
+      final ofKind = [
+        for (final description in described)
+          if (description.title == mass.title) description.detail,
+      ];
+      final massesOfKind =
+          group.masses.where((m) => m.title == mass.title).length;
+      final nth = turns.update(mass.title, (n) => n + 1, ifAbsent: () => 0);
+      details.add(ofKind.length == massesOfKind ? ofKind[nth] : null);
+    }
+    return details;
   }
 
   /// These details together with [other]'s, [other] winning for a church
@@ -95,8 +150,15 @@ class MassDetails {
       MassDetails({..._dailyMasses, ...other._dailyMasses});
 }
 
-/// An ongoing mass has already started but is still reachable.
+/// An ongoing mass has already started but is still reachable. Only for a
+/// mass of the nearest masses, which are all reachable; [isOngoingStart]
+/// decides for any start.
 bool isOngoing(NearbyMassesItem mass, DateTime now) => !mass.start.isAfter(now);
+
+/// Whether a mass starting at [start] is going on at [now] (CONTEXT.md,
+/// „Épp most tartó mise"): it has started, and is still reachable.
+bool isOngoingStart(DateTime start, DateTime now) =>
+    !start.isAfter(now) && !start.isBefore(reachableFrom(now));
 
 /// How far ahead a start still gets its time until start. Beyond two hours the
 /// start alone says enough, and "7 óra 40 perc múlva" in the morning is noise

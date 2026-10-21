@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/api/problem_type.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -41,6 +44,30 @@ class ChurchesResponse {
       _masses[churchId] ?? const <CachedMass>[];
 }
 
+/// One church's masses as the `NearbyMasses` search answers them.
+class ChurchMasses {
+  const ChurchMasses({required this.masses, required this.complete});
+
+  final List<CachedMass> masses;
+
+  /// False when the answer may have been cut off before the church's list
+  /// ended: the masses then run only to the last day they reach, and nothing
+  /// is known of the days after it.
+  final bool complete;
+
+  /// The first day the answer, asked for from [from], says nothing about;
+  /// null for a whole answer. A cut-off answer covers the church's last day
+  /// in it — which may itself be cut short, but shows masses either way.
+  DateTime? unknownFrom(DateTime from) {
+    if (complete) return null;
+    var days = 0;
+    for (final mass in masses) {
+      days = max(days, mass.time.calendarDaysSince(from) + 1);
+    }
+    return from.addCalendarDays(days);
+  }
+}
+
 /// A `NearbyMasses` item's id, church, start and title.
 typedef _Occurrence = (Object?, int?, DateTime, String?);
 
@@ -61,7 +88,8 @@ class MiserendApiClient {
   static const int _churchLimit = 100;
 
   /// The API refuses a larger limit. A church busy enough to hold more than
-  /// this many masses in the requested range loses the tail of its schedule.
+  /// this many masses in the requested range loses the tail of its schedule;
+  /// [ChurchMasses.complete] says when that may have happened.
   static const int _massLimit = 100;
 
   /// Narrow enough that, in practice, only the church itself falls inside it.
@@ -75,8 +103,16 @@ class MiserendApiClient {
 
   final http.Client _client;
 
-  MiserendApiClient({http.Client? client})
-    : _client = client ?? IOClient(newHttpClient());
+  /// Told how every call ended.
+  final ApiStatus status;
+
+  MiserendApiClient({http.Client? client, ApiStatus? status})
+    : _client = client ?? IOClient(newHttpClient()),
+      status = status ?? ApiStatus.shared;
+
+  /// The same connection, its calls reported to [status] instead.
+  MiserendApiClient reportingTo(ApiStatus status) =>
+      MiserendApiClient(client: _client, status: status);
 
   /// The connection every call goes through unless a test hands in its own
   /// client.
@@ -199,7 +235,12 @@ class MiserendApiClient {
   ///
   /// The API sends one occurrence several times over; it is kept once (see
   /// [_sameOccurrence]).
-  Future<ApiResult<List<CachedMass>>> fetchMassesForChurch({
+  ///
+  /// The answer comes grouped by church, nearest first, each church's items
+  /// in time order, and stops at [_massLimit] items. The church's list is
+  /// whole if the answer stopped short of the limit, or if another church's
+  /// item follows the church's own.
+  Future<ApiResult<ChurchMasses>> fetchMassesForChurch({
     required int churchId,
     required double lat,
     required double lon,
@@ -220,8 +261,14 @@ class MiserendApiClient {
 
       final occurrences = <CachedMass>[];
       final seen = <_Occurrence>{};
+      var own = false;
+      var followed = false;
       for (final item in masses.whereType<Map>()) {
-        if (_churchIdOf(item) != churchId) continue;
+        if (_churchIdOf(item) != churchId) {
+          followed = followed || own;
+          continue;
+        }
+        own = true;
         final time = parseApiDateTime(_text(item['start_date']));
         if (time == null) continue;
         if (!seen.add(_sameOccurrence(item, time))) continue;
@@ -236,7 +283,10 @@ class MiserendApiClient {
           ),
         );
       }
-      return occurrences;
+      return ChurchMasses(
+        masses: occurrences,
+        complete: masses.length < _massLimit || followed,
+      );
     });
   }
 
@@ -327,19 +377,24 @@ class MiserendApiClient {
 
   /// Reads a successful body with [read]; a body [read] cannot make sense of
   /// (it returns null) is a server error like any other malformed answer.
+  /// Every call ends here, so here the status learns how it ended.
   ApiResult<T> _map<T>(
     ApiResult<Map<String, dynamic>> result,
     T? Function(Map<String, dynamic> body) read,
   ) {
+    final ApiResult<T> mapped;
     switch (result) {
       case ApiFailed(:final failure):
-        return ApiFailed(failure);
+        mapped = ApiFailed(failure);
       case ApiSuccess(:final value):
-        final mapped = read(value);
-        return mapped == null
-            ? const ApiFailed(ApiFailure.serverError)
-            : ApiSuccess(mapped);
+        final body = read(value);
+        mapped =
+            body == null
+                ? const ApiFailed(ApiFailure.serverError)
+                : ApiSuccess(body);
     }
+    status.record(mapped);
+    return mapped;
   }
 
   /// What makes two `NearbyMasses` items one occurrence (spec 0004,

@@ -217,6 +217,74 @@ void main() {
     });
   });
 
+  group('groupNearestMasses', () {
+    List<List<(int, DateTime, String?)>> groupsOf(
+      List<NearbyMassesItem> items,
+    ) => [
+      for (final group in groupNearestMasses(
+        selectNearestMasses(items, _at(12, 0)),
+      ))
+        [for (final m in group.masses) (m.churchId, m.start, m.title)],
+    ];
+
+    test('puts the masses one church starts together on one card', () {
+      final groups = groupsOf([
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0), title: 'Szent Liturgia'),
+      ]);
+
+      expect(groups, [
+        [(37, _at(18, 0), 'Szentmise'), (37, _at(18, 0), 'Szent Liturgia')],
+      ]);
+    });
+
+    test('a church\'s masses at 18:00 and at 18:30 are two cards', () {
+      final groups = groupsOf([
+        _mass(church: 37, start: _at(18, 0)),
+        _mass(church: 37, start: _at(18, 30)),
+      ]);
+
+      expect(groups, [
+        [(37, _at(18, 0), 'Szentmise')],
+        [(37, _at(18, 30), 'Szentmise')],
+      ]);
+    });
+
+    test('two churches\' masses at 18:00 are two cards, nearer first', () {
+      final groups = groupsOf([
+        _mass(church: 2, km: 2, start: _at(18, 0)),
+        _mass(church: 1, km: 1, start: _at(18, 0)),
+      ]);
+
+      expect(groups, [
+        [(1, _at(18, 0), 'Szentmise')],
+        [(2, _at(18, 0), 'Szentmise')],
+      ]);
+    });
+
+    test('a card\'s masses follow the response, however the rest is '
+        'ordered', () {
+      // Enough items for the sort to stop being an insertion sort, which
+      // keeps equal items in place by chance.
+      final items = [
+        for (var church = 100; church < 109; church++)
+          for (var minute = 0; minute < 4; minute++)
+            _mass(church: church, km: 3, start: _at(17, minute)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0), title: 'Szent Liturgia'),
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0), title: 'Szent Liturgia'),
+      ];
+
+      final card = groupsOf(items).singleWhere((g) => g.first.$1 == 37);
+
+      expect(card.map((m) => m.$3), [
+        'Szent Liturgia',
+        'Szentmise',
+        'Szent Liturgia',
+      ]);
+    });
+  });
+
   group('timeUntilStart', () {
     test('in the last second before the start it is 1 minute', () {
       expect(timeUntilStart(_at(18, 0), _at(17, 59, 59)), '1 perc múlva');
@@ -258,6 +326,19 @@ void main() {
     test('says nothing once the mass has started', () {
       expect(timeUntilStart(_at(18, 0), _at(18, 0)), isNull);
       expect(timeUntilStart(_at(18, 0), _at(18, 4)), isNull);
+    });
+  });
+
+  group('isOngoingStart', () {
+    test('a start is ongoing from the start to 10 minutes after it', () {
+      expect(isOngoingStart(_at(14, 0), _at(13, 59, 59)), isFalse);
+      expect(isOngoingStart(_at(14, 0), _at(14, 0)), isTrue);
+      expect(isOngoingStart(_at(14, 0), _at(14, 10)), isTrue);
+      expect(isOngoingStart(_at(14, 0), _at(14, 10, 1)), isFalse);
+    });
+
+    test('a start of another day is not ongoing', () {
+      expect(isOngoingStart(_at(14, 0), DateTime(2026, 9, 15, 14, 5)), isFalse);
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
@@ -11,6 +12,9 @@ import 'package:miserend/home/masses/mass_start_header.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/card_columns.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
@@ -237,35 +241,29 @@ class _NearMassesPageState extends State<NearMassesPage>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const _Ground(
-        child: LoadingView(message: 'Legközelebbi misék betöltése…'),
-      );
+      return const LoadingView(message: 'Legközelebbi misék betöltése…');
     }
-    return RefreshIndicator(onRefresh: _fetch, child: _content());
+    return RefreshIndicator.adaptive(onRefresh: _fetch, child: _content());
   }
 
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return _Ground(
-        child: PullableFill(
-          child: PositionUnavailableView(
-            reason: noPosition,
-            purpose: 'A legközelebbi misékhez',
-            location: _location,
-            onRetry: _fetch,
-          ),
+      return PullableFill(
+        child: PositionUnavailableView(
+          reason: noPosition,
+          purpose: 'A legközelebbi misékhez',
+          location: _location,
+          onRetry: _fetch,
         ),
       );
     }
     if (_apiFailed) {
-      return const _Ground(
-        child: PullableFill(
-          child: MessageView(
-            message:
-                'Nem sikerült betölteni a miséket. '
-                'Ellenőrizd az internetkapcsolatot.',
-          ),
+      return const PullableFill(
+        child: MessageView(
+          message:
+              'Nem sikerült betölteni a miséket. '
+              'Ellenőrizd az internetkapcsolatot.',
         ),
       );
     }
@@ -273,43 +271,71 @@ class _NearMassesPageState extends State<NearMassesPage>
     final now = widget.clock();
     final masses = selectNearestMasses(_items, now);
     if (masses.isEmpty) {
-      return const _Ground(
-        child: PullableFill(
-          child: MessageView(message: 'A közelben ma már nincs elérhető mise.'),
-        ),
+      return const PullableFill(
+        child: MessageView(message: 'A közelben ma már nincs elérhető mise.'),
       );
     }
 
-    // The masses come in time order, so each start's masses follow its
-    // header. The rows are built lazily, as before the headers: a card asks
-    // the cache for its photo only once it is scrolled to.
-    final rows = <NearbyMassesItem?>[];
-    for (final (index, mass) in masses.indexed) {
-      // A null row stands for the header of the mass after it.
-      if (index == 0 || masses[index - 1].start != mass.start) rows.add(null);
-      rows.add(mass);
-    }
-
-    return _Ground(
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(8),
-        itemCount: rows.length,
-        itemBuilder: (BuildContext context, int index) {
-          final mass = rows[index];
-          if (mass == null) {
-            return MassStartHeader(mass: rows[index + 1]!, now: now);
-          }
-          return MassCard(
-            mass: mass,
-            detail: _details.of(mass),
-            thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-            onTap: () => _openChurch(mass),
-          );
-        },
+    return ContentColumns(
+      // The cards' own margin keeps them 8 apart (TK2).
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.l,
+        vertical: Spacing.xs,
       ),
+      gap: CardRow.listGap,
+      builder: (context, padding, columns) {
+        final rows = _rows(groupNearestMasses(masses), columns);
+        // The rows are built lazily, as before the headers: a card asks the
+        // cache for its photo only once it is scrolled to.
+        return ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          itemCount: rows.length,
+          itemBuilder: (BuildContext context, int index) {
+            final row = rows[index];
+            if (row.isHeader) {
+              return MassStartHeader(mass: row.groups.single.first, now: now);
+            }
+            final cards = [for (final group in row.groups) _card(group)];
+            return CardRow.of(columns, cards);
+          },
+        );
+      },
     );
   }
+
+  /// [groups], in time order, as rows: each start's header across the list,
+  /// then its mass cards [columns] to a row (DESIGN.md EL3). A header row
+  /// holds the start's first group, which it names the time of.
+  static List<({bool isHeader, List<MassGroup> groups})> _rows(
+    List<MassGroup> groups,
+    int columns,
+  ) {
+    final rows = <({bool isHeader, List<MassGroup> groups})>[];
+    var first = 0;
+    while (first < groups.length) {
+      var end = first;
+      while (end < groups.length && groups[end].start == groups[first].start) {
+        end++;
+      }
+      rows.add((isHeader: true, groups: [groups[first]]));
+      for (var row = first; row < end; row += columns) {
+        rows.add((
+          isHeader: false,
+          groups: groups.sublist(row, min(row + columns, end)),
+        ));
+      }
+      first = end;
+    }
+    return rows;
+  }
+
+  Widget _card(MassGroup group) => MassCard.group(
+    group: group,
+    details: _details.of(group),
+    thumbnailUrl: _loader.thumbnailUrl(group.churchId),
+    onTap: () => _openChurch(group.first),
+  );
 
   /// The details page loads everything by id; the item only has to seed the
   /// name and the map until then.
@@ -343,16 +369,4 @@ class _NearMassesPageState extends State<NearMassesPage>
     _onTick();
     _startTicker();
   }
-}
-
-/// The grey the Templomok tab draws its lists and its loading and message
-/// states on, so that the two tabs look like one app.
-class _Ground extends StatelessWidget {
-  const _Ground({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) =>
-      Container(color: Colors.black12, child: child);
 }

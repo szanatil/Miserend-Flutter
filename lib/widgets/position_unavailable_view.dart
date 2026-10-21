@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// The way out of a **Helyzet nem elérhető** reason: what the button says,
 /// what it does, and whether it hands the user over to the phone's settings.
@@ -86,13 +87,13 @@ class PositionUnavailableView extends StatelessWidget {
     final button = action(reason, location, onRetry);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(message(reason, purpose), textAlign: TextAlign.center),
             if (button != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               FilledButton(
                 onPressed: button.onPressed,
                 child: Text(button.label),

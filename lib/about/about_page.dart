@@ -4,10 +4,13 @@ import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/miserend_text.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -49,8 +52,8 @@ class _AboutPageState extends State<AboutPage> {
   );
 
   /// Room below the last tile so it can scroll clear of the floating
-  /// feedback button: the button's 56 plus its 16 margin, and a gap.
-  static const double _feedbackClearance = 88;
+  /// feedback button: the button's 56 plus its margin, and a gap.
+  static const double _feedbackClearance = 56 + Spacing.l + Spacing.l;
 
   late final FeedbackLauncher _feedback = widget.feedback ?? FeedbackLauncher();
 
@@ -88,96 +91,109 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Névjegy')),
       // Floats so it is in view without scrolling on any phone; in the list
       // it would sit below the fold under the church of the day.
       floatingActionButton: FloatingActionButton.extended(
+        // No hero: the Térkép tab's button lives beside this one, and two
+        // default tags fail a full-screen push over the tabs.
+        heroTag: null,
         onPressed: () => _feedback.send(context),
-        icon: const Icon(Icons.mail_outline),
+        icon: const Icon(Icons.mail_outline_rounded),
         label: const Text('Visszajelzés'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      // The grey the Templomok and Misék tabs draw their lists on, so the
-      // page looks like the same app.
-      body: Container(
-        color: Colors.black12,
-        child: ListView(
-          padding: const EdgeInsets.only(top: 8, bottom: _feedbackClearance),
-          children: [
-            if (_church case final church?) _churchOfTheDay(church),
-            SectionCard(
-              title: 'Fejlesztő',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  const Text(
-                    'Az alkalmazást a Szent József Hackathon fejleszti.',
-                  ),
-                  FutureBuilder<PackageInfo>(
-                    future: _packageInfo,
-                    builder: (context, snapshot) {
-                      final info = snapshot.data;
-                      if (info == null) return const SizedBox.shrink();
-                      return Text(
-                        'Verzió: ${info.version} (${info.buildNumber})',
-                        style: textTheme.bodyMedium?.apply(
-                          color: Colors.black54,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            SectionCard(
-              title: 'Forráskód',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  const Text(
-                    'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
-                    'forráskódját:',
-                  ),
-                  _externalLink('A projekt a GitHubon', _sourceCode),
-                ],
-              ),
-            ),
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: ListTile(
-                leading: const Icon(Icons.language, color: Colors.black54),
-                title: const Text('miserend.hu'),
-                subtitle: const Text('A miserend webes változata'),
-                trailing: const Icon(Icons.open_in_new, color: Colors.black54),
-                onTap:
-                    () => launchExternal(
-                      context,
-                      _webVersion,
-                      launch: widget.openLink,
-                    ),
-              ),
-            ),
-          ],
+      body: ContentWidth(
+        padding: const EdgeInsets.only(
+          top: Spacing.s,
+          bottom: _feedbackClearance,
         ),
+        builder:
+            (context, padding) => ListView(
+              padding: padding,
+              children: [
+                if (_church case final church?) _churchOfTheDay(church),
+                SectionCard(
+                  title: 'Fejlesztő',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: Spacing.s,
+                    children: [
+                      const Text(
+                        'Az alkalmazást a Szent József Hackathon fejleszti.',
+                      ),
+                      FutureBuilder<PackageInfo>(
+                        future: _packageInfo,
+                        builder: (context, snapshot) {
+                          final info = snapshot.data;
+                          if (info == null) return const SizedBox.shrink();
+                          return Text(
+                            'Verzió: ${info.version} (${info.buildNumber})',
+                            style: textTheme.bodyMedium?.apply(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                SectionCard(
+                  title: 'Forráskód',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: Spacing.s,
+                    children: [
+                      const Text(
+                        'Ha fejlesztenél valamit az alkalmazáson, itt találod a '
+                        'forráskódját:',
+                      ),
+                      _externalLink('A projekt a GitHubon', _sourceCode),
+                    ],
+                  ),
+                ),
+                Card(
+                  margin: SectionCard.margin,
+                  child: ListTile(
+                    leading: const Icon(Icons.language_rounded),
+                    title: const Text('miserend.hu'),
+                    subtitle: const Text('A miserend webes változata'),
+                    trailing: const Icon(Icons.open_in_new_rounded),
+                    onTap:
+                        () => launchExternal(
+                          context,
+                          _webVersion,
+                          launch: widget.openLink,
+                        ),
+                  ),
+                ),
+              ],
+            ),
       ),
     );
   }
 
   Widget _externalLink(String label, Uri uri) {
-    final color = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
     return InkWell(
       onTap: () => launchExternal(context, uri, launch: widget.openLink),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+          spacing: Spacing.s,
           children: [
-            Flexible(child: Text(label, style: TextStyle(color: color))),
-            Icon(Icons.open_in_new, size: 16, color: color),
+            Flexible(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(color: color),
+              ),
+            ),
+            Icon(Icons.open_in_new_rounded, color: color),
           ],
         ),
       ),
@@ -197,32 +213,27 @@ class _AboutPageState extends State<AboutPage> {
         onTap: () => openChurchDetails(context, _listEntry(church)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 4,
+          spacing: Spacing.s,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Radii.s),
               child: SizedBox(
                 height: _photoHeight,
                 width: double.infinity,
                 child: _photo(church),
               ),
             ),
-            const SizedBox(height: 4),
             Text(church.name ?? '', style: textTheme.titleMedium),
             if (address.isNotEmpty)
               Text(
                 address,
-                style: textTheme.bodyMedium?.apply(color: Colors.black54),
-              ),
-            if (description.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  description,
-                  maxLines: _descriptionLines,
-                  overflow: TextOverflow.ellipsis,
+                style: textTheme.bodyMedium?.apply(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
+            if (description.isNotEmpty)
+              // Whole, wrapping: nothing is cut off (DESIGN.md EL2).
+              Text(description),
           ],
         ),
       ),
@@ -242,18 +253,14 @@ class _AboutPageState extends State<AboutPage> {
       cacheHeight: decodeHeight,
     );
     if (church.photos.isEmpty) return placeholder;
-    return FadeInImage.assetNetwork(
+    return PhotoFadeIn(
       image: church.photos.first,
       placeholder: _placeholder,
-      fit: BoxFit.cover,
       imageErrorBuilder: (context, error, stackTrace) => placeholder,
       imageCacheHeight: decodeHeight,
       placeholderCacheHeight: decodeHeight,
     );
   }
-
-  /// A taste of the description; the whole of it is on the details page.
-  static const int _descriptionLines = 4;
 
   static ChurchListEntry _listEntry(ChurchDetails church) => ChurchListEntry(
     id: church.id,

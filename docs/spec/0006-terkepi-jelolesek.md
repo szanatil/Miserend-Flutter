@@ -55,6 +55,8 @@ Ettől a térkép arra a kérdésre válaszol, amiért megnyitják: „hol vagyo
 
 - **18 px** átmérőjű kék pötty, **fehér gyűrűvel** és finom árnyékkal, **minden zoomon azonos méretben** — a méret nem ugrálhat zoomolás közben.
 - Három jel különbözteti meg a templom-pöttytől: **szín** (kék vs. `#5C27AE`), **méret** (18 vs. 8 px), **gyűrű** (van vs. nincs).
+
+  > **Módosítva (2026-10-08, #58): DESIGN.md KO17.** A „kék pötty" a `userLocation` szerep (`#1A73E8`), a „fehér gyűrű" az `onUserLocation` (`#FFFFFF`), mindkét módban ugyanaz az érték; a finom árnyék értéke a `lib/theme/tokens.dart` `MapShadows.userLocation`-je (MÉ2). A térkép forrásmegjelölése `mapOverlay` hátterű, `onSurface` szövegű.
 - A templomok **fölötti** rétegben rajzolódik: külön `MarkerLayer`, a templomoké után.
 - **Pontossági kör nincs.** A `Position.accuracy` rendelkezésre áll, de egy nagy, szürke korong a 8-as zoomú országnézetben inkább zavar, mint tájékoztat.
 - **Csak a Térkép fülön.** A helykártya 17-es zoomú, a templomra centrált kivágat; a felhasználó helyzete onnan a legtöbbször kilóg, a kivágat tágítása pedig pont azt venné el, amiért a kártya ott van (hol áll a templom az utcában). A távolságot ott szöveg adja meg (#25).

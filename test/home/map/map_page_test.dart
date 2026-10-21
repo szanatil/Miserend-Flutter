@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -15,6 +15,9 @@ import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/map_page.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -22,6 +25,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import '../churches/fake_church_list_loader.dart';
 
 /// Near the default centre, so the markers are on screen.
@@ -30,7 +34,11 @@ const _locations = [
   ChurchLocation(id: 2, lat: 47.2600, lon: 19.7600),
 ];
 
-ChurchListEntry _entry(int id, String name) => ChurchListEntry(
+ChurchListEntry _entry(
+  int id,
+  String name, {
+  List<CachedMass> masses = const [],
+}) => ChurchListEntry(
   id: id,
   name: name,
   commonName: null,
@@ -38,7 +46,7 @@ ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   lat: 47.2537,
   lon: 19.7523,
   photo: null,
-  masses: const [],
+  masses: masses,
 );
 
 /// Close enough for [_locations] to be separate pins, both on screen.
@@ -99,6 +107,7 @@ void main() {
   }) => ChangeNotifierProvider<FavoritesService>.value(
     value: favorites,
     child: MaterialApp(
+      theme: miserendTheme(Brightness.light),
       home: Scaffold(
         body: MapPage(
           isActive: isActive,
@@ -133,12 +142,22 @@ void main() {
     _MapLoader loader, {
     LocationProvider? location,
     double zoom = _pinsZoom,
+    double textScale = 1,
+    Brightness brightness = Brightness.light,
   }) async {
     final controller = MapController();
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(brightness),
+          builder:
+              (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
           home: Scaffold(
             body: MapPage(
               loader: loader,
@@ -190,10 +209,23 @@ void main() {
   /// Asks for the position the way the my-position button does, and lets the
   /// answer come back.
   Future<void> tapMyPosition(WidgetTester tester) async {
-    await tester.tap(find.byIcon(Icons.my_location));
+    await tester.tap(find.byIcon(Icons.my_location_rounded));
     await tester.pump();
     await tester.pump();
   }
+
+  testWidgets('the my-position button is no hero: the Névjegy tab\'s '
+      'button is alive beside it, and two default tags break the next '
+      'full-screen page', (tester) async {
+    await pumpPage(tester, _MapLoader([<ChurchListEntry>[]]));
+
+    expect(
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .heroTag,
+      isNull,
+    );
+  });
 
   group('markers', () {
     testWidgets('are every church the cache knows', (tester) async {
@@ -319,11 +351,21 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, isNot(CustomColors.serverErrorTint));
+      expect(
+        card.color,
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
+      );
 
       await tester.tap(find.byType(OfflineInfoButton));
       await tester.pumpAndSettle();
-      expect(find.textContaining('2026. 09. 01-i állapotot'), findsOneWidget);
+      expect(
+        find.textContaining('2026. 09. 01. óta nem frissült állapotot'),
+        findsOneWidget,
+      );
       expect(find.textContaining('a képernyő magától frissül'), findsOneWidget);
     });
 
@@ -346,9 +388,54 @@ void main() {
           matching: find.byType(Card),
         ),
       );
-      expect(card.color, CustomColors.serverErrorTint);
+      expect(
+        card.color,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
+      );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('floats over the map, rounder and higher than a list '
+              'card and without an outline, at $width dp, text scale '
+              '$textScale, $brightness (KO18, FO2, MÉ1, MÉ2, EH3, EH4)', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 640));
+            await pumpPage(
+              tester,
+              _MapLoader([
+                [_entry(1, 'Tárolt templom')],
+              ]),
+              textScale: textScale,
+              brightness: brightness,
+            );
+
+            await tapMarker(tester, 1);
+
+            final surface = tester.widget<Material>(
+              find
+                  .descendant(
+                    of: find.byType(ChurchCard),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            );
+            final shape = surface.shape! as RoundedRectangleBorder;
+            expect(shape.side, BorderSide.none);
+            expect(
+              shape.borderRadius,
+              const BorderRadius.all(Radius.circular(Radii.l)),
+            );
+            expect(surface.elevation, 3);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
 
     testWidgets('shows how far the church is while the position is known, '
         'and not once it is lost', (tester) async {
@@ -374,24 +461,118 @@ void main() {
       expect(find.byType(DistanceChip), findsNothing);
     });
 
-    testWidgets('the my-position button stands clear above the card', (
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('the card spans the map, is as tall as its content, and '
+              'keeps the chips\' line without a mass, at $width dp, text '
+              'scale $textScale, $brightness (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 640));
+            final answer = Completer<ChurchList>();
+            await pumpPage(
+              tester,
+              _MapLoader(
+                [
+                  [_entry(1, 'Templom')],
+                ],
+                refreshed: [answer],
+              ),
+              textScale: textScale,
+              brightness: brightness,
+            );
+
+            Rect surface() => tester.getRect(
+              find
+                  .descendant(
+                    of: find.byType(Card),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            );
+            double heartFromTop() =>
+                tester.getTopLeft(find.byType(IconButton)).dy - surface().top;
+
+            await tapMarker(tester, 1);
+            expect(tester.takeException(), isNull);
+            final map = tester.getRect(find.byType(MiserendMap));
+            final card = tester.getRect(find.byType(Card));
+            expect(card.left - map.left, Spacing.l);
+            expect(map.right - card.right, Spacing.l);
+            // Nothing under the heart: the card is not stretched to the room.
+            expect(
+              tester.getRect(find.byType(IconButton)).bottom,
+              surface().bottom,
+            );
+            final withoutMass = heartFromTop();
+
+            // The answer brings today's mass.
+            answer.complete(
+              listOf([
+                _entry(
+                  1,
+                  'Templom',
+                  masses: [
+                    CachedMass(
+                      id: null,
+                      apiMassId: null,
+                      churchId: 1,
+                      time: DateTime(2026, 9, 15, 8, 0),
+                      info: null,
+                      source: MassSource.bootstrap,
+                    ),
+                  ],
+                ),
+              ]),
+            );
+            await tester.pump();
+            await tester.pump();
+            expect(find.text('8:00'), findsOneWidget);
+            expect(heartFromTop(), withoutMass);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
+    for (final (size, textScale) in [
+      for (final width in eh4Widths)
+        for (final textScale in eh4TextScales) (Size(width, 640), textScale),
+      // On its side (EL5): the card is taller than the room, and scrolls.
+      (const Size(640, 320), 2.0),
+    ]) {
+      testWidgets('the my-position button stands clear above the card at '
+          '$size and text scale $textScale', (tester) async {
+        setScreen(tester, size);
+        await pumpPage(
+          tester,
+          _MapLoader([
+            [_entry(1, 'Tárolt templom')],
+          ]),
+          textScale: textScale,
+        );
+        await tapMarker(tester, 1);
+
+        expect(tester.takeException(), isNull);
+        final map = tester.getRect(find.byType(MiserendMap));
+        final button = tester.getRect(find.byType(FloatingActionButton));
+        final card = tester.getRect(find.byType(Card));
+        expect(button.top, greaterThanOrEqualTo(map.top));
+        // The card stands Spacing.l off the map's edge on every side (KO18),
+        // the button as far above it.
+        expect(button.bottom, card.top - Spacing.l);
+        expect(map.right - button.right, Spacing.l);
+        expect(find.byType(FloatingActionButton).hitTestable(), findsOneWidget);
+      }, variant: eh4Platforms);
+    }
+
+    testWidgets('without a card, the my-position button stands in the corner', (
       tester,
     ) async {
-      await pumpPage(
-        tester,
-        _MapLoader([
-          [_entry(1, 'Tárolt templom')],
-        ]),
-      );
-      await tapMarker(tester, 1);
+      await pumpPage(tester, _MapLoader(const []));
 
       final map = tester.getRect(find.byType(MiserendMap));
       final button = tester.getRect(find.byType(FloatingActionButton));
-      expect(map.bottom - button.bottom, ChurchCard.height + 16);
-      expect(
-        button.bottom,
-        lessThanOrEqualTo(tester.getRect(find.byType(Card)).top),
-      );
+      expect(map.bottom - button.bottom, Spacing.l);
+      expect(map.right - button.right, Spacing.l);
     });
 
     testWidgets('tapping the map away from the markers closes the card', (
@@ -668,6 +849,7 @@ void main() {
         ChangeNotifierProvider<FavoritesService>.value(
           value: favorites,
           child: MaterialApp(
+            theme: miserendTheme(Brightness.light),
             home: _TabsHost(
               map: MapPage(
                 loader: _MapLoader([<ChurchListEntry>[]]),

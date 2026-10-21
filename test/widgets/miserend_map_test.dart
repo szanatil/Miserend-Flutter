@@ -3,7 +3,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/miserend_map.dart';
+
+import '../theme/theme_harness.dart';
+
+final ThemeData _theme = miserendTheme(Brightness.light);
 
 void main() {
   const budapest = LatLng(47.4979, 19.0402);
@@ -14,7 +19,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: MiserendMap(interactive: true)),
+        MaterialApp(theme: _theme, home: const MiserendMap(interactive: true)),
       );
 
       final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
@@ -31,8 +36,9 @@ void main() {
       'switches to the single-host, key-authenticated tile URL when apiKey is set',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: MiserendMap(interactive: true, apiKey: 'TEST_KEY'),
+          MaterialApp(
+            theme: _theme,
+            home: const MiserendMap(interactive: true, apiKey: 'TEST_KEY'),
           ),
         );
 
@@ -51,7 +57,10 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: MiserendMap(interactive: true, apiKey: '')),
+        MaterialApp(
+          theme: _theme,
+          home: const MiserendMap(interactive: true, apiKey: ''),
+        ),
       );
 
       final tileLayer = tester.widget<TileLayer>(find.byType(TileLayer));
@@ -68,7 +77,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: MiserendMap(interactive: true)),
+        MaterialApp(theme: _theme, home: const MiserendMap(interactive: true)),
       );
 
       expect(find.text('© OpenStreetMap contributors © CARTO'), findsOneWidget);
@@ -78,8 +87,9 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: MiserendMap(interactive: false, compactAttribution: true),
+        MaterialApp(
+          theme: _theme,
+          home: const MiserendMap(interactive: false, compactAttribution: true),
         ),
       );
 
@@ -137,6 +147,7 @@ void main() {
     }) async {
       await tester.pumpWidget(
         MaterialApp(
+          theme: _theme,
           home: MiserendMap(
             interactive: true,
             mapController: controller,
@@ -346,6 +357,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         MaterialApp(
+          theme: _theme,
           home: MiserendMap(
             interactive: true,
             markers: [MiserendMapMarker(id: 1, point: budapest)],
@@ -361,6 +373,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         MaterialApp(
+          theme: _theme,
           home: MiserendMap(
             interactive: true,
             initialCenter: budapest,
@@ -387,7 +400,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: MiserendMap(interactive: true)),
+        MaterialApp(theme: _theme, home: const MiserendMap(interactive: true)),
       );
 
       final flutterMap = tester.widget<FlutterMap>(find.byType(FlutterMap));
@@ -398,11 +411,102 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: MiserendMap(interactive: false)),
+        MaterialApp(theme: _theme, home: const MiserendMap(interactive: false)),
       );
 
       final flutterMap = tester.widget<FlutterMap>(find.byType(FlutterMap));
       expect(flutterMap.options.interactionOptions.flags, InteractiveFlag.none);
     });
   });
+
+  for (final brightness in Brightness.values) {
+    group('MiserendMap colours in $brightness (KO17)', () {
+      Future<void> pumpMap(WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: miserendTheme(brightness),
+            home: MiserendMap(
+              interactive: true,
+              initialCenter: budapest,
+              initialZoom: 8,
+              markers: [
+                MiserendMapMarker(id: 1, point: budapest),
+                MiserendMapMarker(id: 2, point: budapest),
+              ],
+              userPosition: const LatLng(47.45, 19.0),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('a group is a primary circle with an onPrimary ring and '
+          'count, the count labelLarge w700', (tester) async {
+        await pumpMap(tester);
+        final scheme = schemeOf(brightness);
+
+        final count = find.text('2');
+        final circle =
+            tester
+                    .widget<DecoratedBox>(
+                      find
+                          .ancestor(
+                            of: count,
+                            matching: find.byType(DecoratedBox),
+                          )
+                          .first,
+                    )
+                    .decoration
+                as BoxDecoration;
+        expect(circle.color, scheme.primary);
+        expect(circle.border, Border.all(color: scheme.onPrimary, width: 2));
+        final style = drawnStyle(tester, count);
+        expect(style.color, scheme.onPrimary);
+        expect(
+          style.fontSize,
+          Theme.of(tester.element(count)).textTheme.labelLarge!.fontSize,
+        );
+        expect(style.fontWeight, FontWeight.w700);
+      });
+
+      testWidgets('the user\'s own dot is userLocation with an onUserLocation '
+          'ring', (tester) async {
+        await pumpMap(tester);
+        final colors = miserendColorsOf(brightness);
+
+        final dot = tester.widget<Container>(
+          find.descendant(
+            of: find.byKey(MiserendMap.userPositionKey),
+            matching: find.byType(Container),
+          ),
+        );
+        final decoration = dot.decoration! as BoxDecoration;
+        expect(decoration.color, colors.userLocation);
+        expect(
+          decoration.border,
+          Border.all(color: colors.onUserLocation, width: 3),
+        );
+      });
+
+      testWidgets('the attribution reads on the map overlay, in labelSmall', (
+        tester,
+      ) async {
+        await pumpMap(tester);
+        final attribution = find.text('© OpenStreetMap contributors © CARTO');
+
+        final box = tester.widget<Container>(
+          find
+              .ancestor(of: attribution, matching: find.byType(Container))
+              .first,
+        );
+        expect(box.color, miserendColorsOf(brightness).mapOverlay);
+        final style = drawnStyle(tester, attribution);
+        expect(style.color, schemeOf(brightness).onSurface);
+        expect(
+          style.fontSize,
+          Theme.of(tester.element(attribution)).textTheme.labelSmall!.fontSize,
+        );
+      });
+    });
+  }
 }

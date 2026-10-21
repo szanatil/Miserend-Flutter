@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/problem_type.dart';
 import 'package:miserend/church_details/problem_report_sender.dart';
+import 'package:miserend/theme/adaptive.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Reports a problem with one church's data to miserend.hu (CONTEXT.md,
@@ -87,70 +91,88 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Hibajelentés')),
+      appBar: AppBar(
+        // A task flow is left by Mégse, not by a back arrow (DESIGN.md NA2).
+        // Among the actions it takes the width its text needs (EL2).
+        automaticallyImplyLeading: false,
+        title: const Text('Hibajelentés'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Mégse'),
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(widget.churchName, style: textTheme.titleMedium),
-            const SizedBox(height: 24),
-            Text('Milyen hibát jelentesz?', style: textTheme.titleSmall),
-            _typeField(),
-            const SizedBox(height: 24),
-            TextFormField(
-              key: ReportProblemPage.textKey,
-              controller: _textController,
-              minLines: 4,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Leírás',
-                hintText:
-                    'Például: vasárnap 10-kor kezdődik a mise, nem 9-kor.',
-                alignLabelWithHint: true,
+        child: ContentWidth(
+          padding: const EdgeInsets.all(Spacing.l),
+          builder:
+              (context, padding) => ListView(
+                padding: padding,
+                children: [
+                  Text(widget.churchName, style: textTheme.titleMedium),
+                  const SizedBox(height: Spacing.xl),
+                  Text(
+                    'Milyen hibát jelentesz?',
+                    style: textTheme.sectionTitle,
+                  ),
+                  _typeField(),
+                  const SizedBox(height: Spacing.l),
+                  TextFormField(
+                    key: ReportProblemPage.textKey,
+                    controller: _textController,
+                    minLines: 4,
+                    maxLines: null,
+                    keyboardType: TextInputType.multiline,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Leírás',
+                      hintText:
+                          'Például: vasárnap 10-kor kezdődik a mise, nem 9-kor.',
+                      alignLabelWithHint: true,
+                    ),
+                    // Required for every type, not only where the API asks
+                    // for it: the stewards cannot tell what to fix without
+                    // it.
+                    validator:
+                        (value) =>
+                            (value ?? '').trim().isEmpty
+                                ? 'Írd le, mi a hiba.'
+                                : null,
+                  ),
+                  const SizedBox(height: Spacing.l),
+                  TextFormField(
+                    key: ReportProblemPage.emailKey,
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    decoration: const InputDecoration(
+                      labelText: 'E-mail cím (nem kötelező)',
+                      helperText: 'Kérdés esetén ide írhatunk neked.',
+                    ),
+                    validator: (value) {
+                      final email = (value ?? '').trim();
+                      return email.isEmpty || _emailPattern.hasMatch(email)
+                          ? null
+                          : 'Ez nem e-mail cím.';
+                    },
+                  ),
+                  const SizedBox(height: Spacing.xl),
+                  FilledButton(
+                    onPressed: _sending ? null : _submit,
+                    child:
+                        _sending
+                            ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator.adaptive(
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : const Text('Küldés'),
+                  ),
+                ],
               ),
-              // Required for every type, not only where the API asks for it:
-              // the stewards cannot tell what to fix without it.
-              validator:
-                  (value) =>
-                      (value ?? '').trim().isEmpty
-                          ? 'Írd le, mi a hiba.'
-                          : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              key: ReportProblemPage.emailKey,
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'E-mail cím (nem kötelező)',
-                helperText: 'Kérdés esetén ide írhatunk neked.',
-              ),
-              validator: (value) {
-                final email = (value ?? '').trim();
-                return email.isEmpty || _emailPattern.hasMatch(email)
-                    ? null
-                    : 'Ez nem e-mail cím.';
-              },
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _sending ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child:
-                  _sending
-                      ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Text('Küldés'),
-            ),
-          ],
         ),
       ),
     );
@@ -169,13 +191,14 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
             RadioGroup<ProblemType>(
               groupValue: _type,
               onChanged: (type) {
+                miserendSelectionHaptic(context);
                 setState(() => _type = type);
                 field.didChange(type);
               },
               child: Column(
                 children: [
                   for (final type in ProblemType.values)
-                    RadioListTile<ProblemType>(
+                    MiserendRadioTile<ProblemType>(
                       value: type,
                       title: Text(_label(type)),
                       contentPadding: EdgeInsets.zero,

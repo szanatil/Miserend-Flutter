@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// The purple strip under the search bar, the same on every tab, so that the
-/// tabs read as one app: the Templomok tab puts its Közeli / Kedvencek tabs
+/// The strip under the search bar, the same on every tab, so that the tabs
+/// read as one app: the Templomok tab puts its Közeli / Kedvencek tabs
 /// on it, the others their name.
 class SectionBar extends StatelessWidget implements PreferredSizeWidget {
   /// Tabs driven by the [DefaultTabController] above.
@@ -24,39 +24,31 @@ class SectionBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final tabs = this.tabs;
+    // Flat on the surface, like the title bar above it (DESIGN.md KO2, MÉ2).
     return SizedBox(
       height: kToolbarHeight,
       child: Material(
-        elevation: 4,
-        color: Theme.of(context).primaryColor,
+        color: theme.colorScheme.surface,
         child:
             tabs != null
-                ? TabBar(
-                  tabs: tabs,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white60,
-                  indicatorColor: Colors.white,
-                )
+                ? TabBar(tabs: tabs)
                 : Stack(
                   children: [
                     Center(
                       child: Text(
                         title!,
-                        // The tab labels' style, so that a title reads like
-                        // them.
-                        style: (TabBarTheme.of(context).labelStyle ??
-                                Theme.of(context).textTheme.titleSmall)
-                            ?.copyWith(color: Colors.white),
+                        style: theme.textTheme.titleMedium!.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                     ),
                     if (onBack != null)
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: BackButton(
-                          color: Colors.white,
-                          onPressed: onBack,
-                        ),
+                        child: BackButton(onPressed: onBack),
                       ),
                   ],
                 ),

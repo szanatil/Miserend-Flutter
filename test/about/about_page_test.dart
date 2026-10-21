@@ -1,12 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/about/about_page.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/church_details.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../theme/theme_harness.dart';
 import '../widgets/fake_feedback_launcher.dart';
 
 /// Church 38 as the bootstrap import leaves it, without a description.
@@ -85,14 +88,20 @@ void main() {
     FeedbackLauncher? feedback,
     Future<bool> Function(Uri uri)? openLink,
     ChurchOfTheDayLoader? churchOfTheDay,
+    Brightness brightness = Brightness.light,
+    TargetPlatform platform = TargetPlatform.android,
+    double textScale = 1,
   }) async {
     // Tall enough for every card, so none is left unbuilt below the fold.
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(brightness, platform: platform),
         home: AboutPage(
           feedback: feedback,
           openLink: openLink,
@@ -103,6 +112,19 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('the Visszajelzés button is no hero: the Térkép tab\'s '
+      'button is alive beside it, and two default tags break the next '
+      'full-screen page', (tester) async {
+    await pumpPage(tester);
+
+    expect(
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .heroTag,
+      isNull,
+    );
+  });
 
   testWidgets('shows the version beside the developer', (tester) async {
     await pumpPage(tester);
@@ -235,6 +257,21 @@ void main() {
       expect(find.text('A templom története'), findsOneWidget);
     });
 
+    testWidgets('a long description wraps whole rather than being cut off '
+        '(EL2)', (tester) async {
+      final description = List.filled(30, 'A templom története.').join(' ');
+      await pumpPage(
+        tester,
+        churchOfTheDay: _FakeChurchOfTheDay(
+          cached: _withDescription(description),
+        ),
+      );
+
+      final text = tester.widget<Text>(find.text(description));
+      expect(text.maxLines, isNull);
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    });
+
     testWidgets('is left out when the cache has no church', (tester) async {
       await pumpPage(tester, churchOfTheDay: _FakeChurchOfTheDay());
 
@@ -242,4 +279,103 @@ void main() {
       expect(find.text('Fejlesztő'), findsOneWidget);
     });
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the page stands on the surface with roles '
+        'for its text and links (SZ4, SZ5)', (tester) async {
+      await pumpPage(tester, brightness: brightness);
+      final scheme = schemeOf(brightness);
+
+      final ground = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(Scaffold),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(ground.color, scheme.surface);
+      expect(
+        drawnStyle(tester, find.text('Verzió: 1.2.3 (45)')).color,
+        scheme.onSurfaceVariant,
+      );
+      expect(
+        drawnStyle(tester, find.text('A projekt a GitHubon')).color,
+        scheme.primary,
+      );
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the source code link is bodyMedium in '
+        'primary, like the text around it (TI2, SZ4)', (tester) async {
+      await pumpPage(tester, brightness: brightness);
+      final link = find.text('A projekt a GitHubon');
+      final theme = Theme.of(tester.element(link));
+
+      expect(
+        tester.widget<Text>(link).style,
+        theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary),
+      );
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        brightness: brightness,
+        platform: defaultTargetPlatform,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
+  group('fits (EH3, EH4)', () {
+    for (final platform in eh4Platforms.values) {
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('at $width dp and text scale $textScale on $platform '
+                'in $brightness', (tester) async {
+              await pumpPage(
+                tester,
+                size: Size(width, 3000),
+                platform: platform,
+                brightness: brightness,
+                textScale: textScale,
+                churchOfTheDay: _FakeChurchOfTheDay(
+                  cached: _withDescription('A templom története'),
+                ),
+              );
+
+              expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+              expect(tester.takeException(), isNull);
+            });
+          }
+        }
+      }
+    }
+  });
+
+  for (final width in const [el3Width, threeColumnWidth]) {
+    testWidgets(
+      'on a $width dp screen the sections are at most 640 wide, centred, in '
+      'one column (EL3)',
+      (tester) async {
+        await pumpPage(tester, size: Size(width, 1800));
+
+        expectCentredContent(
+          tester,
+          find.ancestor(
+            of: find.text('Fejlesztő'),
+            matching: find.byType(Card),
+          ),
+          screenWidth: width,
+        );
+      },
+    );
+  }
 }

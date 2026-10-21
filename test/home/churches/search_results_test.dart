@@ -5,14 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/search_results.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../theme/theme_harness.dart';
 import 'fake_church_list_loader.dart';
+import 'list_surface.dart';
 
 ChurchListEntry _entry(int id, String name) => ChurchListEntry(
   id: id,
@@ -43,11 +47,13 @@ void main() {
     WidgetTester tester,
     ChurchListLoader loader, {
     SearchParams? params,
+    Brightness brightness = Brightness.light,
   }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(brightness),
           home: SearchResultsPage(
             searchParams:
                 params ?? SearchParams.fromSearchTerm('Boldogasszony'),
@@ -209,5 +215,59 @@ void main() {
 
     expect(loader.refreshes, 2);
     expect(find.byType(OfflineBanner), findsNothing);
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'in $brightness, the list stands on the page\'s surface (SZ5)',
+      (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader(
+            [
+              [_entry(1155, 'Havas Boldogasszony templom')],
+            ],
+            refreshed: [Completer<ChurchList>()],
+          ),
+          brightness: brightness,
+        );
+
+        expect(find.text('Havas Boldogasszony templom'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      },
+    );
+  }
+
+  group('size', () {
+    final found = [
+      for (var i = 1; i <= 3; i++)
+        _entry(
+          i,
+          'Kecskeméti Szent Miklós Ferences Templom és Kolostor Plébánia '
+          'Templom $i',
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(tester, FakeChurchListLoader([found]));
+
+          expect(find.byType(ChurchCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(tester, FakeChurchListLoader([found]));
+
+      expectCentredContent(tester, find.byType(ChurchCard).first);
+    });
   });
 }

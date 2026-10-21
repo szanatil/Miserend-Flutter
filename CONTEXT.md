@@ -34,7 +34,7 @@ _Avoid_: "offline mód" (nem a felhasználó kapcsolja be); "nincs internet" (a 
 
 **Szerverhiba (server error)**:
 A szerver elérhető volt, de hibás választ adott (HTTP-hiba, `error: 1`, értelmezhetetlen válasz). A képernyő a **helyi gyorsítótár** állapotát mutatja, és **eltérő színnel** jelzi, hogy nem online adatot mutat — ez a felhasználó számára váratlan, hiszen van térereje. Az (i) jelzés itt is megjelenik, a miserend.hu elérhetetlenségére szabott szöveggel. A **Nincs kapcsolat**-hoz hasonlóan ez is átmeneti: a képernyő magától kérdez újra, amíg a jelzés áll.
-_Avoid_: "offline" (a telefon online); a sikeres, de üres válasz ("ezen a napon nincs mise") nem szerverhiba.
+_Avoid_: "offline" (a telefon online); a sikeres, de üres válasz (**üres nap**: „a miserend.hu-n nincs információ") nem szerverhiba.
 
 **Helyzet (position)**:
 A felhasználó földrajzi helyzete, amelyhez képest a közeli templomok és a **legközelebbi misék** rendeződnek, és ahová a Térkép „helyzetem" gombja ugrik. A Térkép fülön a helyzet **látható jelölés** is, nem csak kameracél — a jelölés mutatja, merre és nagyjából milyen messze van egy templom; a pontos számot a **légvonal-távolság** írja ki. Csak friss helyzet számít: legfeljebb 5 perce rögzített pozíció, különben új helymeghatározás, időkorláttal. Egy régebbi pozíció nem helyzet — lehet, hogy egy másik városban rögzült, ezért a jelölés is csak addig látszik, amíg a helyzet ismert: sikertelen helymeghatározás után eltűnik.
@@ -49,12 +49,20 @@ A templom és a **helyzet** közti távolság a földfelszínen, egyenes vonalba
 _Avoid_: „távolság" önmagában, ha az útvonal is szóba jöhet; „messze/közel" mértékként; „menetidő".
 
 **Napi miserend (daily masses)**:
-Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb alkalom**): a napi miserendbe csak a misék tartoznak. A listákon a templomsor mise-időpontjai a napi miserendet mutatják.
-_Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkozik, nem a kiterjesztett listára.
+Egy adott templom aznapi miséinek listája — ennek forrása a v4 API `Church`, `Search` és `NearBy` végpontjainak `misek` mezője (`idopont`/`informacio` párokként). A mező a nevével ellentétben nem csak misét ad (ld. **Mise vs. egyéb alkalom**): a napi miserendbe csak a misék tartoznak. A **napi alkalmak** mise-része.
+_Avoid_: a `misek` mezőt "a miserend"-nek nevezni — csak a mai napra vonatkozik, nem a **templomnaptárra**.
 
-**Kiterjesztett miserend (extended schedule)**:
-A templom-részletező oldal több napra (ma / következő vasárnap / 19 nap) kiterjedő miselistája egy adott templomhoz, szemben a napi miserenddel. Egyetlen v4 végpont sem adja ezt vissza közvetlenül, egy adott templomra szűkítve — előállítása a `NearbyMasses` végpont kombinálásával történik (ld. `docs/adr/0002-*`, `docs/spec/0003-*`).
-_Avoid_: "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
+**Napi alkalmak (daily occasions)**:
+Egy adott templom aznapi **alkalmai**, bármilyen fajtájúak: mise, szentségimádás, gyóntatás, zsolozsma… Ugyanabból a `misek` mezőből jön, mint a napi miserend, de válogatás nélkül. A **templomkártya** ezt mutatja: minden alkalom egyforma időpont-chip, és hogy melyik mi, a templom-részletezőn derül ki.
+_Avoid_: "napi miserend" a templomkártya időpontjaira (az csak a misét jelenti); "templomsor" (a templomkártya régi neve).
+
+**Templomnaptár (church calendar)**:
+Egy templom **alkalmai** naponként, ma és a következő 19 napon: melyik nap, mikor, mi van. Minden fajta alkalom benne van, nem csak a mise — ebben különbözik a napi miserendtől. Minden nap pontosan egyszer szerepel benne, az alkalom nélküli is (**üres nap**). A templom-részletező oldalon látszik. Egyetlen v4 végpont sem adja ezt vissza közvetlenül, egy adott templomra szűkítve — előállítása a `NearbyMasses` végpont kombinálásával történik (ld. `docs/adr/0002-*`, `docs/spec/0003-*`).
+_Avoid_: "liturgikus naptár" (az egyházi év ünnepeinek naptára, és a templomnaptárban nem csak liturgia van); "kiterjesztett miserend" (a korábbi név, az ADR 0002 és a spec 0003 még így hívja); "miserend" önmagában, ha a hatókör (egy nap vs. több nap) számít.
+
+**Üres nap (empty day)**:
+A **templomnaptár** egy napja, amelyre az app egyetlen alkalmat sem ismer. Az app soha nem tudja, hogy aznap valóban nincs mise — csak azt, honnan hiányzik az információ, és ennek két fajtája van. **A miserend.hu-n nincs információ**: friss, teljes `NearbyMasses`-válasz érkezett, és arra a napra nem tartalmaz alkalmat — többnyire azért, mert a templom felelősei azt az időszakot nem rögzítették (a javítás útja a **Hibajelentés**). A mai napra a `Church`-válasz is ilyen, mert annak `misek` mezője a mai alkalmakat adja. **Nincs letöltött információ**: nincs friss válasz, vagy a válasz csonka volt és a nap a levágott részre esik, így csak a **helyi gyorsítótár** szól, és abban nincs alkalom arra a napra.
+_Avoid_: "nincs mise" / "ezen a napon nincs mise" (olyat állít, amit az app nem tud); "nincs adat" a felületen (helyette „nincs információ").
 
 **Alkalom (occasion)**:
 Egy templomhoz és időhöz kötött esemény, amelyre a hívő elmehet: mise, szentségimádás, gyóntatás, vecsernye, rózsafüzér… — a gyűjtőnév mindegyikre. A **fajtája** mondja meg, mi történik (misealkalom, szentségimádási alkalom); az idejét kezdési időpont vagy időablak adja. A misekártya egy alkalomkártya, amelynek a fajtája mise.
@@ -63,6 +71,10 @@ _Avoid_: "liturgikus esemény" gyűjtőnévként (a szentségimádás és a róz
 **Mise vs. egyéb alkalom**:
 A v4 API `NearbyMasses` végpontja nevével ellentétben nem csak miséket ad vissza, hanem minden, a miserendben rögzített eseményt, amelyeket csak a `title` szövege különböztet meg. **Mise**: *Szentmise*, *Szent Liturgia* (a görögkatolikus szentmise — a neve nem árulja el, de mise), *Régi rítusú szentmise*. **Nem mise**: *Vecsernye*, *Utrenye* (görögkatolikus imaórák), *Igeliturgia* (pap és áldozás nélküli szertartás), *Gyóntatás*, *Szentségimádás*, *Rózsafüzér*, *Litánia*. Ismeretlen cím nem számít misének, amíg valaki fel nem veszi. **Ellenőrizve**: nyolc helyszín két napján (2026-09-19/20, 50 km) ezek voltak az előforduló címek. Ugyanez igaz a `Church`/`Search`/`NearBy` válasz `misek` mezőjére, ahol az esemény fajtáját az `informacio` szöveg eleje hordozza, felekezeti előtaggal és a vessző után jellemzőkkel (pl. „Római katolikus Szentmise, Csendes", „Római katolikus Gyóntatás") — a fajta itt is a fenti listával dől el. **Ellenőrizve** (2026-09-15, Budapest-keresés és tid 1515).
 _Avoid_: a `NearbyMasses` vagy a `misek` elemeit válogatás nélkül "misének" nevezni.
+
+**Alkalom kategóriája (occasion category)**:
+A miserend.hu négy csoportja, amelybe minden alkalom pontosan egyszer tartozik: **mise**, **szentségimádás**, **gyóntatás**, **egyéb imaalkalom** (a `search` végpont `categories` paraméterének `MASS`, `ADORATION`, `CONFESSION`, `OTHER` értékei). A kategória a **fajtából** dől el: a mise-címek (ld. **Mise vs. egyéb alkalom**) mise, a *Szentségimádás* szentségimádás, a *Gyóntatás* gyóntatás, minden más — a *Vecsernye*, a *Zsolozsma*, a *Rózsafüzér* és az ismeretlen cím is — egyéb imaalkalom. A Részletes kereső ezekre szűr. **Ellenőrizve** (2026-10-19, Budapest-keresés holnapra, mind a négy értékkel).
+_Avoid_: a fajtát és a kategóriát összekeverni (a *Vecsernye* fajta, az egyéb imaalkalom kategória); "típus" (összetéveszthető a **misetípusokkal**, ld. **Mise jellemzője**).
 
 **Legközelebbi misék (nearest masses)**:
 A Misék fül listája: a felhasználó pozíciójához **térben** legközelebbi (legfeljebb 10) templom **összes** mai, még **elérhető** miséje — egy misének egy sor, így egy több misét tartó templom többször is szerepel. Nem egy templomhoz tartozik (szemben a napi miserenddel), hanem a felhasználó helyzetéhez. A "legközelebbi" **a templomok kiválasztására** vonatkozik (térbeli közelség); a lista viszont **időrendben** áll, azonos kezdésnél a közelebbi templom elöl. Csak **misét** tartalmaz, más alkalmat nem, és csak a mai nap miséit. A "mai nap" két szélén van egy-egy kivétel: egy tegnap késő este kezdődött, még elérhető mise is benne van, és a **holnap pontban 00:00-kor** kezdődő mise is — az éjféli mise (karácsony, újév) a felhasználó fejében az előző estéhez tartozik. A 10-es korlát a templomokra vonatkozik, nem a sorokra: a lista hossza attól függ, hány miséjük van még aznap.
@@ -73,7 +85,7 @@ Olyan mise, amelyre a felhasználó még érvényesen odaérhet: a kezdése óta
 _Avoid_: "még nem kezdődött el" (a néhány perce kezdődött mise is elérhető); "odaérhető" (menetidő-számítást sugall, ami nincs).
 
 **Épp most tartó mise (ongoing mass)**:
-Olyan elérhető mise, amely már elkezdődött (legfeljebb 10 perce) — a listán ezzel jelölve jelenik meg. Nem azt jelenti, hogy a mise bármikor a befejezéséig "tart" a lista szempontjából: 10 perc után kikerül, mert onnantól nem elérhető.
+Olyan elérhető mise, amely már elkezdődött (legfeljebb 10 perce) — a listán ezzel jelölve jelenik meg. Nem azt jelenti, hogy a mise bármikor a befejezéséig "tart" a lista szempontjából: 10 perc után kikerül, mert onnantól nem elérhető. A templomkártyán és a templom-részletezőn ugyanez a jelölés minden alkalomra áll (épp most tartó alkalom), nem csak a misére.
 _Avoid_: "folyamatban lévő mise" általánosságban — a mise még tarthat, csak már nem elérhető.
 
 **Hátralévő idő (time until start)**:
@@ -81,7 +93,7 @@ Mennyi idő van még egy **elérhető** mise kezdéséig, a kezdés pontos időp
 _Avoid_: "visszaszámlálás" (másodpercre pontos, élő órát sugall — percenként frissül); "indulásig hátralévő idő" (menetidővel nem számolunk).
 
 **Misekártya vs. templomkártya (mass card vs. church card)**:
-A **misekártya** a Misék fül egy sora: egy konkrét misealkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány miséje van a listán. A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya), a **napi miserendjével** együtt. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
+A **misekártya** a Misék fül egy sora: egy konkrét misealkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány különböző kezdési időpontban van miséje a listán. Ha egy templom ugyanabban az időpontban több misét is tart (pl. a bazilikában 18:00-kor egyet a főhajóban, egyet angolul a Mária-kápolnában), ezek egy **csoportos misekártyán** állnak: a templom egyszer, alatta misénként egy sor a mise címével és jellemzőjével (#80). A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya, Részletes kereső találatai), a **napi alkalmaival** együtt; a Részletes kereső találatain a keresett alkalmakkal a keresett időablakban. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
 _Avoid_: "templomkártya" a Misék fül soraira; "misesor".
 
 **Mise jellemzője (mass detail)**:
@@ -89,7 +101,7 @@ Ami egy mise leírásában a fajtája után áll: „Csendes", „latin nyelven"
 _Avoid_: "címke" / "tag" a teljes jellemzőre (zárt készletet sugall — csak a misetípusok azok); a jellemzőt a mise fajtájának tekinteni (a „Szentmise, Csendes" fajtája szentmise).
 
 **Részletes kereső (advanced search)**:
-**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **miséje** — csak misének, más alkalom nem számít — egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem misealkalom. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
+**Templomok** keresése több feltétel együttesével: név, település (szövegrészre, így a „Buda" Budakeszit is hozza), liturgikus nyelv, és hogy van-e **alkalma** a választott **kategóriákban** (alapból csak mise) egy adott napon és időablakban. A megadott feltételek **mindegyikének** teljesülnie kell; részleges egyezés nem találat. A találat templom, nem misealkalom. A nap-feltétel **csak kapcsolattal** használható: a napi alkalmak a gyorsítótárban elavulhatnak, ezért kapcsolat nélkül csak név, település és nyelv szerint lehet keresni, a gyorsítótárból; ha a keresés közben szakad meg a kapcsolat, a lista **megszakadt keresés**: amit addig talált, az látszik, de nem teljes. Név és település nélkül a keresés a **helyzet** körül, **keresési körökben** halad: előbb csak a 25 km-en belüli templomok, a felhasználó kérésére („Keresés tovább") a 100 km-en belüliek, végül az egész ország (a pozíció nélküli templomokkal) — aki a környékén keres, az a találathoz el is akar menni. Névvel vagy településsel nincs kör. A név a régi Android appból jön, ahol ugyanott, a keresősáv javaslatainak alján volt — a frissítéssel érkező felhasználók így ismerik fel. Nem azonos a keresősáv egyszerű keresésével (egy szöveg, nap nélkül), és nem a **legközelebbi misék** kibővítése (az mindig ma és a helyzet körül).
 _Avoid_: "misekereső" (a találat templom); "szűrő" (a lista nem egy meglévő lista szűkítése); "összetett keresés".
 
 **Gyóntatás (confession)**:
@@ -113,7 +125,7 @@ Az **appról** szóló üzenet az app fejlesztőinek (Szent József Hackathon): 
 _Avoid_: "funkciókérés" külön fogalomként (a visszajelzés egyik fajtája); "hibajelentés" az app hibájára.
 
 **Névjegy (about page)**:
-Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a „Mai templom ajánlatunk”, az app **impresszuma** és a webes változat linkje, egy lapon. Nem fül, hanem a fülek fölé nyíló oldal. Korábbi neve „Menü” volt.
+Az alsó navigáció negyedik pontjából nyíló oldal: a **visszajelzés**, a „Mai templom ajánlatunk”, az app **impresszuma** és a webes változat linkje, egy lapon. A negyedik fül, saját veremmel (a „Mai templom ajánlatunk” részletezője is benne nyílik), keresősáv nélkül. Korábbi neve „Menü” volt.
 _Avoid_: "Menü" (oldalsó menüt sejtet, ami nincs); "Beállítások" (beállítás nincs rajta).
 
 **Impresszum (impressum)**:
@@ -121,5 +133,5 @@ Az app **fejlesztője** (Szent József Hackathon) és verziója, és a forrásk�
 _Avoid_: a miserend.hu üzemeltetőjével azonosítani (a webet a Szent József Hackathon közössége tartja fenn).
 
 **Szentségimádás (adoration)**:
-Dátumozott időablakok listája (`kezdete`/`vege`/`fajta`/opcionális `info`), nem visszatérési szabály és nem mise. Ugyanarra a napra **átfedő** bejegyzések is érkezhetnek (pl. egy `00:00–23:59` és egy `09:00–18:00`); ezek nem hibák, és nem vonhatók össze, mert a teljes napos ablak jelenthet valódi örökimádást is.
+A templom `adoraciok` mezője: dátumozott időablakok listája (`kezdete`/`vege`/`fajta`/opcionális `info`), nem visszatérési szabály és nem mise. A templom-részletező külön kártyán mutatja. Nem azonos a „Szentségimádás” fajtájú **alkalommal**, amely a `misek` mezőben érkezik, és a napi alkalmak, a templomnaptár és a Részletes kereső csak ezt ismeri. Ugyanarra a napra **átfedő** bejegyzések is érkezhetnek (pl. egy `00:00–23:59` és egy `09:00–18:00`); ezek nem hibák, és nem vonhatók össze, mert a teljes napos ablak jelenthet valódi örökimádást is.
 _Avoid_: "adoráció-rend" / "szentségimádás miserendje" (nem menetrendi adat, és nem a `misek` mezőből jön).

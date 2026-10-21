@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/community.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/launch_external.dart';
 import 'package:miserend/widgets/section_card.dart';
+import 'package:miserend/widgets/tap_tooltip.dart';
 
 /// Wheelchair access, stated either way.
 ///
@@ -45,11 +46,12 @@ class AccessibilityTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            state == 'no' ? Icons.not_accessible : Icons.accessible,
-            size: 20,
-            color: Colors.black54,
+            state == 'no'
+                ? Icons.not_accessible_rounded
+                : Icons.accessible_rounded,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.s),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,12 +59,12 @@ class AccessibilityTile extends StatelessWidget {
                 Text(_wheelchair[state] ?? ''),
                 if (description.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: Spacing.s),
                     child: Text(
                       description,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.apply(color: Colors.black54),
+                      style: Theme.of(context).textTheme.bodySmall?.apply(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
               ],
@@ -104,14 +106,46 @@ class LanguagesTile extends StatelessWidget {
           .where((code) => code.isNotEmpty)
           .toList();
 
+  /// How far a flag's 48 dp tap area (AM3) reaches past the flag on each side.
+  /// The areas touch, so the flags stand twice this apart, and the flags
+  /// themselves line up with the title as any content does.
+  static const EdgeInsets _tapAreaReach = EdgeInsets.symmetric(
+    horizontal: (kMinInteractiveDimension - LanguageFlag.width) / 2,
+    vertical: (kMinInteractiveDimension - LanguageFlag.height) / 2,
+  );
+
   @override
   Widget build(BuildContext context) {
     return SectionCard(
       title: 'Nyelvek',
+      bleed: _tapAreaReach,
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [for (final code in _clean(languages)) LanguageFlag(code)],
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final code in _clean(languages))
+            if (languageNames[code] case final name?)
+              TapTooltip(
+                message: name,
+                visibleHeight: LanguageFlag.height,
+                child: SizedBox.square(
+                  dimension: kMinInteractiveDimension,
+                  child: Center(child: LanguageFlag(code)),
+                ),
+              )
+            else
+              // Shown whole, so not tapped (KO21), but framed as a flag is:
+              // as far off its neighbours, the title and the card's edge.
+              // Not tapped, it needs no padding out to a tap target either.
+              Padding(
+                padding: _tapAreaReach,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: LanguageFlag(code),
+                ),
+              ),
+        ],
       ),
     );
   }
@@ -146,7 +180,7 @@ class CommunitiesTile extends StatelessWidget {
     final name = community.name!.trim();
     if (link.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Text(name),
       );
     }
@@ -158,12 +192,12 @@ class CommunitiesTile extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s),
         child: Text(
           name,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.apply(color: CustomColors.accent),
+          style: Theme.of(context).textTheme.bodyMedium?.apply(
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ),
     );

@@ -5,23 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
-import 'package:miserend/church_details/church_page_data.dart';
-import 'package:miserend/church_details/church_schedule_loader.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
-import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/masses/mass_card.dart';
+import 'package:miserend/home/masses/mass_start_header.dart';
 import 'package:miserend/home/masses/near_masses_page.dart';
 import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/home/masses/nearest_masses_loader.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../church_details/fake_church_schedule_loader.dart';
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
+import '../churches/list_surface.dart';
 
 NearbyMassesItem _mass({
   int church = 1,
@@ -98,26 +100,6 @@ class _FakeLoader extends NearestMassesLoader {
   }
 }
 
-/// Lets the details page open without a database or a network call.
-class _EmptyDetailsLoader extends ChurchScheduleLoader {
-  ChurchPageData get _empty => ChurchPageData(
-    church: null,
-    massesByDay: List.generate(
-      ChurchScheduleLoader.scheduleDays,
-      (_) => <CachedMass>[],
-    ),
-    scheduleIsFresh: false,
-    confessionLive: false,
-  );
-
-  @override
-  Future<ChurchPageData> loadCached(int churchId, DateTime today) async =>
-      _empty;
-
-  @override
-  Future<ChurchPageData> refresh(Church church, DateTime today) async => _empty;
-}
-
 void main() {
   late DateTime now;
 
@@ -145,9 +127,11 @@ void main() {
     NearestMassesLoader loader, {
     bool isActive = true,
     LocationProvider? location,
+    Brightness brightness = Brightness.light,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: miserendTheme(brightness),
         home: Scaffold(
           body: NearMassesPage(
             loader: loader,
@@ -170,11 +154,12 @@ void main() {
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(Brightness.light),
           home: Scaffold(
             body: NearMassesPage(
               loader: loader,
               clock: () => now,
-              detailsLoader: _EmptyDetailsLoader(),
+              detailsLoader: FakeChurchScheduleLoader(),
             ),
           ),
         ),
@@ -279,7 +264,7 @@ void main() {
   });
 
   group('position unavailable', () {
-    testWidgets('sits on the same grey ground as on the Templomok tab', (
+    testWidgets('sits on the page\'s own surface, no grey ground (SZ5)', (
       tester,
     ) async {
       await pumpPage(
@@ -293,10 +278,10 @@ void main() {
         find.ancestor(
           of: find.byType(PositionUnavailableView),
           matching: find.byWidgetPredicate(
-            (w) => w is Container && w.color == Colors.black12,
+            (w) => w is Container && w.color != null,
           ),
         ),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -397,26 +382,37 @@ void main() {
     });
   });
 
-  group('card', () {
-    testWidgets('the list sits on the same grey ground as on the Templomok '
-        'tab', (tester) async {
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
           [_mass(start: _at(18, 30))],
         ]),
+        brightness: brightness,
       );
 
-      expect(
-        find.ancestor(
-          of: find.byType(ListView),
-          matching: find.byWidgetPredicate(
-            (w) => w is Container && w.color == Colors.black12,
-          ),
-        ),
-        findsOneWidget,
-      );
-    });
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
+  group('card', () {
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, the list sits on the page\'s own surface, '
+          'no grey ground (SZ5)', (tester) async {
+        await pumpPage(
+          tester,
+          _FakeLoader([
+            [_mass(start: _at(18, 30))],
+          ]),
+          brightness: brightness,
+        );
+
+        expect(find.text('18:30'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      });
+    }
 
     testWidgets('keeps the city and shows the distance', (tester) async {
       await pumpPage(
@@ -462,8 +458,8 @@ void main() {
       expect(find.byType(Divider), findsNWidgets(2));
     });
 
-    testWidgets('the start leads its block, large, bold and in the accent '
-        'color', (tester) async {
+    testWidgets('the start leads its block, the strongest text on the list, '
+        'in its orange container (TI2, TI3, SZ4)', (tester) async {
       await pumpPage(
         tester,
         _FakeLoader([
@@ -473,9 +469,14 @@ void main() {
 
       final textTheme = Theme.of(tester.element(find.text('18:00'))).textTheme;
       final style = tester.widget<Text>(find.text('18:00')).style!;
-      expect(style.fontSize, textTheme.headlineMedium!.fontSize);
-      expect(style.fontWeight, FontWeight.bold);
-      expect(style.color, CustomColors.accent);
+      expect(style.fontSize, textTheme.titleLarge!.fontSize);
+      expect(style.fontWeight, FontWeight.w600);
+      expect(
+        style.color,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.onOccasionTimeContainer,
+      );
     });
 
     testWidgets('marks a mass as ongoing only once it has started, in its '
@@ -661,7 +662,9 @@ void main() {
       final rows = find.byType(MassCard);
       expect(rows, findsNWidgets(3));
       expect(
-        tester.widgetList<MassCard>(rows).map((row) => row.mass.start.hour),
+        tester
+            .widgetList<MassCard>(rows)
+            .map((row) => row.masses.single.start.hour),
         [13, 17, 18],
       );
 
@@ -680,6 +683,109 @@ void main() {
       }
     });
   });
+
+  testWidgets('a church\'s masses starting together share one card under '
+      'their header, each with its own detail, and it opens that church '
+      '(#80)', (tester) async {
+    CachedMass daily(String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 37,
+      time: _at(18, 0),
+      info: info,
+      source: MassSource.dailyList,
+    );
+    final loader = _FakeLoader([
+      [
+        _mass(church: 1, name: 'Dóm', km: 1.0, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+      ],
+    ]);
+    loader.details.complete(
+      MassDetails({
+        37: [
+          daily('Római katolikus Szentmise'),
+          daily('Római katolikus Szentmise angol nyelven'),
+        ],
+      }),
+    );
+    await pumpWithDetails(tester, loader);
+    await tester.pump();
+
+    final cards = find.byType(MassCard);
+    expect(find.text('18:00'), findsOneWidget);
+    expect(cards, findsNWidgets(2));
+    expect(
+      tester.widgetList<MassCard>(cards).map((card) => card.masses.length),
+      [2, 1],
+    );
+    expect(
+      top(tester, '18:00'),
+      lessThan(top(tester, 'Szent István-bazilika')),
+    );
+    expect(
+      top(tester, 'Szent István-bazilika'),
+      lessThan(top(tester, 'Dóm')),
+      reason: 'the group stands where its first mass would',
+    );
+    expect(find.text('angol nyelven'), findsOneWidget);
+
+    await tester.tap(find.text('angol nyelven'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<ChurchDetailsPage>(find.byType(ChurchDetailsPage))
+          .church
+          .id,
+      37,
+    );
+  });
+
+  for (final brightness in Brightness.values) {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('in $brightness at $width dp, text scale $textScale, a '
+            'group mass card fits the list (EH4, #80)', (tester) async {
+          setScreen(tester, Size(width, 1600), textScale: textScale);
+          final loader = _FakeLoader([
+            [
+              _mass(church: 37, km: 0.1, start: _at(18, 0)),
+              _mass(church: 37, km: 0.1, start: _at(18, 0)),
+            ],
+          ]);
+          loader.details.complete(
+            MassDetails({
+              37: [
+                for (final info in [
+                  'Római katolikus Szentmise',
+                  'Római katolikus Szentmise angol nyelven, Csendes '
+                      '(Mária-kápolnában)',
+                ])
+                  CachedMass(
+                    id: null,
+                    apiMassId: null,
+                    churchId: 37,
+                    time: _at(18, 0),
+                    info: info,
+                    source: MassSource.dailyList,
+                  ),
+              ],
+            }),
+          );
+
+          await pumpPage(tester, loader, brightness: brightness);
+          await tester.pump();
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(MassCard), findsOneWidget);
+          expect(find.text('Szentmise'), findsNWidgets(2));
+          expect(find.text('angol nyelven'), findsOneWidget);
+        }, variant: eh4Platforms);
+      }
+    }
+  }
 
   group('refresh', () {
     testWidgets('fetches once when the page first appears', (tester) async {
@@ -949,6 +1055,106 @@ void main() {
       );
 
       expect(fetchesWhileAway, 1);
+    });
+  });
+
+  group('size', () {
+    final crowded = [
+      for (var i = 1; i <= 4; i++)
+        _mass(
+          church: i,
+          name:
+              'Nagyboldogasszony görögkatolikus székesegyház és püspöki '
+              'templom $i',
+          city: 'Budapest XVIII. kerület, Pestszentlőrinc-Pestszentimre',
+          title: 'Régi rítusú szentmise',
+          start: _at(18, i * 5),
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(tester, _FakeLoader([crowded]));
+
+          expect(find.byType(MassCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(tester, _FakeLoader([crowded]));
+
+      expectCentredContent(tester, find.byType(MassCard).first);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in columns, fits in $brightness at $width dp and text '
+              'scale $textScale (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              _FakeLoader([crowded]),
+              brightness: brightness,
+            );
+
+            expect(find.byType(MassCard), findsWidgets);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
+    testWidgets('on a 1300 dp screen the cards stand three to a row, as tall '
+        'as each other, under a header across the row (EL3)', (tester) async {
+      setScreen(tester, const Size(threeColumnWidth, 1200));
+      // A long name on the second card only, so that its row has a tallest.
+      final masses = [
+        for (var i = 1; i <= 4; i++)
+          _mass(
+            church: i,
+            name: i == 2 ? crowded.first.churchName! : 'Templom $i',
+            start: _at(18, 0),
+          ),
+        _mass(church: 5, name: 'Templom 5', start: _at(19, 0)),
+      ];
+      await pumpPage(tester, _FakeLoader([masses]));
+
+      final cards = [
+        for (var i = 0; i < 5; i++) tester.getRect(find.byType(MassCard).at(i)),
+      ];
+      final headers = [
+        for (var i = 0; i < 2; i++)
+          tester.getRect(find.byType(MassStartHeader).at(i)),
+      ];
+      // The screen edge's distance either side; 8 between the cards (TK2).
+      expect([headers[0].left, headers[0].right], [16, 1284]);
+      expect([
+        cards[0].top,
+        cards[1].top,
+        cards[2].top,
+      ], everyElement(cards[0].top));
+      expect([
+        cards[0].height,
+        cards[1].height,
+        cards[2].height,
+      ], everyElement(cards[1].height));
+      expect(cards[1].left - cards[0].right, 8);
+      expect(cards[2].right, 1284);
+      // The fourth card begins a row, the next start a header of its own.
+      expect(cards[3].left, 16);
+      expect(cards[3].top, cards[1].bottom);
+      expect(cards[3].width, cards[0].width);
+      expect(headers[1].top, greaterThanOrEqualTo(cards[3].bottom));
+      expect(cards[4].left, 16);
     });
   });
 }

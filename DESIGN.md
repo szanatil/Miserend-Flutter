@@ -16,11 +16,13 @@ Kapcsolódó források: fogalmak a [CONTEXT.md](CONTEXT.md)-ben, a platformstrat
 | **Szerep** | Egy szín jelentése (`primary`, `surfaceContainerLow`, `occasionTime`…), nem az értéke. Világos és sötét módban más az értéke, a szerepe ugyanaz. |
 | **Kártya** | Egy önálló tartalmi egység a listán (alkalomkártya, templomkártya, térképi kártya). |
 | **Alkalomkártya** | Egy **alkalom** (CONTEXT.md, „Alkalom") kártyája; a **misekártya** ennek a mise fajtájú változata. |
+| **Csoportos misekártya** | Egy templom azonos időpontban kezdődő miséinek közös misekártyája a Misék fülön, misénként egy sorral (KO1, CONTEXT.md „Misekártya"). |
 | **Csempe** | Angolul *tile*: egy soros, koppintható listaelem (Flutterben `ListTile`, nálunk a `*Tile` widgetek, pl. `ExpandableInfoTile`). |
 | **Chip** | **Adatot** hordozó kis elem egy kártyán vagy sorban: időpont, távolság, a mise jellemzője, nyelv. Lehet interaktív (pl. szűrő-chip). |
 | **Badge** | **Állapotot** jelző elem: valami *most* más, mint általában, vagy figyelmet kér. Soha nem interaktív. Ld. KO6. |
 | **Időblokk** | Az alkalom idejének vizuális formája (kezdés vagy időablak). A formáját külön spec rögzíti; addig az időpont-chip (KO3) áll a helyén. |
 | **Szalag** | A lista vagy a képernyő tetején, teljes szélességben álló állapotsáv (nincs kapcsolat, szerverhiba, helyzet nem elérhető). |
+| **Tooltip** | Egy elem rövid, ideiglenes felirata, amely fölötte vagy alatta lebeg (az M3 *plain tooltip*-je). Nem interaktív. Ld. KO21. |
 | **Lebegő elem** | A tartalom fölött, attól elválva megjelenő elem: térképi kártya, FAB, menü. |
 | **Modális elem** | A fülek fölé nyíló, a navigációt eltakaró elem: dialógus, sheet, teljes képernyős fotó, feladatfolyamat-űrlap, nyitóképernyő. |
 | **Adaptív elem** | Olyan elem, amely Androidon és iOS-en mást mutat vagy másképp viselkedik (PL2). |
@@ -47,12 +49,10 @@ Ha egy eset nincs szabályban, ezek döntenek, ebben a sorrendben.
 
 - `miserend_theme.dart`: a `ThemeData` világos és sötét változata.
 - `miserend_colors.dart`: a `MiserendColors` `ThemeExtension` (SZ3).
-- `tokens.dart`: a `Spacing` (TK1) és a `Radii` (FO1) osztály.
+- `tokens.dart`: a `Spacing` (TK1), a `Radii` (FO1) és az `IconSizes` (IK3) osztály, és a térkép jelölőinek árnyéka, `MapShadows` (MÉ2, KO17).
 - `adaptive.dart`: az adaptív elemek segédfüggvényei (PL3).
 
-A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, és nyers `Duration` animációhoz.
-
-_Ismert eltérés: a `lib/theme/` még nem létezik; a téma a `lib/main.dart`-ban, a színek a `lib/colors.dart`-ban állnak (#54). Nyers színek, térközök, lekerekítések a widgetekben: #57, #58, #59._
+A `lib/theme/`-on kívül nem áll `Color(…)`, `Colors.*` (kivéve `Colors.transparent`), `fontSize:`, nyers számú `BorderRadius.circular(…)`, `Radius.circular(…)`, nyers számú `EdgeInsets` vagy `SizedBox` térköz, az `Icon`-nak átadott `size:` (IK3), és nyers `Duration` animációhoz.
 
 ## SZ. Szín
 
@@ -71,8 +71,13 @@ _Ismert eltérés: a `lib/theme/` még nem létezik; a téma a `lib/main.dart`-b
 | `serverErrorContainer` | `#FFE0B2` | `#5A3300` | A szerverhiba szalagjának, kártyájának háttere |
 | `onServerErrorContainer` | `#2E1500` | `#FFDCC2` | Szöveg `serverErrorContainer`-en |
 | `serverErrorIcon` | `#B45309` | `#FFB870` | A szerverhiba ikonja `serverErrorContainer`-en |
+| `userLocation` | `#1A73E8` | `#1A73E8` | A saját helyzet pöttye a térképen (spec 0006) |
+| `onUserLocation` | `#FFFFFF` | `#FFFFFF` | A saját helyzet pöttyének gyűrűje |
+| `mapOverlay` | `surface` 70%-os átlátszatlansággal | `surface` 70%-os átlátszatlansággal | A térkép forrásmegjelölésének háttere (KO17) |
+| `photoScrim` | `#99000000` | `#99000000` | Sötét átmenet a fotón álló szöveg és ikon alatt (KO19) |
+| `onPhoto` | `#FFFFFF` | `#FFFFFF` | Szöveg és ikon fotón, a `photoScrim` fölött (KO19) |
 
-_Ismert eltérés: a `CustomColors` (`lib/colors.dart`) fix, csak világos színeket tart (#54)._
+A szöveges párok kontrasztja legalább 4,5:1, az ikoné (`serverErrorIcon`) és a nem szöveges jelölésé (`userLocation`) legalább 3:1 (AM1). Az `onPhoto` fehér fotón, a `photoScrim` alatt is legalább 4,5:1.
 
 **SZ4 — Egy szín, egy jelentés.**
 
@@ -81,18 +86,20 @@ _Ismert eltérés: a `CustomColors` (`lib/colors.dart`) fix, csak világos szín
 | Alkalom időpontja | `occasionTimeContainer` / `onOccasionTimeContainer`; épp most tartónál `occasionTime` / `onOccasionTime` |
 | Mise jellemzője | `secondaryContainer` / `onSecondaryContainer` |
 | Távolság, nyelv és más kiegészítő adat | `surfaceContainerHighest` / `onSurfaceVariant` |
+| Üres nap a napi sávban (CONTEXT.md, „Üres nap") | `surface` háttér, `outlineVariant` keret, `onSurfaceVariant` dátum (KO1) |
 | Gomb, link, kiválasztás, fókusz, navigációs indikátor | `primary` és családja (`primaryContainer`, `secondaryContainer` az M3 alapértelmezése szerint) |
 | Nincs kapcsolat, helyzet nem elérhető | `surfaceContainerHighest` / `onSurfaceVariant` |
 | Szerverhiba | `serverErrorContainer` / `onServerErrorContainer` / `serverErrorIcon` |
 | Űrlaphiba | `error` / `onErrorContainer` |
+| Saját helyzet a térképen | `userLocation` / `onUserLocation` |
+| Templom a térképen | a miserend.hu pinje, csoportja `primary` / `onPrimary` (KO17) |
+| Szöveg és ikon fotón | `onPhoto` a `photoScrim` átmenet fölött (KO19) |
 
 A narancs **csak** időpontot jelöl: gomb, link, ikon vagy díszítés nem narancs. A narancs szövegként felületen (`surface`, `surfaceContainer*`) nem állhat, mert ott nem éri el az AA kontrasztot; az időpont mindig a saját konténerében áll.
 
-**SZ5 — Felületek.** Az oldal háttere `surface`, a kártyáé `surfaceContainerLow`, a keresősávé `surfaceContainerHigh`, az elválasztóé `outlineVariant`. Szöveg: elsődleges `onSurface`, másodlagos `onSurfaceVariant`. Átlátszósággal halványított szöveg (`withAlpha`, `withOpacity`) nincs.
+**SZ5 — Felületek.** Az oldal háttere `surface`, a kártyáé `surfaceContainerLow` (kivétel az üres nap: SZ4, KO1), a keresősávé `surfaceContainerHigh`, az elválasztóé és a kártya sötét módú keretéé `outlineVariant` (MÉ1). Szöveg: elsődleges `onSurface`, másodlagos `onSurfaceVariant`. Átlátszósággal halványított szöveg (`withAlpha`, `withOpacity`) nincs.
 
-**SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs.
-
-_Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Colors.white)` (#56, #58)._
+**SZ6 — Sötét mód a rendszer szerint.** `MaterialApp(theme: …, darkTheme: …, themeMode: ThemeMode.system)`. Az appban nincs témaválasztó. Minden képernyő mindkét módban használható; fix fehér vagy fekete háttér nincs, a fotógalériáé sem: az is a `surface`-en áll.
 
 ## TI. Tipográfia
 
@@ -105,12 +112,14 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 | Képernyőcím (címsor) | `titleLarge` |
 | Szakaszcím a lapon | `titleMedium`, `FontWeight.w600` |
 | Templom neve kártyán | `titleMedium` |
-| Alkalom időpontja kártyán, csoportfejlécben | `titleLarge`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
+| Alkalom időpontja a csoportfejlécben | `titleLarge`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
+| Alkalom időpontja az időpont-chipben (KO3) | `titleMedium`, `FontWeight.w600`, `FontFeature.tabularFigures()` |
 | Hosszabb olvasnivaló (leírás, névjegy) | `bodyLarge` |
 | Kártya másodlagos sorai (hely, cím) | `bodyMedium`, `onSurfaceVariant` |
-| Chip felirata | `labelLarge` |
+| Adat-chip felirata (KO4) | `labelLarge` |
 | Hátralévő idő | `labelMedium` |
 | Badge felirata | `labelSmall` |
+| Lábjegyzet, az adat kora | `bodySmall`, `onSurfaceVariant` |
 | Gomb felirata | a gomb témájának alapértelmezése (`labelLarge`) |
 
 **TI3 — Az időpont a kártya legerősebb eleme** (AL1). Ugyanazon a kártyán nincs nála nagyobb vagy vastagabb szöveg.
@@ -127,6 +136,7 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 |---|---|
 | A képernyő vízszintes széle | `l` |
 | Kártyák között a listán | `s` |
+| Kártyák között egymás mellett, oszlopokban (EL3) | `s` |
 | Kártyán belül, a széltől | `l` |
 | Kártyán belül, sorok között | `s` |
 | Chipek között | `s` |
@@ -152,16 +162,17 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 | Gomb, keresősáv | `full` |
 | Bottom sheet felső sarkai | `xl` |
 | Dialógus (Android) | `xl` (iOS-en a rendszer rajzolja) |
-| Menü, snackbar | `xs` |
+| Menü, snackbar, tooltip | `xs` |
 | Fotó a részletező lap fejlécében | nincs lekerekítés |
 | Fotó a galériában | `m` |
+| Bélyegkép csempében (pl. a keresési javaslat fotója, ikonja) | `s` |
 | Szalag | nincs lekerekítés |
 
 ## MÉ. Mélység és árnyék
 
-**MÉ1 — A mélységet tónus adja, nem árnyék.** A kártya `elevation: 0`, és a `surfaceContainerLow` színnel válik el a `surface` háttértől.
+**MÉ1 — A kártya az M3 elevated kártyája.** `surfaceContainerLow` színnel és `elevation: 1` alacsony árnyékkal válik el a `surface` háttértől. A tónus egyedül kevés: a `surfaceContainerLow` és a `surface` között a világosságkülönbség csak kb. 1,05:1, ezért a kártyának nem volna széle. Sötét módban az árnyék nem látszik, ezért ott a széle egy 1 dp-s `outlineVariant` keret; világos módban keret nincs. Kivétel a templom-részletező napi sávjának üres napja, amely mindkét módban keretes kártya (KO1), és a térképi kártya, amely a térkép fölött lebeg, és keretet egyik módban sem kap (KO18). Fix szürke (`Colors.black12`, `#F2F2F2`) vagy fehér laphátter nincs: a lap háttere a `Scaffold` `surface`-e (SZ5).
 
-**MÉ2 — Árnyékot csak a lebegő elem kap**, az M3 alapértelmezésével: térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`.
+**MÉ2 — Árnyékot a kártya és a lebegő elem kap**, az M3 alapértelmezésével: kártya a listán és a lapon `1` (MÉ1), térképi kártya és FAB `3`, menü `2`. Más elem `elevation`-je `0`. Kivétel az iOS-es rádiógomb (`1`, PL2), a templom-részletező napi sávjának üres napja (`0`, KO1), valamint a térképi csoport és a saját helyzet jelölője: ezek a spec 0006/0012 szerinti finom árnyékot kapnak (KO17), amelynek értéke a `lib/theme/`-ben áll.
 
 **MÉ3 — A címsor görgetéskor tónust kap.** `elevation: 0`, `scrolledUnderElevation: 3` (M3 alapértelmezés), árnyék nélkül.
 
@@ -169,9 +180,14 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 
 **EL1 — Telefonra optimalizált, 320 dp-től.** A legkisebb támogatott szélesség 320 dp; a tervezési alap 360–393 dp; a nagy telefon 430 dp felett. Egyik szélességen sem vágódik le és nem lóg ki semmi.
 
-**EL2 — Nincs fix szélesség.** Szöveget, chipet, gombot tartalmazó elemnek nincs rögzített szélessége; ami nem fér el egy sorban, az tördel (`Wrap`, több soros `Text`), nem `overflow: ellipsis`-szel vész el. Kivétel: a templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
+**EL2 — Nincs fix szélesség.** Szöveget, chipet, gombot tartalmazó elemnek nincs rögzített szélessége; ami nem fér el egy sorban, az tördel (`Wrap`, több soros `Text`), nem `overflow: ellipsis`-szel vész el. Kivételek:
 
-**EL3 — Széles képernyőn korlátozott tartalom.** 600 dp feletti szélességen (tablet, fekvő tájolás) a lista és az űrlap tartalma legfeljebb **640** dp széles, középre igazítva. A térkép és a fotó kitölti a teljes szélességet. Kétpaneles elrendezés nincs.
+- A templom neve a kártyán legfeljebb 2 sor, utána `ellipsis`.
+- A templomkártya időpont-chipjei (a napi alkalmak, CONTEXT.md) egy sorban állnak; ami nem fér ki, azt a sor végén egy `…` chip jelzi (spec 0007). Alkalom nélkül is fenntartott a chip-sor helye, üresen, szöveg nélkül, így a chipek, az elválasztó és a kedvenc gomb minden kártyán ugyanott áll. A részletező minden misét mutat.
+- A mise jellemzőjének buborékja a misekártyán egy sorban, `ellipsis`-szel áll; koppintásra a teljes szöveg látszik (spec 0011).
+- A templom-részletező napi kártyáinak mise-chipjei egy sorban állnak: sok misés napon a kártya szélesebb lesz, nem magasabb. A sáv minden kártyája a legmagasabbhoz nyúlik, és felül egy vonalban áll. A sáv vízszintesen görgethető, így semmi nem vész el (spec 0003).
+
+**EL3 — Széles képernyőn oszlopok.** Az űrlap (Hibajelentés, a Részletes kereső feltételei és összegzése) és a Névjegy tartalma 600 dp feletti szélességen is legfeljebb **640** dp széles, középre igazítva. A templom-részletező, a Templomok, Misék lista és a Részletes kereső találatainak kártyái 840 dp alatt egy, legfeljebb **640** dp-s oszlopban állnak középen; 840 dp-től **két**, 1200 dp-től **három** oszlopban, többen nem. Egy oszlop legfeljebb 640 dp; ami ezen felül marad, az két oldalt egyenlően üres. A listán a kártyák sorokban, balról jobbra és felülről lefelé követik egymást, egy sor kártyái egyforma magasak, a rövid utolsó sor kártyái sem szélesebbek; a Misék időfejléce a teljes tartalomszélességben áll, a csoportja új sorban kezdődik. A megnyúlt templomkártyán a többlet a közismert név alá kerül: az időpont-chipek, az elválasztó és a kedvenc gomb a sor kártyáin egy vonalban áll, a fotó a teljes magasságot kitölti. A templom-részletezőn a név, a gombok és a misék a teljes tartalomszélességben állnak, alattuk a szakaszok téma szerint oszlopokban; üres téma nem hagy üres oszlopot (spec 0003). A térkép és a fotó kitölti a teljes szélességet. A templom-részletező Megközelítés térképe a saját szélességéhez 3:2 arányú, de legfeljebb a látható magasság fele (a fotófejlécé: KO19).
 
 **EL4 — Biztonságos terület.** Tartalom nem kerül a notch, a status bar, a home indicator vagy a navigációs gesztussáv alá (`SafeArea` vagy a `Scaffold` beépített kezelése). A térkép kitöltheti, de a rajta lévő vezérlők és lebegő elemek nem.
 
@@ -181,13 +197,11 @@ _Ismert eltérés: nincs `darkTheme` (#54); több `Scaffold(backgroundColor: Col
 
 **NA1 — Az alsó navigáció mindig látszik.** Minden lapon, amely egy fülről nyílik (templom-részletező, keresési találatok, részletes kereső, Névjegy, Impresszum), a fülsáv látható. Ehhez minden fülnek saját navigációs verme van. Csak a modális elem takarhatja el: dialógus, bottom sheet, action sheet, teljes képernyős fotónézegető, feladatfolyamat-űrlap (pl. Hibajelentés), nyitóképernyő.
 
-_Ismert eltérés: a részletező, a keresési találatok és a Névjegy `Navigator.push`-sal a fülsáv fölé nyílik; a Hibajelentés nem modális (#55)._
-
 **NA2 — Feladatfolyamat-űrlap.** Ami egy befejezendő vagy elvetendő folyamat (pl. Hibajelentés), az modálisan nyílik: iOS-en modális lap, Androidon teljes képernyős dialógus (`fullscreenDialog: true`), „Mégse" kilépéssel.
 
 **NA3 — Vissza.** A vissza gomb, a vissza-gesztus és az iOS élről húzás a fül saját vermében lép vissza. Androidon egy fül gyökeréről az első fülre (Templomok) visz, onnan kilép az appból. Minden mélyebb lapon van vissza gomb a címsorban.
 
-**NA4 — Az aktív fülre újra koppintva** a fül a gyökerére ugrik, ha mélyebb lap van nyitva; ha már a gyökéren van, a lista elejére görget.
+**NA4 — Az aktív fülre újra koppintva** a fül a gyökerére ugrik, ha mélyebb lap van nyitva; ha már a gyökéren van, és a gyökérnek saját fülsora van (Templomok: Közeli / Kedvencek), előbb az első fülére vált; onnan a lista elejére görget.
 
 **NA5 — Fülváltáskor** minden fül megtartja a saját vermét és görgetési helyét.
 
@@ -208,7 +222,8 @@ _Ismert eltérés: a részletező, a keresési találatok és a Névjegy `Naviga
 | Dialógus | M3 `AlertDialog` | `CupertinoAlertDialog` (`AlertDialog.adaptive`) |
 | Műveletválasztó (pl. a liturgikus nyelv választója) | M3 `showModalBottomSheet` | `CupertinoActionSheet` |
 | Dátum- és időválasztó | M3 `showDatePicker` / `showTimePicker` | `CupertinoDatePicker` sheetben |
-| Kapcsoló, pipa, rádiógomb | M3 | `.adaptive` konstruktor |
+| Kapcsoló, pipa | M3 | `.adaptive` konstruktor |
+| Rádiógomb (`MiserendRadioTile`) | M3 `RadioListTile` | `CupertinoRadio` 24 dp-re nagyítva, `elevation: 1` árnyékkal (a saját 14 dp-s, hajszálvékony szélű köre világos lapon alig látszik) |
 | Töltésjelző | `CircularProgressIndicator` | `CircularProgressIndicator.adaptive` |
 | Pull-to-refresh | `RefreshIndicator` | `RefreshIndicator.adaptive` |
 | Alsó navigáció | M3 `NavigationBar` | `CupertinoTabBar`, aktív szín `primary` |
@@ -219,15 +234,11 @@ _Ismert eltérés: a részletező, a keresési találatok és a Névjegy `Naviga
 
 **PL3 — Az elágazás egy helyen.** A platformfüggő döntés a `lib/theme/adaptive.dart` segédfüggvényeiben (pl. `showMiserendDialog`, `showMiserendActionSheet`, `pickMiserendDate`) és a témában áll; a képernyő kódja nem ágazik el platformonként. A platformot `Theme.of(context).platform` adja, nem a `dart:io` `Platform`, így a teszt felülírhatja.
 
-_Ismert eltérés: iOS-en is minden Material — dialógus, sheet, választók, töltésjelző, pull-to-refresh, átmenet, érintés (#60)._
-
 ## IK. Ikonok
 
 **IK1 — Beépített lekerekített ikonok.** Tartalmi ikon: `Icons.*_rounded` (külső ikoncsomag nincs). Egy képernyőn nem keveredik a sima és a lekerekített változat. Kivétel: az app saját képi ikonjai (pl. a kehely) és a liturgikus nyelvek zászlói.
 
 **IK2 — Kitöltött csak kiválasztva.** Kiválasztott állapotban (aktív fül, kedvenc) a kitöltött változat, egyébként a körvonalas (`*_outline_rounded`, `*_border_rounded`), ahol van ilyen.
-
-_Ismert eltérés: egyetlen ikon sem `_rounded` (#61)._
 
 **IK3 — Méret.** Alapértelmezés `24`, chipben és szalagban `18`, állapotnézetben (KO8) `48`; a méret az `IconTheme`-ből vagy a komponens témájából jön.
 
@@ -235,27 +246,21 @@ _Ismert eltérés: egyetlen ikon sem `_rounded` (#61)._
 
 ## MO. Mozgás
 
-**MO1 — Időtartamok.** Kis állapotváltás `Durations.short3` (150 ms), elem be- és kilépése `Durations.medium1` (250 ms), képernyőnyi átmenet `Durations.medium3` (350 ms). Más időtartam nincs.
+**MO1 — Időtartamok.** Kis állapotváltás `Durations.short3` (150 ms), elem be- és kilépése `Durations.medium1` (250 ms), képernyőnyi átmenet `Durations.medium3` (350 ms). Más időtartam nincs; kivétel a tooltip kiúszása (KO21).
 
 **MO2 — Görbék.** Belépés `Easing.emphasizedDecelerate`, kilépés `Easing.emphasizedAccelerate`, helyben maradó állapotváltás `Easing.standard`.
 
 **MO3 — Csökkentett mozgás.** Ha `MediaQuery.disableAnimationsOf(context)` igaz, nincs csúszás és átméretezés: a váltás azonnali, vagy legfeljebb 150 ms áttűnés.
 
-_Ismert eltérés: nyers időtartamok és görbék, a csökkentett mozgás nincs kezelve (#64)._
-
 **MO4 — Takarékos mozgás** (AL5). Hero animáció csak a fotónál (fejléc → galéria). Nincs skeleton: a lista a helyi gyorsítótárból szinte azonnal kész, a betöltést a `LoadingView` (KO8) mutatja. Nincs dekoratív, ismétlődő vagy figyelemfelkeltő animáció. Egyetlen kivétel a fotófejléc automatikus diavetítése (spec 0003, KO19).
 
 ## KO. Komponensek
 
-**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card.filled` vagy `Card(elevation: 0)`, szín `surfaceContainerLow`, forma `Radii.m`, belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5).
+**KO1 — Kártya** (alkalomkártya, misekártya, templomkártya). `Card` a téma `cardTheme`-jével: szín `surfaceContainerLow`, `elevation: 1` (MÉ1), forma `Radii.m`, sötét módban 1 dp-s `outlineVariant` keret (MÉ1), belső térköz `Spacing.l`, kártyák között `Spacing.s`. Az egész kártya koppintható; a képernyőolvasó egy egységként olvassa fel (AM5). Kivétel a Részletes kereső templomkártyáinak (i)-s időpont-chipje (KO3): az a saját koppintását kapja, és a leírását nyitja meg action sheetben, mint a részletezőn; a kártya többi része a kártyáé. A chip érintési területe 48 × 48 dp (AM3), a chip-sor ekkora magas lesz, így egy oszlopban a kártya magasabb lehet, több oszlopban a sor többi kártyája hozzá igazodik (EL3). Ahol az (i)-vel kevesebb időpont férne a sorba, mint nélküle (a legkeskenyebb telefonon, nagy szövegnél), a chipek (i) nélkül állnak: az időpont a fontosabb (TI3). A leírás a kártya képernyőolvasós műveletei között is ott van („10:30 leírása"). A többi templomkártya chipje nem kap (i)-t. A Misék fülön egy templom azonos időpontban kezdődő miséi **egy misekártyán** állnak (**csoportos misekártya**), az időfejléc alatt ott, ahol a csoport első miséje állna. A templom neve, a település, a fotó és a távolság egyszer szerepel, bökésre a templom-részletező nyílik. Alattuk misénként **egy sor**, a lista sorrendjében, `Spacing.s` sorközzel: elején a mise címe `bodyMedium` `onSurfaceVariant`, „Szentmise" esetén is (kivétel a spec 0008 szabálya alól: itt ez különbözteti meg a sorokat), mögötte `Spacing.s`-re a mise jellemzőjének buborékai (KO4, KO21), a címmel függőlegesen középre igazítva; ami nem fér a sorba, az alá tördel (EL2). Minden sor legalább egy buboréknyi magas, így a később érkező jellemző nem tolja le a kártyát. A csoportos kártya magasabb lehet; több oszlopban a sor többi kártyája hozzá igazodik (EL3). Egy egységként olvasódik fel, mindegyik misével (AM5). Egy misés csoport kártyája a megszokott misekártya: a cím a település sorában, „Szentmise" nélkül, alatta a jellemző lefoglalt sora. Kivétel a templom-részletező napi sávjának **üres napja**: az M3 outlined kártyája, háttere `surface` (azonos a lappal), 1 dp-s `outlineVariant` kerettel, `elevation: 0`, forma `Radii.m`; a fejléce (napnév vagy „Holnap") a misés napéval azonos, a dátum `onSurfaceVariant`, világos és sötét módban (SZ4). Más látható szöveg nincs rajta: a keret maga jelzi, hogy arra a napra nincs alkalom. Egy egységként olvasódik fel, a fajtájának megfelelő mondattal, pl. „Holnap, 2026. 10. 19., Erre a napra a miserend.hu-n nincs információ" (AM5). A `surfaceContainerHighest` itt nem jó: sötét módban jóval világosabb a misés kártyánál, így az üres nap lenne a sáv legfeltűnőbb eleme.
 
 **KO2 — Címsor.** Háttér `surface`, előtér `onSurface`, cím `titleLarge`, `elevation: 0`, `scrolledUnderElevation: 3`. Lila vagy más színes háttér nincs.
 
-_Ismert eltérés: a téma `appBarTheme`-je és a szakaszsáv lila hátteret és fehér előteret ad (#56)._
-
-**KO3 — Időpont-chip.** Háttér `occasionTimeContainer`, szöveg `onOccasionTimeContainer`, épp most tartó alkalomnál `occasionTime` / `onOccasionTime`. Forma `Radii.s`, `labelLarge` `w600`, táblázatos számjegyek. Az időblokk végleges formáját külön spec rögzíti.
-
-_Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, kontraszt kb. 2,4:1; az adat-chipek és a kártyák színe, formája sem a KO1/KO4 szerinti (#57)._
+**KO3 — Időpont-chip.** Háttér `occasionTimeContainer`, szöveg `onOccasionTimeContainer`, épp most tartó alkalomnál `occasionTime` / `onOccasionTime`. Forma `Radii.s`, `titleMedium` `w600`, táblázatos számjegyek: akkora, mint a templom neve a kártyán, és vastagabb nála, így a kártya legerősebb eleme (TI3). Belső térköz vízszintesen `s`, függőlegesen `xs`; az (i) jelölő `Icons.info_outline_rounded` `18`, a szöveg színében. Koppintás nélkül nincs ripple. Az időblokk végleges formáját külön spec rögzíti.
 
 **KO4 — Adat-chip** (távolság, nyelv, jellemző). Távolság és nyelv: `surfaceContainerHighest` / `onSurfaceVariant`; jellemző: `secondaryContainer` / `onSecondaryContainer`. Forma `Radii.s`, felirat `labelLarge`, ikon `18`. Nem interaktív chip nem kap `onTap`-et és ripple-t.
 
@@ -268,9 +273,11 @@ _Ismert eltérés: az időpont-chip narancs háttéren fehér szöveget mutat, k
 
 Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai címkéje van („Épp most tart", „3 új").
 
-**KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. Színek: SZ4.
+**KO7 — Szalag** (nincs kapcsolat, szerverhiba, helyzet nem elérhető, és a Részletes kereső két szalagja: a **megszakadt keresés** — „A keresés megszakadt, a lista nem teljes." — és a **sikertelen keresés** — „A keresés nem sikerült, nincs kapcsolat." / „…, a miserend.hu nem elérhető."; ezek színe a hiba szerinti, „Újra" szöveges gombjuk van, és magától nem próbálkoznak újra). Teljes szélesség, lekerekítés nélkül, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Ikon `18` és `bodyMedium` szöveg; mellette (i) gomb, ha van bővebb tájékoztatás. A gombok a szöveg mellett, a szalag végén állnak, amíg a belső térközön belüli szélesség felénél nem foglalnak többet; különben a szöveg alá kerülnek, a szalag végére igazítva, és ha egy sorban nem férnek el, tördelnek (EL2). Színek: SZ4.
 
-**KO8 — Állapotnézetek** (betöltés, üres, hiba). Betöltés: középre igazított `CircularProgressIndicator.adaptive`. Üres és hiba: ikon `48` `onSurfaceVariant`, alatta `titleMedium` cím, `bodyMedium` magyarázat (SV2), és ha van teendő, egy `FilledButton.tonal` („Újra"). Elemek között `Spacing.l`. A meglévő `LoadingView`, `MessageView`, `PositionUnavailableView` ezt valósítja meg.
+**KO8 — Állapotnézetek** (betöltés, üres, hiba). Betöltés: középre igazított `CircularProgressIndicator.adaptive`. Ha a munka hosszú, és ismert, hol tart (a Részletes kereső keresési köre, spec 0010), a forgó jelző helyén **haladásjelző** (`LoadingProgress`) áll: meghatározott M3 `LinearProgressIndicator` mindkét platformon (nincs a PL2 listáján), az alapértelmezett témával — sáv `primary`, pálya `secondaryContainer`, 4 dp magas —, a képernyő szélétől `Spacing.l`, legfeljebb 640 dp széles (EL3), középre igazítva; alatta `Spacing.s`-re a felirata számokkal („120 / 210 templom átnézve"), `bodyMedium` `onSurfaceVariant`, táblázatos számjegyekkel, középre igazítva, tördelve (EL2). Hátralévő időt nem ír ki. Csak az érték ugrik, animációja nincs (MO4). A lista alján, a kis forgó jelző helyén ugyanez áll, `Spacing.l` térközzel; lapok között láthatatlanul megtartja a helyét. Üres és hiba: ikon `48` `onSurfaceVariant`, alatta `titleMedium` cím, `bodyMedium` magyarázat (SV2), és ha van teendő, egy `FilledButton.tonal` („Újra"). Két egyenrangú teendőnél két `FilledButton.tonal` áll egymás mellett, középre igazítva, `Spacing.s` távolságra; ami nem fér el egy sorban, az alá tördel, `Spacing.s` sorközzel (EL2). Elemek között `Spacing.l`.
+
+**Kör vége — „Keresés tovább".** A Részletes kereső keresési körének végén (spec 0010, „Lista alja") a továbblépés CTA-ja **mindenhol ugyanaz**: `FilledButton.tonal` „Keresés tovább" felirattal, a kör-szöveg alatt `Spacing.l`-re, középre igazítva. A kör-szöveg `bodyMedium` `onSurfaceVariant`, középre igazítva, tördelve (EL2), a képernyő szélétől `Spacing.l`. A lista alján a kártyák alatt áll, körülötte `Spacing.l`; a „Nincs találat" nézetben a cím alatt a kör-szöveg, alatta a „Feltételek módosítása" és a „Keresés tovább" két egyenrangú tonal gombként, ebben a sorrendben. Szöveges gomb (`TextButton`) itt nem áll: a felhasználó következő lépése, nem mellékes teendő. A meglévő `LoadingView`, `MessageView`, `PositionUnavailableView` ezt valósítja meg.
 
 **KO9 — Gombok.** Képernyőnként legfeljebb egy `FilledButton` (a fő teendő); utána `FilledButton.tonal`, majd `TextButton`. `ElevatedButton` nincs. Forma `Radii.full`. Felirat ige (SV3).
 
@@ -286,21 +293,30 @@ Egy kártyán legfeljebb egy állapot-badge. Minden badge-nek magyar szemantikai
 
 **KO15 — Snackbar.** Háttér `inverseSurface`, szöveg `onInverseSurface`, akció `inversePrimary`, `SnackBarBehavior.floating`, forma `Radii.xs`, 4 s.
 
-_Ismert eltérés: a `snackBarTheme` lila hátteret ad (#56)._
-
 **KO16 — Alsó navigáció.** A PL2 szerint adaptív, felirat mindig látszik. Androidon `NavigationBar` az M3 alap színeivel (háttér `surfaceContainer`, indikátor `secondaryContainer`); iOS-en `CupertinoTabBar`, aktív szín `primary`, inaktív `onSurfaceVariant`.
 
-_Ismert eltérés: `BottomNavigationBar` lila háttérrel, mindkét platformon (#55)._
+**KO17 — Térkép: jelölő, csoport, saját helyzet, forrásmegjelölés.**
 
-**KO17 — Térképi jelölő és csoport.** A jelölő színe a `primary` szerepből jön. A csoport (spec 0012) kör `primaryContainer` háttérrel, `onPrimaryContainer` `labelLarge` számmal. A kijelölt jelölő nagyobb, nem más színű.
+- **Templom-pin**: a miserend.hu pinje (`assets/images/map_pin.png`, alapszíne a `primary` világos értéke, spec 0006). Kép, ezért sötét módban sem vált színt. A kijelölt pin 1,3×-os, nem más színű.
+- **Csoport** (spec 0012): kör `primary` háttérrel, `onPrimary` szegéllyel és `onPrimary` `labelLarge` `FontWeight.w700` számmal, finom árnyékkal (MÉ2).
+- **Saját helyzet** (spec 0006): `userLocation` pötty `onUserLocation` gyűrűvel, finom árnyékkal (MÉ2).
+- **Forrásmegjelölés**: háttér `mapOverlay`, szöveg `labelSmall` `onSurface`.
 
-**KO18 — Térképi kártya.** Lebegő elem: `surfaceContainerLow`, forma `Radii.l`, `elevation: 3`, a képernyő szélétől és a biztonságos területtől `Spacing.l`.
+**KO18 — Térképi kártya.** Lebegő elem: `surfaceContainerLow`, forma `Radii.l`, `elevation: 3`, keret sötét módban sincs (MÉ1), a képernyő szélétől és a biztonságos területtől `Spacing.l`.
 
-**KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül, Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon alatt sötét átmenet biztosítja az AA kontrasztot.
+**KO19 — Fotófejléc.** Teljes szélesség, lekerekítés nélkül; kinyitva 16:9 arányú, de legfeljebb a látható magasság fele; Hero animációval a galériába (MO4). Több fotónál automatikus diavetítés: 4 s-onként lapoz, `Durations.medium3` és `Easing.emphasizedDecelerate` görbével; kézi lapozásra véglegesen leáll, és leáll, ha a fejléc összecsukódik vagy az app háttérbe kerül (spec 0003). Csökkentett mozgásnál (MO3) el sem indul. A fotón álló szöveg vagy ikon `onPhoto`, alatta `photoScrim` sötét átmenet biztosítja az AA kontrasztot (SZ3). A lapozójelölő pöttyei közül az aktuális fotóé telt, a többié gyűrű: alakjuk különbözteti meg őket, nem halványabb szín (SZ5). A fotó tetején a status bar alatt teljes erejű `photoScrim` áll, amely a címsor alján átlátszóba fut; amíg a fotó a címsor alatt van, a status bar ikonjai világosak, a vissza gomb pedig `photoScrim` korongon `onPhoto` színű. Összecsukott fejlécnél a vissza gomb és a status bar a címsoré (KO2).
 
 **KO20 — Lebegő számláló** (pl. a részletes kereső „8 / 42 találat" felirata, spec 0010). Nem badge (nem állapot) és nem chip (nem egy elem adata), hanem a lista egészéről szóló, ideiglenes lebegő felirat. Alul középen, a biztonságos területtől `Spacing.l`-re; háttér `inverseSurface`, szöveg `onInverseSurface` `labelLarge`, táblázatos számjegyekkel, forma `Radii.full`, belső térköz vízszintesen `Spacing.l`, függőlegesen `Spacing.s`. Görgetés közben látszik, a görgetés vége után 1,5 s-mal `Durations.medium1` alatt elhalványul. Nem interaktív, árnyéka nincs.
 
-_Ismert eltérés: félig átlátszó fekete kapszula fehér szöveggel, 300 ms-os halványulás (#58, #64)._
+**KO21 — Tooltip** (az M3 plain tooltipje). Három esetre: az ikongomb felirata hosszú nyomásra (AM5); egy levágott chip teljes szövege koppintásra (pl. a mise jellemzőjének buboréka, spec 0011); és a liturgikus nyelv zászlójának neve koppintásra (pl. a templom részletező Nyelvek kártyája). Csak a levágott chip kap tooltipet; a teljesen látszó chip koppintása a kártyáé (KO1). A levágottságot az ellipszis jelzi; a chipen és a zászlón ripple és kiemelés nincs (KO4). A zászló érintési területe 48 × 48 dp (AM3), a látható zászló ennek közepén áll, és a szomszédos zászlók területei összeérnek. A látható zászlók között így vízszintesen 24, a sorok között 30 dp a hely: ezt az érintési terület adja, kivétel a TK1 skálája és a TK2 sorközei alól. A zászlók a kártya tartalmának szélén állnak, az érintési terület a kártya belső margójába és a cím sorába lóg. Mindkét platformon ugyanaz (PL1), a téma `tooltipTheme`-jéből.
+
+- **Megjelenés**: háttér `inverseSurface`, telt, átlátszóság nélkül; szöveg `onInverseSurface` `bodySmall`; forma `Radii.xs`; belső térköz vízszintesen `Spacing.s`, függőlegesen `Spacing.xs`; legalább 24 dp magas; árnyéka nincs (MÉ2).
+- **Hely**: a chip és a zászló tooltipje fölötte, a látható elem szélétől `Spacing.xs`-re; ha fölötte nincs elég hely a képernyőn, alatta, ugyanúgy `Spacing.xs`-re. Rálóghat a címsorra és a szomszédos tartalomra: ideiglenes, és nem tol el semmit. Az ikongombé a Flutter alapértelmezése szerint. A képernyő szélétől legalább `Spacing.l` (TK2).
+- **Szélesség**: legfeljebb a képernyő szélessége mínusz 2 × `Spacing.l`, de legfeljebb 312 dp; a hosszabb szöveg több sorba tördel. Eltérés az M3 200 dp-jétől: a chip teljes szövege (pl. egy hosszú megjegyzés) 200 dp-n, 2,0-s szövegnagyításnál keskeny, hosszú oszlop lenne.
+- **Időzítés**: hosszú nyomásra az elengedés után 1,5 s-ig látszik; koppintásra egy másik érintésig vagy görgetésig, legfeljebb 10 s-ig. Ugyanarra a chipre vagy zászlóra újra koppintva a 10 s elölről indul.
+- **Mozgás**: a Flutter beépített áttűnése, be 150 ms (`Durations.short3`), ki 75 ms; csökkentett mozgásnál is ez (az MO3 legfeljebb 150 ms áttűnést enged). A 75 ms-os kiúszás kivétel az MO1 alól: a `Tooltip` áttűnése nem állítható, és egy saját tooltip az ikongombok beépített `tooltip`-jét is kiváltaná.
+
+A tooltip nem hordoz kattintható tartalmat (linket, gombot).
 
 ## AM. Akadálymentesség
 
@@ -310,11 +326,9 @@ _Ismert eltérés: félig átlátszó fekete kapszula fehér szöveggel, 300 ms-
 
 **AM3 — Érintési terület legalább 48 × 48 dp**, mindkét platformon (az iOS 44 pt-os minimumát is fedi).
 
-**AM4 — Szövegnagyítás.** A rendszer szövegméretét követjük, nem korlátozzuk (`textScaler` nincs lezárva). 2,0-s nagyításnál, 320 dp szélességen sem vágódik le és nem lóg ki tartalom.
+**AM4 — Szövegnagyítás.** A rendszer szövegméretét követjük, nem korlátozzuk (`textScaler` nincs lezárva). 2,0-s nagyításnál, 320 dp szélességen sem vágódik le és nem lóg ki tartalom. Kivétel: a fülsáv (KO16) felirata legfeljebb 1,3-szorosára nő, mindkét platformon, mint az M3 `NavigationBar`-é.
 
-**AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
-
-_Ismert eltérés (AM3–AM5, EL1–EL3): nincs `MergeSemantics` a kártyákon, fix templomkártya-magasság, nincs 640 dp-s korlát, nincsenek méret- és guideline-tesztek (#62)._
+**AM5 — Képernyőolvasó.** Minden ikongombnak magyar `tooltip`-je (KO21) vagy `Semantics` címkéje van. A kártya egy egységként, értelmes sorrendben olvasódik fel (`MergeSemantics`), pl. „18:30, Szent István-bazilika, 1,2 km". Díszítő kép és ikon `excludeFromSemantics`.
 
 **AM6 — Gesztus csak kényelmi.** Minden funkció koppintással is elérhető; a húzás, hosszú nyomás csak gyorsítás.
 
@@ -327,8 +341,6 @@ _Ismert eltérés (AM3–AM5, EL1–EL3): nincs `MergeSemantics` a kártyákon, 
 **SV2 — Hibaüzenet: mi történt + mit tehetsz.** „Nincs internetkapcsolat. Próbáld újra, ha lesz térerő."
 
 **SV3 — A gomb felirata ige**: „Újra", „Küldés", „Megnyitás". „OK" csak puszta tudomásulvételre.
-
-_Ismert eltérés (SV1, SV3): a nyitóképernyő dialógusa magáz, és „Igen" / „Nem" gombokat mutat (#63)._
 
 **SV4 — A domain szavai a CONTEXT.md-ből jönnek** (pl. „Részletes kereső", „Épp most tart"), az ott kerülendő szavak a felületen sem szerepelnek.
 
@@ -344,8 +356,6 @@ _Ismert eltérés (SV1, SV3): a nyitóképernyő dialógusa magáz, és „Igen"
 
 **FM5 — Tartomány:** nagykötőjellel, szóköz nélkül („9:00–18:00").
 
-_Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem friss adat dátumáról hiányzik a záró pont (#63)._
-
 ## EH. Ellenőrzés
 
 **EH1 — Minden eltérés bug.** A review a DESIGN.md-től való minden eltérést bugként jelez, pontos egyezéssel: a hasonló érték nem elég.
@@ -358,4 +368,4 @@ _Ismert eltérés: az időformázás kétjegyű órát ad („07:30"), a nem fri
 
 ## Átállás állapota
 
-A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64 issue-k viszik (a #54 a téma-alap, a többi erre épül), és a `test/design_rules_test.dart` kivétellistája ezekre mutat.
+A dokumentum első változata (2026-10-07) a meglévő appból indult, és a célt rögzíti. A kód auditja ugyanekkor készült: az eltéréseket a #54–#64, a #66 és a #67 issue-k viszik (a #54 a téma-alap, a többi erre épül; minden eltérésért pontosan egy issue felel), és a `test/design_rules_test.dart` kivétellistája ezekre mutat. A KO21 (tooltip) 2026-10-12-én került be, eltérését a #71 viszi. A KO21 harmadik esete (a liturgikus nyelv zászlója), az „alatta, ha fölötte nincs hely" kitétel és a takarásról szóló mondat 2026-10-16-án került be, a #78-cal együtt. Az üres nap (SZ4, MÉ2, KO1, EL2) ugyanekkor, a #79-cel. Az üres nap kártyájáról a látható szöveg 2026-10-18-án került le (SZ4, KO1, EL2), a #81-gyel. A kártya sötét módú `outlineVariant` kerete (SZ5, MÉ1, KO1, KO18) 2026-10-19-én került be, a #82-vel. A Részletes kereső (i)-s időpont-chipjének kivétele (KO1) és a megszakadt, illetve sikertelen keresés szalagja (KO7) 2026-10-20-án, a #83-mal. A templomkártya mise-chipjei ugyanekkor lettek a napi alkalmak időpont-chipjei (EL2, EL3), a #77-tel. A KO8 haladásjelzője ugyanekkor, a #84-gyel. A „Keresés tovább" egységes CTA-ja és a KO8 két egyenrangú tonal gombja ugyanekkor, a #84 review-ja nyomán. A csoportos misekártya (Szótár, KO1) 2026-10-21-én került be, a #80-nal.

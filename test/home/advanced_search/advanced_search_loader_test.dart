@@ -7,11 +7,13 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
+import 'package:miserend/mass_kind.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// A Sunday morning.
@@ -60,13 +62,18 @@ ChurchDetails _church(
   isGreek: null,
 );
 
-CachedMass _cached(int churchId, DateTime time, {String? info}) => CachedMass(
+CachedMass _cached(
+  int churchId,
+  DateTime time, {
+  String? info,
+  MassSource source = MassSource.bootstrap,
+}) => CachedMass(
   id: null,
   apiMassId: null,
   churchId: churchId,
   time: time,
   info: info,
-  source: MassSource.bootstrap,
+  source: source,
 );
 
 /// A seeded church as the `Church` endpoint answers with it, with no mass
@@ -319,6 +326,48 @@ void main() {
       expect(page.failure, isNull);
       expect(noCall.requests, isEmpty);
     });
+
+    test(
+      'each church shows today\'s occasions of every kind, as other lists do',
+      () async {
+        await cache.importChurches(const [], [
+          _cached(1, DateTime(2026, 9, 20, 8, 0)),
+          _cached(
+            1,
+            DateTime(2026, 9, 20, 9, 0),
+            info: 'Római katolikus Gyóntatás',
+            source: MassSource.dailyList,
+          ),
+        ]);
+
+        final page = await loaderWith(
+          noCall,
+        ).loadPage(const AdvancedSearchCriteria(name: 'matyas'), 0);
+
+        expect(page.churches.single.masses.map((m) => m.time), [
+          DateTime(2026, 9, 20, 8, 0),
+          DateTime(2026, 9, 20, 9, 0),
+        ]);
+      },
+    );
+
+    test('the categories narrow nothing', () async {
+      await cache.importChurches(const [], [
+        _cached(1, DateTime(2026, 9, 20, 8, 0)),
+      ]);
+
+      final page = await loaderWith(noCall).loadPage(
+        const AdvancedSearchCriteria(
+          name: 'matyas',
+          categories: {OccasionCategory.confession},
+        ),
+        0,
+      );
+
+      expect(page.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 20, 8, 0),
+      ]);
+    });
   });
 
   group('pages', () {
@@ -378,6 +427,106 @@ void main() {
         (second.found, second.foundIsFinal, second.hasMore),
         (25, true, false),
       );
+    });
+  });
+
+  group('with only a position', () {
+    setUp(() async {
+      // Some 34 km from Budakeszi: in the second ring.
+      await seed([_church(6, 'Bazilika', 'Esztergom', lat: 47.79, lon: 18.74)]);
+    });
+
+    const nearby = AdvancedSearchCriteria(position: _budakeszi);
+
+    test('the first ring holds the churches within 25 km, nearest first, and '
+        'ends there', () async {
+      final page = await loaderWith(noCall).loadPage(nearby, 0);
+
+      expect(page.churches.map((c) => c.id), [3, 1, 2]);
+      expect(page.ring, SearchRing.within25Km);
+      expect(page.hasMore, isFalse);
+      expect((page.found, page.foundIsFinal), (3, true));
+      expect((page.lookedAt, page.candidates), (3, 3));
+    });
+
+    test('a wider ring, asked for, goes on from the next page with the '
+        'churches not yet seen, the count going on too', () async {
+      final loader = loaderWith(noCall);
+      await loader.loadPage(nearby, 0);
+
+      final second = await loader.loadPage(nearby.widened(), 1);
+      final third = await loader.loadPage(nearby.widened().widened(), 2);
+
+      expect(second.churches.map((c) => c.id), [6]);
+      expect(second.ring, SearchRing.within100Km);
+      expect((second.found, second.lookedAt, second.candidates), (4, 1, 1));
+      expect(second.hasMore, isFalse);
+      // Szeged, then the church of no position, last.
+      expect(third.churches.map((c) => c.id), [4, 5]);
+      expect(third.ring, SearchRing.country);
+      expect((third.found, third.lookedAt, third.candidates), (6, 2, 2));
+    });
+
+    test('with a day, the API is asked about the ring\'s churches alone, and '
+        'the wider ring\'s finds add to the count', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T08:00:00+02:00'),
+          _occurrence(6, '2026-09-21T09:00:00+02:00'),
+        ],
+      );
+      final loader = loaderWith(api);
+      final monday = AdvancedSearchCriteria(position: _budakeszi, day: _monday);
+
+      final first = await loader.loadPage(monday, 0);
+      final askedFirst = api.to('church').single.body;
+      // Nothing past the ring is asked about.
+      expect(api.to('nearbymasses'), hasLength(3));
+      final second = await loader.loadPage(monday.widened(), 1);
+
+      expect((jsonDecode(askedFirst) as Map)['ids'], [3, 1, 2]);
+      expect(first.churches.map((c) => c.id), [1]);
+      expect(
+        (first.found, first.foundIsFinal, first.hasMore),
+        (1, true, false),
+      );
+      expect((jsonDecode(api.to('church').last.body) as Map)['ids'], [6]);
+      expect(second.churches.map((c) => c.id), [6]);
+      expect((second.found, second.foundIsFinal), (2, true));
+    });
+
+    test(
+      'each page says how far through the ring\'s candidates it got',
+      () async {
+        await seed([
+          for (var i = 1; i <= 25; i++)
+            _church(100 + i, 'Templom $i', 'Budakeszi', lat: 47.5, lon: 18.9),
+        ]);
+        final loader = loaderWith(noCall);
+
+        final first = await loader.loadPage(nearby, 0);
+        final second = await loader.loadPage(nearby, 1);
+
+        // The 25 above and the three of the setUp within 25 km.
+        expect(
+          (first.lookedAt, first.candidates, first.hasMore),
+          (20, 28, true),
+        );
+        expect(
+          (second.lookedAt, second.candidates, second.hasMore),
+          (28, 28, false),
+        );
+      },
+    );
+
+    test('a name or a city searches with no ring', () async {
+      final page = await loaderWith(noCall).loadPage(
+        const AdvancedSearchCriteria(name: 'templom', position: _budakeszi),
+        0,
+      );
+
+      expect(page.ring, isNull);
+      expect(page.churches.map((c) => c.id), [3, 1, 4, 5]);
     });
   });
 
@@ -490,6 +639,57 @@ void main() {
       );
     });
 
+    test('a search for adoration finds the churches holding one in the '
+        'window, with its times and not the masses\'', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T09:00:00+02:00'),
+          _occurrence(1, '2026-09-21T10:00:00+02:00', title: 'Szentségimádás'),
+          _occurrence(1, '2026-09-21T13:00:00+02:00', title: 'Szentségimádás'),
+          _occurrence(2, '2026-09-21T10:00:00+02:00'),
+          _occurrence(2, '2026-09-21T11:00:00+02:00', title: 'Gyóntatás'),
+        ],
+      );
+
+      final page = await loaderWith(api).loadPage(
+        AdvancedSearchCriteria(
+          city: 'Budapest',
+          day: _monday,
+          from: const TimeOfDay(hour: 9, minute: 0),
+          until: const TimeOfDay(hour: 12, minute: 0),
+          categories: const {OccasionCategory.adoration},
+        ),
+        0,
+      );
+
+      expect(page.churches.map((c) => c.id), [1]);
+      expect(page.churches.single.masses.map((m) => m.time), [
+        DateTime(2026, 9, 21, 10, 0),
+      ]);
+    });
+
+    test('a search for every category counts every occasion, one of an '
+        'unknown kind too', () async {
+      final api = _answering(
+        masses: [
+          _occurrence(1, '2026-09-21T08:00:00+02:00', title: 'Ismeretlen'),
+          _occurrence(2, '2026-09-21T17:00:00+02:00', title: 'Gyóntatás'),
+        ],
+      );
+
+      expect(
+        await idsFound(
+          AdvancedSearchCriteria(
+            city: 'Budapest',
+            day: _monday,
+            categories: OccasionCategory.values.toSet(),
+          ),
+          api: api,
+        ),
+        [1, 2],
+      );
+    });
+
     test('a church the API no longer has is not found, and leaves the cache '
         'and the favorites', () async {
       final gone = <int>[];
@@ -510,54 +710,245 @@ void main() {
       expect(gone, [2]);
       expect(await cache.getChurch(2), isNull);
     });
+  });
 
-    test('no connection decides from the cached masses and says so', () async {
-      await cache.importChurches(const [], [
-        _cached(1, DateTime(2026, 9, 21, 8, 0)),
-      ]);
-      final api = _Api((_) async => throw const SocketException('offline'));
+  group('with a day, when the API gives no answer', () {
+    final waits = <Duration>[];
+    setUp(waits.clear);
 
-      final page = await loaderWith(
-        api,
-      ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
+    AdvancedSearchLoader retryingWith(_Api api) => AdvancedSearchLoader(
+      cache: cache,
+      api: api.client,
+      clock: () => _now,
+      wait: (duration) async => waits.add(duration),
+    );
 
-      // Church 2 has nothing cached for the day, so it is not found.
-      expect(page.churches.map((c) => c.id), [1]);
-      expect(page.failure, ApiFailure.noConnection);
-      expect(page.dataAsOf, DateTime(2026, 9, 1, 10, 0));
-    });
+    /// Fails the first [failures] calls with [failure], then answers as
+    /// [answering] does.
+    _Api failingFirst(
+      int failures,
+      _Api answering, {
+      ApiFailure failure = ApiFailure.noConnection,
+    }) {
+      var failed = 0;
+      return _Api((request) async {
+        if (failed < failures) {
+          failed++;
+          if (failure == ApiFailure.noConnection) {
+            throw const SocketException('offline');
+          }
+          return http.Response('', 500);
+        }
+        return answering.answer(request);
+      });
+    }
 
-    test('a server error on one church\'s masses decides that church from '
-        'the cache and says so', () async {
-      await cache.importChurches(const [], [
-        _cached(2, DateTime(2026, 9, 21, 10, 0)),
-      ]);
+    test(
+      'tries again after 2 seconds, and carries on as if nothing happened',
+      () async {
+        final api = failingFirst(
+          1,
+          _answering(masses: [_occurrence(1, '2026-09-21T08:00:00+02:00')]),
+        );
+
+        final page = await retryingWith(
+          api,
+        ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
+
+        expect(page.churches.map((c) => c.id), [1]);
+        expect(page.failure, isNull);
+        expect(waits, [const Duration(seconds: 2)]);
+      },
+    );
+
+    test('a server error on one church\'s masses is tried again too', () async {
       final answering = _answering(
-        masses: [_occurrence(1, '2026-09-21T08:00:00+02:00')],
+        masses: [
+          _occurrence(1, '2026-09-21T08:00:00+02:00'),
+          _occurrence(2, '2026-09-21T10:00:00+02:00'),
+        ],
       );
+      var failed = false;
       final api = _Api((request) async {
         final body = jsonDecode(request.body) as Map<String, dynamic>;
-        if (request.url.path == '/api/v4/nearbymasses' &&
+        if (!failed &&
+            request.url.path == '/api/v4/nearbymasses' &&
             _churchAt(body) == 2) {
+          failed = true;
           return http.Response('', 500);
         }
         return answering.answer(request);
       });
 
-      final page = await loaderWith(
+      final page = await retryingWith(
         api,
       ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
 
       expect(page.churches.map((c) => c.id), [1, 2]);
+      expect(page.failure, isNull);
+    });
+
+    test('gives up after three retries, 2, 4 and 8 seconds apart, finding '
+        'nothing from the cache', () async {
+      await cache.importChurches(const [], [
+        _cached(1, DateTime(2026, 9, 21, 8, 0)),
+      ]);
+      final api = _Api((_) async => throw const SocketException('offline'));
+
+      final page = await retryingWith(
+        api,
+      ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
+
+      expect(page.churches, isEmpty);
+      expect(page.failure, ApiFailure.noConnection);
+      expect(page.found, 0);
+      expect(page.foundIsFinal, isFalse);
+      expect(waits, const [
+        Duration(seconds: 2),
+        Duration(seconds: 4),
+        Duration(seconds: 8),
+      ]);
+      // Four tries of the page's `Church` call, and nothing past it.
+      expect(api.to('church'), hasLength(4));
+      expect(api.to('nearbymasses'), isEmpty);
+    });
+
+    test('says which failure it gave up on', () async {
+      final page = await retryingWith(
+        failingFirst(4, _answering(), failure: ApiFailure.serverError),
+      ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
+
       expect(page.failure, ApiFailure.serverError);
     });
 
-    test('a successful search dates the data to itself', () async {
-      final page = await loaderWith(
-        _answering(),
-      ).loadPage(AdvancedSearchCriteria(city: 'Budapest', day: _monday), 0);
+    test('given up on a later page, the count keeps what was found and stays '
+        'open', () async {
+      final churches = [
+        for (var id = 10; id < 10 + AdvancedSearchLoader.pageSize + 1; id++)
+          _church(id, 'Templom $id', 'Pécs', lat: 46, lon: 18 + id / 1000),
+      ];
+      await seed(churches);
+      final answering = _answering(
+        masses: [
+          for (final church in churches)
+            _occurrence(church.id, '2026-09-21T08:00:00+02:00'),
+        ],
+      );
+      var offline = false;
+      final api = _Api(
+        (request) async =>
+            offline
+                ? throw const SocketException('offline')
+                : answering.answer(request),
+      );
+      final loader = retryingWith(api);
+      final criteria = AdvancedSearchCriteria(city: 'Pécs', day: _monday);
 
-      expect(page.dataAsOf, _now);
+      final first = await loader.loadPage(criteria, 0);
+      offline = true;
+      final second = await loader.loadPage(criteria, 1);
+
+      expect(first.churches, hasLength(AdvancedSearchLoader.pageSize));
+      expect(second.churches, isEmpty);
+      expect(second.failure, ApiFailure.noConnection);
+      expect(second.found, AdvancedSearchLoader.pageSize);
+      expect(second.foundIsFinal, isFalse);
+    });
+  });
+
+  group('the connection', () {
+    test(
+      'is down while the last call got no answer, and up after one did',
+      () async {
+        final status = ApiStatus();
+        var offline = true;
+        final api = _Api(
+          (request) async =>
+              offline
+                  ? throw const SocketException('offline')
+                  : _answering().answer(request),
+        );
+        final loader = AdvancedSearchLoader(
+          cache: cache,
+          api: MiserendApiClient(
+            client: MockClient((request) async {
+              api.requests.add(request);
+              return api.answer(request);
+            }),
+            status: status,
+          ),
+          clock: () => _now,
+        );
+
+        await loader.checkConnection();
+        expect(loader.lastFailure.value, ApiFailure.noConnection);
+
+        offline = false;
+        await loader.checkConnection();
+        expect(loader.lastFailure.value, isNull);
+        // One small call each time.
+        expect(api.requests, hasLength(2));
+        expect(api.to('church'), hasLength(2));
+      },
+    );
+
+    group('after a page with a day', () {
+      /// A loader reporting to [status], answering every call with [answer].
+      AdvancedSearchLoader reportingTo(
+        ApiStatus status,
+        Future<http.Response> Function(http.Request request) answer,
+      ) => AdvancedSearchLoader(
+        cache: cache,
+        api: MiserendApiClient(client: MockClient(answer), status: status),
+        clock: () => _now,
+        wait: (_) async {},
+      );
+
+      /// What a call failing with [failure] gets.
+      http.Response failWith(ApiFailure failure) => switch (failure) {
+        ApiFailure.noConnection => throw const SocketException('offline'),
+        ApiFailure.serverError => http.Response('', 500),
+      };
+
+      final criteria = AdvancedSearchCriteria(city: 'Budapest', day: _monday);
+
+      for (final failure in ApiFailure.values) {
+        for (final failingLast in [true, false]) {
+          test('is up when any of its calls was answered, the one failing '
+              'with ${failure.name} ${failingLast ? 'last' : 'first'} to '
+              'answer', () async {
+            final status = ApiStatus();
+            final answering = _answering(
+              masses: [_occurrence(1, '2026-09-21T08:00:00+02:00')],
+            );
+
+            await reportingTo(status, (request) async {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              final failing =
+                  request.url.path == '/api/v4/nearbymasses' &&
+                  _churchAt(body) == 2;
+              if (failing == failingLast) {
+                await Future<void>.delayed(const Duration(milliseconds: 20));
+              }
+              return failing ? failWith(failure) : answering.answer(request);
+            }).loadPage(criteria, 0);
+
+            expect(status.value, isNull);
+          });
+        }
+
+        test('is down with ${failure.name} when all of its calls failed '
+            'with it', () async {
+          final status = ApiStatus();
+
+          await reportingTo(
+            status,
+            (_) async => failWith(failure),
+          ).loadPage(criteria, 0);
+
+          expect(status.value, failure);
+        });
+      }
     });
   });
 

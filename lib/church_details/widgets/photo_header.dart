@@ -1,15 +1,19 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/photo_gallery_page.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 
 /// The photo strip behind the collapsing app bar.
 ///
 /// With two or more photos it advances on its own, because a still image gives
 /// no hint that there are others behind it. A swipe stops that for good: an
 /// slideshow that resumes takes the photo out from under the person looking
-/// at it.
+/// at it. With reduced motion it does not start at all (DESIGN.md MO3, KO19).
 class ChurchPhotoHeader extends StatefulWidget {
   const ChurchPhotoHeader({
     super.key,
@@ -21,6 +25,24 @@ class ChurchPhotoHeader extends StatefulWidget {
   final List<String> photos;
   final double height;
   final String heroPrefix;
+
+  /// The row of dots that tells how many photos there are and which one shows.
+  static const Key pageIndicatorKey = ValueKey('photo-page-indicator');
+
+  /// The dark fade at the top, under the status bar and the back button.
+  static const Key topScrimKey = ValueKey('photo-top-scrim');
+
+  /// The open header's shape: as wide as the screen, 16:9.
+  static const double _aspectRatio = 16 / 9;
+
+  /// The most of the screen's height the open header takes, so a wide window
+  /// still shows content under it.
+  static const double _maxHeightShare = 1 / 2;
+
+  /// The open header's height on a screen of [size]: a fixed height would be
+  /// a thin strip of the photo in a wide window.
+  static double heightFor(Size size) =>
+      min(size.width / _aspectRatio, size.height * _maxHeightShare);
 
   @override
   State<ChurchPhotoHeader> createState() => _ChurchPhotoHeaderState();
@@ -40,10 +62,20 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
 
   bool _collapsed = false;
 
+  bool _reducedMotion = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Also runs right after [initState], which is where the timer first starts:
+  /// whether motion is reduced is only known from the context.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
     _syncTimer();
   }
 
@@ -75,11 +107,13 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
   }
 
   /// Runs only while there is something to advance through, the header is open,
-  /// the app is in front, and the person has not taken over.
+  /// the app is in front, motion is not reduced, and the person has not taken
+  /// over.
   void _syncTimer({bool resumed = true}) {
     final shouldRun =
         widget.photos.length > 1 &&
         !_handedOver &&
+        !_reducedMotion &&
         !_collapsed &&
         resumed &&
         mounted;
@@ -98,8 +132,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
     final next = (_index + 1) % widget.photos.length;
     _controller.animateToPage(
       next,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
+      duration: Durations.medium3,
+      curve: Easing.emphasizedDecelerate,
     );
   }
 
@@ -124,6 +158,13 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
       WidgetsBinding.instance.addPostFrameCallback((_) => _syncTimer());
     }
 
+    return Stack(
+      fit: StackFit.expand,
+      children: [_photos(context), _topScrim(context)],
+    );
+  }
+
+  Widget _photos(BuildContext context) {
     if (widget.photos.isEmpty) {
       return Image.asset(
         _placeholder,
@@ -151,7 +192,7 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
                 ),
           ),
         ),
-        Positioned(left: 0, right: 0, bottom: 8, child: _dots()),
+        Positioned(left: 0, right: 0, bottom: 0, child: _dots()),
       ],
     );
   }
@@ -159,9 +200,8 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
   Widget _photo(int index) {
     return Hero(
       tag: '${widget.heroPrefix}-$index',
-      child: FadeInImage.assetNetwork(
+      child: PhotoFadeIn(
         image: widget.photos[index],
-        fit: BoxFit.cover,
         placeholder: _placeholder,
         imageErrorBuilder:
             (context, error, stackTrace) => Image.asset(
@@ -175,27 +215,83 @@ class _ChurchPhotoHeaderState extends State<ChurchPhotoHeader>
     );
   }
 
-  Widget _dots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List<Widget>.generate(widget.photos.length, (index) {
-        final active = index == _index;
-        return Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
+  /// The status bar and the back button stand on the photo too, so its top
+  /// gets the same scrim: at full strength behind the status bar's light
+  /// icons, fading out down the toolbar, where the back button brings a disc
+  /// of its own (KO19).
+  Widget _topScrim(BuildContext context) {
+    final statusBar = MediaQuery.paddingOf(context).top;
+    final height = statusBar + kToolbarHeight;
+    final scrim = Theme.of(context).extension<MiserendColors>()!.photoScrim;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: height,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          key: ChurchPhotoHeader.topScrimKey,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? Colors.white : Colors.white54,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [scrim, scrim, Colors.transparent],
+              stops: [0, statusBar / height, 1],
+            ),
           ),
-        );
-      }),
+        ),
+      ),
+    );
+  }
+
+  /// The dots stand on the photo, so they get a dark fade under them that
+  /// keeps them readable on a white photo too (KO19). The top padding is the
+  /// fade's room, as tall as the dots and their bottom padding.
+  Widget _dots() {
+    final colors = Theme.of(context).extension<MiserendColors>()!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, colors.photoScrim],
+          // Fades in above the dots and is at full strength behind them: the
+          // dots start halfway down, below the top padding.
+          stops: const [0, 0.5],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: Spacing.l, bottom: Spacing.s),
+        child: Row(
+          key: ChurchPhotoHeader.pageIndicatorKey,
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: Spacing.s,
+          children: List<Widget>.generate(widget.photos.length, (index) {
+            final active = index == _index;
+            // The current photo's dot is filled, the others are rings: the
+            // shape tells them apart, not a fainter white.
+            return Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? colors.onPhoto : null,
+                border:
+                    active
+                        ? null
+                        : Border.all(color: colors.onPhoto, width: 1.5),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 
   void _openGallery(int index) {
     _handOver();
-    Navigator.of(context).push(
+    // Full screen, over the navigation bar too (DESIGN.md NA1).
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder:
             (_) => PhotoGalleryPage(

@@ -50,7 +50,12 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 Új, teljes képernyős oldal (`lib/church_details/report_problem_page.dart`), `Navigator.push`-sal nyílik. A régi `report_problem_popup.dart` és a `_showReportPopup` törlődik.
 
+> **Módosítva (2026-10-08, #55):** a Hibajelentés feladatfolyamat-űrlapként modálisan nyílik a fülsáv fölé (DESIGN.md NA2): iOS-en modális lap, Androidon teljes képernyős dialógus, a címsorban „Mégse” kilépéssel (`pushMiserendTaskFlow`, `lib/theme/adaptive.dart`).
+
 - **AppBar:** az app témája szerinti lila, címe „Hibajelentés”.
+
+  > **Módosítva (2026-10-08, #56): DESIGN.md KO2.** A címsor háttere `surface`, előtere `onSurface`, nem lila.
+
 - **Fejléc:** a templom neve (`titleMedium`), hogy látsszon, miről szól a jelentés.
 - **Típus:** három választógomb (`RadioListTile`), alapból **egyik sincs kiválasztva**:
 
@@ -126,6 +131,7 @@ Két külön fogalom, két külön csatorna (CONTEXT.md, „Hibajelentés”, �
 
 - **miserend.hu** csempe („A miserend webes változata”): a `https://miserend.hu` a böngészőben nyílik meg (`launchExternal`, injektálható).
 - **„Mai templom ajánlatunk”** kártya (`SectionCard`), fentről lefelé: a templom **képe** (az első fotó), **neve**, **címe** (város, utca) és **leírásának** első négy sora; koppintásra megnyílik a részletezője.
+  > **Módosítva (2026-10-09, #67): DESIGN.md EL2.** A leírás nem vágódik le négy sor után: teljes terjedelmében, tördelve áll.
   - Csak fotóval rendelkező templom jöhet szóba (`CacheDatabase.photographedChurchCount` / `photographedChurchAt`).
   - A `ChurchOfTheDayLoader` a napból képzett véletlen maggal 10 jelöltet választ, így egész nap ugyanaz a sor. Közülük az első leírással rendelkező nyer, ha egyiknek sincs, az első.
   - A kezdeti feltöltés nem hoz leírást. A kártya a gyorsítótárból azonnal megjelenik, majd egyetlen teljes `Church {"ids"}` hívás mind a 10 jelöltet a gyorsítótárba írja, és a választás onnan ismétlődik (ADR-0003); a nap későbbi megnyitásain így rögtön a leírásos templom látszik. Sikertelen hívásnál a gyorsítótárbeli választás marad, hibajelzés nélkül. Fotós templom nélkül a kártya nem jelenik meg.

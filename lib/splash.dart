@@ -8,6 +8,8 @@ import 'package:miserend/database/database_manager.dart';
 import 'package:miserend/database/miserend_database.dart';
 import 'package:miserend/home/home.dart';
 import 'package:miserend/preferences.dart';
+import 'package:miserend/theme/adaptive.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// What the splash screen does to get the app ready, behind one seam so that
 /// the screen can be pumped without files, preferences or a network.
@@ -75,24 +77,14 @@ class _RouteSplashState extends State<RouteSplash> {
   _checkDatabase() async {
     final bool fileExists = await widget.startup.exportExists();
     if (!fileExists) {
-      unawaited(
-        _showDialog(
-          'Adatabázis nem taláható',
-          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
-        ),
-      );
+      unawaited(_showDialog('Hiányoznak a miserendek'));
       return;
     }
 
     final bool databaseVersionCompatible =
         await widget.startup.exportVersionCompatible();
     if (!databaseVersionCompatible) {
-      unawaited(
-        _showDialog(
-          'Adatbázis nem megfelelő',
-          'Az alkalmazás használatához szükség van az adatbázis letöltésére. Letölti most?',
-        ),
-      );
+      unawaited(_showDialog('Elavultak a miserendek'));
       return;
     }
 
@@ -102,12 +94,14 @@ class _RouteSplashState extends State<RouteSplash> {
   _downloadDatabase() async {
     setState(() {
       _downloadFailed = false;
-      _status = 'Adatbázis letöltése…';
+      _status = 'Miserendek letöltése…';
     });
     final bool success = await widget.startup.downloadExport();
     if (success) {
       if (mounted) {
-        const snackBar = SnackBar(content: Text('Adatbázis letöltése sikeres'));
+        const snackBar = SnackBar(
+          content: Text('A miserendek letöltése sikeres'),
+        );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
       _goToMainScreen();
@@ -120,7 +114,7 @@ class _RouteSplashState extends State<RouteSplash> {
       if (mounted) {
         const snackBar = SnackBar(
           content: Text(
-            'Az adatbázis letöltése nem sikerült, '
+            'A miserendek letöltése nem sikerült, '
             'a korábban letöltött adatokkal folytatjuk.',
           ),
         );
@@ -193,7 +187,7 @@ class _RouteSplashState extends State<RouteSplash> {
   Widget build(BuildContext context) {
     if (_downloadFailed) {
       return _retryScreen(
-        'Az adatbázis letöltése nem sikerült. Ellenőrizd az '
+        'A miserendek letöltése nem sikerült. Ellenőrizd az '
         'internetkapcsolatot, és próbáld újra.',
         _downloadDatabase,
       );
@@ -210,9 +204,9 @@ class _RouteSplashState extends State<RouteSplash> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
+            const CircularProgressIndicator.adaptive(),
             if (_status != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               Text(_status!),
             ],
           ],
@@ -225,12 +219,12 @@ class _RouteSplashState extends State<RouteSplash> {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Spacing.l),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.l),
               FilledButton(
                 onPressed: onRetry,
                 child: const Text('Újrapróbálás'),
@@ -242,31 +236,27 @@ class _RouteSplashState extends State<RouteSplash> {
     );
   }
 
-  Future<void> _showDialog(String title, String description) async {
-    return showDialog<void>(
-      context: context,
+  Future<void> _showDialog(String title) async {
+    final download = await showMiserendDialog<bool>(
+      context,
+      title: title,
+      content:
+          'Az app használatához egyszer le kell tölteni a templomok és misék '
+          'adatait. Letöltöd most?',
+      actions: const [
+        MiserendDialogAction('Kilépés', false),
+        MiserendDialogAction('Letöltés', true),
+      ],
       barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(description),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Nem'),
-              onPressed: () {
-                SystemNavigator.pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Igen'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _downloadDatabase();
-              },
-            ),
-          ],
-        );
-      },
     );
+    if (!mounted) return;
+    switch (download) {
+      case true:
+        _downloadDatabase();
+      case false:
+        unawaited(SystemNavigator.pop());
+      case null:
+        break;
+    }
   }
 }

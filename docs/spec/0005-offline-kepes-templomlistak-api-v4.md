@@ -14,7 +14,7 @@ Az ADR-0002 az API v4-et tette tekintélyelvű adatforrássá, és az 1. csomag 
 
 ## Solution
 
-A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a lista azonnal megjelenik, a háttérben egy API v4 hívás fut, amelynek válasza soronként a gyorsítótárba íródik, és a lista ezután egyszer újraolvassa a gyorsítótárat (ld. ADR-0003). Ha a háttérhívás 15 s-on belül nem ad választ, a képernyő a gyorsítótár állapotánál marad, és jelzi, hogy nem online adatot mutat — **Nincs kapcsolat** esetén (i) jelzéssel, **Szerverhiba** esetén eltérő színnel és (i) jelzéssel (ld. [CONTEXT.md](../../CONTEXT.md)). A listák lehúzással újrapróbálhatók. A napi miserend a listaválaszokból a gyorsítótárba íródik, a csipek csak misét mutatnak. A kedvenc templomok adatai és 20 napos miserendje naponta legfeljebb egyszer, induláskor előre frissül. A **Helyzet nem elérhető** állapot okonként mondja meg, mit tehet a felhasználó, és egy gombot ad hozzá — a Közeli templomokon, a Térképen és a Misék fülön egyformán. A képernyők a letöltött exportot többé nem olvassák; az export kizárólag a kezdeti feltöltés forrása marad.
+A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a lista azonnal megjelenik, a háttérben egy API v4 hívás fut, amelynek válasza soronként a gyorsítótárba íródik, és a lista ezután egyszer újraolvassa a gyorsítótárat (ld. ADR-0003). Ha a háttérhívás 15 s-on belül nem ad választ, a képernyő a gyorsítótár állapotánál marad, és jelzi, hogy nem online adatot mutat — **Nincs kapcsolat** esetén (i) jelzéssel, **Szerverhiba** esetén eltérő színnel és (i) jelzéssel (ld. [CONTEXT.md](../../CONTEXT.md)). A listák lehúzással újrapróbálhatók. A napi miserend a listaválaszokból a gyorsítótárba íródik, a csipek a napi alkalmakat mutatják (#77 óta; addig csak misét). A kedvenc templomok adatai és 20 napos miserendje naponta legfeljebb egyszer, induláskor előre frissül. A **Helyzet nem elérhető** állapot okonként mondja meg, mit tehet a felhasználó, és egy gombot ad hozzá — a Közeli templomokon, a Térképen és a Misék fülön egyformán. A képernyők a letöltött exportot többé nem olvassák; az export kizárólag a kezdeti feltöltés forrása marad.
 
 ## User Stories
 
@@ -68,8 +68,8 @@ A négy képernyő **mindig a helyi gyorsítótárból rajzol**, online is: a li
   - **Szerverhiba** (HTTP-hiba, `error: 1`, értelmezhetetlen válasz): eltérő szín **és** (i) jelzés.
 - Listaképernyőn a jelölés **egyszer, a lista fölötti sávban** jelenik meg, nem soronként. A **térképi templomkártyán** a kártyán, ha a kártya hívása elbukik. A részletező oldalon (spec 0003) a listákéval azonos sáv, a fejléc alatt rögzítve; a „húzd le a listát" helyett „nyisd meg újra a templomot" (kézi teszt, 2026-09-15: a misék csempéjén álló (i) nem volt észrevehető).
 - Az (i) koppintásra részletes tájékoztatót ad: mikori az adat, és mit tehet a felhasználó.
-  - Nincs kapcsolat: „Az adatok a telefonon tárolt, {dátum}-i állapotot mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon beállításaiban, majd húzd le a listát."
-  - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok {dátum}-i állapotot mutatnak."
+  - Nincs kapcsolat: „Az adatok a telefonon tárolt, {dátum} óta nem frissült állapotot mutatják. Frissítéshez kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a Miserend használhat-e mobilnetet a telefon beállításaiban, majd húzd le a listát."
+  - Szerverhiba: „A miserend.hu jelenleg nem elérhető, az adatok a {dátum} óta nem frissült állapotot mutatják." A dátum `yyyy. MM. dd.` (DESIGN.md FM2): a záró pont miatt rag nem kerülhet rá.
   - A térképi kártyán a „húzd le a listát" helyett „nyisd meg újra a templomot".
 - Az "utoljára frissítve" dátum **nem** jelenik meg alapból a képernyőn (UX-döntés), csak az (i) tájékoztatóban.
 - **A {dátum} jelentése** (CONTEXT.md, „helyi szinkron"): listaképernyőn az adott lista utolsó sikeres háttérfrissítésének ideje, képernyőnként tárolva; a részletezőn és a térképi kártyán a templom helyi szinkronja (`local_synced_at`). Ha még nem volt ilyen, a kezdeti feltöltés dátuma.
@@ -109,7 +109,7 @@ Ez a spec 0003 részletező oldalát is érinti: a `ChurchScheduleLoader` "üres
 - **Napi miserend beírása.** Egy sikeres listaválasz `misek` mezője a templom **mai napjának** sorait mindig cseréli, a sorok forrásától függetlenül — a részletező 20 napos miserendjéből (`NearbyMasses`) származó mai sorokat is; üres `misek` a mai napot kiüríti. A többi nap sorai érintetlenek. A miserend.hu a lista `misek` mezőjét és a `NearbyMasses` választ ugyanabból az indexből adja, a listaválasz tehát ugyanolyan friss. **Felülírva** (#31): eredetileg a részletező mai sorai védettek voltak; így egy egyszer megnyitott templom (és minden előfrissített kedvenc) mai miséi a lista lehúzására nem frissültek. A mai `replaceMassesForChurch` a templom összes miséjét cseréli; ehhez egy napra szűkített művelet kell.
 - **A mise-sor forrása** a gyorsítótárban tárolandó, mert az `informacio` forrásonként mást jelent, és az `api_mass_id` nem különbözteti meg őket (a listaválasz elemeinek sincs azonosítója):
 
-  | Forrás | `informacio` tartalma | Mise-e (csipként) |
+  | Forrás | `informacio` tartalma | Mise-e |
   |---|---|---|
   | kezdeti feltöltés | a régi `megjegyzes` (pl. „gitáros") | mindig misének számít |
   | `NearbyMasses` (részletező, kedvencek előfrissítése) | `title` (pl. „Szentmise", „Gyóntatás") | a CONTEXT.md mise-listája szerint |
@@ -124,7 +124,7 @@ Ez a spec 0003 részletező oldalát is érinti: a `ChurchScheduleLoader` "üres
 - **Közeli templomok**: a **helyzet** (CONTEXT.md) alapján a gyorsítótárból távolság szerint, korlátlanul; háttérben `NearBy`. Állapotok: betöltés, **Helyzet nem elérhető** (okonként, ld. lent), üres, a két offline-jelölés. Lehúzásos frissítés — helyzet nélkül a helymeghatározást is újrapróbálja.
 - **Kedvencek**: a kedvencek a gyorsítótárból; háttérben `Church {"ids"}`. Lehúzásos frissítés.
 - **Térkép**: markerek mindig a gyorsítótárból (`churches_cache`, minden templom koordinátája); új templom akkor kerül a térképre, amikor bármely API-válasz beírta. Markerre bökve a kártya a gyorsítótárból azonnal megjelenik, a háttérben `Church {"ids": [tid]}` `full` fut, és a kártya újraolvas; hiba esetén a kártyán a két jelölés. Helyzet nélkül a térkép az ország nézetében marad (`MiserendMap.defaultInitialCenter`).
-- **Templomsor időpont-csipjei**: a mai nap **misei** a gyorsítótárból (ld. a forrás-táblázat); gyóntatás, szentségimádás és más nem-mise esemény nem jelenik meg.
+- **Templomsor időpont-csipjei**: ~~a mai nap **misei** a gyorsítótárból (ld. a forrás-táblázat); gyóntatás, szentségimádás és más nem-mise esemény nem jelenik meg.~~ **Felülírva (2026-10-20, #77):** a templomkártya a templom **napi alkalmait** (CONTEXT.md) mutatja a gyorsítótárból, bármilyen fajtájúak: misét, szentségimádást, gyóntatást, zsolozsmát… Egyforma időpont-chipek, fajta-jelölés nélkül; hogy melyik mi, a részletezőn derül ki. Az `adoraciok` időablakai nem kerülnek a kártyára.
 - **Bélyegképek**: a listák a gyorsítótárban lévő első fotót mutatják (a spec 0004 mintájára), mert a `minimal` válasz nem hoz képet. Egy új templomnak addig nincs bélyegképe, amíg a részletezője vagy a térképi kártyája nem töltötte be a `full` választ.
 - **Lista-elem modell**: a `ChurchListItem` ma a régi `Church`/`ChurchWithMasses`/`Mass` modellt és a `MassFilter`-t használja (napra szűrés `HHNN` dátumokon). Az új forrás konkrét időpontokat ad (`CachedMass`), a napi szűrés dátum-összehasonlítás lesz.
 

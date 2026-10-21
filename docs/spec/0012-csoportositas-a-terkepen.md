@@ -36,6 +36,8 @@ A térkép **minden zoomszinten csoportosít**, amíg a tűk átfednék egymást
 - **Pöttyös nézet megszűnik**: a 12-es küszöb (spec 0006, „Sűrűség-küszöb") és a pötty-jelölő kikerül. Minden zoomon tűk vagy csoportok.
 - **Csoportosítás**: a csoport akkor bomlik szét, amikor a tűk már nem fednék egymást (a tű mérete szerinti sugár). A legnagyobb zoomon is egyben maradó csoport koppintásra **szétnyílik** (spiderfy); a térképre koppintva visszacsukódik.
 - **Csoport megjelenése**: kör az app lila színével, fehér számmal; nagyobb számnál nagyobb kör, néhány lépcsőben.
+
+  > **Módosítva (2026-10-08, #58): DESIGN.md KO17.** A „lila" a téma `primary`-je, a „fehér" szegély és szám az `onPrimary`: sötét módban a `primary` világosabb lila, rajta sötét szám. A finom árnyék értéke a `lib/theme/tokens.dart` `MapShadows.group`-ja (MÉ2).
 - **Koppintás a csoportra**: a kamera a csoport elemeit befoglaló területre közelít.
 - **Kiválasztott templom**: a csoportosításból kimarad, saját, kiemelt tűként külön rétegben rajzolódik (a mai viselkedés folytatása: „a kiválasztott tű minden zoomon megmarad").
 - **Saját helyzet**: külön réteg, soha nem csoportosul.
@@ -66,4 +68,4 @@ A térkép **minden zoomszinten csoportosít**, amíg a tűk átfednék egymást
 ## Further Notes
 
 - Ez a spec felülírja a spec 0006 „Sűrűség-küszöb" szakaszát.
-- Az Android app csoportjai lila háttérrel és egyedi tűikonnal jelentek meg; a csoportra koppintva a csoport elemeire közelített (`docs/ANDROID-OSSZEHASONLITAS.md`, „Térképi csoportosítás").
+- Az Android app csoportjai lila háttérrel és egyedi tűikonnal jelentek meg; a csoportra koppintva a csoport elemeire közelített.

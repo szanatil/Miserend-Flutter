@@ -15,11 +15,17 @@ class ChurchPageData {
   /// One bucket per day, so the day a mass belongs to is its list index.
   final List<List<CachedMass>> massesByDay;
 
-  /// True once a NearbyMasses response has landed, an empty one included.
-  /// Until then an empty day means "we have not been told", not "no mass is
-  /// held" — and the page has to word it differently, because confusing the
-  /// two on a mass-times app is the one mistake worth guarding against.
-  final bool scheduleIsFresh;
+  /// How many days of [massesByDay], from today, a response covers: none
+  /// before one has landed; today once a Church response has, whose `misek`
+  /// are today's rows (#90); and of a NearbyMasses response, all of them
+  /// once a whole one has, up to the church's last day in it when the answer
+  /// was cut off at its limit. An empty day within reach means miserend.hu holds
+  /// nothing for it; past it, only that nothing has been downloaded — and the
+  /// page words the two differently (CONTEXT.md, „Üres nap").
+  final int freshDays;
+
+  /// Whether [day], an index into [massesByDay], is covered by a response.
+  bool isFresh(int day) => day < freshDays;
 
   /// Why the last attempt to refresh from the API got no answer; null while
   /// it is still running and after it succeeded. The page marks what it shows
@@ -47,7 +53,7 @@ class ChurchPageData {
   const ChurchPageData({
     required this.church,
     required this.massesByDay,
-    required this.scheduleIsFresh,
+    required this.freshDays,
     required this.confessionLive,
     this.failure,
     this.dataAsOf,

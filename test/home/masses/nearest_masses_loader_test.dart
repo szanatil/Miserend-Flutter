@@ -91,15 +91,16 @@ class _Api {
   );
 }
 
-/// A `Church` answer holding one church, [churchId], with today's [misek].
-http.Response _churchWith(int churchId, Map<String, String> misek) => _json(
+/// A `Church` answer holding one church, [churchId], with today's [misek]
+/// as (start, description) pairs.
+http.Response _churchWith(int churchId, List<(String, String)> misek) => _json(
   jsonEncode({
     'templomok': [
       {
         'id': churchId,
         'nev': 'Templom $churchId',
         'misek': [
-          for (final MapEntry(key: info, value: time) in misek.entries)
+          for (final (time, info) in misek)
             {'idopont': time, 'informacio': info},
         ],
       },
@@ -190,17 +191,19 @@ void main() {
     Future<List<NearbyMassesItem>> nearestMasses() async =>
         selectNearestMasses(await loader.fetch(_morning), _morning);
 
-    String? detailAt(
+    /// The details of the card of [churchId] at [hour]:[minute], one per mass
+    /// on it.
+    List<String?> detailsAt(
       MassDetails details,
       List<NearbyMassesItem> masses,
       int churchId,
       int hour,
       int minute,
     ) => details.of(
-      masses.singleWhere(
-        (m) =>
-            m.churchId == churchId &&
-            m.start == DateTime(2026, 9, 17, hour, minute),
+      groupNearestMasses(masses).singleWhere(
+        (g) =>
+            g.churchId == churchId &&
+            g.start == DateTime(2026, 9, 17, hour, minute),
       ),
     );
 
@@ -227,9 +230,11 @@ void main() {
 
       final details = await loader.fetchMassDetails(masses, _morning);
 
-      expect(detailAt(details, masses, 37, 7, 0), 'Csendes (Mária-kápolnában)');
-      expect(detailAt(details, masses, 36, 9, 0), 'latin nyelven');
-      expect(detailAt(details, masses, 36, 10, 0), isNull);
+      expect(detailsAt(details, masses, 37, 7, 0), [
+        'Csendes (Mária-kápolnában)',
+      ]);
+      expect(detailsAt(details, masses, 36, 9, 0), ['latin nyelven']);
+      expect(detailsAt(details, masses, 36, 10, 0), [null]);
     });
 
     test('two masses of one church each get their own', () async {
@@ -237,8 +242,8 @@ void main() {
 
       final details = await loader.fetchMassDetails(masses, _morning);
 
-      expect(detailAt(details, masses, 1515, 7, 0), 'Csendes');
-      expect(detailAt(details, masses, 1515, 18, 0), isNull);
+      expect(detailsAt(details, masses, 1515, 7, 0), ['Csendes']);
+      expect(detailsAt(details, masses, 1515, 18, 0), [null]);
     });
 
     test('a failed call leaves every mass without one, quietly', () async {
@@ -248,8 +253,8 @@ void main() {
 
       final details = await loader.fetchMassDetails(masses, _morning);
 
-      for (final mass in masses) {
-        expect(details.of(mass), isNull);
+      for (final group in groupNearestMasses(masses)) {
+        expect(details.of(group), everyElement(isNull));
       }
     });
 
@@ -268,14 +273,20 @@ void main() {
         loader = loaderFor(
           _Api(
             church:
-                () async => _churchWith(7, {
-                  'Görögkatolikus Szent Liturgia, Csendes':
-                      '2026-09-17 18:00:00',
-                  'Római katolikus Szentmise latin nyelven':
-                      '2026-09-17 18:00:00',
-                  'Római katolikus Gyóntatás angol nyelven':
-                      '2026-09-17 18:00:00',
-                }),
+                () async => _churchWith(7, [
+                  (
+                    '2026-09-17 18:00:00',
+                    'Görögkatolikus Szent Liturgia, Csendes',
+                  ),
+                  (
+                    '2026-09-17 18:00:00',
+                    'Római katolikus Szentmise latin nyelven',
+                  ),
+                  (
+                    '2026-09-17 18:00:00',
+                    'Római katolikus Gyóntatás angol nyelven',
+                  ),
+                ]),
           ),
         );
         final masses = [
@@ -285,26 +296,90 @@ void main() {
 
         final details = await loader.fetchMassDetails(masses, _morning);
 
-        expect(details.of(masses[0]), 'latin nyelven');
-        expect(details.of(masses[1]), 'Csendes');
+        expect(details.of(MassGroup(masses)), ['latin nyelven', 'Csendes']);
       });
 
       test('none goes on the card when the kind does not decide', () async {
         loader = loaderFor(
           _Api(
             church:
-                () async => _churchWith(7, {
-                  'Római katolikus Szentmise, Csendes': '2026-09-17 18:00:00',
-                  'Római katolikus Szentmise latin nyelven':
-                      '2026-09-17 18:00:00',
-                }),
+                () async => _churchWith(7, [
+                  ('2026-09-17 18:00:00', 'Római katolikus Szentmise, Csendes'),
+                  (
+                    '2026-09-17 18:00:00',
+                    'Római katolikus Szentmise latin nyelven',
+                  ),
+                ]),
           ),
         );
         final mass = _item(7, at18, 'Szentmise');
 
         final details = await loader.fetchMassDetails([mass], _morning);
 
-        expect(details.of(mass), isNull);
+        expect(details.of(MassGroup([mass])), [null]);
+      });
+
+      test('the basilica\'s two masses at six share a card, each with its '
+          'own detail (#80)', () async {
+        // As miserend.hu answered for the Szent István-bazilika on
+        // 2026-10-16, moved to the fixtures' day.
+        loader = loaderFor(
+          _Api(
+            church:
+                () async => _churchWith(37, [
+                  (
+                    '2026-09-17 07:00:00',
+                    'Római katolikus Szentmise, Csendes (Mária-kápolnában)',
+                  ),
+                  ('2026-09-17 18:00:00', 'Római katolikus Szentmise'),
+                  (
+                    '2026-09-17 18:00:00',
+                    'Római katolikus Szentmise angol nyelven, Csendes '
+                        '(Mária-kápolnában)',
+                  ),
+                ]),
+          ),
+        );
+        final masses = [
+          _item(37, at18, 'Szentmise'),
+          _item(37, at18, 'Szentmise'),
+        ];
+
+        final groups = groupNearestMasses(masses);
+        final details = await loader.fetchMassDetails(masses, _morning);
+
+        expect(groups, hasLength(1));
+        expect(details.of(groups.single), [
+          null,
+          'angol nyelven, Csendes (Mária-kápolnában)',
+        ]);
+      });
+
+      test('none goes on a card whose masses of a kind are fewer than the '
+          'schedule\'s', () async {
+        loader = loaderFor(
+          _Api(
+            church:
+                () async => _churchWith(7, [
+                  ('2026-09-17 18:00:00', 'Római katolikus Szentmise'),
+                  ('2026-09-17 18:00:00', 'Római katolikus Szentmise, Csendes'),
+                  (
+                    '2026-09-17 18:00:00',
+                    'Római katolikus Szentmise latin nyelven',
+                  ),
+                ]),
+          ),
+        );
+        final masses = [
+          _item(7, at18, 'Szentmise'),
+          _item(7, at18, 'Szentmise'),
+        ];
+
+        final groups = groupNearestMasses(masses);
+        final details = await loader.fetchMassDetails(masses, _morning);
+
+        expect(groups, hasLength(1));
+        expect(details.of(groups.single), [null, null]);
       });
     });
   });

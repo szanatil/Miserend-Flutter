@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/api_result.dart';
@@ -8,18 +11,29 @@ import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/church_details/report_problem_page.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/church_details/widgets/contact_card.dart';
+import 'package:miserend/church_details/widgets/photo_header.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/church.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
+import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
+import 'package:miserend/widgets/section_card.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
+import 'package:miserend/widgets/time_chip.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import '../database/fake_favorites_service.dart';
+import '../theme/theme_harness.dart';
 
 final Church _church = Church(
   id: 38,
@@ -36,6 +50,12 @@ final Church _church = Church(
   gettingThere: null,
   imageUrl: null,
 );
+
+/// Long enough for [ExpandableInfoTile] to collapse it even on a wide page.
+final String _longText = List.filled(
+  12,
+  'A templom a város legrégebbi épülete, többször átépítették.',
+).join(' ');
 
 DateTime _todayAt(int hour, int minute) {
   final now = DateTime.now();
@@ -82,6 +102,20 @@ ChurchDetails _details({
   );
 }
 
+/// Every day of the window covered by a whole NearbyMasses response.
+const int _allFresh = ChurchScheduleLoader.scheduleDays;
+
+/// What an empty day's card reads out (CONTEXT.md, „Üres nap"). It is not
+/// shown on the card (#81).
+const String _noInfo = 'Erre a napra a miserend.hu-n nincs információ';
+const String _notDownloaded = 'Erre a napra nincs letöltött információ';
+
+/// The empty days' cards in the strip, found by what they read out.
+Finder _emptyDay(String text) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Semantics && (widget.properties.label?.endsWith(text) ?? false),
+);
+
 List<List<CachedMass>> _emptyDays() =>
     List.generate(ChurchScheduleLoader.scheduleDays, (_) => <CachedMass>[]);
 
@@ -103,7 +137,7 @@ List<List<CachedMass>> _scheduleWith(DateTime time, {String? info}) {
 ChurchPageData _page(
   List<List<CachedMass>> masses, {
   ChurchDetails? church,
-  bool scheduleIsFresh = false,
+  int freshDays = 0,
   bool confessionLive = false,
   ApiFailure? failure,
   DateTime? dataAsOf,
@@ -111,7 +145,7 @@ ChurchPageData _page(
   return ChurchPageData(
     church: church,
     massesByDay: masses,
-    scheduleIsFresh: scheduleIsFresh,
+    freshDays: freshDays,
     confessionLive: confessionLive,
     failure: failure,
     dataAsOf: dataAsOf,
@@ -160,7 +194,11 @@ void main() {
   // clock, which fails the test that happens to be running when it fires.
   late FavoritesService favorites;
 
+  late Directory tileCache;
+
   setUpAll(() async {
+    tileCache = Directory.systemTemp.createTempSync('miserend_tiles');
+    addTearDown(() => tileCache.deleteSync(recursive: true));
     favorites = FavoritesService();
     for (var i = 0; i < 400 && !favorites.loaded; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -169,23 +207,61 @@ void main() {
 
   Future<void> pumpPage(
     WidgetTester tester,
-    ChurchScheduleLoader loader,
-  ) async {
+    ChurchScheduleLoader loader, {
+    DateTime Function() clock = DateTime.now,
+    Brightness brightness = Brightness.light,
+    double width = 1000,
+    double textScale = 1,
+    double height = 4000,
+    bool pushed = false,
+    FavoritesService? favoritesService,
+  }) async {
     // Tall enough for the lazy ListView to build every section, so a test can
     // assert that one is absent rather than merely off-screen.
-    tester.view.physicalSize = const Size(1000, 4000);
+    tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
-        value: favorites,
+        value: favoritesService ?? favorites,
         child: MaterialApp(
-          home: ChurchDetailsPage(church: _church, loader: loader),
+          theme: miserendTheme(brightness),
+          home:
+              pushed
+                  ? Builder(
+                    builder:
+                        (context) => TextButton(
+                          onPressed:
+                              () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder:
+                                      (_) => ChurchDetailsPage(
+                                        church: _church,
+                                        loader: loader,
+                                        clock: clock,
+                                      ),
+                                ),
+                              ),
+                          child: const Text('Megnyitás'),
+                        ),
+                  )
+                  : ChurchDetailsPage(
+                    church: _church,
+                    loader: loader,
+                    clock: clock,
+                  ),
         ),
       ),
     );
+    if (pushed) {
+      await tester.tap(find.text('Megnyitás'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
     await tester.pump();
     await tester.pump();
   }
@@ -200,7 +276,7 @@ void main() {
 
     await pumpPage(tester, loader);
 
-    expect(find.text('09:00'), findsWidgets);
+    expect(find.text('9:00'), findsWidgets);
     expect(find.text('18:30'), findsNothing);
   });
 
@@ -218,7 +294,667 @@ void main() {
     await tester.pump();
 
     expect(find.text('18:30'), findsWidgets);
-    expect(find.text('09:00'), findsNothing);
+    expect(find.text('9:00'), findsNothing);
+  });
+
+  testWidgets('a time chip that opens something takes taps on 48 × 48, '
+      'and stands in line with one that does not (AM3)', (tester) async {
+    final handle = tester.ensureSemantics();
+    final days = _scheduleWith(_todayAt(9, 0), info: 'Diákmise');
+    days[0].add(
+      CachedMass(
+        id: null,
+        apiMassId: null,
+        churchId: 38,
+        time: _todayAt(18, 30),
+        info: null,
+        source: MassSource.nearbyMasses,
+      ),
+    );
+    final page = _page(days);
+    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+    Finder chip(String time) =>
+        find
+            .ancestor(of: find.text(time), matching: find.byType(TimeChip))
+            .first;
+    final target = tester.getSemantics(chip('9:00')).rect;
+    expect(target.width, greaterThanOrEqualTo(48));
+    expect(target.height, greaterThanOrEqualTo(48));
+    expect(
+      tester.getCenter(chip('9:00')).dy,
+      tester.getCenter(chip('18:30')).dy,
+    );
+    handle.dispose();
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      final days = _scheduleWith(_todayAt(9, 0), info: 'Diákmise');
+      days[1].addAll(_scheduleWith(_todayAt(18, 30))[0]);
+      final page = _page(
+        days,
+        church: _details(
+          description: _longText,
+          email: 'plebania@example.com',
+          languages: const ['magyar'],
+          hasConfession: true,
+        ),
+        freshDays: _allFresh,
+      );
+      // The contrast check lets real time pass, in which the map's tile
+      // cache asks where to keep its files.
+      const pathProvider = MethodChannel('plugins.flutter.io/path_provider');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        pathProvider,
+        (call) async => tileCache.path,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          pathProvider,
+          null,
+        ),
+      );
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+        width: 430,
+        height: 3000,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
+  testWidgets('a mass going on now has its chip in the filled orange, a '
+      'later one not (KO3)', (tester) async {
+    final page = _page(_scheduleWith(_todayAt(9, 0)));
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => _todayAt(9, 5),
+    );
+
+    final chips = tester.widgetList<TimeChip>(
+      find.ancestor(of: find.text('9:00'), matching: find.byType(TimeChip)),
+    );
+    expect(chips.first.ongoing, isTrue);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => _todayAt(8, 59),
+    );
+
+    expect(
+      tester
+          .widgetList<TimeChip>(
+            find.ancestor(
+              of: find.text('9:00'),
+              matching: find.byType(TimeChip),
+            ),
+          )
+          .any((chip) => chip.ongoing),
+      isFalse,
+    );
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, the page is the theme\'s surface, not a '
+        'fixed grey (SZ5)', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+      );
+
+      final ground = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(Scaffold),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(ground.color, miserendTheme(brightness).colorScheme.surface);
+    });
+  }
+
+  testWidgets('the day heading is a section title, titleMedium w600 (TI2)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      clock: () => DateTime(2026, 10, 7, 9),
+    );
+
+    final titleMedium =
+        Theme.of(tester.element(find.text('Ma'))).textTheme.titleMedium!;
+    final style = tester.widget<Text>(find.text('Ma')).style!;
+    expect(style.fontSize, titleMedium.fontSize);
+    expect(style.fontWeight, FontWeight.w600);
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, an unselected favourite is an outline in the '
+        'secondary colour, not the button\'s primary (IK4)', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        brightness: brightness,
+      );
+
+      expect(
+        tester.widget<Icon>(find.byIcon(Icons.favorite_border_rounded)).color,
+        schemeOf(brightness).onSurfaceVariant,
+      );
+    });
+  }
+
+  testWidgets('the favourite is filled only while selected: '
+      'favorite_rounded, otherwise favorite_border_rounded (IK2)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      favoritesService: FakeFavoritesService([]),
+    );
+
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_rounded), findsNothing);
+
+    await tester.tap(find.text('Kedvencekhez'));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_border_rounded), findsNothing);
+  });
+
+  testWidgets('the action buttons\' icons are regular icons, 24 (IK3)', (
+    tester,
+  ) async {
+    final page = _page(_emptyDays());
+    await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+    for (final icon in [
+      Icons.favorite_border_rounded,
+      Icons.error_outline_rounded,
+    ]) {
+      expect(tester.getSize(find.byIcon(icon)), const Size(24, 24));
+    }
+  });
+
+  group('the back button over the photo (KO19)', () {
+    // The back button is the platform's own (PL2), so each case runs on both.
+    const platforms = TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    });
+
+    SliverAppBar appBar(WidgetTester tester) =>
+        tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, it stands on a dark disc in onPhoto, '
+          'under light status bar icons', (tester) async {
+        final page = _page(_scheduleWith(_todayAt(9, 0)));
+        await pumpPage(
+          tester,
+          _FakeLoader(cached: page, refreshed: page),
+          brightness: brightness,
+          pushed: true,
+        );
+        final colors = miserendColorsOf(brightness);
+
+        final style = tester.widget<BackButton>(find.byType(BackButton)).style!;
+        expect(style.backgroundColor!.resolve({}), colors.photoScrim);
+        expect(style.foregroundColor!.resolve({}), colors.onPhoto);
+        expect(
+          appBar(tester).systemOverlayStyle!.statusBarIconBrightness,
+          Brightness.light,
+        );
+      }, variant: platforms);
+    }
+
+    testWidgets('once the header has collapsed, it is the title bar\'s own '
+        'again', (tester) async {
+      final page = _page(_scheduleWith(_todayAt(9, 0)));
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        height: 800,
+        pushed: true,
+      );
+
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -600));
+      await tester.pump();
+
+      expect(appBar(tester).leading, isNull);
+      expect(appBar(tester).systemOverlayStyle, isNull);
+      expect(find.byType(BackButton), findsOneWidget);
+    }, variant: platforms);
+
+    testWidgets('in a wide window, where the header is taller, it stays on '
+        'the photo until that header has collapsed', (tester) async {
+      final page = _page(_scheduleWith(_todayAt(9, 0)));
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 1000,
+        pushed: true,
+      );
+
+      // The header is 500 tall: 300 is past a 200 header's collapse, not
+      // past this one's.
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -300));
+      await tester.pump();
+      expect(appBar(tester).leading, isNotNull);
+      expect(appBar(tester).systemOverlayStyle, SystemUiOverlayStyle.light);
+
+      await tester.drag(find.text('Hibajelentés'), const Offset(0, -300));
+      await tester.pump();
+      expect(appBar(tester).leading, isNull);
+      expect(appBar(tester).systemOverlayStyle, isNull);
+    }, variant: platforms);
+
+    testWidgets('with nowhere to go back to, there is no back button', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(tester, _FakeLoader(cached: page, refreshed: page));
+
+      expect(find.byType(BackButton), findsNothing);
+    }, variant: platforms);
+  });
+
+  group('the photo header\'s height (KO19)', () {
+    double photoHeight(WidgetTester tester) =>
+        tester.getSize(find.byType(ChurchPhotoHeader)).height;
+
+    testWidgets('on a phone it is 16:9 to the width', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+
+      expect(photoHeight(tester), 360 * 9 / 16);
+    });
+
+    testWidgets('in a wide window it is at most half the height', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 1000,
+      );
+
+      expect(photoHeight(tester), 500);
+    });
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 1000,
+      );
+
+      tester.view.physicalSize = const Size(1500, 1000);
+      await tester.pump();
+
+      expect(photoHeight(tester), 500);
+    });
+  });
+
+  group('the Megközelítés map\'s height', () {
+    final map = find.byType(MiserendMap);
+
+    Future<Size> mapSize(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        map,
+        200,
+        scrollable:
+            find
+                .byWidgetPredicate(
+                  (widget) =>
+                      widget is Scrollable &&
+                      widget.axisDirection == AxisDirection.down,
+                )
+                .last,
+      );
+      return tester.getSize(map);
+    }
+
+    testWidgets('on a phone it is 3:2 to its own width', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+
+      final size = await mapSize(tester);
+      expect(size.width, lessThan(360));
+      expect(size.height, moreOrLessEquals(size.width * 2 / 3));
+    });
+
+    testWidgets('in a wide window it is at most half the height', (
+      tester,
+    ) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 1500,
+        height: 600,
+      );
+
+      final size = await mapSize(tester);
+      expect(size.width * 2 / 3, greaterThan(300));
+      expect(size.height, 300);
+    });
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = _page(_emptyDays());
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: 360,
+        height: 800,
+      );
+      await mapSize(tester);
+
+      tester.view.physicalSize = const Size(1500, 600);
+      await tester.pump();
+
+      final size = await mapSize(tester);
+      expect(size.height, 300);
+    });
+  });
+
+  group('fits (EH4)', () {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('at $width dp and text scale $textScale', (tester) async {
+          // Every tile with an icon, so their rows are measured too.
+          final page = _page(
+            _scheduleWith(_todayAt(9, 0)),
+            church: _details(
+              description: _longText,
+              email: 'plebania@example.hu',
+              links: ['https://www.example.hu/egy-hosszu-cim'],
+              accessibility: {'wheelchair': 'limited'},
+            ),
+          );
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: page, refreshed: page),
+            width: width,
+            textScale: textScale,
+          );
+
+          expect(find.text('Hibajelentés'), findsOneWidget);
+          expect(find.text('plebania@example.hu'), findsOneWidget);
+          expect(find.text('Több'), findsOneWidget);
+          expect(find.byIcon(Icons.accessible_rounded), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+  });
+
+  testWidgets('fits a phone on its side (EL5)', (tester) async {
+    final page = _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(description: _longText, email: 'plebania@example.hu'),
+    );
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      width: 640,
+      height: 320,
+      textScale: 2,
+    );
+
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  }, variant: eh4Platforms);
+
+  testWidgets('on an $el3Width dp screen the photo fills the width and the '
+      'sections are at most 640 wide, centred (EL3)', (tester) async {
+    final page = _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(email: 'plebania@example.hu'),
+    );
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: page, refreshed: page),
+      width: el3Width,
+    );
+
+    expect(tester.getRect(find.byType(ChurchPhotoHeader)).width, el3Width);
+    expectCentredContent(tester, find.byType(SectionCard).first);
+  });
+
+  group('on a wide screen the sections stand in columns (EL3)', () {
+    ChurchPageData full({bool adoration = true, bool about = true}) => _page(
+      _scheduleWith(_todayAt(9, 0)),
+      church: _details(
+        description: about ? _longText : null,
+        email: 'plebania@example.hu',
+        adorations: [
+          if (adoration)
+            Adoration(
+              start: _todayAt(0, 0),
+              end: _todayAt(23, 59),
+              kind: 'csendes',
+              info: null,
+            ),
+        ],
+      ),
+    );
+
+    // The outermost: the masses' card holds a card of its own.
+    Rect section(WidgetTester tester, String text) => tester.getRect(
+      find
+          .ancestor(of: find.text(text), matching: find.byType(SectionCard))
+          .last,
+    );
+
+    /// How far apart the cards in [left] and [right] stand, without their
+    /// side margins.
+    double gapBetween(Rect left, Rect right) =>
+        (right.left + Spacing.l) - (left.right - Spacing.l);
+
+    testWidgets('three columns: the masses across all of them, then when, '
+        'where and about, side by side, as far apart as down (TK2)', (
+      tester,
+    ) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: threeColumnWidth,
+      );
+
+      expect(section(tester, '9:00').width, threeColumnWidth);
+      final when = section(tester, 'Szentségimádás');
+      final where = section(tester, 'Megközelítés');
+      final about = section(tester, 'Leírás');
+      expect([when.left, about.right], [0, threeColumnWidth]);
+      expect(where.width, moreOrLessEquals(when.width));
+      expect(about.width, moreOrLessEquals(when.width));
+      expect(gapBetween(when, where), moreOrLessEquals(Spacing.s));
+      expect(gapBetween(where, about), moreOrLessEquals(Spacing.s));
+      expect([where.top, about.top], [when.top, when.top]);
+    });
+
+    testWidgets('two columns: when on the left, where on the right, and '
+        'about under the shorter', (tester) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: twoColumnWidth,
+      );
+
+      final when = section(tester, 'Szentségimádás');
+      final where = section(tester, 'Megközelítés');
+      final contact = tester.getRect(find.byType(ContactCard));
+      final about = section(tester, 'Leírás');
+      expect([when.left, where.right], [0, twoColumnWidth]);
+      expect(gapBetween(when, where), Spacing.s);
+      expect(where.top, when.top);
+      final shorter = when.bottom <= contact.bottom ? when : contact;
+      expect(about.topLeft, Offset(shorter.left, shorter.bottom));
+    });
+
+    /// The width of three columns of cards, the widest the masses get.
+    const threeColumnContentWidth =
+        3 * ContentWidth.maxWidth + 2 * (Spacing.s - 2 * Spacing.l);
+
+    for (final width in const [threeColumnWidth, wideWidth]) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('on a $width dp screen at text scale $textScale a church '
+            'with neither adoration nor confession leaves no empty column, and '
+            'the two others are at most 640 wide, centred under the masses', (
+          tester,
+        ) async {
+          final page = full(adoration: false);
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: page, refreshed: page),
+            width: width,
+            textScale: textScale,
+          );
+
+          expect(find.text('Szentségimádás'), findsNothing);
+          final masses = section(tester, '9:00');
+          final where = section(tester, 'Megközelítés');
+          final about = section(tester, 'Leírás');
+          expect(
+            masses.width,
+            moreOrLessEquals(min(width, threeColumnContentWidth)),
+          );
+          expect(where.width, moreOrLessEquals(ContentWidth.maxWidth));
+          expect(about.width, moreOrLessEquals(ContentWidth.maxWidth));
+          expect((where.left + about.right) / 2, moreOrLessEquals(width / 2));
+          expect(gapBetween(where, about), moreOrLessEquals(Spacing.s));
+          expect(about.top, where.top);
+        }, variant: eh4Platforms);
+      }
+
+      testWidgets('on a $width dp screen a church with only where to show has '
+          'it at most 640 wide, centred under the masses', (tester) async {
+        final page = full(adoration: false, about: false);
+        await pumpPage(
+          tester,
+          _FakeLoader(cached: page, refreshed: page),
+          width: width,
+        );
+
+        expect(find.text('Leírás'), findsNothing);
+        final masses = section(tester, '9:00');
+        final where = section(tester, 'Megközelítés');
+        expect(
+          masses.width,
+          moreOrLessEquals(min(width, threeColumnContentWidth)),
+        );
+        expect(where.width, moreOrLessEquals(ContentWidth.maxWidth));
+        expect(where.center.dx, moreOrLessEquals(width / 2));
+      }, variant: eh4Platforms);
+    }
+
+    testWidgets('on a $wideWidth dp screen the three columns are 640 wide '
+        'each, centred, under masses as wide as all of them', (tester) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: wideWidth,
+      );
+
+      final masses = section(tester, '9:00');
+      final when = section(tester, 'Szentségimádás');
+      final about = section(tester, 'Leírás');
+      expect(masses.width, moreOrLessEquals(threeColumnContentWidth));
+      expect(when.width, moreOrLessEquals(ContentWidth.maxWidth));
+      expect(about.width, moreOrLessEquals(ContentWidth.maxWidth));
+      expect([when.left, about.right], [masses.left, masses.right]);
+      expect(masses.center.dx, moreOrLessEquals(wideWidth / 2));
+    }, variant: eh4Platforms);
+
+    testWidgets('follows the window when it is resized', (tester) async {
+      final page = full();
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: page, refreshed: page),
+        width: el3Width,
+      );
+      expect(
+        section(tester, 'Megközelítés').left,
+        section(tester, '9:00').left,
+      );
+
+      tester.view.physicalSize = const Size(threeColumnWidth, 4000);
+      await tester.pump();
+      expect(
+        section(tester, 'Megközelítés').top,
+        section(tester, 'Szentségimádás').top,
+      );
+
+      tester.view.physicalSize = const Size(el3Width, 4000);
+      await tester.pump();
+      expect(
+        section(tester, 'Megközelítés').left,
+        section(tester, '9:00').left,
+      );
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth, wideWidth]) {
+        for (final textScale in eh4TextScales) {
+          for (final adoration in const [true, false]) {
+            testWidgets(
+              'fits in $brightness at $width dp and text scale '
+              '$textScale${adoration ? '' : ' without adoration'} (EH3, EH4)',
+              (tester) async {
+                final page = full(adoration: adoration);
+                await pumpPage(
+                  tester,
+                  _FakeLoader(cached: page, refreshed: page),
+                  brightness: brightness,
+                  width: width,
+                  textScale: textScale,
+                );
+
+                expect(find.text('Leírás'), findsOneWidget);
+                expect(tester.takeException(), isNull);
+              },
+              variant: eh4Platforms,
+            );
+          }
+        }
+      }
+    }
   });
 
   testWidgets('shows the church name', (tester) async {
@@ -229,25 +965,63 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('an empty day without a response reads as missing data, not as '
-      'no mass', (tester) async {
+  testWidgets(
+    'the header leaves the title\'s alignment to the platform (PL2)',
+    (tester) async {
+      final empty = _page(_emptyDays());
+      await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
+
+      expect(
+        tester.widget<SliverAppBar>(find.byType(SliverAppBar)).centerTitle,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FlexibleSpaceBar>(find.byType(FlexibleSpaceBar))
+            .centerTitle,
+        isNull,
+      );
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  /// The day strip's cards, left to right: the day each is headed with.
+  List<String> stripDates(WidgetTester tester) {
+    final dates = find.textContaining(RegExp(r'^\d{4}\. \d{2}\. \d{2}\.$'));
+    return [
+      for (final element in dates.evaluate()) (element.widget as Text).data!,
+    ];
+  }
+
+  CachedMass massAt(DateTime time) => CachedMass(
+    id: null,
+    apiMassId: null,
+    churchId: 38,
+    time: time,
+    info: null,
+    source: MassSource.nearbyMasses,
+  );
+
+  testWidgets('without a response, no empty day claims miserend.hu has '
+      'nothing for it', (tester) async {
     final empty = _page(_emptyDays());
     await pumpPage(tester, _FakeLoader(cached: empty, refreshed: empty));
 
-    // The two rows word it differently, and on a Sunday the "Most vasárnap"
-    // row is not drawn at all because it would repeat "Ma".
-    expect(find.text('Nincs adat a mai miserendről'), findsOneWidget);
-    expect(find.text('Ezen a napon nincs mise'), findsNothing);
-    expect(
-      find.text('Nincs adat erről a napról'),
-      DateTime.now().weekday == DateTime.sunday ? findsNothing : findsOneWidget,
-    );
+    expect(find.text('Mára nincs letöltött információ'), findsOneWidget);
+    expect(_emptyDay(_notDownloaded), findsNWidgets(19));
+    expect(_emptyDay(_noInfo), findsNothing);
+    expect(find.textContaining('miserend.hu-n nincs'), findsNothing);
+    expect(find.textContaining('nincs mise'), findsNothing);
   });
 
-  testWidgets('an empty day with a response reads as no mass', (tester) async {
+  testWidgets('after a whole response, an empty day says miserend.hu has '
+      'nothing for it', (tester) async {
     final loader = _FakeLoader(
       cached: _page(_emptyDays()),
-      refreshed: _page(_emptyDays(), scheduleIsFresh: true),
+      refreshed: _page(_emptyDays(), freshDays: _allFresh),
     );
 
     await pumpPage(tester, loader);
@@ -255,32 +1029,451 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Ezen a napon nincs mise'), findsWidgets);
-    expect(find.text('Nincs adat a mai miserendről'), findsNothing);
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    expect(_emptyDay(_noInfo), findsNWidgets(19));
+    expect(_emptyDay(_notDownloaded), findsNothing);
   });
 
-  testWidgets('the day strip skips days with no masses', (tester) async {
-    // Not this Sunday: the "Most vasárnap" row would show the mass a second
-    // time.
-    final day = DateTime.sunday - DateTime.now().weekday == 3 ? 2 : 3;
+  testWidgets('past where a cut-off response reaches, an empty day says '
+      'nothing was downloaded', (tester) async {
     final masses = _emptyDays();
-    masses[day].add(
-      CachedMass(
-        id: null,
-        apiMassId: null,
-        churchId: 38,
-        time: _todayAt(7, 30).add(Duration(days: day)),
-        info: null,
-        source: MassSource.nearbyMasses,
-      ),
-    );
-    final data = _page(masses, scheduleIsFresh: true);
+    masses[4].add(massAt(_todayAt(18, 0).add(const Duration(days: 4))));
+    final data = _page(masses, freshDays: 5);
 
     await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
 
-    // One card, for the only day that has anything.
-    expect(find.text('07:30'), findsOneWidget);
-    expect(find.byType(Card), findsWidgets);
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    // Days 1–3 within reach, 5–19 past it.
+    expect(_emptyDay(_noInfo), findsNWidgets(3));
+    expect(_emptyDay(_notDownloaded), findsNWidgets(15));
+  });
+
+  // What the loader hands over when the church call answered and the
+  // schedule call did not reach today (#90): today fresh, the rest not. The
+  // page tells apart only whether the schedule call failed; why it did not
+  // reach today — cut off, or no coordinates to ask with — is the loader's.
+  final churchAnsweredOnly = {
+    'the schedule call failed': ApiFailure.noConnection,
+    'the schedule answer did not reach today': null,
+  };
+  for (final MapEntry(key: reason, value: failure)
+      in churchAnsweredOnly.entries) {
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('when $reason but the church call answered, in '
+              '$brightness at $width dp, text scale $textScale, Ma says '
+              'miserend.hu has nothing for today (#90, EH3, EH4)', (
+            tester,
+          ) async {
+            final data = _page(_emptyDays(), freshDays: 1, failure: failure);
+            final loader = _FakeLoader(
+              cached: _page(_emptyDays()),
+              refreshed: data,
+            );
+
+            await pumpPage(
+              tester,
+              loader,
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+            loader.answerApi();
+            await tester.pump();
+            await tester.pump();
+
+            expect(
+              find.text('Mára a miserend.hu-n nincs információ'),
+              findsOneWidget,
+            );
+            expect(find.text('Mára nincs letöltött információ'), findsNothing);
+            expect(_emptyDay(_notDownloaded), findsNWidgets(19));
+            expect(_emptyDay(_noInfo), findsNothing);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+
+          testWidgets('when $reason but the church call answered, in '
+              '$brightness at $width dp, text scale $textScale, Ma shows '
+              'today\'s masses (#90, EH3, EH4)', (tester) async {
+            final data = _page(
+              _scheduleWith(_todayAt(18, 0)),
+              freshDays: 1,
+              failure: failure,
+            );
+            final loader = _FakeLoader(
+              cached: _page(_emptyDays()),
+              refreshed: data,
+            );
+
+            await pumpPage(
+              tester,
+              loader,
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+            loader.answerApi();
+            await tester.pump();
+            await tester.pump();
+
+            expect(find.text('18:00'), findsOneWidget);
+            expect(find.textContaining('Mára'), findsNothing);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  }
+
+  testWidgets('the day strip shows every day from tomorrow to the end of the '
+      'window, each once, and no "Most vasárnap"', (tester) async {
+    // A Wednesday with masses every day: each day used to appear twice.
+    final masses = _emptyDays();
+    for (var day = 0; day < masses.length; day++) {
+      masses[day].add(massAt(DateTime(2026, 10, 7 + day, 18, 0)));
+    }
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 7, 9),
+    );
+
+    expect(find.text('Most vasárnap'), findsNothing);
+    expect(stripDates(tester), [
+      for (var day = 8; day <= 26; day++)
+        '2026. 10. ${day.toString().padLeft(2, '0')}.',
+    ]);
+    // Today's mass and one per day in the strip, each shown once.
+    expect(find.text('18:00'), findsNWidgets(20));
+  });
+
+  testWidgets('opened on a Sunday with masses only from the next one, the '
+      'strip runs on through the empty days, which show only their day '
+      '(#79, #81)', (tester) async {
+    // Budakalász, recorded live: nothing between 10.01. and 10.24.
+    final masses = _emptyDays();
+    for (var day = 7; day < masses.length; day++) {
+      final date = DateTime(2026, 10, 18 + day);
+      if (date.weekday == DateTime.sunday) {
+        masses[day].addAll([
+          massAt(DateTime(2026, 10, 18 + day, 8, 0)),
+          massAt(DateTime(2026, 10, 18 + day, 18, 0)),
+        ]);
+      }
+    }
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 18, 9),
+    );
+
+    expect(find.text('Mára a miserend.hu-n nincs információ'), findsOneWidget);
+    expect(stripDates(tester).take(7), [
+      for (var day = 19; day <= 25; day++) '2026. 10. $day.',
+    ]);
+    Finder cardOf(String date) =>
+        find.ancestor(of: find.text(date), matching: find.byType(Card));
+    for (var day = 19; day <= 24; day++) {
+      final card = cardOf('2026. 10. $day.');
+      expect(
+        find.descendant(of: card, matching: _emptyDay(_noInfo)),
+        findsOneWidget,
+        reason: '10.$day.',
+      );
+      // The day's name and its date, nothing else.
+      expect(
+        find.descendant(of: card, matching: find.byType(Text)),
+        findsNWidgets(2),
+        reason: '10.$day.',
+      );
+    }
+    expect(find.text(_noInfo), findsNothing);
+    final sunday = cardOf('2026. 10. 25.');
+    expect(
+      find.descendant(of: sunday, matching: find.text('Vasárnap')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sunday, matching: find.text('8:00')),
+      findsOneWidget,
+    );
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, an empty day is an outlined card on the '
+        'page\'s own colour, its date secondary (SZ4)', (tester) async {
+      final empty = _page(_emptyDays(), freshDays: _allFresh);
+      await pumpPage(
+        tester,
+        _FakeLoader(cached: empty, refreshed: empty),
+        brightness: brightness,
+        clock: () => DateTime(2026, 10, 18, 9),
+      );
+
+      final scheme = miserendTheme(brightness).colorScheme;
+      final card = tester.widget<Card>(
+        find.ancestor(
+          of: _emptyDay(_noInfo).first,
+          matching: find.byType(Card),
+        ),
+      );
+      expect(card.color, scheme.surface);
+      expect(card.elevation, 0);
+      final shape = card.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, scheme.outlineVariant);
+      expect(shape.side.width, 1);
+      expect(
+        shape.borderRadius,
+        const BorderRadius.all(Radius.circular(Radii.m)),
+      );
+      expect(
+        tester.widget<Text>(find.text('2026. 10. 19.')).style?.color,
+        scheme.onSurfaceVariant,
+      );
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('in $brightness at $width dp, text scale $textScale, the '
+            'Ma, Szentségimádás and mass day cards are outlined in dark mode '
+            'only, the empty day in both (KO1, MÉ1, EH3, EH4)', (tester) async {
+          final masses = _emptyDays();
+          masses[0].add(massAt(DateTime(2026, 10, 18, 10, 0)));
+          masses[1].add(massAt(DateTime(2026, 10, 19, 10, 0)));
+          final data = _page(
+            masses,
+            freshDays: _allFresh,
+            church: _details(
+              adorations: [
+                Adoration(
+                  start: DateTime(2026, 10, 18, 15, 0),
+                  end: DateTime(2026, 10, 18, 16, 0),
+                  kind: 'csendes',
+                  info: null,
+                ),
+              ],
+            ),
+          );
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: data, refreshed: data),
+            brightness: brightness,
+            width: width,
+            textScale: textScale,
+            clock: () => DateTime(2026, 10, 18, 9),
+          );
+
+          final scheme = miserendTheme(brightness).colorScheme;
+          BorderSide edgeOf(Finder content) {
+            final surface = tester.widget<Material>(
+              find.ancestor(of: content, matching: find.byType(Material)).first,
+            );
+            return (surface.shape! as RoundedRectangleBorder).side;
+          }
+
+          final outline =
+              brightness == Brightness.dark
+                  ? BorderSide(color: scheme.outlineVariant)
+                  : BorderSide.none;
+          expect(edgeOf(find.text('Ma')), outline);
+          expect(edgeOf(find.text('Szentségimádás')), outline);
+          expect(edgeOf(find.text('Holnap')), outline);
+          expect(
+            edgeOf(_emptyDay(_noInfo).first),
+            BorderSide(color: scheme.outlineVariant),
+          );
+        }, variant: eh4Platforms);
+      }
+    }
+  }
+
+  testWidgets('an empty day is read out as one unit (AM5)', (tester) async {
+    final handle = tester.ensureSemantics();
+    final empty = _page(_emptyDays(), freshDays: _allFresh);
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: empty, refreshed: empty),
+      clock: () => DateTime(2026, 10, 18, 9),
+    );
+
+    expect(
+      tester.getSemantics(_emptyDay(_noInfo).first),
+      matchesSemantics(label: 'Holnap, 2026. 10. 19., $_noInfo'),
+    );
+    handle.dispose();
+  });
+
+  for (final width in [320.0, 430.0]) {
+    for (final textScale in [1.0, 2.0]) {
+      for (final brightness in Brightness.values) {
+        testWidgets('at $width dp, text scale $textScale, $brightness, an '
+            'empty day\'s card is as wide and as tall as a mass day\'s, and '
+            'in line with it', (tester) async {
+          final masses = _emptyDays();
+          masses[2].add(massAt(_todayAt(7, 30).add(const Duration(days: 2))));
+          final data = _page(masses, freshDays: _allFresh);
+
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: data, refreshed: data),
+            width: width,
+            textScale: textScale,
+            brightness: brightness,
+          );
+
+          Rect cardOf(Finder inside) => tester.getRect(
+            find.ancestor(of: inside, matching: find.byType(Card)).first,
+          );
+          final empty = cardOf(_emptyDay(_noInfo).first);
+          final full = cardOf(find.text('7:30'));
+          expect(find.text(_noInfo), findsNothing);
+          expect(empty.width, full.width);
+          expect(empty.height, full.height);
+          expect(empty.top, full.top);
+        }, variant: TargetPlatformVariant.mobile());
+      }
+    }
+  }
+
+  group('two masses at the same time today (#80)', () {
+    const english =
+        'Római katolikus Szentmise angol nyelven, Csendes '
+        '(Mária-kápolnában)';
+    CachedMass daily(String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: _todayAt(18, 0),
+      info: info,
+      source: MassSource.dailyList,
+    );
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp, text scale $textScale, '
+              'the one the church answer describes opens its description', (
+            tester,
+          ) async {
+            final masses = _emptyDays();
+            masses[0].addAll([
+              daily('Római katolikus Szentmise'),
+              daily(english),
+            ]);
+            final data = _page(masses, freshDays: _allFresh);
+
+            await pumpPage(
+              tester,
+              _FakeLoader(cached: data, refreshed: data),
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+
+            final chips = find.ancestor(
+              of: find.text('18:00'),
+              matching: find.byType(TimeChip),
+            );
+            expect(chips, findsNWidgets(2));
+            expect(
+              tester.widgetList<TimeChip>(chips).map((chip) => chip.hasInfo),
+              [false, true],
+            );
+
+            await tester.tap(chips.last);
+            await tester.pumpAndSettle();
+
+            expect(find.text(english), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
+
+  testWidgets('a day with many masses grows wider, not taller: its times '
+      'stay on one line, its card as tall as the others', (tester) async {
+    const few = 1;
+    const many = 2;
+    CachedMass at(int day, int hour) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: _todayAt(hour, 20).add(Duration(days: day)),
+      info: null,
+      source: MassSource.nearbyMasses,
+    );
+    final masses = _emptyDays();
+    masses[few].addAll([at(few, 7), at(few, 18)]);
+    masses[many].addAll([
+      for (final h in [6, 8, 10, 12, 19]) at(many, h),
+    ]);
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+
+    Rect cardOf(String time) => tester.getRect(
+      find.ancestor(of: find.text(time), matching: find.byType(Card)).first,
+    );
+    final fewCard = cardOf('7:20');
+    final manyCard = cardOf('6:20');
+    expect(manyCard.height, fewCard.height);
+    expect(manyCard.top, fewCard.top);
+    expect(manyCard.width, greaterThan(fewCard.width));
+    final tops = {
+      for (final time in ['6:20', '8:20', '10:20', '12:20', '19:20'])
+        tester.getTopLeft(find.text(time)).dy,
+    };
+    expect(tops, hasLength(1));
+  });
+
+  testWidgets('the day after the clocks go back is named by its own date', (
+    tester,
+  ) async {
+    // 2026-10-25, the Sunday the clocks go back, has 25 hours.
+    CachedMass at(DateTime time) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: time,
+      info: null,
+      source: MassSource.nearbyMasses,
+    );
+    final masses = _emptyDays();
+    masses[17].add(at(DateTime(2026, 10, 25, 10, 0)));
+    masses[18].add(at(DateTime(2026, 10, 26, 7, 30)));
+    final data = _page(masses, freshDays: _allFresh);
+
+    await pumpPage(
+      tester,
+      _FakeLoader(cached: data, refreshed: data),
+      clock: () => DateTime(2026, 10, 8, 10, 0),
+    );
+
+    expect(stripDates(tester), [
+      for (var day = 9; day <= 27; day++)
+        '2026. 10. ${day.toString().padLeft(2, '0')}.',
+    ]);
+    Finder cardOf(String date) =>
+        find.ancestor(of: find.text(date), matching: find.byType(Card));
+    expect(
+      find.descendant(
+        of: cardOf('2026. 10. 25.'),
+        matching: find.text('10:00'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cardOf('2026. 10. 26.'), matching: find.text('7:30')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('no confession tile without a live response', (tester) async {
@@ -367,6 +1560,29 @@ void main() {
     expect(find.bySemanticsLabel('tagalog'), findsOneWidget);
   });
 
+  testWidgets('a tapped flag names its language, and another flag swaps it '
+      '(KO21)', (tester) async {
+    final data = _page(_emptyDays(), church: _details(languages: ['va', 'de']));
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+    Finder flag(String code) => find.byWidgetPredicate(
+      (widget) => widget is LanguageFlag && widget.code == code,
+    );
+
+    await tester.tap(flag('va'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tooltipText('latin'), findsOneWidget);
+    final box = tester.getRect(tooltipBox('latin'));
+    expect(
+      box.bottom,
+      moreOrLessEquals(tester.getRect(flag('va')).top - Spacing.xs),
+    );
+
+    await tester.tap(flag('de'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(tooltipText('latin'), findsNothing);
+    expect(tooltipText('német'), findsOneWidget);
+  });
+
   testWidgets('a code with no flag falls back to text rather than vanishing', (
     tester,
   ) async {
@@ -399,7 +1615,28 @@ void main() {
 
     expect(find.text('Szentségimádás'), findsOneWidget);
     expect(find.text('Egész nap · csendes'), findsOneWidget);
-    expect(find.text('00:00 – 23:59 · csendes'), findsNothing);
+    expect(find.text('0:00–23:59 · csendes'), findsNothing);
+  });
+
+  testWidgets('an adoration window is an en dash range without spaces (FM1, '
+      'FM5)', (tester) async {
+    final data = _page(
+      _emptyDays(),
+      church: _details(
+        adorations: [
+          Adoration(
+            start: _todayAt(9, 0),
+            end: _todayAt(18, 0),
+            kind: null,
+            info: null,
+          ),
+        ],
+      ),
+    );
+
+    await pumpPage(tester, _FakeLoader(cached: data, refreshed: data));
+
+    expect(find.text('9:00–18:00'), findsOneWidget);
   });
 
   testWidgets('accessibility states a "no" plainly', (tester) async {
@@ -458,7 +1695,7 @@ void main() {
     testWidgets('nothing is marked after a successful refresh', (tester) async {
       await refreshWith(
         tester,
-        _page(_scheduleWith(_todayAt(9, 0)), scheduleIsFresh: true),
+        _page(_scheduleWith(_todayAt(9, 0)), freshDays: _allFresh),
       );
 
       expect(find.byType(OfflineBanner), findsNothing);
@@ -520,7 +1757,14 @@ void main() {
 
       expect(find.byType(OfflineBanner), findsOneWidget);
       expect(find.byType(OfflineInfoButton), findsOneWidget);
-      expect(bannerColor(tester), isNot(CustomColors.serverErrorTint));
+      expect(
+        bannerColor(tester),
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
+      );
       expect(
         tester.getTopLeft(find.byType(OfflineBanner)).dy,
         lessThan(tester.getTopLeft(find.text('Ma')).dy),
@@ -535,7 +1779,12 @@ void main() {
         _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.serverError),
       );
 
-      expect(bannerColor(tester), CustomColors.serverErrorTint);
+      expect(
+        bannerColor(tester),
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
+      );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
       final massCard = tester.widget<Card>(
         find.ancestor(of: find.text('Ma'), matching: find.byType(Card)).first,
@@ -560,7 +1809,8 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 08. 01-i állapotot mutatják. '
+          'Az adatok a telefonon tárolt, 2026. 08. 01. óta nem frissült '
+          'állapotot mutatják. '
           'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
           'Miserend használhat-e mobilnetet a telefon beállításaiban — '
           'amint újra van kapcsolat, a képernyő magától frissül.',
@@ -586,8 +1836,8 @@ void main() {
 
       expect(
         find.text(
-          'A miserend.hu jelenleg nem elérhető, az adatok '
-          '2026. 08. 01-i állapotot mutatnak.',
+          'A miserend.hu jelenleg nem elérhető, az adatok a '
+          '2026. 08. 01. óta nem frissült állapotot mutatják.',
         ),
         findsOneWidget,
       );
@@ -621,6 +1871,30 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    TextButton reportButton(WidgetTester tester) => tester.widget<TextButton>(
+      find.ancestor(
+        of: find.text('Hibajelentés'),
+        matching: find.byType(TextButton),
+      ),
+    );
+
+    testWidgets('while blocked, the button greys out as a disabled one, '
+        'not in a colour of its own', (tester) async {
+      await answered(
+        tester,
+        _page(_scheduleWith(_todayAt(9, 0)), failure: ApiFailure.noConnection),
+      );
+
+      expect(reportButton(tester).enabled, isFalse);
+      expect(reportButton(tester).style, isNull);
+    });
+
+    testWidgets('with live data, the button is enabled', (tester) async {
+      await answered(tester, _page(_scheduleWith(_todayAt(9, 0))));
+
+      expect(reportButton(tester).enabled, isTrue);
+    });
+
     for (final failure in ApiFailure.values) {
       testWidgets('with ${failure.name} marked, the button explains itself '
           'instead of opening the page', (tester) async {
@@ -643,7 +1917,7 @@ void main() {
         _page(
           _scheduleWith(_todayAt(9, 0)),
           church: _details(),
-          scheduleIsFresh: true,
+          freshDays: _allFresh,
           dataAsOf: DateTime(2026, 9, 3, 17, 45),
         ),
       );
@@ -706,7 +1980,7 @@ void main() {
       refreshed: ChurchPageData(
         church: null,
         massesByDay: _emptyDays(),
-        scheduleIsFresh: false,
+        freshDays: 0,
         confessionLive: false,
         churchGone: true,
       ),
@@ -721,9 +1995,9 @@ void main() {
       find.text('Ez a templom már nem szerepel a miserend.hu-n.'),
       findsOneWidget,
     );
-    expect(find.text('09:00'), findsNothing);
-    expect(find.text('Nincs adat a mai miserendről'), findsNothing);
-    expect(find.text('Most vasárnap'), findsNothing);
+    expect(find.text('9:00'), findsNothing);
+    expect(find.text('Mára nincs letöltött információ'), findsNothing);
+    expect(_emptyDay(_notDownloaded), findsNothing);
     expect(find.byType(ChurchDetailsPage), findsOneWidget);
     // The name the page was opened with stays readable.
     expect(find.text('Belvárosi Nagyboldogasszony-templom'), findsOneWidget);
@@ -755,5 +2029,70 @@ void main() {
       expect(map.userPosition, isNull);
       expect(find.byKey(MiserendMap.userPositionKey), findsNothing);
     });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp, text scale $textScale, '
+              'directions are a text button with a verb, read out as a '
+              'button, at least 48 tall, and plan the route (KO9, SV1, SV3, '
+              'AM3, EH3, EH4)', (tester) async {
+            final calls = <String>[];
+            const launcher = MethodChannel('map_launcher');
+            tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+              launcher,
+              (call) async {
+                calls.add(call.method);
+                return call.method == 'getInstalledMaps'
+                    ? [
+                      {'mapName': 'Google Maps', 'mapType': 'google'},
+                    ]
+                    : null;
+              },
+            );
+            addTearDown(
+              () => tester.binding.defaultBinaryMessenger
+                  .setMockMethodCallHandler(launcher, null),
+            );
+            final handle = tester.ensureSemantics();
+            final empty = _page(_emptyDays());
+            await pumpPage(
+              tester,
+              _FakeLoader(cached: empty, refreshed: empty),
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+
+            final button = find.widgetWithText(
+              TextButton,
+              'Útvonaltervezés ide',
+            );
+            expect(button, findsOneWidget);
+            expect(find.text('ÚTVONAL'), findsNothing);
+            expect(
+              tester.getSemantics(button),
+              isSemantics(
+                label: 'Útvonaltervezés ide',
+                isButton: true,
+                hasTapAction: true,
+              ),
+            );
+            expect(
+              tester.getSize(button).height,
+              greaterThanOrEqualTo(kMinInteractiveDimension),
+            );
+            expect(tester.takeException(), isNull);
+
+            await tester.ensureVisible(button);
+            await tester.tap(button);
+            await tester.pumpAndSettle();
+
+            expect(calls, ['getInstalledMaps', 'showDirections']);
+            handle.dispose();
+          }, variant: eh4Platforms);
+        }
+      }
+    }
   });
 }

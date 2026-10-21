@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/home/advanced_search/advanced_search_loader.dart';
@@ -9,7 +12,9 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
     this.pages, {
     this.cityNames = const [],
     this.languageCodes = const [],
-  });
+    ApiFailure? lastFailure,
+    this.checkFinds,
+  }) : connection = ValueNotifier(lastFailure);
 
   final List<AdvancedSearchResultPage> pages;
   final List<String> cityNames;
@@ -17,12 +22,33 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
 
   final List<(AdvancedSearchCriteria, int)> asked = [];
 
+  /// How the app's last API call ended, as the page is told.
+  final ValueNotifier<ApiFailure?> connection;
+
+  /// What a connection check ends with; null when it gets an answer.
+  ApiFailure? checkFinds;
+
+  int checks = 0;
+
+  /// Pages that stay on their way until their completer completes.
+  final Map<int, Completer<void>> held = {};
+
+  @override
+  ValueListenable<ApiFailure?> get lastFailure => connection;
+
+  @override
+  Future<void> checkConnection() async {
+    checks++;
+    connection.value = checkFinds;
+  }
+
   @override
   Future<AdvancedSearchResultPage> loadPage(
     AdvancedSearchCriteria criteria,
     int page,
   ) async {
     asked.add((criteria, page));
+    await held[page]?.future;
     return page < pages.length ? pages[page] : resultPage(const []);
   }
 
@@ -39,22 +65,28 @@ AdvancedSearchResultPage resultPage(
   int? found,
   bool foundIsFinal = true,
   ApiFailure? failure,
+  SearchRing? ring,
+  int lookedAt = 0,
+  int candidates = 0,
 }) => AdvancedSearchResultPage(
   churches: churches,
   hasMore: hasMore,
   found: found ?? churches.length,
   foundIsFinal: foundIsFinal,
   failure: failure,
-  dataAsOf: null,
+  ring: ring,
+  lookedAt: lookedAt,
+  candidates: candidates,
 );
 
-ChurchListEntry churchEntry(int id, {String? name}) => ChurchListEntry(
-  id: id,
-  name: name ?? 'Templom $id',
-  commonName: null,
-  city: 'Pécs',
-  lat: 46.07,
-  lon: 18.23,
-  photo: null,
-  masses: const [],
-);
+ChurchListEntry churchEntry(int id, {String? name, String? commonName}) =>
+    ChurchListEntry(
+      id: id,
+      name: name ?? 'Templom $id',
+      commonName: commonName,
+      city: 'Pécs',
+      lat: 46.07,
+      lon: 18.23,
+      photo: null,
+      masses: const [],
+    );

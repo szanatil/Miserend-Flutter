@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:miserend/church_details/widgets/day_label.dart';
 import 'package:miserend/database/cache/adoration.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/section_card.dart';
 
 /// The church's adoration windows, grouped by the day they fall on.
 ///
 /// Overlapping entries on the same day are all shown. Church 38 reports both a
-/// 00:00–23:59 window and a 09:00–18:00 one for the same day; collapsing them
+/// 0:00–23:59 window and a 9:00–18:00 one for the same day; collapsing them
 /// to the narrower would throw away a perpetual adoration, and we cannot tell
 /// the two cases apart from the data.
 class AdorationCard extends StatelessWidget {
@@ -30,10 +32,10 @@ class AdorationCard extends StatelessWidget {
         children: [
           for (final day in byDay.keys) ...[
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 2),
+              padding: const EdgeInsets.only(top: Spacing.s),
               child: Text(
                 _dayHeading(day),
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.sectionTitle,
               ),
             ),
             for (final adoration in byDay[day]!) _entry(context, adoration),
@@ -47,7 +49,7 @@ class AdorationCard extends StatelessWidget {
     final kind = adoration.kind?.trim() ?? '';
     final info = adoration.info?.trim() ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.only(top: Spacing.s),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -57,16 +59,16 @@ class AdorationCard extends StatelessWidget {
           if (info.isNotEmpty)
             Text(
               info,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.apply(color: Colors.black54),
+              style: Theme.of(context).textTheme.bodySmall?.apply(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
         ],
       ),
     );
   }
 
-  /// A window that covers the whole day is stated as such — "00:00 – 23:59"
+  /// A window that covers the whole day is stated as such — "0:00–23:59"
   /// reads as a precise schedule when it means the opposite.
   String _range(Adoration adoration) {
     final start = adoration.start;
@@ -82,7 +84,7 @@ class AdorationCard extends StatelessWidget {
     if (coversDay) {
       return 'Egész nap';
     }
-    return '${TimeOfDay.fromDateTime(start).to24hours()} – '
+    return '${TimeOfDay.fromDateTime(start).to24hours()}–'
         '${TimeOfDay.fromDateTime(end).to24hours()}';
   }
 

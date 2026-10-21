@@ -32,7 +32,7 @@ A templom képe marad, mert segít gyorsan felismerni, melyik templomról van sz
 ### Kártyacsalád (egyezés a templomkártyával)
 
 - `Card` az app alapértelmezett árnyékával. **A templomkártya árnyéka nem változik**, a téma `cardTheme`-jét nem kell bővíteni.
-- A lista `Colors.black12` háttéren áll, mint a Templomok fül listái, 8 px-es `ListView` paddinggel (ma is ennyi).
+- A lista `Colors.black12` háttéren áll, mint a Templomok fül listái, 8 px-es `ListView` paddinggel (ma is ennyi). *(Módosítva 2026-10-08, #58: a lista a lap `surface`-én áll, saját háttérszín nélkül (DESIGN.md SZ5, MÉ1).)*
 - Ugyanaz a `DistanceChip`, ugyanaz a fotó-helykitöltő (`church_blurred.png`), ugyanazok a `PhotoDecode` szabályok.
 - **Nincs kedvenc-gomb.** A kártya egy konkrét, rövidesen lejáró alkalomról szól, a kedvenc pedig a templomra vonatkozik. Kedvencnek jelölni a részletezőn és a Templomok fülön lehet.
 - Az egész kártya koppintásra a részletezőt nyitja (a mostani `onTap`, változatlanul).
@@ -44,15 +44,21 @@ A templom képe marad, mert segít gyorsan felismerni, melyik templomról van sz
 
 | Sáv | Tartalom |
 |---|---|
-> **Módosítva (2026-09-18, a #36 tesztelése után):** a kezdés és a hátralévő idő lekerült a kártyáról. Az azonos időpontban kezdődő misék blokkot alkotnak: a blokk fejléce (`MassStartHeader`) a kezdés, mellette a hátralévő idő vagy az „Épp most tart", alatta egy vonal, alatta a kártyák. A fejlécben a kezdés `headlineMedium`, félkövér, `CustomColors.accent` színű; a hátralévő idő `bodyLarge`. A kártyán nincs idősáv, a templom neve a templomkártyáéval egyező `titleLarge`; a mise jellemzője a település alatti saját sorba került (spec 0011). A Misék fül a keresősáv alatt a Templomok fül lila sávját kapja „Mai misék" felirattal, a Térkép fül „Térkép" felirattal (`SectionBar`).
+> **Módosítva (2026-09-18, a #36 tesztelése után):** a kezdés és a hátralévő idő lekerült a kártyáról. Az azonos időpontban kezdődő misék blokkot alkotnak: a blokk fejléce (`MassStartHeader`) a kezdés, mellette a hátralévő idő vagy az „Épp most tart", alatta egy vonal, alatta a kártyák. A fejlécben a kezdés `headlineMedium`, félkövér, `occasionTime` (`MiserendColors`) színű; a hátralévő idő `bodyLarge`. A kártyán nincs idősáv, a templom neve a templomkártyáéval egyező `titleLarge`; a mise jellemzője a település alatti saját sorba került (spec 0011). A Misék fül a keresősáv alatt a Templomok fül lila sávját kapja „Mai misék" felirattal, a Térkép fül „Térkép" felirattal (`SectionBar`).
 
-| **Idő** (bal, fix szélesség) — *megszűnt, ld. fent* | Kezdés 24 órás formában, nagy (`headlineMedium` körül), **félkövér**, `CustomColors.accent` színnel. Ugyanez a szín jelöli a mise-időpontokat a templomkártyán is. Alatta kisebb (`bodySmall`), szürke szöveggel a **hátralévő idő**, vagy **helyette** az „Épp most tart" jelölés (a mostani `_OngoingBadge`). A két elem kizárja egymást. 2 órán túli misénél a hely üres marad. |
+> **Módosítva (2026-10-08, #57): DESIGN.md KO1, KO3, KO6, TI2, SZ4, SZ5.** A fejlécben a kezdés nem narancs `headlineMedium` félkövér szöveg a felületen, hanem `titleLarge` `FontWeight.w600` táblázatos számjegyekkel, a saját `occasionTimeContainer` konténerében `onOccasionTimeContainer` színnel (`Radii.s`); épp most tartó misénél `occasionTime` / `onOccasionTime`. A hátralévő idő `labelMedium` `onSurfaceVariant`, az elválasztó `outlineVariant`. Az „Épp most tart" állapot-badge: `occasionTime` / `onOccasionTime`, `Radii.full`, `labelSmall`. A kártyán a templom neve `titleMedium` (nem `titleLarge`), a település sora `bodyMedium` `onSurfaceVariant`; a kártya a téma kártyája (`surfaceContainerLow`, `elevation: 1`, `Radii.m`, belül `Spacing.l`), a lista háttere a lap `surface`-e, nem `Colors.black12` (MÉ1).
+
+> **Módosítva (2026-10-08, #56): DESIGN.md KO2.** A `SectionBar` nem lila: a címsorhoz hasonlóan `surface` hátterű, árnyék nélkül; a felirata `titleMedium` `FontWeight.w600` (TI2), a Templomok fülsora az M3 alap színeivel áll.
+
+| **Idő** (bal, fix szélesség) — *megszűnt, ld. fent* | Kezdés 24 órás formában, nagy (`headlineMedium` körül), **félkövér**, `occasionTime` (`MiserendColors`) színnel. Ugyanez a szín jelöli a mise-időpontokat a templomkártyán is. Alatta kisebb (`bodySmall`), szürke szöveggel a **hátralévő idő**, vagy **helyette** az „Épp most tart" jelölés (a mostani `_OngoingBadge`). A két elem kizárja egymást. 2 órán túli misénél a hely üres marad. |
 | **Templom** (közép, `Expanded`) | **Név**: legfeljebb **2 sor**, ellipszissel. A két sor helye rövid névnél is le van foglalva (a templomkártya `_LineSlot` mintája), így ami alatta van, minden kártyán ugyanott áll. **Alatta 1 sor**: település és mise címe, `·`-vel elválasztva („Nyíregyháza · Szent Liturgia"). Ha nincs cím, vagy a cím „Szentmise", csak a település áll. Ha nincs település, csak a cím. Ha nem fér ki, a sor vége ellipszissel levágódik. A **mise jellemzője** ez alatt, saját sorban, sárga buborékokban áll (spec 0011, módosítva 2026-09-18). |
 | **Kép** (jobb) | Keskeny, **teljes magasságú** fotósáv (~96 px széles), a kártya széléig kifuttatva (`Clip.antiAlias` a kártyán, mint a templomkártyán). A `DistanceChip` a kép **jobb alsó sarkában** áll, 8 px-re a szélektől, a templomkártyával egyezően. |
 
 - A fix magasság a legmagasabb tartalomból adódik: kétsoros név + egy sor alatta a középső sávban, illetve kezdés + jelölés az időoszlopban. Nagyobb betűméretnél sem csordulhat túl, ezt teszt ellenőrzi.
 - **Ismert kockázat:** hosszú településnévnél a mise címe esik ki. Vállaljuk, mert a cím ritka, egy mindig lefoglalt, de szinte mindig üres külön sor pedig a tömörséget rontaná.
 - A bélyegkép továbbra is a `thumbnailUrl` jövőből jön, és amíg nem oldódik fel, a helykitöltő látszik (spec 0004: a kép nem tartja vissza a listát). A dekódolási méret a fotósáv magasságából számolódik, a templomkártyához hasonlóan `tight: true`-val.
+
+> **Módosítva (2026-10-09, #67): DESIGN.md EL2–EL3.** A kártyának nincs fix magassága: a tartalomból jön. A település · cím sora nem vágódik le ellipszissel, hanem tördel, így hosszú településnévnél sem esik ki a mise címe; a kártya ilyenkor magasabb. A név két sora és a buborékok egy sora továbbra is le van foglalva, így a később érkező mise-jellemző nem tolja le a lista többi kártyáját. A buborék egy sorban, ellipszissel áll, koppintásra a teljes szöveg látszik (EL2 kivétel). 600 dp feletti szélességen a lista legfeljebb 640 dp széles, középre igazítva (EL3).
 
 ### Hátralévő idő
 

@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
@@ -36,7 +39,7 @@ class ChurchScheduleLoader {
     return _read(
       churchId,
       today,
-      scheduleIsFresh: false,
+      freshDays: 0,
       confessionLive: false,
       failure: null,
     );
@@ -52,6 +55,7 @@ class ChurchScheduleLoader {
       church.id,
     ], length: ResponseLength.full);
     ChurchDetails? details;
+    List<CachedMass>? todayMasses;
     ApiFailure? churchFailure;
     switch (churchResult) {
       case ApiSuccess(:final value):
@@ -63,19 +67,22 @@ class ChurchScheduleLoader {
           return ChurchPageData(
             church: null,
             massesByDay: _groupByDay(const [], today),
-            scheduleIsFresh: false,
+            freshDays: 0,
             confessionLive: false,
             churchGone: true,
           );
         }
         for (final fresh in value.churches) {
-          if (fresh.id == church.id) details = fresh;
+          if (fresh.id == church.id) {
+            details = fresh;
+            todayMasses = value.massesOf(church.id);
+          }
         }
       case ApiFailed(:final failure):
         churchFailure = failure;
     }
 
-    var scheduleIsFresh = false;
+    var freshDays = 0;
     ApiFailure? scheduleFailure;
     final lat = church.lat;
     final lon = church.lon;
@@ -85,23 +92,44 @@ class ChurchScheduleLoader {
         lat: lat,
         lon: lon,
         from: today,
-        until: today.add(const Duration(days: scheduleDays)),
+        until: today.addCalendarDays(scheduleDays),
       );
       switch (masses) {
         case ApiSuccess(:final value):
-          // An empty answer is an answer: the church holds no mass in the
-          // window, and the stored schedule has to stop saying otherwise.
-          await cache.replaceMassesForChurch(church.id, value);
-          scheduleIsFresh = true;
+          // An empty answer is an answer: miserend.hu holds no mass in the
+          // window, and the stored schedule has to stop saying otherwise —
+          // up to where a cut-off answer stops.
+          final unknownFrom = value.unknownFrom(today);
+          await cache.replaceMassesForChurch(
+            church.id,
+            value.masses,
+            keepFrom: unknownFrom,
+          );
+          // The church answer's rows say what the schedule's do and more —
+          // the language, the remark — so they stay today's, none as well
+          // (spec 0005, „Gyorsítótár-írás"; #80).
+          if (todayMasses != null) {
+            await cache.replaceDailyMasses(church.id, today, todayMasses);
+          }
+          freshDays =
+              unknownFrom == null
+                  ? scheduleDays
+                  : min(unknownFrom.calendarDaysSince(today), scheduleDays);
         case ApiFailed(:final failure):
           scheduleFailure = failure;
       }
+    }
+    // Today's rows are the church answer's — written through with it, and
+    // written again after a schedule answer — so whatever the schedule call
+    // did, today is answered for (#90).
+    if (todayMasses != null) {
+      freshDays = max(freshDays, 1);
     }
 
     return _read(
       church.id,
       today,
-      scheduleIsFresh: scheduleIsFresh,
+      freshDays: freshDays,
       // Only a response from this call may light the confession tile.
       confessionLive: details?.hasConfession ?? false,
       failure: scheduleFailure ?? churchFailure,
@@ -111,7 +139,7 @@ class ChurchScheduleLoader {
   Future<ChurchPageData> _read(
     int churchId,
     DateTime today, {
-    required bool scheduleIsFresh,
+    required int freshDays,
     required bool confessionLive,
     required ApiFailure? failure,
   }) async {
@@ -120,12 +148,12 @@ class ChurchScheduleLoader {
     final cached = await cache.getMassesForChurch(
       churchId,
       from: today,
-      until: today.add(const Duration(days: scheduleDays)),
+      until: today.addCalendarDays(scheduleDays),
     );
     return ChurchPageData(
       church: church,
       massesByDay: _groupByDay(cached, today),
-      scheduleIsFresh: scheduleIsFresh,
+      freshDays: freshDays,
       confessionLive: confessionLive,
       failure: failure,
       dataAsOf: church?.localSyncedAt ?? await cache.bootstrappedAt(),
@@ -136,12 +164,7 @@ class ChurchScheduleLoader {
   List<List<CachedMass>> _groupByDay(List<CachedMass> cached, DateTime today) {
     final days = List.generate(scheduleDays, (_) => <CachedMass>[]);
     for (final mass in cached) {
-      final offset =
-          DateTime(
-            mass.time.year,
-            mass.time.month,
-            mass.time.day,
-          ).difference(today).inDays;
+      final offset = mass.time.calendarDaysSince(today);
       if (offset >= 0 && offset < days.length) {
         days[offset].add(mass);
       }

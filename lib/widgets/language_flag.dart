@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:miserend/theme/tokens.dart';
 
 /// The Hungarian name of each `nyelvek` code with a flag in `assets/flags/`
 /// — the language it marks, not the country whose flag is borrowed
@@ -39,6 +40,10 @@ class LanguageFlag extends StatelessWidget {
 
   final String code;
 
+  /// The size a flag is drawn at.
+  static const double width = 24;
+  static const double height = 18;
+
   @override
   Widget build(BuildContext context) {
     final name = languageNames[code];
@@ -53,15 +58,17 @@ class LanguageFlag extends StatelessWidget {
       label: name,
       image: true,
       child: Container(
-        width: 24,
-        height: 18,
+        width: width,
+        height: height,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           // Several of these flags run to white at the edge — the English one
           // is white with a red cross — and would otherwise bleed into the
           // card behind them.
-          border: Border.all(color: Colors.black12),
-          borderRadius: BorderRadius.circular(2),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          borderRadius: BorderRadius.circular(Radii.xs),
         ),
         child: SvgPicture.asset('assets/flags/$code.svg', fit: BoxFit.contain),
       ),

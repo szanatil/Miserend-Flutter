@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:miserend/api/api_result.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
+import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/churches/near_churches_page.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_colors.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/offline_notice.dart';
 import 'package:miserend/widgets/time_chip.dart';
@@ -18,7 +20,9 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../fake_location_provider.dart';
+import '../../theme/theme_harness.dart';
 import 'fake_church_list_loader.dart';
+import 'list_surface.dart';
 
 Position _position() => Position(
   latitude: 47.4979,
@@ -71,12 +75,14 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester,
     ChurchListLoader loader,
-    LocationProvider location,
-  ) async {
+    LocationProvider location, {
+    Brightness brightness = Brightness.light,
+  }) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesService>.value(
         value: favorites,
         child: MaterialApp(
+          theme: miserendTheme(brightness),
           home: Scaffold(
             body: NearChurchesPage(loader: loader, location: location),
           ),
@@ -99,6 +105,25 @@ void main() {
   }
 
   final found = PositionFound(_position());
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'in $brightness, the list stands on the page\'s surface (SZ5)',
+      (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader([
+            [_entry('Közelebbi')],
+          ]),
+          FakeLocationProvider([found]),
+          brightness: brightness,
+        );
+
+        expect(find.text('Közelebbi'), findsOneWidget);
+        expectListOnSurface(tester, brightness);
+      },
+    );
+  }
 
   group('states', () {
     testWidgets('shows the loading caption while the cache is read', (
@@ -158,7 +183,7 @@ void main() {
       expect(find.text('230 m'), findsOneWidget);
     });
 
-    testWidgets('a row shows masses only, not confession or adoration', (
+    testWidgets('a row shows today\'s occasions, confession too (#77)', (
       tester,
     ) async {
       await pumpPage(
@@ -178,9 +203,9 @@ void main() {
         FakeLocationProvider([found]),
       );
 
-      expect(find.byType(TimeChip), findsNWidgets(2));
-      expect(find.text('07:00'), findsOneWidget);
-      expect(find.text('09:00'), findsNothing);
+      expect(find.byType(TimeChip), findsNWidgets(3));
+      expect(find.text('7:00'), findsOneWidget);
+      expect(find.text('9:00'), findsOneWidget);
       expect(find.text('18:00'), findsOneWidget);
     });
   });
@@ -437,7 +462,11 @@ void main() {
                   .first,
             )
             .color,
-        isNot(CustomColors.serverErrorTint),
+        isNot(
+          miserendTheme(
+            Brightness.light,
+          ).extension<MiserendColors>()!.serverErrorContainer,
+        ),
       );
     });
 
@@ -464,7 +493,9 @@ void main() {
                   .first,
             )
             .color,
-        CustomColors.serverErrorTint,
+        miserendTheme(
+          Brightness.light,
+        ).extension<MiserendColors>()!.serverErrorContainer,
       );
       expect(find.byType(OfflineInfoButton), findsOneWidget);
     });
@@ -494,7 +525,8 @@ void main() {
 
       expect(
         find.text(
-          'Az adatok a telefonon tárolt, 2026. 09. 10-i állapotot mutatják. '
+          'Az adatok a telefonon tárolt, 2026. 09. 10. óta nem frissült '
+          'állapotot mutatják. '
           'Kapcsold be az adatkapcsolatot, vagy ellenőrizd, hogy a '
           'Miserend használhat-e mobilnetet a telefon beállításaiban — '
           'amint újra van kapcsolat, a képernyő magától frissül.',
@@ -562,6 +594,152 @@ void main() {
 
       expect(loader.refreshes, 0);
       expect(find.byType(OfflineBanner), findsNothing);
+    });
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('in $brightness, meets the accessibility guidelines '
+        '(AM1, AM3, AM5)', (tester) async {
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([
+          [
+            _entry('Közelebbi'),
+            ChurchListEntry(
+              id: 2,
+              name: 'Távolabbi',
+              commonName: 'Szent Anna',
+              city: 'Budapest',
+              lat: 47.5,
+              lon: 19.04,
+              photo: null,
+              masses: [_row(8, 'Szentmise', MassSource.bootstrap)],
+            ),
+          ],
+        ]),
+        FakeLocationProvider([found]),
+        brightness: brightness,
+      );
+
+      await expectAccessibilityGuidelines(tester);
+    }, variant: eh4Platforms);
+  }
+
+  group('size', () {
+    final crowded = [
+      for (var i = 0; i < 3; i++)
+        ChurchListEntry(
+          id: i,
+          name:
+              'Kecskeméti Szent Miklós Ferences Templom és Kolostor Plébánia '
+              'Templom $i',
+          commonName: 'Alsóvárosi templom, Ferences templom, Barátok temploma',
+          city: 'Budapest',
+          lat: 47.5,
+          lon: 19.04,
+          photo: null,
+          masses: [
+            for (var hour = 6; hour < 20; hour++)
+              _row(hour, 'Szentmise', MassSource.bootstrap),
+          ],
+        ),
+    ];
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits $width dp at text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          await pumpPage(
+            tester,
+            FakeChurchListLoader([crowded]),
+            FakeLocationProvider([found]),
+          );
+
+          expect(find.byType(ChurchCard), findsWidgets);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
+
+    testWidgets('on an $el3Width dp screen the list is at most 640 wide and '
+        'centred (EL3)', (tester) async {
+      setScreen(tester, const Size(el3Width, 800));
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([crowded]),
+        FakeLocationProvider([found]),
+      );
+
+      expectCentredContent(tester, find.byType(ChurchCard).first);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in columns, fits in $brightness at $width dp and text '
+              'scale $textScale (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              FakeChurchListLoader([crowded]),
+              FakeLocationProvider([found]),
+              brightness: brightness,
+            );
+
+            expect(find.byType(ChurchCard), findsWidgets);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+
+    testWidgets('on a 1300 dp screen the cards stand three to a row, as tall '
+        'as each other (EL3)', (tester) async {
+      setScreen(tester, const Size(threeColumnWidth, 1200));
+      // A short card beside the crowded ones, and one for the second row.
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([
+          [crowded[0], _entry('Rövid'), crowded[1], crowded[2]],
+        ]),
+        FakeLocationProvider([found]),
+      );
+
+      final cards = [
+        for (var i = 0; i < 4; i++)
+          tester.getRect(find.byType(ChurchCard).at(i)),
+      ];
+      // The screen edge's distance either side; 8 between the cards (TK2).
+      expect([cards[0].left, cards[2].right], [16, 1284]);
+      expect(cards[1].left - cards[0].right, 8);
+      expect([cards[1].top, cards[2].top], everyElement(cards[0].top));
+      expect([cards[1].height, cards[2].height], everyElement(cards[0].height));
+      expect([cards[3].left, cards[3].top], [16, cards[0].bottom]);
+      expect(cards[3].width, cards[0].width);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the rows follow the window when it is resized (EL3)', (
+      tester,
+    ) async {
+      setScreen(tester, const Size(el3Width, 1200));
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([crowded]),
+        FakeLocationProvider([found]),
+      );
+      Rect card(int index) => tester.getRect(find.byType(ChurchCard).at(index));
+      expect(card(1).top, card(0).bottom);
+
+      tester.view.physicalSize = const Size(threeColumnWidth, 1200);
+      await tester.pump();
+      expect([card(1).top, card(2).top], everyElement(card(0).top));
+
+      tester.view.physicalSize = const Size(el3Width, 1200);
+      await tester.pump();
+      expect(card(1).top, card(0).bottom);
     });
   });
 }

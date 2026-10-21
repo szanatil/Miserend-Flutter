@@ -64,17 +64,13 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Container(
-      color: Colors.black12,
-      child:
-          loading
-              ? const LoadingView(message: 'Kedvencek betöltése...')
-              : ChurchListView(
-                list: _list,
-                emptyMessage: 'Még nincsenek kedvenc templomaid.',
-                onRefresh: () => _load(refresh: true),
-              ),
-    );
+    return loading
+        ? const LoadingView(message: 'Kedvencek betöltése...')
+        : ChurchListView(
+          list: _list,
+          emptyMessage: 'Még nincsenek kedvenc templomaid.',
+          onRefresh: () => _load(refresh: true),
+        );
   }
 
   Future<void> _load({required bool refresh}) async {

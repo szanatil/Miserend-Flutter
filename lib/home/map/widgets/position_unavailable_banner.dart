@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:miserend/colors.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/widgets/notice_strip.dart';
 import 'package:miserend/widgets/position_unavailable_view.dart';
 
@@ -40,9 +40,10 @@ class PositionUnavailableBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = PositionUnavailableView.action(reason, location, onRetry);
     return NoticeStrip(
-      color: CustomColors.noticeTint,
-      icon: Icons.location_off,
-      iconColor: Colors.black54,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      icon: Icons.location_off_rounded,
+      iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      textColor: Theme.of(context).colorScheme.onSurfaceVariant,
       text: PositionUnavailableView.message(reason, _purpose),
       actions: [
         if (button != null)
@@ -53,10 +54,9 @@ class PositionUnavailableBanner extends StatelessWidget {
             child: Text(button.label),
           ),
         IconButton(
-          icon: const Icon(Icons.close),
-          color: Colors.black54,
+          icon: Icon(SystemIcon.close.of(context)),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           tooltip: 'Bezárás',
-          visualDensity: VisualDensity.compact,
           onPressed: onClose,
         ),
       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/church_details/widgets/expandable_info_tile.dart';
+import 'package:miserend/theme/miserend_theme.dart';
 
 const String _long =
     'Egy nagyon hosszú leírás, amely bőven túlnyúlik három soron, hogy a '
@@ -10,6 +11,7 @@ const String _long =
 
 Widget _host(String text) {
   return MaterialApp(
+    theme: miserendTheme(Brightness.light),
     home: Scaffold(
       body: SizedBox(width: 200, child: ExpandableInfoTile(text: text)),
     ),
@@ -22,14 +24,14 @@ void main() {
 
     expect(find.text('Több'), findsNothing);
     expect(find.text('Kevesebb'), findsNothing);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
   });
 
   testWidgets('collapsed shows a down arrow and "Több"', (tester) async {
     await tester.pumpWidget(_host(_long));
 
     expect(find.text('Több'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
     // The old wording is gone.
     expect(find.text('Tovább'), findsNothing);
   });
@@ -41,8 +43,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Kevesebb'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_up), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    expect(find.byIcon(Icons.keyboard_arrow_up_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
   });
 
   testWidgets('collapses again on a second tap', (tester) async {
@@ -54,6 +56,17 @@ void main() {
     await tester.pump();
 
     expect(find.text('Több'), findsOneWidget);
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
+  });
+
+  testWidgets('the arrow is a regular icon, 24, not the button\'s 18 (IK3)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_long));
+
+    expect(
+      tester.getSize(find.byIcon(Icons.keyboard_arrow_down_rounded)),
+      const Size(24, 24),
+    );
   });
 }

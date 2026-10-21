@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miserend/calendar_days.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -113,7 +114,7 @@ class BootstrapImporter {
     final occurrences = <String, CachedMass>{};
 
     for (var offset = 0; offset < days; offset++) {
-      final day = start.add(Duration(days: offset));
+      final day = start.addCalendarDays(offset);
       for (final rule in rules) {
         final time = rule.time;
         if (time == null || !MassFilter.isMassOnDay(rule, day)) continue;

@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The mechanical half of DESIGN.md (EH2): raw design values outside
-/// `lib/theme/` (TO1) and non-rounded icons (IK1). The other rules are left
-/// to the review.
+/// `lib/theme/` (TO1), non-rounded icons (IK1) and icon sizes given to the
+/// icon rather than taken from the theme (IK3). The other rules are left to
+/// the review.
 final Map<String, RegExp> _rules = {
   'color': RegExp(
     r'\bColors\.(?!transparent\b)[a-zA-Z]|\bColor\(0x|\bColor\.fromARGB|\bCustomColors\.|\.withAlpha\(|\.withOpacity\(|\.primaryColor\b',
@@ -18,130 +19,22 @@ final Map<String, RegExp> _rules = {
   'icon': RegExp(r'\bIcons\.(?![a-z_]+_rounded\b)[a-z_]+'),
 };
 
+/// The rules an expression can spread over several lines for: each match
+/// counts as one line.
+final Map<String, RegExp> _expressionRules = {
+  'iconSize': RegExp(r'\bIcon\((?:[^()]|\([^()]*\))*?\bsize\s*:'),
+};
+
 /// The known deviations found by the design audit of 2026-10-07, as the
 /// number of offending lines per file and rule, each with the issue that
 /// removes it. A count may only fall: a new deviation fails the test, and a
 /// fixed one fails it too until its entry is lowered or removed, so the list
 /// never hides a regression behind a fix.
-const Map<String, Map<String, (int, String)>> _knownDeviations = {
-  'lib/about/about_page.dart': {
-    'color': (7, '#58'),
-    'icon': (4, '#61'),
-    'radius': (1, '#59'),
-    'spacing': (5, '#59'),
-  },
-  'lib/church_details/church_details_page.dart': {
-    'color': (11, '#58'),
-    'icon': (3, '#61'),
-    'spacing': (17, '#59'),
-  },
-  'lib/church_details/report_problem_page.dart': {'spacing': (5, '#59')},
-  'lib/church_details/widgets/adoration_card.dart': {
-    'color': (1, '#58'),
-    'spacing': (2, '#59'),
-  },
-  'lib/church_details/widgets/church_info_tiles.dart': {
-    'color': (3, '#58'),
-    'icon': (1, '#61'),
-    'spacing': (4, '#59'),
-  },
-  'lib/church_details/widgets/confession_tile.dart': {
-    'color': (3, '#58'),
-    'icon': (1, '#61'),
-    'spacing': (3, '#59'),
-  },
-  'lib/church_details/widgets/contact_card.dart': {
-    'color': (2, '#58'),
-    'icon': (2, '#61'),
-    'spacing': (3, '#59'),
-  },
-  'lib/church_details/widgets/expandable_info_tile.dart': {
-    'color': (1, '#58'),
-    'icon': (2, '#61'),
-    'spacing': (2, '#59'),
-  },
-  'lib/church_details/widgets/mass_info.dart': {'spacing': (2, '#59')},
-  'lib/church_details/widgets/photo_gallery_page.dart': {'color': (3, '#58')},
-  'lib/church_details/widgets/photo_header.dart': {
-    'color': (1, '#58'),
-    'spacing': (1, '#59'),
-  },
-  'lib/colors.dart': {'color': (15, '#54')},
-  'lib/home/advanced_search/advanced_search_page.dart': {
-    'color': (5, '#58'),
-    'elevation': (1, '#56'),
-    'icon': (7, '#61'),
-    'spacing': (13, '#59'),
-  },
-  'lib/home/advanced_search/widgets/result_count_badge.dart': {
-    'color': (2, '#58'),
-    'radius': (1, '#59'),
-    'spacing': (1, '#59'),
-  },
-  'lib/home/churches/church_card.dart': {
-    'color': (4, '#57'),
-    'icon': (2, '#61'),
-    'spacing': (2, '#59'),
-  },
-  'lib/home/churches/church_list_view.dart': {'spacing': (1, '#59')},
-  'lib/home/churches/favorite_churches.dart': {'color': (1, '#58')},
-  'lib/home/churches/near_churches_page.dart': {'color': (1, '#58')},
-  'lib/home/churches/search_results.dart': {'color': (1, '#58')},
-  'lib/home/home.dart': {
-    'color': (7, '#55, #56'),
-    'icon': (5, '#61'),
-    'radius': (2, '#59'),
-  },
-  'lib/home/map/map_page.dart': {'icon': (1, '#61')},
-  'lib/home/map/widgets/position_unavailable_banner.dart': {
-    'color': (3, '#58'),
-    'icon': (2, '#61'),
-  },
-  'lib/home/masses/mass_card.dart': {
-    'color': (3, '#57'),
-    'radius': (1, '#57'),
-    'spacing': (1, '#59'),
-  },
-  'lib/home/masses/mass_start_header.dart': {
-    'color': (3, '#57'),
-    'radius': (1, '#57'),
-    'spacing': (2, '#59'),
-  },
-  'lib/home/masses/near_masses_page.dart': {
-    'color': (1, '#58'),
-    'spacing': (1, '#59'),
-  },
-  'lib/home/widgets/section_bar.dart': {
-    'color': (6, '#56'),
-    'elevation': (1, '#56'),
-  },
-  'lib/main.dart': {'color': (9, '#54')},
-  'lib/splash.dart': {'spacing': (3, '#59')},
-  'lib/widgets/distance_chip.dart': {
-    'color': (2, '#57'),
-    'spacing': (1, '#59'),
-  },
-  'lib/widgets/language_flag.dart': {'color': (1, '#58'), 'radius': (1, '#59')},
-  'lib/widgets/list_status_view.dart': {'spacing': (2, '#59')},
-  'lib/widgets/miserend_map.dart': {
-    'color': (9, '#58'),
-    'fontSize': (2, '#59'),
-    'spacing': (2, '#59'),
-  },
-  'lib/widgets/notice_strip.dart': {'spacing': (2, '#59')},
-  'lib/widgets/offline_notice.dart': {'color': (5, '#58'), 'icon': (3, '#61')},
-  'lib/widgets/position_unavailable_view.dart': {'spacing': (2, '#59')},
-  'lib/widgets/section_card.dart': {'spacing': (3, '#59')},
-  'lib/widgets/time_chip.dart': {
-    'color': (3, '#57'),
-    'icon': (1, '#61'),
-    'radius': (1, '#57'),
-    'spacing': (1, '#59'),
-  },
-};
+const Map<String, Map<String, (int, String)>> _knownDeviations = {};
 
 /// Counts the lines of each `lib/` file outside `lib/theme/` that match a
-/// rule, skipping comment lines.
+/// rule, and the expressions that match an expression rule, skipping comment
+/// lines.
 Map<String, Map<String, int>> _scan() {
   final found = <String, Map<String, int>>{};
   final files = Directory('lib')
@@ -150,7 +43,18 @@ Map<String, Map<String, int>> _scan() {
       .where((f) => f.path.endsWith('.dart'))
       .where((f) => !f.path.startsWith('lib/theme/'));
   for (final file in files) {
-    for (final line in file.readAsLinesSync()) {
+    final lines = file.readAsLinesSync();
+    final source = lines
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    for (final rule in _expressionRules.entries) {
+      final count = rule.value.allMatches(source).length;
+      if (count > 0) {
+        final counts = found.putIfAbsent(file.path, () => {});
+        counts[rule.key] = (counts[rule.key] ?? 0) + count;
+      }
+    }
+    for (final line in lines) {
       if (line.trimLeft().startsWith('//')) continue;
       for (final rule in _rules.entries) {
         if (rule.value.hasMatch(line)) {
@@ -177,7 +81,7 @@ void main() {
         if (count > allowed) {
           problems.add(
             '$path: $count "$rule" line(s), $allowed allowed '
-            '(DESIGN.md TO1/IK1; new deviations are not allowed)',
+            '(DESIGN.md TO1/IK1/IK3; new deviations are not allowed)',
           );
         } else if (count < allowed) {
           problems.add(

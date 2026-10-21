@@ -1,29 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
-import 'package:miserend/colors.dart';
+import 'package:miserend/extentions.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/mass_detail.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
 import 'package:miserend/widgets/photo_decode.dart';
+import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:miserend/widgets/reserved_room.dart';
+import 'package:miserend/widgets/tap_tooltip.dart';
 
-/// One of the nearest masses, the church card's sibling: the same card, grey
-/// ground and distance chip (spec 0008). The start is not on it: the list
+/// One of the nearest masses, the church card's sibling: the same card and
+/// distance chip (spec 0008). The start is not on it: the list
 /// puts the masses starting together under one header that says when. Tapping
 /// it opens the details page.
 ///
-/// Every card is the same height whatever it says: each line reserves its
+/// Short texts leave every card the same height: each line reserves its
 /// room, as on the church card, the bubbles of the mass detail among them, so
 /// that a detail arriving after the list does not push the cards below it
-/// down. The room is reserved in the text size the lines are drawn in, so a
-/// larger text size makes the card taller rather than overflow it.
+/// down. The room is reserved in the text size the lines are drawn in, and a
+/// line too long for it wraps, so a larger text size or a long city makes the
+/// card taller rather than overflow it (DESIGN.md EL2).
+///
+/// The screen reader reads it as one unit, the start first, though the card
+/// does not show it: one card is read at a time, without its header
+/// (DESIGN.md AM5).
+///
+/// Masses one church starts together share a card, the group mass card
+/// (CONTEXT.md, „Csoportos misekártya"): the church once, and a row per mass,
+/// its title first — Szentmise too, as it is what tells the rows apart — and
+/// its detail's bubbles after it.
 class MassCard extends StatelessWidget {
-  const MassCard({
+  MassCard({
     super.key,
-    required this.mass,
-    this.detail,
+    required NearbyMassesItem mass,
+    String? detail,
     required this.thumbnailUrl,
     this.onTap,
-  });
+  }) : masses = [mass],
+       details = [detail];
+
+  MassCard.group({
+    super.key,
+    required MassGroup group,
+    required this.details,
+    required this.thumbnailUrl,
+    this.onTap,
+  }) : assert(details.length == group.masses.length),
+       masses = group.masses;
 
   /// Wide enough for the photo to help recognize the church.
   static const double photoWidth = 96;
@@ -36,12 +60,16 @@ class MassCard extends StatelessWidget {
   /// Lines the name may take; the full name is on the details page.
   static const int _nameLines = 2;
 
-  final NearbyMassesItem mass;
+  /// One church's masses at one start, in the list's order.
+  final List<NearbyMassesItem> masses;
 
-  /// The mass detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
+  /// Each mass's detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
   /// the list is drawn without it rather than wait (spec 0011). Each of its
   /// parts is drawn as a bubble of its own.
-  final String? detail;
+  final List<String?> details;
+
+  /// The church and the start, which every mass on the card shares.
+  NearbyMassesItem get _first => masses.first;
 
   /// The church's cached photo. The card is drawn with the placeholder until
   /// this resolves, so a slow cache never holds the list back.
@@ -50,6 +78,15 @@ class MassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Semantics(
+        label: TimeOfDay.fromDateTime(_first.start).to24hours(),
+        child: _card(context),
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -61,7 +98,7 @@ class MassCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                    padding: const EdgeInsets.all(Spacing.l),
                     child: _churchColumn(context),
                   ),
                 ),
@@ -80,9 +117,9 @@ class MassCard extends StatelessWidget {
                 children: [
                   _photo(),
                   Positioned(
-                    right: 8,
-                    bottom: 8,
-                    child: DistanceChip(km: mass.distanceKm),
+                    right: Spacing.s,
+                    bottom: Spacing.s,
+                    child: DistanceChip(km: _first.distanceKm),
                   ),
                 ],
               ),
@@ -94,15 +131,19 @@ class MassCard extends StatelessWidget {
   }
 
   Widget _churchColumn(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    // As large as on the church card, its sibling.
-    final nameStyle = textTheme.titleLarge;
-    final title = mass.title;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    // As large as on the church card, its sibling (TI2).
+    final nameStyle = textTheme.titleMedium;
+    final lineStyle = textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final alone = masses.length == 1;
+    final title = _first.title;
     final place = [
-      mass.city,
-      if (title != _plainMassTitle) title,
+      _first.city,
+      if (alone && title != _plainMassTitle) title,
     ].whereType<String>().join(' · ');
-    final detail = this.detail;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -114,30 +155,32 @@ class MassCard extends StatelessWidget {
           lines: _nameLines,
           style: nameStyle,
           child: Text(
-            mass.churchName ?? '?',
+            _first.churchName ?? '?',
             style: nameStyle,
             maxLines: _nameLines,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // The city leads, so a long one cuts the title off. An empty text
-        // still takes its line.
-        Text(
-          place,
-          style: textTheme.bodyMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: _MassDetailBubbles.gap),
-        _MassDetailBubbles(
-          parts:
-              detail == null
-                  ? const <MassDetailPart>[]
-                  : massDetailParts(detail),
-        ),
+        // A long line wraps rather than being cut off (DESIGN.md EL2). An
+        // empty text still takes its line.
+        Text(place, style: lineStyle),
+        if (alone) ...[
+          const SizedBox(height: Spacing.s),
+          _MassDetailBubbles(parts: _partsOf(details.single)),
+        ] else
+          for (final (index, mass) in masses.indexed) ...[
+            const SizedBox(height: Spacing.s),
+            _MassDetailBubbles(
+              title: Text(mass.title ?? '?', style: lineStyle),
+              parts: _partsOf(details[index]),
+            ),
+          ],
       ],
     );
   }
+
+  static List<MassDetailPart> _partsOf(String? detail) =>
+      detail == null ? const <MassDetailPart>[] : massDetailParts(detail);
 
   Widget _photo() {
     return LayoutBuilder(
@@ -153,6 +196,7 @@ class MassCard extends StatelessWidget {
           _placeholder,
           fit: BoxFit.cover,
           cacheHeight: decodeHeight,
+          excludeFromSemantics: true,
         );
 
         return FutureBuilder<String?>(
@@ -160,9 +204,8 @@ class MassCard extends StatelessWidget {
           builder: (context, snapshot) {
             final url = snapshot.data;
             if (url == null) return placeholder;
-            return FadeInImage.assetNetwork(
+            return PhotoFadeIn(
               image: url,
-              fit: BoxFit.cover,
               placeholder: _placeholder,
               imageErrorBuilder: (context, error, stackTrace) => placeholder,
               imageCacheHeight: decodeHeight,
@@ -176,25 +219,29 @@ class MassCard extends StatelessWidget {
 }
 
 /// The mass detail's bubbles, one per part, wrapping onto as many lines as
-/// they need. One line is reserved on every card, so that a detail arriving
-/// after the list, one line long as most are, does not push the cards below
-/// it down.
+/// they need, after the mass's [title] on a group mass card. One line is
+/// reserved on every card, and on every row of a group mass card, so that a
+/// detail arriving after the list, one line long as most are, does not push
+/// the cards below it down.
 class _MassDetailBubbles extends StatelessWidget {
-  const _MassDetailBubbles({required this.parts});
+  const _MassDetailBubbles({this.title, required this.parts});
 
+  final Widget? title;
   final List<MassDetailPart> parts;
-
-  /// Between two bubbles, and between the city line and the bubbles.
-  static const double gap = 6;
 
   @override
   Widget build(BuildContext context) {
+    final title = this.title;
     return ReservedRoom(
       placeholder: const _BubbleSurface(part: MassDetailText('')),
       child: Wrap(
-        spacing: gap,
-        runSpacing: gap,
-        children: [for (final part in parts) MassDetailBubble(part: part)],
+        spacing: Spacing.s,
+        runSpacing: Spacing.s,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (title != null) title,
+          for (final part in parts) MassDetailBubble(part: part),
+        ],
       ),
     );
   }
@@ -202,8 +249,11 @@ class _MassDetailBubbles extends StatelessWidget {
 
 /// One part of the mass detail (CONTEXT.md, „Mise jellemzője"): a type as its
 /// icon and its word, a language or a comment as written. A comment too long
-/// for the card is cut off with an ellipsis; tapped, the bubble shows its
-/// whole text above it, and does not open the church.
+/// for the card is cut off with an ellipsis; tapped, that bubble shows its
+/// whole text above it until another touch or a scroll, for at most 10 s, and
+/// does not open the church. A
+/// bubble shown in full is the card's: tapping it opens the church (DESIGN.md
+/// KO21, spec 0011).
 class MassDetailBubble extends StatelessWidget {
   const MassDetailBubble({super.key, required this.part});
 
@@ -211,66 +261,96 @@ class MassDetailBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: part.label,
-      triggerMode: TooltipTriggerMode.tap,
-      preferBelow: false,
-      // The bubble's text reads the same.
-      excludeFromSemantics: true,
-      child: _BubbleSurface(part: part),
+    // Whether the text is cut off is asked again on every layout, as the
+    // width, the text size and the screen's turn all change it.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final surface = _BubbleSurface(part: part);
+        if (!constraints.hasBoundedWidth ||
+            !surface.cutsOffIn(context, constraints.maxWidth)) {
+          return surface;
+        }
+        // No ripple or highlight: the ellipsis tells it is tappable (KO4).
+        return TapTooltip(message: part.label, child: surface);
+      },
     );
   }
 }
 
-/// The yellow surface of a [MassDetailBubble], also laid out empty to reserve
-/// the bubbles' line on a card without them.
+/// The surface of a [MassDetailBubble], a data chip in the mass detail's
+/// colours (DESIGN.md KO4, SZ4), also laid out empty to reserve the bubbles'
+/// line on a card without them.
 class _BubbleSurface extends StatelessWidget {
   const _BubbleSurface({required this.part});
 
   final MassDetailPart part;
 
-  static const double _horizontalPadding = 8;
-  static const double _verticalPadding = 2;
-  static const double _iconGap = 4;
+  /// A chip's icon size (IK3).
+  static const double _iconSize = IconSizes.small;
 
-  static TextStyle? _style(BuildContext context) =>
-      Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.black87);
+  /// The bubble's inner padding, either side of its content.
+  static const EdgeInsets _padding = EdgeInsets.symmetric(
+    horizontal: Spacing.s,
+    vertical: Spacing.xs,
+  );
 
-  /// As tall as the letters, in the text size they are drawn in.
-  static double _iconSize(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(_style(context)?.fontSize ?? 12);
+  TextStyle? _labelStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.textTheme.labelLarge?.copyWith(
+      color: theme.colorScheme.onSecondaryContainer,
+    );
+  }
+
+  /// Whether the label, on one line, is cut off in a bubble [maxWidth] wide.
+  /// It is measured as [Text] draws it, bold when the phone asks for bold
+  /// text.
+  bool cutsOffIn(BuildContext context, double maxWidth) {
+    final iconRoom = part.iconAsset == null ? 0 : _iconSize + Spacing.s;
+    var style = DefaultTextStyle.of(context).style.merge(_labelStyle(context));
+    if (MediaQuery.boldTextOf(context)) {
+      style = style.merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: part.label, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width > maxWidth - _padding.horizontal - iconRoom;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final iconAsset = part.iconAsset;
-    final iconSize = _iconSize(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: CustomColors.massDetailTint,
-        borderRadius: BorderRadius.circular(12),
+      decoration: ShapeDecoration(
+        color: scheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(Radii.s)),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: _horizontalPadding,
-          vertical: _verticalPadding,
-        ),
+        padding: _padding,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (iconAsset != null) ...[
               Image.asset(
                 iconAsset,
-                width: iconSize,
-                height: iconSize,
-                color: Colors.black87,
+                width: _iconSize,
+                height: _iconSize,
+                color: scheme.onSecondaryContainer,
                 excludeFromSemantics: true,
               ),
-              const SizedBox(width: _iconGap),
+              const SizedBox(width: Spacing.s),
             ],
             Flexible(
               child: Text(
                 part.label,
-                style: _style(context),
+                style: _labelStyle(context),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,

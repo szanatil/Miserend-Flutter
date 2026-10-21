@@ -1,7 +1,5 @@
 # Névjegy és impresszum
 
-> Háttér és források: [docs/MENU-ES-IMPRESSZUM.md](../MENU-ES-IMPRESSZUM.md) (kutatás és a karbantartó 2026-09-18-i döntései)
-
 ## Problem Statement
 
 Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név túl általános, és az ikon oldalsó menüt (drawer) sejtet, ami az appban nincs. Az appban nem volt impresszum sem: nem derült ki belőle, ki fejleszti, és hol a forráskód.
@@ -9,6 +7,7 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
 ## Solution
 
 - A pont neve **„Névjegy”**, ikonja ⓘ (`Icons.info_outline`). Viselkedése a régi: nem fül, `Navigator.push`-sal saját oldalt nyit, a kiválasztott fül nem változik (spec 0009, „Visszajelzés: belépési pont”).
+  *(Módosítva 2026-10-08, #55: a Névjegy a negyedik fül, saját veremmel és kiemeléssel a fülsávon, keresősáv nélkül; a fülsáv alatta is látszik (DESIGN.md NA1, NA5).)*
 - A **„Visszajelzés”** (spec 0009, „Visszajelzés: a levél”) **lebegő gomb** a képernyő alján, középen (`FloatingActionButton.extended`, `centerFloat`): görgetés nélkül, minden telefonon látszik. A lista alján annyi hely marad, hogy az utolsó csempe is kigördülhessen alóla.
 - Az impresszum **nem külön oldal**: a Névjegy szakaszai. A Névjegy oldal fentről lefelé:
   1. **„Mai templom ajánlatunk”** kártya (spec 0009, „Menü oldal”), változatlanul.
@@ -21,7 +20,7 @@ Az alsó navigáció negyedik pontja „Menü” volt, hamburger ikonnal. A név
 ## Implementation Decisions
 
 - A `lib/menu/` könyvtár `lib/about/` lett, a `MenuPage` `AboutPage`.
-- A szakaszok `SectionCard`-ok, a lap a régi szürke hátterén.
+- A szakaszok `SectionCard`-ok, a lap a régi szürke hátterén. *(Módosítva 2026-10-08, #58: a lap a `Scaffold` `surface`-én áll, nem szürkén; a verzió és a templom címe `onSurfaceVariant`, a GitHub-link `primary` (DESIGN.md SZ4, SZ5).)*
 - A külső linkek a `launchExternal`-on át nyílnak; az indító injektálható (K1).
 
 ## Testing Decisions

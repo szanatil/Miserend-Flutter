@@ -120,6 +120,21 @@ void main() {
       expect(masses.single.source, MassSource.bootstrap);
     });
 
+    test('a daily rule gets every date once across the clocks going back', () {
+      // 2026-10-25, a Sunday, has 25 hours.
+      final masses = BootstrapImporter.expandMasses(
+        [_rule(0)],
+        from: DateTime(2026, 10, 24),
+        days: 3,
+      );
+
+      expect(masses.map((m) => m.time), [
+        DateTime(2026, 10, 24, 17, 0),
+        DateTime(2026, 10, 25, 17, 0),
+        DateTime(2026, 10, 26, 17, 0),
+      ]);
+    });
+
     test('repeats a rule that is held on any day of the week', () {
       final masses = BootstrapImporter.expandMasses(
         [_rule(0)],

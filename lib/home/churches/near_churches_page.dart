@@ -83,19 +83,15 @@ class _NearChurchesPageState extends State<NearChurchesPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Container(
-      color: Colors.black12,
-      child:
-          _loaded
-              ? _content()
-              : const LoadingView(message: 'Közeli templomok betöltése...'),
-    );
+    return _loaded
+        ? _content()
+        : const LoadingView(message: 'Közeli templomok betöltése...');
   }
 
   Widget _content() {
     final noPosition = _noPosition;
     if (noPosition != null) {
-      return RefreshIndicator(
+      return RefreshIndicator.adaptive(
         onRefresh: _load,
         child: PullableFill(
           child: PositionUnavailableView(

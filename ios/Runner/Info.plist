@@ -6,6 +6,10 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>hu</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Miserend</string>
 	<key>CFBundleExecutable</key>

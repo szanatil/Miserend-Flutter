@@ -7,6 +7,8 @@ import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
+import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/stale_data_retry.dart';
 import 'package:provider/provider.dart';
@@ -44,8 +46,9 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   static const double _positionZoom = 14;
 
-  /// Around the church card, between it and the map's edges.
-  static const double _cardPadding = 8;
+  /// Between the map's edges and what floats on it, the church card and the
+  /// my-position button (KO18).
+  static const double _edgeGap = Spacing.l;
 
   late final MapController _controller =
       widget.mapController ?? MapController();
@@ -148,24 +151,40 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
                 apiKey: const String.fromEnvironment('CARTO_API_KEY'),
                 onTap: _closeCard,
               ),
-              if (entry != null)
-                Column(
+              // The button stands on the card, so wherever the card's
+              // content puts its top, the button is clear above it. A card
+              // taller than the room — large text, a phone on its side —
+              // scrolls rather than overflow (DESIGN.md EL2, EL5).
+              Positioned.fill(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(child: Container()),
                     Padding(
-                      padding: const EdgeInsets.all(_cardPadding),
-                      child: _cardWithRetry(entry, card!),
+                      padding: EdgeInsets.only(
+                        top: _edgeGap,
+                        right: _edgeGap,
+                        bottom: entry == null ? _edgeGap : 0,
+                      ),
+                      child: FloatingActionButton(
+                        // No hero: the Névjegy tab's button lives beside this
+                        // one, and two default tags fail a full-screen push
+                        // over the tabs.
+                        heroTag: null,
+                        onPressed: _goToMyPosition,
+                        child: const Icon(Icons.my_location_rounded),
+                      ),
                     ),
+                    if (entry != null)
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.all(_edgeGap),
+                          child: SingleChildScrollView(
+                            child: _cardWithRetry(entry, card!),
+                          ),
+                        ),
+                      ),
                   ],
-                ),
-              Positioned(
-                right: 8,
-                // Above the card and its padding on both sides.
-                bottom:
-                    entry != null ? ChurchCard.height + 2 * _cardPadding : 8,
-                child: FloatingActionButton(
-                  onPressed: _goToMyPosition,
-                  child: const Icon(Icons.my_location),
                 ),
               ),
             ],
@@ -188,12 +207,15 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   /// the retry that the strip drives elsewhere hangs off the card itself —
   /// and only while the card is actually marked as stale.
   Widget _cardWithRetry(ChurchListEntry entry, ChurchList card) {
-    final child = ChurchCard(
-      entry: entry,
-      // The position as of now: the distance goes and comes with the mark.
-      position: _userPosition,
-      failure: card.failure,
-      dataAsOf: card.dataAsOf,
+    final child = Theme(
+      data: mapCardTheme(Theme.of(context)),
+      child: ChurchCard(
+        entry: entry,
+        // The position as of now: the distance goes and comes with the mark.
+        position: _userPosition,
+        failure: card.failure,
+        dataAsOf: card.dataAsOf,
+      ),
     );
     if (card.failure == null) return child;
     return StaleDataRetry(onRetry: _refreshCard, child: child);
