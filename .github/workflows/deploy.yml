@@ -178,7 +178,6 @@ jobs:
     if: needs.bump.result == 'success'
     runs-on: ubuntu-latest
     env:
-      CHANNEL: ${{ needs.detect.outputs.channel == 'beta' && 'beta' || 'deploy' }}
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -199,6 +198,8 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      # FIGYELEM: a subosito/flutter-action a $CHANNEL env-et előbbre veszi,
+      # mint a channel: inputot. Ide ne kerüljön CHANNEL (és más generikus) env.
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -230,7 +231,15 @@ jobs:
 
       - name: Fastlane deploy
         working-directory: android
-        run: bundle exec fastlane "$CHANNEL"
+        env:
+          FASTLANE_LANE: ${{ needs.detect.outputs.channel == 'beta' && 'beta' || 'deploy' }}
+        run: |
+          set -euo pipefail
+          case "$FASTLANE_LANE" in
+            beta|deploy) ;;
+            *) echo "Unknown fastlane lane: '$FASTLANE_LANE'"; exit 1 ;;
+          esac
+          bundle exec fastlane "$FASTLANE_LANE"
 
   deploy-ios:
     name: Deploy iOS
