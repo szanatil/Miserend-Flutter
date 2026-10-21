@@ -140,12 +140,14 @@ ThemeData miserendTheme(Brightness brightness, {TargetPlatform? platform}) {
   );
 }
 
-/// [theme] for the card that floats over the map (KO18): it stands on the
-/// map, not on the page, so it has no outline in dark mode either (MÉ1).
+/// [theme] for the card that floats over the map (KO18): rounder and higher
+/// than a list card (FO2, MÉ2), and as it stands on the map, not on the page,
+/// it has no outline in dark mode either (MÉ1).
 ThemeData mapCardTheme(ThemeData theme) => theme.copyWith(
   cardTheme: theme.cardTheme.copyWith(
-    shape: (theme.cardTheme.shape! as RoundedRectangleBorder).copyWith(
-      side: BorderSide.none,
+    elevation: 3,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(Radii.l)),
     ),
   ),
 );

@@ -400,8 +400,9 @@ void main() {
     for (final brightness in Brightness.values) {
       for (final width in eh4Widths) {
         for (final textScale in eh4TextScales) {
-          testWidgets('floats over the map without an outline at $width dp, '
-              'text scale $textScale, $brightness (KO18, MÉ1, EH3, EH4)', (
+          testWidgets('floats over the map, rounder and higher than a list '
+              'card and without an outline, at $width dp, text scale '
+              '$textScale, $brightness (KO18, FO2, MÉ1, MÉ2, EH3, EH4)', (
             tester,
           ) async {
             setScreen(tester, Size(width, 640));
@@ -424,10 +425,13 @@ void main() {
                   )
                   .first,
             );
+            final shape = surface.shape! as RoundedRectangleBorder;
+            expect(shape.side, BorderSide.none);
             expect(
-              (surface.shape! as RoundedRectangleBorder).side,
-              BorderSide.none,
+              shape.borderRadius,
+              const BorderRadius.all(Radius.circular(Radii.l)),
             );
+            expect(surface.elevation, 3);
           }, variant: eh4Platforms);
         }
       }
