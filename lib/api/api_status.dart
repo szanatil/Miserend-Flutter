@@ -13,9 +13,35 @@ class ApiStatus extends ValueNotifier<ApiFailure?> {
   /// own.
   static final ApiStatus shared = ApiStatus();
 
-  void record(ApiResult<Object?> result) =>
-      value = switch (result) {
-        ApiSuccess() => null,
-        ApiFailed(:final failure) => failure,
-      };
+  void record(ApiResult<Object?> result) => value = _failureOf(result);
+
+  /// Records [results], calls made together, as one call: answered if any of
+  /// them was, else failed — with no connection if any of them got no answer
+  /// at all. A Részletes kereső page makes its calls in parallel, so which
+  /// of them answers last is chance, and must not decide (spec 0010, „Oldal"; #92).
+  void recordAll(List<ApiResult<Object?>> results) {
+    if (results.isEmpty) return;
+    final failures = results.map(_failureOf);
+    value =
+        failures.contains(null)
+            ? null
+            : failures.contains(ApiFailure.noConnection)
+            ? ApiFailure.noConnection
+            : ApiFailure.serverError;
+  }
+
+  static ApiFailure? _failureOf(ApiResult<Object?> result) => switch (result) {
+    ApiSuccess() => null,
+    ApiFailed(:final failure) => failure,
+  };
+}
+
+/// Keeps the calls reported to it instead of telling anyone, so that they
+/// can reach an [ApiStatus] together, through [ApiStatus.recordAll].
+class ApiCallLog extends ApiStatus {
+  /// The calls reported, in the order they ended.
+  final List<ApiResult<Object?>> results = [];
+
+  @override
+  void record(ApiResult<Object?> result) => results.add(result);
 }

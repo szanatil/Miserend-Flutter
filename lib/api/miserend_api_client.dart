@@ -110,6 +110,10 @@ class MiserendApiClient {
     : _client = client ?? IOClient(newHttpClient()),
       status = status ?? ApiStatus.shared;
 
+  /// The same connection, its calls reported to [status] instead.
+  MiserendApiClient reportingTo(ApiStatus status) =>
+      MiserendApiClient(client: _client, status: status);
+
   /// The connection every call goes through unless a test hands in its own
   /// client.
   @visibleForTesting

@@ -891,6 +891,65 @@ void main() {
         expect(api.to('church'), hasLength(2));
       },
     );
+
+    group('after a page with a day', () {
+      /// A loader reporting to [status], answering every call with [answer].
+      AdvancedSearchLoader reportingTo(
+        ApiStatus status,
+        Future<http.Response> Function(http.Request request) answer,
+      ) => AdvancedSearchLoader(
+        cache: cache,
+        api: MiserendApiClient(client: MockClient(answer), status: status),
+        clock: () => _now,
+        wait: (_) async {},
+      );
+
+      /// What a call failing with [failure] gets.
+      http.Response failWith(ApiFailure failure) => switch (failure) {
+        ApiFailure.noConnection => throw const SocketException('offline'),
+        ApiFailure.serverError => http.Response('', 500),
+      };
+
+      final criteria = AdvancedSearchCriteria(city: 'Budapest', day: _monday);
+
+      for (final failure in ApiFailure.values) {
+        for (final failingLast in [true, false]) {
+          test('is up when any of its calls was answered, the one failing '
+              'with ${failure.name} ${failingLast ? 'last' : 'first'} to '
+              'answer', () async {
+            final status = ApiStatus();
+            final answering = _answering(
+              masses: [_occurrence(1, '2026-09-21T08:00:00+02:00')],
+            );
+
+            await reportingTo(status, (request) async {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              final failing =
+                  request.url.path == '/api/v4/nearbymasses' &&
+                  _churchAt(body) == 2;
+              if (failing == failingLast) {
+                await Future<void>.delayed(const Duration(milliseconds: 20));
+              }
+              return failing ? failWith(failure) : answering.answer(request);
+            }).loadPage(criteria, 0);
+
+            expect(status.value, isNull);
+          });
+        }
+
+        test('is down with ${failure.name} when all of its calls failed '
+            'with it', () async {
+          final status = ApiStatus();
+
+          await reportingTo(
+            status,
+            (_) async => failWith(failure),
+          ).loadPage(criteria, 0);
+
+          expect(status.value, failure);
+        });
+      }
+    });
   });
 
   test('the languages are those the cached churches serve in, Hungarian '

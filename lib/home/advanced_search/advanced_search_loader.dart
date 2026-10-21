@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable, setEquals;
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:latlong2/latlong.dart';
 import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -256,9 +257,9 @@ class AdvancedSearchLoader {
   Future<CacheDatabase> _db() async => _cache ??= await CacheDatabase.create();
 
   /// Why the app's last API call got no answer, null when it got one —
-  /// whichever screen made it. While it is set, the day condition is not
-  /// offered: the cached days may be out of date (CONTEXT.md, „Részletes
-  /// kereső").
+  /// whichever screen made it; a page of this search counts as one call.
+  /// While it is set, the day condition is not offered: the cached days may
+  /// be out of date (CONTEXT.md, „Részletes kereső").
   ValueListenable<ApiFailure?> get lastFailure => _api.status;
 
   /// Asks the API about one church, only to see whether it answers; the
@@ -462,7 +463,24 @@ class AdvancedSearchLoader {
   /// call the details page builds its schedule with (ADR-0002, spec 0003);
   /// the `Church` call is what reports a church removed from miserend.hu.
   /// Returns why an answer did not come, if one did not.
+  ///
+  /// The calls reach [lastFailure] as one, once all have ended: answered if
+  /// any of them was (spec 0010, „Oldal"; #92).
   Future<ApiFailure?> _refreshDay(
+    CacheDatabase cache,
+    List<ChurchListEntry> slice,
+    DateTime day,
+  ) async {
+    final calls = ApiCallLog();
+    try {
+      return await _refreshDayWith(_api.reportingTo(calls), cache, slice, day);
+    } finally {
+      _api.status.recordAll(calls.results);
+    }
+  }
+
+  Future<ApiFailure?> _refreshDayWith(
+    MiserendApiClient api,
     CacheDatabase cache,
     List<ChurchListEntry> slice,
     DateTime day,
@@ -470,7 +488,7 @@ class AdvancedSearchLoader {
     if (slice.isEmpty) return null;
     final now = clock();
     final ChurchesResponse churches;
-    switch (await _api.fetchChurches([for (final church in slice) church.id])) {
+    switch (await api.fetchChurches([for (final church in slice) church.id])) {
       case ApiFailed(:final failure):
         return failure;
       case ApiSuccess(:final value):
@@ -484,19 +502,20 @@ class AdvancedSearchLoader {
     final failures = await Future.wait([
       for (final church in churches.churches)
         if (ChurchLocation.isKnown(church.lat, church.lon))
-          _refreshMasses(cache, church, day),
+          _refreshMasses(api, cache, church, day),
     ]);
     return failures.nonNulls.firstOrNull;
   }
 
   Future<ApiFailure?> _refreshMasses(
+    MiserendApiClient api,
     CacheDatabase cache,
     ChurchDetails church,
     DateTime day,
   ) async {
     final start = DateTime(day.year, day.month, day.day);
     final next = DateTime(day.year, day.month, day.day + 1);
-    switch (await _api.fetchMassesForChurch(
+    switch (await api.fetchMassesForChurch(
       churchId: church.id,
       lat: church.lat!,
       lon: church.lon!,
