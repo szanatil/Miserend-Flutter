@@ -9,11 +9,12 @@ Az app Flutterrel készült, és ugyanazt a templom-adatbázist jeleníti meg, m
 - **Templomok fül:** a közeli templomok távolság szerint rendezve, a kedvenc templomok, és mindegyiknél a mai misék.
 - **Misék fül:** a legközelebbi, még elérhető misék a környéken, időrendben, a kezdési időpont szerint csoportosítva, és mindegyiknél a mise jellemzői.
 - **Térkép fül:** az összes templom a térképen, az egymást takaró jelölők csoportba rendezve, a jelölőre koppintva a templom kártyájával.
-- **Keresés:** templomnév (az alternatív nevek is) vagy település alapján, kis-nagybetűtől és ékezettől függetlenül, már gépelés közben is kínál találatokat. A javaslatok aljáról nyílik a **Részletes kereső**, amely több feltétel együttesével keres: név, település, liturgikus nyelv, valamint hogy van-e miséje a templomnak egy adott napon és időablakban.
-- **Templom adatlapja:** a mai és a vasárnapi misék, a következő napok miserendje, a templom helye a térképen, útvonaltervezés, és hibabejelentés a miserend.hu-nak.
+- **Keresés:** templomnév (az alternatív nevek is) vagy település alapján, kis-nagybetűtől és ékezettől függetlenül, már gépelés közben is kínál találatokat. A javaslatok aljáról nyílik a **Részletes kereső**, amely több feltétel együttesével keres: név, település, liturgikus nyelv, valamint hogy van-e a templomnak egy adott napon és időablakban miséje, szentségimádása, gyóntatása vagy egyéb imaalkalma. Név és település nélkül előbb 25 km-en belül keres, a „Keresés tovább” gombbal 100 km-ig, majd az egész országban.
+- **Templom adatlapja:** a mai alkalmak, a holnaptól folyamatosan következő napok miserendje, a templom helye a térképen, útvonaltervezés, és hibabejelentés a miserend.hu-nak.
 - **Kedvencek:** csak a készüléken tárolódnak, fiók nincs.
-- **Névjegy:** az alsó navigációból nyíló oldal. Alján egy lebegő gomb, amellyel e-mailben lehet visszajelzést küldeni az app fejlesztőinek; a lapon a nap templom-ajánlata, majd az app fejlesztője és verziója, a forráskód linkje, végül a miserend.hu webes változatának linkje.
+- **Névjegy fül:** az alsó fülsáv negyedik füle. Alján egy lebegő gomb, amellyel e-mailben lehet visszajelzést küldeni az app fejlesztőinek; a lapon a nap templom-ajánlata, majd az app fejlesztője és verziója, a forráskód linkje, végül a miserend.hu webes változatának linkje.
 - **Offline működés:** ha nincs kapcsolat, a képernyők a helyi gyorsítótárból dolgoznak, és jelzik, hogy az adat nem friss.
+- **Megjelenés:** világos és sötét mód a telefon beállítása szerint; iOS-en az iOS saját vezérlői; tableten és széles ablakban a kártyák két-három oszlopban.
 
 ## Futtatás
 
@@ -28,11 +29,20 @@ Első indításkor az app letölti a miserend.hu teljes adatbázis-exportját, e
 
 ### Térképkulcs (nem kötelező)
 
-A térkép a CARTO Voyager csempéit használja. Kulcs nélkül az ingyenes csempeszerverről tölt, ami fejlesztéshez elég. Saját kulcsot így lehet megadni:
+A térkép a CARTO Voyager csempéit használja. Kulcs nélkül az ingyenes csempeszerverről tölt, ami fejlesztéshez elég. A kulcsot fordításkor kapja meg az app (`String.fromEnvironment('CARTO_API_KEY')`), legegyszerűbben a repó gyökerében lévő `.env.local` fájlból, amelyet a git figyelmen kívül hagy:
 
 ```sh
-flutter run --dart-define=CARTO_API_KEY=<kulcs>
+# .env.local
+CARTO_API_KEY=<kulcs>
 ```
+
+```sh
+flutter run --dart-define-from-file=.env.local
+flutter build appbundle --release --dart-define-from-file=.env.local
+flutter build ipa --release --dart-define-from-file=.env.local
+```
+
+Fájl nélkül közvetlenül is megadható: `--dart-define=CARTO_API_KEY=<kulcs>`. Xcode-ból archiválva a `--dart-define` nem hat; előtte egy `flutter build ios --release --dart-define-from-file=.env.local` a kulcsot az `ios/Flutter/Generated.xcconfig`-ba írja, és az Xcode onnan veszi.
 
 A kiadott buildek a kulcsot a `CARTO_API_KEY` GitHub secretből kapják ([deploy.yml](.github/workflows/deploy.yml)); a secret nélkül a deploy megáll.
 
@@ -64,11 +74,19 @@ A boltokba a [deploy.yml](.github/workflows/deploy.yml) tölt fel, a CI-vel azon
 
 Minden kiadás elején a pipeline megemeli a build-számot a `pubspec.yaml`-ben (`1.0.1+25` → `+26`), és visszacommitolja az ágra (`ci: bump build number to … [skip ci]`). A verziót (`1.0.1`) viszont kézzel, külön commitban emeljük. Az aláíráshoz és a feltöltéshez szükséges kulcsok (Android keystore, Play Store, App Store Connect, match, `CARTO_API_KEY`) a repó GitHub secretjei között vannak.
 
+Egy kiadás lépései:
+
+1. A verzió emelése a `pubspec.yaml`-ben, ugyanabban a commitban a kiadási szöveggel (lásd lent).
+2. Béta: push egy `*-rc` végű ágra, például `git push origin HEAD:release/3.0.0-rc`, és kipróbálás TestFlightból, illetve a Play béta sávjából.
+3. Merge a `main`-be PR-rel, zöld CI-vel.
+4. Éles: `git tag v3.0.0` a `main`-en, majd `git push origin v3.0.0`.
+
 ### A kiadási szöveg: release_notes.txt
 
 A [release-notes/Miserend/hu/release_notes.txt](release-notes/Miserend/hu/release_notes.txt) az a szöveg, amelyet a felhasználók a TestFlightban és az App Store „Újdonságok” rovatában látnak. A pipeline változtatás nélkül tölti fel, senki nem nézi át útközben, ezért kiadás előtt mindig frissíteni kell:
 
-- **Ugyanaz a commit írja meg, amelyik a verziót emeli.** A fájl teljes tartalmát le kell cserélni az előző `v*` tag óta bekerült, a felhasználónak látható változásokra. Refaktor, teszt, CI és dokumentáció nem kerül bele.
+- **A kiadások között a [release-notes/unreleased.txt](release-notes/unreleased.txt) gyűjti a tételeket.** Minden, a felhasználónak látható változás a saját commitjában ide írja a tételét.
+- **Ugyanaz a commit írja meg, amelyik a verziót emeli.** A fájl teljes tartalmát le kell cserélni az előző `v*` tag óta bekerült, a felhasználónak látható változásokra, vagyis az `unreleased.txt` tételeire, amely ezután kiürül. Refaktor, teszt, CI és dokumentáció nem kerül bele.
 - **Ha nincs látható változás**, a szöveg egyetlen sor: „Miserend alkalmazás frissítése.”
 - **Soha nem lehet üres.** Üres szöveggel az App Store-feltöltés elbukik, ezért a következő verzióemelésig az előző kiadás szövege marad benne.
 - Az Android-kiadás nem használja.
