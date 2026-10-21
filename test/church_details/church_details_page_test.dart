@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/theme/miserend_colors.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/content_width.dart';
 import 'package:miserend/widgets/language_flag.dart';
 import 'package:miserend/widgets/miserend_map.dart';
 import 'package:miserend/widgets/offline_notice.dart';
@@ -753,10 +755,10 @@ void main() {
   });
 
   group('on a wide screen the sections stand in columns (EL3)', () {
-    ChurchPageData full({bool adoration = true}) => _page(
+    ChurchPageData full({bool adoration = true, bool about = true}) => _page(
       _scheduleWith(_todayAt(9, 0)),
       church: _details(
-        description: _longText,
+        description: about ? _longText : null,
         email: 'plebania@example.hu',
         adorations: [
           if (adoration)
@@ -825,23 +827,80 @@ void main() {
       expect(about.topLeft, Offset(shorter.left, shorter.bottom));
     });
 
-    testWidgets('a church with neither adoration nor confession leaves no '
-        'empty column', (tester) async {
-      final page = full(adoration: false);
+    /// The width of three columns of cards, the widest the masses get.
+    const threeColumnContentWidth =
+        3 * ContentWidth.maxWidth + 2 * (Spacing.s - 2 * Spacing.l);
+
+    for (final width in const [threeColumnWidth, wideWidth]) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('on a $width dp screen at text scale $textScale a church '
+            'with neither adoration nor confession leaves no empty column, and '
+            'the two others are at most 640 wide, centred under the masses', (
+          tester,
+        ) async {
+          final page = full(adoration: false);
+          await pumpPage(
+            tester,
+            _FakeLoader(cached: page, refreshed: page),
+            width: width,
+            textScale: textScale,
+          );
+
+          expect(find.text('Szentségimádás'), findsNothing);
+          final masses = section(tester, '9:00');
+          final where = section(tester, 'Megközelítés');
+          final about = section(tester, 'Leírás');
+          expect(
+            masses.width,
+            moreOrLessEquals(min(width, threeColumnContentWidth)),
+          );
+          expect(where.width, moreOrLessEquals(ContentWidth.maxWidth));
+          expect(about.width, moreOrLessEquals(ContentWidth.maxWidth));
+          expect((where.left + about.right) / 2, moreOrLessEquals(width / 2));
+          expect(gapBetween(where, about), moreOrLessEquals(Spacing.s));
+          expect(about.top, where.top);
+        }, variant: eh4Platforms);
+      }
+
+      testWidgets('on a $width dp screen a church with only where to show has '
+          'it at most 640 wide, centred under the masses', (tester) async {
+        final page = full(adoration: false, about: false);
+        await pumpPage(
+          tester,
+          _FakeLoader(cached: page, refreshed: page),
+          width: width,
+        );
+
+        expect(find.text('Leírás'), findsNothing);
+        final masses = section(tester, '9:00');
+        final where = section(tester, 'Megközelítés');
+        expect(
+          masses.width,
+          moreOrLessEquals(min(width, threeColumnContentWidth)),
+        );
+        expect(where.width, moreOrLessEquals(ContentWidth.maxWidth));
+        expect(where.center.dx, moreOrLessEquals(width / 2));
+      }, variant: eh4Platforms);
+    }
+
+    testWidgets('on a $wideWidth dp screen the three columns are 640 wide '
+        'each, centred, under masses as wide as all of them', (tester) async {
+      final page = full();
       await pumpPage(
         tester,
         _FakeLoader(cached: page, refreshed: page),
-        width: threeColumnWidth,
+        width: wideWidth,
       );
 
-      expect(find.text('Szentségimádás'), findsNothing);
-      final where = section(tester, 'Megközelítés');
+      final masses = section(tester, '9:00');
+      final when = section(tester, 'Szentségimádás');
       final about = section(tester, 'Leírás');
-      expect([where.left, about.right], [0, threeColumnWidth]);
-      expect(about.width, where.width);
-      expect(gapBetween(where, about), Spacing.s);
-      expect(about.top, where.top);
-    });
+      expect(masses.width, moreOrLessEquals(threeColumnContentWidth));
+      expect(when.width, moreOrLessEquals(ContentWidth.maxWidth));
+      expect(about.width, moreOrLessEquals(ContentWidth.maxWidth));
+      expect([when.left, about.right], [masses.left, masses.right]);
+      expect(masses.center.dx, moreOrLessEquals(wideWidth / 2));
+    }, variant: eh4Platforms);
 
     testWidgets('follows the window when it is resized', (tester) async {
       final page = full();
@@ -871,22 +930,28 @@ void main() {
     });
 
     for (final brightness in Brightness.values) {
-      for (final width in const [twoColumnWidth, threeColumnWidth]) {
+      for (final width in const [twoColumnWidth, threeColumnWidth, wideWidth]) {
         for (final textScale in eh4TextScales) {
-          testWidgets('fits in $brightness at $width dp and text scale '
-              '$textScale (EH3, EH4)', (tester) async {
-            final page = full();
-            await pumpPage(
-              tester,
-              _FakeLoader(cached: page, refreshed: page),
-              brightness: brightness,
-              width: width,
-              textScale: textScale,
-            );
+          for (final adoration in const [true, false]) {
+            testWidgets(
+              'fits in $brightness at $width dp and text scale '
+              '$textScale${adoration ? '' : ' without adoration'} (EH3, EH4)',
+              (tester) async {
+                final page = full(adoration: adoration);
+                await pumpPage(
+                  tester,
+                  _FakeLoader(cached: page, refreshed: page),
+                  brightness: brightness,
+                  width: width,
+                  textScale: textScale,
+                );
 
-            expect(find.text('Leírás'), findsOneWidget);
-            expect(tester.takeException(), isNull);
-          }, variant: eh4Platforms);
+                expect(find.text('Leírás'), findsOneWidget);
+                expect(tester.takeException(), isNull);
+              },
+              variant: eh4Platforms,
+            );
+          }
         }
       }
     }

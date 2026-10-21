@@ -217,7 +217,9 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
   /// church is and how to reach it, and what else there is to know. Each
   /// topic has a column of its own while there are enough of them; a topic
   /// with nothing to show leaves no empty column, and of three topics in two
-  /// columns the last goes under the shorter (DESIGN.md EL3).
+  /// columns the last goes under the shorter (DESIGN.md EL3). Fewer topics
+  /// than columns share the width the masses take, but each column stays at
+  /// most [ContentWidth.maxWidth], in the middle.
   List<Widget> _topics(int columns) {
     final topics =
         [
@@ -228,22 +230,40 @@ class _ChurchDetailsPageState extends State<ChurchDetailsPage> {
           [_mapCard(), ..._contactSection()],
           _infoTiles(),
         ].where((topic) => topic.isNotEmpty).toList();
-    if (columns == 1 || topics.length == 1) {
+    if (columns == 1) {
       return [for (final topic in topics) ...topic];
     }
 
     Widget column(List<Widget> topic) =>
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: topic);
-    if (topics.length <= columns) {
-      return [
-        CardColumns(gap: _columnGap, columns: topics.map(column).toList()),
-      ];
-    }
-    return [
-      CardColumns(
+    final filledColumns = min(columns, topics.length);
+    final Widget sections;
+    if (topics.length == 1) {
+      sections = column(topics.single);
+    } else if (topics.length <= columns) {
+      sections = CardColumns(
+        gap: _columnGap,
+        columns: topics.map(column).toList(),
+      );
+    } else {
+      sections = CardColumns(
         gap: _columnGap,
         columns: [column(topics[0]), column(topics[1])],
         tail: column(topics[2]),
+      );
+    }
+    return [
+      LayoutBuilder(
+        builder:
+            (context, constraints) => Padding(
+              padding: ContentWidth.widen(
+                EdgeInsets.zero,
+                constraints.maxWidth,
+                columns: filledColumns,
+                gap: _columnGap,
+              ),
+              child: sections,
+            ),
       ),
     ];
   }

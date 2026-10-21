@@ -95,6 +95,10 @@ const double twoColumnWidth = 1000;
 /// one-column page still keeps to [ContentWidth.maxWidth] (DESIGN.md EL3).
 const double threeColumnWidth = 1300;
 
+/// The width of a screen wider than three columns of cards, where they and
+/// the content above them stand in the middle (DESIGN.md EL3).
+const double wideWidth = 2400;
+
 /// Checks that [content], on a screen [screenWidth] wide, takes the
 /// [ContentWidth.maxWidth] the content is held to and stands in the middle.
 void expectCentredContent(
