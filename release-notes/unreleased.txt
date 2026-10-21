@@ -1,16 +1,21 @@
 Újdonságok
 – Az alkalmazás sötét módban is használható: ha a telefonodon sötét mód van beállítva, a Miserend is sötét színekkel jelenik meg.
 – iPhone-on a párbeszédablakok, a választók, a kapcsolók és a lapok közötti átmenet az iOS megszokott formáját követik.
-– A részletes keresőben szentségimádásra, gyóntatásra és egyéb imaalkalomra is kereshetsz, nem csak misére.
-– A részletes kereső találatain az (i) jellel megjelölt időpontra koppintva látszik az alkalom leírása, így vegyes keresésnél is kiderül, melyik időpont mise és melyik szentségimádás.
-– Tableten és széles ablakban a templom adatlapja, a templomlista és a miselista kártyái két vagy három oszlopba rendeződnek, így egyszerre több látszik belőlük.
+– A Részletes keresőben szentségimádásra, gyóntatásra és egyéb imaalkalomra is kereshetsz, nem csak misére.
+– A Részletes kereső találatain az (i) jellel megjelölt időpontra koppintva látszik az alkalom leírása, így vegyes keresésnél is kiderül, melyik időpont mise és melyik szentségimádás.
+– Tableten és széles ablakban a templom adatlapja, a templomlista, a miselista és a Részletes kereső találatainak kártyái két vagy három oszlopba rendeződnek, így egyszerre több látszik belőlük.
+– A templom adatlapján a liturgia nyelvének zászlójára koppintva megjelenik a nyelv neve.
+– Ha a telefonodon a mozgás csökkentése be van kapcsolva, a templom fotói nem váltakoznak maguktól, és áttűnés nélkül, azonnal jelennek meg.
 
 Javítások
 – Az óraátállás körüli napokon a templom miserendje a helyes napot mutatja: eddig október végén kétszer szerepelt a vasárnap, és a hétfő kimaradt.
 – A dátum- és időválasztó magyarul jelenik meg.
-– A részletes keresőben a „-tól” időpont nem lehet későbbi az „-ig”-nél: ha az egyiket a másikon túl állítod, a másik vele mozdul.
-– A részletes kereső napra szóló keresése nem mutat elavult adatot kapcsolat nélkül: ha megszakad a kapcsolat, néhányszor újrapróbálja, utána jelzi, hogy a lista nem teljes, és az Újra gombbal elölről indítható.
-– A részletes kereső név és település nélkül előbb csak a 25 km-en belüli templomok között keres, így ritka alkalomra keresve sem kell perceket várni. A „Keresés tovább” gombbal 100 km-ig, majd az egész országban is kereshetsz, és egy sáv mutatja, hány templomot nézett már át.
+– A templomkártyán a templom mai alkalmai közül a szentségimádás és a gyóntatás is látszik, nem csak a mise.
+– A templom adatlapja nem mutat egymásnak ellentmondó vasárnapi miserendet: a „Most vasárnap” rész megszűnt, a napok pedig holnaptól folyamatosan követik egymást. Amelyik napra nincs információ, az keretes kártyán, csak a nappal és a dátummal látszik, így egy kimaradó hét is feltűnik.
+– A Részletes keresőben a „-tól” időpont nem lehet későbbi az „-ig”-nél: ha az egyiket a másikon túl állítod, a másik vele mozdul.
+– A Részletes kereső napra szóló keresése nem mutat elavult adatot kapcsolat nélkül: kapcsolat nélkül a nap nem választható ki, ha pedig keresés közben szakad meg a kapcsolat, néhányszor újrapróbálja, utána jelzi, hogy a lista nem teljes, és az Újra gombbal elölről indítható.
+– A Részletes kereső név és település nélkül előbb csak a 25 km-en belüli templomok között keres, így ritka alkalomra keresve sem kell perceket várni. A „Keresés tovább” gombbal 100 km-ig, majd az egész országban is kereshetsz, és egy sáv mutatja, hány templomot nézett már át.
 – Ha egy templomban ugyanabban az időpontban két mise is van (például az egyik angolul, egy kápolnában), a Misék fülön egy kártyán, külön sorban látszik mindkettő a saját jellemzőjével, a templom adatlapján pedig a mai napnál koppintásra kiderül, melyik melyik.
 – iPhone-on a hibajelentés választógombjai jól látszanak.
 – Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.
+– Képernyőolvasóval a templom- és misekártyák egy egységként olvashatók fel, a koppintható időpontok pedig könnyebben eltalálhatók.
