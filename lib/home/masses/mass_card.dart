@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/extentions.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/distance_chip.dart';
@@ -24,14 +25,29 @@ import 'package:miserend/widgets/tap_tooltip.dart';
 /// The screen reader reads it as one unit, the start first, though the card
 /// does not show it: one card is read at a time, without its header
 /// (DESIGN.md AM5).
+///
+/// Masses one church starts together share a card, the group mass card
+/// (CONTEXT.md, „Csoportos misekártya"): the church once, and a row per mass,
+/// its title first — Szentmise too, as it is what tells the rows apart — and
+/// its detail's bubbles after it.
 class MassCard extends StatelessWidget {
-  const MassCard({
+  MassCard({
     super.key,
-    required this.mass,
-    this.detail,
+    required NearbyMassesItem mass,
+    String? detail,
     required this.thumbnailUrl,
     this.onTap,
-  });
+  }) : masses = [mass],
+       details = [detail];
+
+  MassCard.group({
+    super.key,
+    required MassGroup group,
+    required this.details,
+    required this.thumbnailUrl,
+    this.onTap,
+  }) : assert(details.length == group.masses.length),
+       masses = group.masses;
 
   /// Wide enough for the photo to help recognize the church.
   static const double photoWidth = 96;
@@ -44,12 +60,16 @@ class MassCard extends StatelessWidget {
   /// Lines the name may take; the full name is on the details page.
   static const int _nameLines = 2;
 
-  final NearbyMassesItem mass;
+  /// One church's masses at one start, in the list's order.
+  final List<NearbyMassesItem> masses;
 
-  /// The mass detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
+  /// Each mass's detail (CONTEXT.md, „Mise jellemzője"), once it has arrived:
   /// the list is drawn without it rather than wait (spec 0011). Each of its
   /// parts is drawn as a bubble of its own.
-  final String? detail;
+  final List<String?> details;
+
+  /// The church and the start, which every mass on the card shares.
+  NearbyMassesItem get _first => masses.first;
 
   /// The church's cached photo. The card is drawn with the placeholder until
   /// this resolves, so a slow cache never holds the list back.
@@ -60,7 +80,7 @@ class MassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return MergeSemantics(
       child: Semantics(
-        label: TimeOfDay.fromDateTime(mass.start).to24hours(),
+        label: TimeOfDay.fromDateTime(_first.start).to24hours(),
         child: _card(context),
       ),
     );
@@ -99,7 +119,7 @@ class MassCard extends StatelessWidget {
                   Positioned(
                     right: Spacing.s,
                     bottom: Spacing.s,
-                    child: DistanceChip(km: mass.distanceKm),
+                    child: DistanceChip(km: _first.distanceKm),
                   ),
                 ],
               ),
@@ -115,12 +135,15 @@ class MassCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     // As large as on the church card, its sibling (TI2).
     final nameStyle = textTheme.titleMedium;
-    final title = mass.title;
+    final lineStyle = textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final alone = masses.length == 1;
+    final title = _first.title;
     final place = [
-      mass.city,
-      if (title != _plainMassTitle) title,
+      _first.city,
+      if (alone && title != _plainMassTitle) title,
     ].whereType<String>().join(' · ');
-    final detail = this.detail;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -132,7 +155,7 @@ class MassCard extends StatelessWidget {
           lines: _nameLines,
           style: nameStyle,
           child: Text(
-            mass.churchName ?? '?',
+            _first.churchName ?? '?',
             style: nameStyle,
             maxLines: _nameLines,
             overflow: TextOverflow.ellipsis,
@@ -140,22 +163,24 @@ class MassCard extends StatelessWidget {
         ),
         // A long line wraps rather than being cut off (DESIGN.md EL2). An
         // empty text still takes its line.
-        Text(
-          place,
-          style: textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: Spacing.s),
-        _MassDetailBubbles(
-          parts:
-              detail == null
-                  ? const <MassDetailPart>[]
-                  : massDetailParts(detail),
-        ),
+        Text(place, style: lineStyle),
+        if (alone) ...[
+          const SizedBox(height: Spacing.s),
+          _MassDetailBubbles(parts: _partsOf(details.single)),
+        ] else
+          for (final (index, mass) in masses.indexed) ...[
+            const SizedBox(height: Spacing.s),
+            _MassDetailBubbles(
+              title: Text(mass.title ?? '?', style: lineStyle),
+              parts: _partsOf(details[index]),
+            ),
+          ],
       ],
     );
   }
+
+  static List<MassDetailPart> _partsOf(String? detail) =>
+      detail == null ? const <MassDetailPart>[] : massDetailParts(detail);
 
   Widget _photo() {
     return LayoutBuilder(
@@ -194,22 +219,29 @@ class MassCard extends StatelessWidget {
 }
 
 /// The mass detail's bubbles, one per part, wrapping onto as many lines as
-/// they need. One line is reserved on every card, so that a detail arriving
-/// after the list, one line long as most are, does not push the cards below
-/// it down.
+/// they need, after the mass's [title] on a group mass card. One line is
+/// reserved on every card, and on every row of a group mass card, so that a
+/// detail arriving after the list, one line long as most are, does not push
+/// the cards below it down.
 class _MassDetailBubbles extends StatelessWidget {
-  const _MassDetailBubbles({required this.parts});
+  const _MassDetailBubbles({this.title, required this.parts});
 
+  final Widget? title;
   final List<MassDetailPart> parts;
 
   @override
   Widget build(BuildContext context) {
+    final title = this.title;
     return ReservedRoom(
       placeholder: const _BubbleSurface(part: MassDetailText('')),
       child: Wrap(
         spacing: Spacing.s,
         runSpacing: Spacing.s,
-        children: [for (final part in parts) MassDetailBubble(part: part)],
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (title != null) title,
+          for (final part in parts) MassDetailBubble(part: part),
+        ],
       ),
     );
   }

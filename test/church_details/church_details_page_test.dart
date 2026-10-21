@@ -1199,6 +1199,62 @@ void main() {
     }
   }
 
+  group('two masses at the same time today (#80)', () {
+    const english =
+        'Római katolikus Szentmise angol nyelven, Csendes '
+        '(Mária-kápolnában)';
+    CachedMass daily(String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 38,
+      time: _todayAt(18, 0),
+      info: info,
+      source: MassSource.dailyList,
+    );
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('in $brightness at $width dp, text scale $textScale, '
+              'the one the church answer describes opens its description', (
+            tester,
+          ) async {
+            final masses = _emptyDays();
+            masses[0].addAll([
+              daily('Római katolikus Szentmise'),
+              daily(english),
+            ]);
+            final data = _page(masses, freshDays: _allFresh);
+
+            await pumpPage(
+              tester,
+              _FakeLoader(cached: data, refreshed: data),
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+
+            final chips = find.ancestor(
+              of: find.text('18:00'),
+              matching: find.byType(TimeChip),
+            );
+            expect(chips, findsNWidgets(2));
+            expect(
+              tester.widgetList<TimeChip>(chips).map((chip) => chip.hasInfo),
+              [false, true],
+            );
+
+            await tester.tap(chips.last);
+            await tester.pumpAndSettle();
+
+            expect(find.text(english), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  });
+
   testWidgets('a day with many masses grows wider, not taller: its times '
       'stay on one line, its card as tall as the others', (tester) async {
     const few = 1;

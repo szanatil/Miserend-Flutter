@@ -662,7 +662,9 @@ void main() {
       final rows = find.byType(MassCard);
       expect(rows, findsNWidgets(3));
       expect(
-        tester.widgetList<MassCard>(rows).map((row) => row.mass.start.hour),
+        tester
+            .widgetList<MassCard>(rows)
+            .map((row) => row.masses.single.start.hour),
         [13, 17, 18],
       );
 
@@ -681,6 +683,109 @@ void main() {
       }
     });
   });
+
+  testWidgets('a church\'s masses starting together share one card under '
+      'their header, each with its own detail, and it opens that church '
+      '(#80)', (tester) async {
+    CachedMass daily(String info) => CachedMass(
+      id: null,
+      apiMassId: null,
+      churchId: 37,
+      time: _at(18, 0),
+      info: info,
+      source: MassSource.dailyList,
+    );
+    final loader = _FakeLoader([
+      [
+        _mass(church: 1, name: 'Dóm', km: 1.0, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+        _mass(church: 37, km: 0.1, start: _at(18, 0)),
+      ],
+    ]);
+    loader.details.complete(
+      MassDetails({
+        37: [
+          daily('Római katolikus Szentmise'),
+          daily('Római katolikus Szentmise angol nyelven'),
+        ],
+      }),
+    );
+    await pumpWithDetails(tester, loader);
+    await tester.pump();
+
+    final cards = find.byType(MassCard);
+    expect(find.text('18:00'), findsOneWidget);
+    expect(cards, findsNWidgets(2));
+    expect(
+      tester.widgetList<MassCard>(cards).map((card) => card.masses.length),
+      [2, 1],
+    );
+    expect(
+      top(tester, '18:00'),
+      lessThan(top(tester, 'Szent István-bazilika')),
+    );
+    expect(
+      top(tester, 'Szent István-bazilika'),
+      lessThan(top(tester, 'Dóm')),
+      reason: 'the group stands where its first mass would',
+    );
+    expect(find.text('angol nyelven'), findsOneWidget);
+
+    await tester.tap(find.text('angol nyelven'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<ChurchDetailsPage>(find.byType(ChurchDetailsPage))
+          .church
+          .id,
+      37,
+    );
+  });
+
+  for (final brightness in Brightness.values) {
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('in $brightness at $width dp, text scale $textScale, a '
+            'group mass card fits the list (EH4, #80)', (tester) async {
+          setScreen(tester, Size(width, 1600), textScale: textScale);
+          final loader = _FakeLoader([
+            [
+              _mass(church: 37, km: 0.1, start: _at(18, 0)),
+              _mass(church: 37, km: 0.1, start: _at(18, 0)),
+            ],
+          ]);
+          loader.details.complete(
+            MassDetails({
+              37: [
+                for (final info in [
+                  'Római katolikus Szentmise',
+                  'Római katolikus Szentmise angol nyelven, Csendes '
+                      '(Mária-kápolnában)',
+                ])
+                  CachedMass(
+                    id: null,
+                    apiMassId: null,
+                    churchId: 37,
+                    time: _at(18, 0),
+                    info: info,
+                    source: MassSource.dailyList,
+                  ),
+              ],
+            }),
+          );
+
+          await pumpPage(tester, loader, brightness: brightness);
+          await tester.pump();
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(MassCard), findsOneWidget);
+          expect(find.text('Szentmise'), findsNWidgets(2));
+          expect(find.text('angol nyelven'), findsOneWidget);
+        }, variant: eh4Platforms);
+      }
+    }
+  }
 
   group('refresh', () {
     testWidgets('fetches once when the page first appears', (tester) async {

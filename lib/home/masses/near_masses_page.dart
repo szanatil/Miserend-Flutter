@@ -284,7 +284,7 @@ class _NearMassesPageState extends State<NearMassesPage>
       ),
       gap: CardRow.listGap,
       builder: (context, padding, columns) {
-        final rows = _rows(masses, columns);
+        final rows = _rows(groupNearestMasses(masses), columns);
         // The rows are built lazily, as before the headers: a card asks the
         // cache for its photo only once it is scrolled to.
         return ListView.builder(
@@ -294,9 +294,9 @@ class _NearMassesPageState extends State<NearMassesPage>
           itemBuilder: (BuildContext context, int index) {
             final row = rows[index];
             if (row.isHeader) {
-              return MassStartHeader(mass: row.masses.single, now: now);
+              return MassStartHeader(mass: row.groups.single.first, now: now);
             }
-            final cards = [for (final mass in row.masses) _card(mass)];
+            final cards = [for (final group in row.groups) _card(group)];
             return CardRow.of(columns, cards);
           },
         );
@@ -304,25 +304,25 @@ class _NearMassesPageState extends State<NearMassesPage>
     );
   }
 
-  /// [masses], in time order, as rows: each start's header across the list,
-  /// then its masses [columns] to a row (DESIGN.md EL3). A header row holds
-  /// the start's first mass, which it names the time of.
-  static List<({bool isHeader, List<NearbyMassesItem> masses})> _rows(
-    List<NearbyMassesItem> masses,
+  /// [groups], in time order, as rows: each start's header across the list,
+  /// then its mass cards [columns] to a row (DESIGN.md EL3). A header row
+  /// holds the start's first group, which it names the time of.
+  static List<({bool isHeader, List<MassGroup> groups})> _rows(
+    List<MassGroup> groups,
     int columns,
   ) {
-    final rows = <({bool isHeader, List<NearbyMassesItem> masses})>[];
+    final rows = <({bool isHeader, List<MassGroup> groups})>[];
     var first = 0;
-    while (first < masses.length) {
+    while (first < groups.length) {
       var end = first;
-      while (end < masses.length && masses[end].start == masses[first].start) {
+      while (end < groups.length && groups[end].start == groups[first].start) {
         end++;
       }
-      rows.add((isHeader: true, masses: [masses[first]]));
+      rows.add((isHeader: true, groups: [groups[first]]));
       for (var row = first; row < end; row += columns) {
         rows.add((
           isHeader: false,
-          masses: masses.sublist(row, min(row + columns, end)),
+          groups: groups.sublist(row, min(row + columns, end)),
         ));
       }
       first = end;
@@ -330,11 +330,11 @@ class _NearMassesPageState extends State<NearMassesPage>
     return rows;
   }
 
-  Widget _card(NearbyMassesItem mass) => MassCard(
-    mass: mass,
-    detail: _details.of(mass),
-    thumbnailUrl: _loader.thumbnailUrl(mass.churchId),
-    onTap: () => _openChurch(mass),
+  Widget _card(MassGroup group) => MassCard.group(
+    group: group,
+    details: _details.of(group),
+    thumbnailUrl: _loader.thumbnailUrl(group.churchId),
+    onTap: () => _openChurch(group.first),
   );
 
   /// The details page loads everything by id; the item only has to seed the

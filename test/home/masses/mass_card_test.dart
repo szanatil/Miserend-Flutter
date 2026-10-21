@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/home/masses/mass_card.dart';
+import 'package:miserend/home/masses/nearest_masses.dart';
 import 'package:miserend/mass_detail.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 import 'package:miserend/theme/tokens.dart';
@@ -441,6 +442,114 @@ void main() {
     await tester.tap(_photo());
 
     expect(taps, 2);
+  });
+
+  group('masses one church starts together (#80)', () {
+    // The Szent István-bazilika at six on 2026-10-16.
+    final group = MassGroup([_mass(), _mass()]);
+    const details = [null, 'angol nyelven, Csendes (Mária-kápolnában)'];
+
+    Widget card({VoidCallback? onTap}) => MassCard.group(
+      group: group,
+      details: details,
+      thumbnailUrl: Future.value(null),
+      onTap: onTap,
+    );
+
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      for (final brightness in Brightness.values) {
+        for (final width in eh4Widths) {
+          for (final textScale in eh4TextScales) {
+            testWidgets('on $platform in $brightness at $width dp, text scale '
+                '$textScale, stand on one card a row each, the title first, '
+                'the bubbles after it', (tester) async {
+              await pumpThemed(
+                tester,
+                card(),
+                platform: platform,
+                brightness: brightness,
+                width: width,
+                textScale: textScale,
+              );
+
+              expect(tester.takeException(), isNull);
+              expect(find.text('Szent Miklós-templom'), findsOneWidget);
+              expect(find.byType(DistanceChip), findsOneWidget);
+              final titles = find.text('Szentmise');
+              expect(titles, findsNWidgets(2));
+              final first = tester.getRect(titles.first);
+              final second = tester.getRect(titles.last);
+              expect(second.top, greaterThan(first.bottom));
+              expect(_bubble(), findsNWidgets(3));
+              for (final bubble in _bubble().evaluate()) {
+                final rect = tester.getRect(find.byWidget(bubble.widget));
+                expect(rect.bottom, greaterThan(second.top));
+                expect(
+                  rect.right,
+                  lessThanOrEqualTo(width - MassCard.photoWidth),
+                );
+              }
+              final runs = {
+                for (final bubble in _bubble().evaluate())
+                  tester.getTopLeft(find.byWidget(bubble.widget)).dy,
+              };
+              expect(runs.length, greaterThan(1), reason: 'the bubbles wrap');
+            });
+          }
+        }
+      }
+    }
+
+    testWidgets('a short detail stands beside its title, and a row without '
+        'one is as tall as its row', (tester) async {
+      await pumpThemed(
+        tester,
+        MassCard.group(
+          group: group,
+          details: const [null, 'Csendes'],
+          thumbnailUrl: Future.value(null),
+        ),
+        width: 430,
+      );
+
+      final titles = find.text('Szentmise');
+      final gap =
+          tester.getTopLeft(titles.last).dy -
+          tester.getTopLeft(titles.first).dy;
+      final bubble = tester.getRect(_bubble());
+      expect(gap, greaterThanOrEqualTo(bubble.height + Spacing.s));
+      expect(bubble.left, tester.getRect(titles.last).right + Spacing.s);
+      expect(bubble.center.dy, tester.getCenter(titles.last).dy);
+    });
+
+    testWidgets('tapping it, a bubble in full among it, opens the church', (
+      tester,
+    ) async {
+      var taps = 0;
+      await pumpThemed(tester, card(onTap: () => taps++));
+
+      await tester.tap(find.text('Szentmise').first);
+      await tester.tap(find.text('angol nyelven'));
+      await tester.tap(_photo());
+
+      expect(taps, 3);
+    });
+
+    testWidgets('is read out as one unit, both masses in it (AM5)', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpThemed(tester, card(onTap: () {}));
+
+      final node = tester.getSemantics(find.byType(MassCard));
+      expect(node.mergeAllDescendantsIntoThisNode, isTrue);
+      final label = node.getSemanticsData().label;
+      expect(label, startsWith('18:00'));
+      expect('Szentmise'.allMatches(label), hasLength(2));
+      expect(label, contains('angol nyelven'));
+      expect(label, contains('(Mária-kápolnában)'));
+      handle.dispose();
+    });
   });
 
   group('a cut-off bubble\'s tooltip (KO21)', () {

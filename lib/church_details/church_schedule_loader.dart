@@ -55,6 +55,7 @@ class ChurchScheduleLoader {
       church.id,
     ], length: ResponseLength.full);
     ChurchDetails? details;
+    List<CachedMass>? todayMasses;
     ApiFailure? churchFailure;
     switch (churchResult) {
       case ApiSuccess(:final value):
@@ -72,7 +73,10 @@ class ChurchScheduleLoader {
           );
         }
         for (final fresh in value.churches) {
-          if (fresh.id == church.id) details = fresh;
+          if (fresh.id == church.id) {
+            details = fresh;
+            todayMasses = value.massesOf(church.id);
+          }
         }
       case ApiFailed(:final failure):
         churchFailure = failure;
@@ -101,6 +105,12 @@ class ChurchScheduleLoader {
             value.masses,
             keepFrom: unknownFrom,
           );
+          // The church answer's rows say what the schedule's do and more —
+          // the language, the remark — so they stay today's, none as well
+          // (spec 0005, „Gyorsítótár-írás"; #80).
+          if (todayMasses != null) {
+            await cache.replaceDailyMasses(church.id, today, todayMasses);
+          }
           freshDays =
               unknownFrom == null
                   ? scheduleDays

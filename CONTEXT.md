@@ -93,7 +93,7 @@ Mennyi idő van még egy **elérhető** mise kezdéséig, a kezdés pontos időp
 _Avoid_: "visszaszámlálás" (másodpercre pontos, élő órát sugall — percenként frissül); "indulásig hátralévő idő" (menetidővel nem számolunk).
 
 **Misekártya vs. templomkártya (mass card vs. church card)**:
-A **misekártya** a Misék fül egy sora: egy konkrét misealkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány miséje van a listán. A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya, Részletes kereső találatai), a **napi alkalmaival** együtt; a Részletes kereső találatain a keresett alkalmakkal a keresett időablakban. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
+A **misekártya** a Misék fül egy sora: egy konkrét misealkalom, amelyben az időpont áll elöl, és a templom csak a helyét mondja meg. Egy templom annyi misekártyán szerepel, ahány különböző kezdési időpontban van miséje a listán. Ha egy templom ugyanabban az időpontban több misét is tart (pl. a bazilikában 18:00-kor egyet a főhajóban, egyet angolul a Mária-kápolnában), ezek egy **csoportos misekártyán** állnak: a templom egyszer, alatta misénként egy sor a mise címével és jellemzőjével (#80). A **templomkártya** egy templomot mutat (Templomok fül listái, térképi kártya, Részletes kereső találatai), a **napi alkalmaival** együtt; a Részletes kereső találatain a keresett alkalmakkal a keresett időablakban. A két kártya egy családba tartozik, ezért könnyű a Misék fül kártyáját is „templomkártyának" hívni — de amiről szól, az a mise.
 _Avoid_: "templomkártya" a Misék fül soraira; "misesor".
 
 **Mise jellemzője (mass detail)**:
