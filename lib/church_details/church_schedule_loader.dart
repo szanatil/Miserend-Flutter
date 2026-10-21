@@ -119,6 +119,12 @@ class ChurchScheduleLoader {
           scheduleFailure = failure;
       }
     }
+    // Today's rows are the church answer's — written through with it, and
+    // written again after a schedule answer — so whatever the schedule call
+    // did, today is answered for (#90).
+    if (todayMasses != null) {
+      freshDays = max(freshDays, 1);
+    }
 
     return _read(
       church.id,

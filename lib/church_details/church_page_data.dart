@@ -15,12 +15,13 @@ class ChurchPageData {
   /// One bucket per day, so the day a mass belongs to is its list index.
   final List<List<CachedMass>> massesByDay;
 
-  /// How many days of [massesByDay], from today, a NearbyMasses response
-  /// covers: none before one has landed, all of them once a whole one has,
-  /// and up to the church's last day in it when the answer was cut off at
-  /// its limit. An empty day within reach means miserend.hu holds nothing
-  /// for it; past it, only that nothing has been downloaded — and the page
-  /// words the two differently (CONTEXT.md, „Üres nap").
+  /// How many days of [massesByDay], from today, a response covers: none
+  /// before one has landed; today once a Church response has, whose `misek`
+  /// are today's rows (#90); and of a NearbyMasses response, all of them
+  /// once a whole one has, up to the church's last day in it when the answer
+  /// was cut off at its limit. An empty day within reach means miserend.hu holds
+  /// nothing for it; past it, only that nothing has been downloaded — and the
+  /// page words the two differently (CONTEXT.md, „Üres nap").
   final int freshDays;
 
   /// Whether [day], an index into [massesByDay], is covered by a response.

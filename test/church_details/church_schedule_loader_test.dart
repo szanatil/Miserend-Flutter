@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/church_details/church_page_data.dart';
 import 'package:miserend/church_details/church_schedule_loader.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -27,6 +28,23 @@ final Church _church = Church(
   country: 'Magyarország',
   county: 'Budapest',
   street: 'Március 15. tér',
+  gettingThere: null,
+  imageUrl: null,
+);
+
+/// The same church, as one miserend.hu has no position for.
+final Church _churchWithoutCoordinates = Church(
+  id: 38,
+  name: 'Templom',
+  commonName: null,
+  isGreek: false,
+  lat: null,
+  lon: null,
+  address: null,
+  city: null,
+  country: null,
+  county: null,
+  street: null,
   gettingThere: null,
   imageUrl: null,
 );
@@ -101,20 +119,21 @@ http.Response _churchResponse({
 
 /// Answers the church call from the recorded response and the masses call from
 /// [massTimes]; [failure] makes every call fail that way, [churchFailure] only
-/// the church call.
+/// the church call, [massesFailure] only the masses call.
 MiserendApiClient _api({
   List<DateTime> massTimes = const [],
   List<int>? massIds,
   int nearer = 0,
   ApiFailure? failure,
   ApiFailure? churchFailure,
+  ApiFailure? massesFailure,
   bool? confession,
   List<Map<String, String>>? todayMasses,
 }) {
   return MiserendApiClient(
     client: MockClient((request) async {
       final isMasses = request.url.path.endsWith('nearbymasses');
-      switch (failure ?? (isMasses ? null : churchFailure)) {
+      switch (failure ?? (isMasses ? massesFailure : churchFailure)) {
         case ApiFailure.noConnection:
           throw const SocketException('offline');
         case ApiFailure.serverError:
@@ -379,26 +398,10 @@ void main() {
         }),
       );
 
-      final noCoordinates = Church(
-        id: 38,
-        name: 'Templom',
-        commonName: null,
-        isGreek: false,
-        lat: null,
-        lon: null,
-        address: null,
-        city: null,
-        country: null,
-        county: null,
-        street: null,
-        gettingThere: null,
-        imageUrl: null,
-      );
-
       await ChurchScheduleLoader(
         cache: cache,
         api: api,
-      ).refresh(noCoordinates, _today);
+      ).refresh(_churchWithoutCoordinates, _today);
 
       expect(askedForMasses, isFalse);
       expect(await cache.getChurch(38), isNotNull);
@@ -422,20 +425,15 @@ void main() {
       expect(page.massesByDay[5], hasLength(10));
     });
 
-    test(
-      'an answer a nearer church fills to the limit is fresh on no day',
-      () async {
-        final loader = ChurchScheduleLoader(
-          cache: cache,
-          api: _api(nearer: 100),
-        );
+    test('an answer a nearer church fills to the limit is fresh on today '
+        'only', () async {
+      final loader = ChurchScheduleLoader(cache: cache, api: _api(nearer: 100));
 
-        final page = await loader.refresh(_church, _today);
+      final page = await loader.refresh(_church, _today);
 
-        expect(page.freshDays, 0);
-        expect(page.failure, isNull);
-      },
-    );
+      expect(page.freshDays, 1);
+      expect(page.failure, isNull);
+    });
 
     test('a cut-off answer keeps what the cache holds past the cut-off, and '
         'replaces what lies before it', () async {
@@ -534,6 +532,96 @@ void main() {
 
         expect(days[0], isEmpty);
         expect(days[1].map((m) => m.time), [tomorrow]);
+      });
+
+      group('is fresh when the church call answered', () {
+        // The cache said otherwise before: the church answer has to replace it.
+        setUp(() async {
+          await cache.replaceMassesForChurch(38, [
+            _mass(DateTime(2026, 9, 10, 9, 0), 'Bootstrap mise'),
+            _mass(DateTime(2026, 9, 11, 9, 0), 'Holnapi mise'),
+          ]);
+        });
+
+        /// Refreshes, checks today is the church answer's, and hands the page
+        /// back for the rest.
+        Future<ChurchPageData> expectTodayFromChurch(
+          ChurchScheduleLoader loader, {
+          Church? church,
+        }) async {
+          final page = await loader.refresh(church ?? _church, _today);
+
+          expect(page.isFresh(0), isTrue);
+          expect(page.massesByDay[0].map((m) => (m.info, m.source)), [
+            (plain, MassSource.dailyList),
+            (english, MassSource.dailyList),
+          ]);
+          final stored = await cache.getMassesForChurch(
+            38,
+            from: _today,
+            until: _today.add(const Duration(days: 1)),
+          );
+          expect(stored.map((m) => m.info), [plain, english]);
+          return page;
+        }
+
+        test('and the masses call failed', () async {
+          final loader = ChurchScheduleLoader(
+            cache: cache,
+            api: _api(
+              todayMasses: todayMasses,
+              massesFailure: ApiFailure.noConnection,
+            ),
+          );
+
+          final page = await expectTodayFromChurch(loader);
+          expect(page.isFresh(1), isFalse);
+          expect(page.massesByDay[1].map((m) => m.info), ['Holnapi mise']);
+          expect(page.failure, ApiFailure.noConnection);
+        });
+
+        test('and the masses answer holds none of the church\'s', () async {
+          final loader = ChurchScheduleLoader(
+            cache: cache,
+            api: _api(todayMasses: todayMasses, nearer: 100),
+          );
+
+          final page = await expectTodayFromChurch(loader);
+          expect(page.freshDays, 1);
+        });
+
+        test('of a church with no coordinates', () async {
+          final loader = ChurchScheduleLoader(
+            cache: cache,
+            api: _api(todayMasses: todayMasses),
+          );
+          final page = await expectTodayFromChurch(
+            loader,
+            church: _churchWithoutCoordinates,
+          );
+          expect(page.freshDays, 1);
+        });
+
+        test('even with no mass today', () async {
+          final page = await ChurchScheduleLoader(
+            cache: cache,
+            api: _api(
+              todayMasses: const [],
+              massesFailure: ApiFailure.serverError,
+            ),
+          ).refresh(_church, _today);
+
+          expect(page.isFresh(0), isTrue);
+          expect(page.massesByDay[0], isEmpty);
+          expect(
+            await cache.getMassesForChurch(
+              38,
+              from: _today,
+              until: _today.add(const Duration(days: 1)),
+            ),
+            isEmpty,
+          );
+        });
       });
     });
 

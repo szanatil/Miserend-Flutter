@@ -983,6 +983,84 @@ void main() {
     expect(_emptyDay(_notDownloaded), findsNWidgets(15));
   });
 
+  // What the loader hands over when the church call answered and the
+  // schedule call did not reach today (#90): today fresh, the rest not. The
+  // page tells apart only whether the schedule call failed; why it did not
+  // reach today — cut off, or no coordinates to ask with — is the loader's.
+  final churchAnsweredOnly = {
+    'the schedule call failed': ApiFailure.noConnection,
+    'the schedule answer did not reach today': null,
+  };
+  for (final MapEntry(key: reason, value: failure)
+      in churchAnsweredOnly.entries) {
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('when $reason but the church call answered, in '
+              '$brightness at $width dp, text scale $textScale, Ma says '
+              'miserend.hu has nothing for today (#90, EH3, EH4)', (
+            tester,
+          ) async {
+            final data = _page(_emptyDays(), freshDays: 1, failure: failure);
+            final loader = _FakeLoader(
+              cached: _page(_emptyDays()),
+              refreshed: data,
+            );
+
+            await pumpPage(
+              tester,
+              loader,
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+            loader.answerApi();
+            await tester.pump();
+            await tester.pump();
+
+            expect(
+              find.text('Mára a miserend.hu-n nincs információ'),
+              findsOneWidget,
+            );
+            expect(find.text('Mára nincs letöltött információ'), findsNothing);
+            expect(_emptyDay(_notDownloaded), findsNWidgets(19));
+            expect(_emptyDay(_noInfo), findsNothing);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+
+          testWidgets('when $reason but the church call answered, in '
+              '$brightness at $width dp, text scale $textScale, Ma shows '
+              'today\'s masses (#90, EH3, EH4)', (tester) async {
+            final data = _page(
+              _scheduleWith(_todayAt(18, 0)),
+              freshDays: 1,
+              failure: failure,
+            );
+            final loader = _FakeLoader(
+              cached: _page(_emptyDays()),
+              refreshed: data,
+            );
+
+            await pumpPage(
+              tester,
+              loader,
+              brightness: brightness,
+              width: width,
+              textScale: textScale,
+            );
+            loader.answerApi();
+            await tester.pump();
+            await tester.pump();
+
+            expect(find.text('18:00'), findsOneWidget);
+            expect(find.textContaining('Mára'), findsNothing);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    }
+  }
+
   testWidgets('the day strip shows every day from tomorrow to the end of the '
       'window, each once, and no "Most vasárnap"', (tester) async {
     // A Wednesday with masses every day: each day used to appear twice.
