@@ -50,6 +50,10 @@ class NearestMassesLoader {
   /// cache or on the legacy export: the list promises masses one can still get
   /// to, and a stale one is worse than saying it could not be loaded.
   Future<List<NearbyMassesItem>> fetch(DateTime now) async {
+    // The photos may have reached the cache since the last load: from a
+    // church opened in the meantime, or from the bootstrap import run late
+    // from the Névjegy (spec 0015).
+    _thumbnails.clear();
     final Position position;
     switch (await _location.currentPosition()) {
       case PositionFound(position: final found):
@@ -114,8 +118,8 @@ class NearestMassesLoader {
   }
 
   /// The church's first cached photo, or null. The API item carries no image.
-  /// The same future is handed back for a church every time, so a row that
-  /// rebuilds does not read the cache again.
+  /// Until the next [fetch] the same future is handed back for a church, so a
+  /// row that rebuilds does not read the cache again.
   Future<String?> thumbnailUrl(int churchId) {
     return _thumbnails[churchId] ??= _readThumbnail(churchId);
   }

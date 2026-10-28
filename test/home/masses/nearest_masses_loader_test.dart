@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/miserend_api_client.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/database/cache/cache_database.dart';
@@ -170,6 +171,40 @@ void main() {
       final loader = NearestMassesLoader(cache: cache);
 
       expect(await loader.thumbnailUrl(999), isNull);
+    });
+
+    test('is read again on the next load: a photo that arrived meanwhile — '
+        'from the bootstrap import, or a church opened — shows', () async {
+      final loader = NearestMassesLoader(
+        cache: cache,
+        location: FakeLocationProvider([PositionFound(_budapest)]),
+        api: MiserendApiClient(
+          client: MockClient((_) async => http.Response('', 500)),
+          status: ApiStatus(),
+        ),
+      );
+      expect(await loader.thumbnailUrl(37), isNull);
+      await cache.upsertChurch(
+        _church(
+          37,
+          photos: const ['https://miserend.hu/kepek/templomok/37/elso.jpg'],
+        ),
+      );
+      expect(
+        await loader.thumbnailUrl(37),
+        isNull,
+        reason: 'within one load, a row that rebuilds reads nothing again',
+      );
+
+      await expectLater(
+        loader.fetch(DateTime(2026, 9, 17, 6, 0)),
+        throwsA(isA<MassesUnavailable>()),
+      );
+
+      expect(
+        await loader.thumbnailUrl(37),
+        'https://miserend.hu/kepek/templomok/37/elso.jpg',
+      );
     });
   });
 
