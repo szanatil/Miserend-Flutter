@@ -79,14 +79,17 @@ class _SearchResultsPageState extends State<SearchResultsPage>
               : ChurchListView(
                 list: list,
                 emptyMessage: 'Nincs találat',
-                onRefresh: _load,
+                onRefresh: () => _load(pulled: true),
               ),
     );
   }
 
   /// Draws what the cache finds, then refreshes it in the background.
-  /// Pull-to-refresh waits for the whole of it.
-  Future<void> _load() async {
+  /// Pull-to-refresh waits for the whole of it, under its own spinner;
+  /// otherwise the cache finding nothing keeps the page's spinner up until
+  /// the answer is in: the API may know churches the cache does not (spec
+  /// 0015).
+  Future<void> _load({bool pulled = false}) async {
     final loadId = ++_loadId;
     bool current() => mounted && loadId == _loadId;
 
@@ -94,7 +97,7 @@ class _SearchResultsPageState extends State<SearchResultsPage>
     if (!current()) return;
     // No banner while the refresh runs: it marks a failed attempt only
     // (spec 0005, „Offline-jelölés").
-    setState(() => _list = cached);
+    if (pulled || cached.churches.isNotEmpty) setState(() => _list = cached);
 
     final refreshed = await _loader.refresh(_query, cached.churches);
     if (!current()) return;

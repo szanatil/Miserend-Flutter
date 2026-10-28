@@ -1,0 +1,3 @@
+Újdonságok
+– Első indításkor az app megmutatja, mekkora a templomok és misék adatainak letöltése, és a letöltés el is utasítható; később a Névjegyen indítható el.
+– A letöltés közben látszik, hány megabájt jött már le, és megszakítható.

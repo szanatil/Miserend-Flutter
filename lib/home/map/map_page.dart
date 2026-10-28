@@ -5,6 +5,7 @@ import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
+import 'package:miserend/home/map/widgets/missing_churches_banner.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/miserend_theme.dart';
@@ -50,6 +51,11 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   /// my-position button (KO18).
   static const double _edgeGap = Spacing.l;
 
+  /// The most of the tab the information strip takes. Its sentence runs to
+  /// many lines on a narrow phone with large text, and the map it is about
+  /// must stay in sight; past this the strip scrolls (DESIGN.md EL2).
+  static const double _maxStripShare = 0.5;
+
   late final MapController _controller =
       widget.mapController ?? MapController();
   late final ChurchListLoader _loader =
@@ -61,6 +67,13 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   late final LocationProvider _location = widget.location ?? LocationProvider();
 
   List<MiserendMapMarker> _markers = [];
+
+  /// Whether the markers have been read once: before that an empty area says
+  /// nothing.
+  bool _markersLoaded = false;
+
+  /// Where the camera was last seen; null until the map is ready.
+  MapCamera? _camera;
 
   /// Bumped per marker load, so that a slow read cannot draw older markers
   /// over newer ones.
@@ -92,6 +105,8 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     // The tab stays alive underneath the others, so the markers follow every
     // answer written to the cache, not only the ones this page asked for.
     _loader.churchesWritten.addListener(_loadMarkers);
+    _loader.bootstrapped.addListener(_rebuild);
+    _loader.lastFailure.addListener(_rebuild);
     _loadMarkers();
     // Quietly: a strip the moment the tab opens would answer a question
     // nobody asked. Without a position the map stays on the country.
@@ -101,6 +116,8 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _loader.churchesWritten.removeListener(_loadMarkers);
+    _loader.bootstrapped.removeListener(_rebuild);
+    _loader.lastFailure.removeListener(_rebuild);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -131,75 +148,118 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     }
   }
 
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
+
+  /// No church in view, and the bootstrap import has not run, which may be
+  /// why. Offline the map shows the cache either way, and the screens' own
+  /// offline notices say so (spec 0015, „Tájékoztatás").
+  bool get _mayLackBootstrap {
+    final camera = _camera;
+    if (camera == null ||
+        !_markersLoaded ||
+        _loader.bootstrapped.value ||
+        _loader.lastFailure.value != null) {
+      return false;
+    }
+    final bounds = camera.visibleBounds;
+    return !_markers.any((marker) => bounds.contains(marker.point));
+  }
+
+  /// Rebuilds only when the camera's move may have changed what the strip
+  /// says, not on every frame of a pan.
+  void _onCameraChanged(MapCamera camera) {
+    final before = _mayLackBootstrap;
+    _camera = camera;
+    if (_mayLackBootstrap != before) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final card = _card;
     final ChurchListEntry? entry =
         card == null || card.churches.isEmpty ? null : card.churches.first;
     final noPosition = _positionUnavailableReason;
-    return Column(
-      children: [
-        Expanded(
-          child: Stack(
+    return LayoutBuilder(
+      builder:
+          (context, constraints) => Column(
             children: [
-              MiserendMap(
-                interactive: true,
-                mapController: _controller,
-                markers: _markers,
-                selectedMarkerId: _cardChurchId,
-                userPosition: _userPosition,
-                apiKey: const String.fromEnvironment('CARTO_API_KEY'),
-                onTap: _closeCard,
-              ),
-              // The button stands on the card, so wherever the card's
-              // content puts its top, the button is clear above it. A card
-              // taller than the room — large text, a phone on its side —
-              // scrolls rather than overflow (DESIGN.md EL2, EL5).
-              Positioned.fill(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              // Over the map, not on it: what is in view is what the strip is
+              // about, and it would hide some of it.
+              if (_mayLackBootstrap)
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * _maxStripShare,
+                  ),
+                  child: const SingleChildScrollView(
+                    child: MissingChurchesBanner(),
+                  ),
+                ),
+              Expanded(
+                child: Stack(
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: _edgeGap,
-                        right: _edgeGap,
-                        bottom: entry == null ? _edgeGap : 0,
-                      ),
-                      child: FloatingActionButton(
-                        // No hero: the Névjegy tab's button lives beside this
-                        // one, and two default tags fail a full-screen push
-                        // over the tabs.
-                        heroTag: null,
-                        onPressed: _goToMyPosition,
-                        child: const Icon(Icons.my_location_rounded),
+                    MiserendMap(
+                      interactive: true,
+                      mapController: _controller,
+                      markers: _markers,
+                      selectedMarkerId: _cardChurchId,
+                      userPosition: _userPosition,
+                      apiKey: const String.fromEnvironment('CARTO_API_KEY'),
+                      onTap: _closeCard,
+                      onCameraChanged: _onCameraChanged,
+                    ),
+                    // The button stands on the card, so wherever the card's
+                    // content puts its top, the button is clear above it. A card
+                    // taller than the room — large text, a phone on its side —
+                    // scrolls rather than overflow (DESIGN.md EL2, EL5).
+                    Positioned.fill(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: _edgeGap,
+                              right: _edgeGap,
+                              bottom: entry == null ? _edgeGap : 0,
+                            ),
+                            child: FloatingActionButton(
+                              // No hero: the Névjegy tab's button lives beside this
+                              // one, and two default tags fail a full-screen push
+                              // over the tabs.
+                              heroTag: null,
+                              onPressed: _goToMyPosition,
+                              child: const Icon(Icons.my_location_rounded),
+                            ),
+                          ),
+                          if (entry != null)
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.all(_edgeGap),
+                                child: SingleChildScrollView(
+                                  child: _cardWithRetry(entry, card!),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    if (entry != null)
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.all(_edgeGap),
-                          child: SingleChildScrollView(
-                            child: _cardWithRetry(entry, card!),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
+              // The strip takes its own room under the map rather than lying over
+              // it, so the church card and the my-position button stay whole.
+              if (noPosition != null)
+                PositionUnavailableBanner(
+                  reason: noPosition,
+                  location: _location,
+                  onRetry: _goToMyPosition,
+                  onClose:
+                      () => setState(() => _positionUnavailableReason = null),
+                ),
             ],
           ),
-        ),
-        // The strip takes its own room under the map rather than lying over
-        // it, so the church card and the my-position button stay whole.
-        if (noPosition != null)
-          PositionUnavailableBanner(
-            reason: noPosition,
-            location: _location,
-            onRetry: _goToMyPosition,
-            onClose: () => setState(() => _positionUnavailableReason = null),
-          ),
-      ],
     );
   }
 
@@ -226,6 +286,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     final locations = await _loader.churchLocations();
     if (!mounted || loadId != _markersLoadId) return;
     setState(() {
+      _markersLoaded = true;
       _markers =
           locations
               .map(

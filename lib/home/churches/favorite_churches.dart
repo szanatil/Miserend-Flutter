@@ -69,11 +69,14 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
         : ChurchListView(
           list: _list,
           emptyMessage: 'Még nincsenek kedvenc templomaid.',
-          onRefresh: () => _load(refresh: true),
+          onRefresh: () => _load(refresh: true, pulled: true),
         );
   }
 
-  Future<void> _load({required bool refresh}) async {
+  /// With [refresh], the favorites none of which the cache holds keep the
+  /// page's spinner up until the answer is in, unless [pulled]: the list is
+  /// not empty, only not yet read (spec 0015).
+  Future<void> _load({required bool refresh, bool pulled = false}) async {
     if (!favoritesService.loaded) {
       // The favorites are still being read; the service notifies us when
       // they arrive and this method runs again.
@@ -99,13 +102,17 @@ class _FavoriteChurchesPageState extends State<FavoriteChurchesPage>
                 failure: _list.failure,
                 dataAsOf: cached.dataAsOf,
               );
-      loading = false;
+      loading =
+          refresh && !pulled && cached.churches.isEmpty && query.ids.isNotEmpty;
     });
 
     if (!refresh || query.ids.isEmpty) return;
     final refreshed = await _loader.refresh(query, cached.churches);
     if (!current()) return;
-    setState(() => _list = refreshed);
+    setState(() {
+      _list = refreshed;
+      loading = false;
+    });
   }
 
   @override

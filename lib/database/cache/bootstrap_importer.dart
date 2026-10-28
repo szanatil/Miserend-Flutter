@@ -7,10 +7,12 @@ import 'package:miserend/database/mass.dart';
 import 'package:miserend/mass_filter.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Fills the cache once, from the downloaded legacy database, so the app has
-/// something to show before any API call is made. This is the only place the
-/// legacy recurrence columns are read; from here on the cache is fed by the
-/// API alone.
+/// Fills the cache from the downloaded legacy database, so the app has
+/// something to show before any API call is made. It only fills what the
+/// cache lacks (ADR-0006): the user may have declined it at first, and run it
+/// from the Névjegy after the API has written fresher rows. This is the only
+/// place the legacy recurrence columns are read; from here on the cache is
+/// fed by the API alone.
 class BootstrapImporter {
   /// The export is never downloaded again (ADR-0003), so this is how long a
   /// phone that never goes online keeps a full schedule. It covers the church
@@ -31,6 +33,11 @@ class BootstrapImporter {
     int days = defaultDays,
     DateTime Function() clock = DateTime.now,
   }) async {
+    // The file ships without any index, so the per-chunk read of the ~280k
+    // row mass table would scan it whole.
+    await legacy.execute(
+      'CREATE INDEX IF NOT EXISTS idx_misek_tid ON misek(tid)',
+    );
     final churches = await legacy.query('templomok');
 
     for (var start = 0; start < churches.length; start += _chunkSize) {
@@ -61,7 +68,7 @@ class BootstrapImporter {
         );
       }
 
-      await cache.importChurches(
+      await cache.importMissing(
         chunk.map(churchFromLegacyRow).toList(),
         masses,
       );

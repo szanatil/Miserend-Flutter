@@ -747,7 +747,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const MessageView(message: 'Nincs találat'),
+              if (_mayLackBootstrap)
+                const EmptyView.withoutBootstrap()
+              else
+                const MessageView(message: 'Nincs találat'),
               if (ended != null) ...[
                 _ringEndNote(ended),
                 const SizedBox(height: Spacing.l),
@@ -904,6 +907,15 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       ),
     );
   }
+
+  /// Whether finding nothing may be down to the bootstrap import not having
+  /// run: the cache held no candidate by the name, city and language. With
+  /// candidates that hold nothing on the day, the API has said so; offline,
+  /// the cache is all there is either way (spec 0015, „Tájékoztatás").
+  bool get _mayLackBootstrap =>
+      !_loader.bootstrapped.value &&
+      _online &&
+      _pages.lastOrNull?.candidates == 0;
 
   /// The ring's end's call to action, the same tonal button at the list's
   /// end and in the „Nincs találat" view (DESIGN.md KO8).

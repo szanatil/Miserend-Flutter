@@ -34,7 +34,7 @@ Ha jó okkal térsz el egy szabálytól, ugyanabban a PR-ben módosítsd a szab�
 
 ## K. Képernyők és widgetek
 
-**K1 — A függőség konstruktorban cserélhető.** Loader, `LocationProvider`, óra: opcionális konstruktor-paraméter, a State-ben `late final _loader = widget.loader ?? ChurchListLoader();`. A paraméter doc-kommentje: `/// Injected by tests; the page builds its own otherwise.` Provideren át csak az app-szintű `FavoritesService` érkezik.
+**K1 — A függőség konstruktorban cserélhető.** Loader, `LocationProvider`, óra: opcionális konstruktor-paraméter, a State-ben `late final _loader = widget.loader ?? ChurchListLoader();`. A paraméter doc-kommentje: `/// Injected by tests; the page builds its own otherwise.`; ha az alapértelmezés egy app-szintű, megosztott példány (pl. `CacheBootstrap.shared`): `/// Injected by tests; the app's own otherwise.` Provideren át csak az app-szintű `FavoritesService` érkezik.
 
 **K2 — `await` után a State még él?** Ha `await` után `setState` vagy `context` jön, előtte `mounted`-ellenőrzés áll. Az újratölthető lapok betöltésenként léptetett azonosítóval (`_loadId`, `current()`) vetik el a lassú, már elavult választ. Minta: `_load` a [near_churches_page.dart](lib/home/churches/near_churches_page.dart)-ban.
 
@@ -75,7 +75,7 @@ Ha jó okkal térsz el egy szabálytól, ugyanabban a PR-ben módosítsd a szab�
 A SQLite export korából maradt, ma már csak a kezdeti feltöltést és néhány átadási pontot szolgáló kód:
 
 - `Church` ([lib/database/church.dart](lib/database/church.dart)), `Mass` ([lib/database/mass.dart](lib/database/mass.dart))
-- `MiserendDatabase`, `DatabaseManager`, `Preferences`, `MassFilter`
+- `Preferences`, `MassFilter`
 
 **R1 — Új kód a gyorsítótár modelljeire épül.** Új képernyő, loader vagy modell a `ChurchDetails` / `ChurchListEntry` / `CachedMass` típusokat és a `CacheDatabase`-t használja. Egy meglévő átadási pont, amely régi típust vár (pl. `ChurchDetailsPage(church:)`), használható úgy, ahogy van.
 

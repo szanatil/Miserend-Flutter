@@ -1,172 +1,36 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:miserend/bootstrap/bootstrap_progress_page.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/splash.dart';
 import 'package:miserend/theme/miserend_theme.dart';
 
+import 'bootstrap/fake_cache_bootstrap.dart';
 import 'theme/theme_harness.dart';
 
-/// A device whose export is downloaded and current; only the bootstrap
-/// import's outcome varies.
-class _FakeStartup extends AppStartup {
-  _FakeStartup({required this.bootstrapped, required this.importSucceeds});
-
-  bool bootstrapped;
-  List<bool> importSucceeds;
-  int imports = 0;
-
-  @override
-  Future<bool> exportExists() async => true;
-
-  @override
-  Future<bool> exportVersionCompatible() async => true;
-
-  @override
-  Future<bool> downloadExport() async => true;
-
-  @override
-  Future<bool> isCacheBootstrapped() async => bootstrapped;
-
-  @override
-  Future<void> bootstrapCache() async {
-    final succeeds =
-        importSucceeds[imports.clamp(0, importSucceeds.length - 1)];
-    imports++;
-    if (!succeeds) throw StateError('import failed');
-    bootstrapped = true;
-  }
-}
-
-/// Answers whether the cache is filled only when the test says so.
-class _SlowStartup extends _FakeStartup {
-  _SlowStartup() : super(bootstrapped: false, importSucceeds: [true]);
-
-  final Completer<bool> answer = Completer();
-
-  @override
-  Future<bool> isCacheBootstrapped() => answer.future;
-}
-
-/// A device without a usable export: missing, or of the wrong version.
-class _NoExportStartup extends _FakeStartup {
-  _NoExportStartup({required this.exists})
-    : super(bootstrapped: true, importSucceeds: [true]);
-
-  final bool exists;
-  int downloads = 0;
-
-  /// Once downloaded the export is there; the splash checks its version only
-  /// before the download, so it stays "incompatible" without harm.
-  @override
-  Future<bool> exportExists() async => exists || downloads > 0;
-
-  @override
-  Future<bool> exportVersionCompatible() async => false;
-
-  @override
-  Future<bool> downloadExport() async {
-    downloads++;
-    return true;
-  }
-}
+const _offer =
+    'A jobb élményhez töltsd le egyszer a templomok és misék adatait '
+    '(21,8 MB). Nélküle az app csak korlátozottan működik. A letöltést később '
+    'a Névjegyen is elindíthatod.';
 
 void main() {
-  Future<void> pumpSplash(WidgetTester tester, AppStartup startup) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: RouteSplash(
-          startup: startup,
-          homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-  }
-
-  testWidgets('goes to the home screen once the cache has been filled', (
-    tester,
-  ) async {
-    final startup = _FakeStartup(bootstrapped: true, importSucceeds: [true]);
-
-    await pumpSplash(tester, startup);
-
-    expect(find.text('Főképernyő'), findsOneWidget);
-    expect(startup.imports, 0);
-  });
-
-  testWidgets('fills the cache on the first start, then goes on', (
-    tester,
-  ) async {
-    final startup = _FakeStartup(bootstrapped: false, importSucceeds: [true]);
-
-    await pumpSplash(tester, startup);
-
-    expect(startup.imports, 1);
-    expect(find.text('Főképernyő'), findsOneWidget);
-  });
-
-  testWidgets('a failed first import stops on an error with a retry, rather '
-      'than going on to empty lists', (tester) async {
-    final startup = _FakeStartup(
-      bootstrapped: false,
-      importSucceeds: [false, true],
-    );
-
-    await pumpSplash(tester, startup);
-
-    expect(find.text('Főképernyő'), findsNothing);
-    expect(
-      find.text('Az adatok előkészítése nem sikerült. Próbáld újra.'),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.widgetWithText(FilledButton, 'Újrapróbálás'));
-    await tester.pumpAndSettle();
-
-    expect(startup.imports, 2);
-    expect(find.text('Főképernyő'), findsOneWidget);
-  });
-
-  testWidgets('a splash gone before the cache check answers starts no import', (
-    tester,
-  ) async {
-    final startup = _SlowStartup();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: RouteSplash(
-          startup: startup,
-          homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    startup.answer.complete(false);
-    await tester.pump();
-
-    expect(tester.takeException(), isNull);
-    expect(startup.imports, 0);
-  });
-
-  const askToDownload =
-      'Az app használatához egyszer le kell tölteni a templomok és misék '
-      'adatait. Letöltöd most?';
-
-  /// Pumps the splash up to its download dialog. The spinner behind the
-  /// dialog never settles, so it pumps fixed frames instead.
-  Future<void> pumpDialog(
+  /// Starts the app on [bootstrap]. The spinner never settles, so it pumps
+  /// fixed frames instead; [bootstrap] keeps its flags from an earlier start.
+  Future<void> start(
     WidgetTester tester,
-    AppStartup startup, {
+    FakeCacheBootstrap bootstrap, {
     Brightness brightness = Brightness.light,
   }) async {
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(
       MaterialApp(
-        theme: miserendTheme(brightness),
+        theme: miserendTheme(brightness, platform: defaultTargetPlatform),
         home: RouteSplash(
-          startup: startup,
+          bootstrap: bootstrap,
           homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
         ),
       ),
@@ -175,32 +39,142 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  for (final brightness in Brightness.values) {
-    for (final (exists, title) in [
-      (false, 'Hiányoznak a miserendek'),
-      (true, 'Elavultak a miserendek'),
-    ]) {
-      testWidgets('asks to download, in the second person, when the export is '
-          '${exists ? 'out of date' : 'missing'}, in $brightness (SV1, SV3, '
-          'SV4)', (tester) async {
-        final startup = _NoExportStartup(exists: exists);
-        await pumpDialog(tester, startup, brightness: brightness);
-
-        expect(find.text(title), findsOneWidget);
-        expect(find.text(askToDownload), findsOneWidget);
-        expect(find.text('Kilépés'), findsOneWidget);
-        expect(find.text('Letöltés'), findsOneWidget);
-
-        await tester.tap(find.text('Letöltés'));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
-
-        expect(startup.downloads, 1);
-        expect(find.text('A miserendek letöltése sikeres'), findsOneWidget);
-        expect(find.text('Főképernyő'), findsOneWidget);
-      }, variant: eh4Platforms);
-    }
+  Future<void> choose(WidgetTester tester, String action) async {
+    await tester.tap(find.text(action));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
   }
+
+  testWidgets('goes on to the home screen without an offer when the size '
+      'does not come back, and asks for it again on the next start', (
+    tester,
+  ) async {
+    final bootstrap = FakeCacheBootstrap();
+
+    await start(tester, bootstrap);
+
+    expect(find.text(_offer, findRichText: true), findsNothing);
+    expect(find.text('Főképernyő'), findsOneWidget);
+    expect(bootstrap.runs, 0);
+
+    await start(tester, bootstrap);
+    expect(bootstrap.sizeQueries, 2);
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('offers the download with its size, and says where to find it '
+        'later, in $brightness (SV1, SV3)', (tester) async {
+      await start(
+        tester,
+        FakeCacheBootstrap(size: 21800000),
+        brightness: brightness,
+      );
+
+      expect(find.text('Templomok és misék letöltése'), findsOneWidget);
+      expect(find.text(_offer), findsOneWidget);
+      expect(find.text('Most nem'), findsOneWidget);
+      expect(find.text('Letöltés'), findsOneWidget);
+      expect(find.text('Kilépés'), findsNothing);
+      expect(find.text('Főképernyő'), findsNothing);
+    }, variant: eh4Platforms);
+  }
+
+  testWidgets('„Most nem" goes on without the download, and is not offered '
+      'again', (tester) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000);
+    await start(tester, bootstrap);
+
+    await choose(tester, 'Most nem');
+
+    expect(find.text('Főképernyő'), findsOneWidget);
+    expect(bootstrap.runs, 0);
+    expect(bootstrap.declined, isTrue);
+
+    await start(tester, bootstrap);
+    expect(bootstrap.sizeQueries, 1);
+    expect(find.text(_offer), findsNothing);
+    expect(find.text('Főképernyő'), findsOneWidget);
+  });
+
+  testWidgets('„Letöltés" runs it on the progress screen, then goes on to '
+      'the home screen', (tester) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000);
+    await start(tester, bootstrap);
+
+    await choose(tester, 'Letöltés');
+
+    expect(find.byType(BootstrapProgressPage), findsOneWidget);
+    expect(bootstrap.runs, 1);
+
+    bootstrap.report(const BootstrapImporting());
+    await bootstrap.end(const BootstrapDone());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Főképernyő'), findsOneWidget);
+  });
+
+  testWidgets('stopped with „Mégse", it goes on, and is not offered on the '
+      'next start', (tester) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000);
+    await start(tester, bootstrap);
+    await choose(tester, 'Letöltés');
+    bootstrap.report(const BootstrapDownloading(100, 21800000));
+    await tester.pump();
+
+    await tester.tap(find.text('Mégse'));
+    await bootstrap.end(const BootstrapCancelled());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Főképernyő'), findsOneWidget);
+
+    await start(tester, bootstrap);
+    expect(find.text(_offer), findsNothing);
+    expect(find.text('Főképernyő'), findsOneWidget);
+  });
+
+  testWidgets('a failed run goes on, and is offered again on the next start', (
+    tester,
+  ) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000);
+    await start(tester, bootstrap);
+    await choose(tester, 'Letöltés');
+
+    await bootstrap.end(const BootstrapFailed());
+    await tester.pump();
+    await tester.pump(BootstrapProgressPage.failureShown);
+    await tester.pumpAndSettle();
+    expect(find.text('Főképernyő'), findsOneWidget);
+
+    await start(tester, bootstrap);
+    expect(find.text(_offer), findsOneWidget);
+  });
+
+  testWidgets('once it has succeeded, neither the size nor the offer', (
+    tester,
+  ) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000, done: true);
+
+    await start(tester, bootstrap);
+
+    expect(bootstrap.sizeQueries, 0);
+    expect(find.text(_offer), findsNothing);
+    expect(find.text('Főképernyő'), findsOneWidget);
+  });
+
+  testWidgets('a splash gone before the size comes back offers nothing', (
+    tester,
+  ) async {
+    final bootstrap = FakeCacheBootstrap(size: 21800000)
+      ..sizeHeld = Completer<void>();
+    await start(tester, bootstrap);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    bootstrap.sizeHeld!.complete();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_offer), findsNothing);
+  });
 
   test('the splash says neither „adatbázis” nor „Letölti” (SV1, SV4)', () {
     final source = File('lib/splash.dart').readAsStringSync();
@@ -214,63 +188,33 @@ void main() {
   });
 
   group('fits (EH4)', () {
-    void sizeView(WidgetTester tester, double width, double textScale) {
-      tester.view.physicalSize = Size(width, 800);
-      tester.view.devicePixelRatio = 1.0;
-      tester.platformDispatcher.textScaleFactorTestValue = textScale;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    }
-
     for (final width in eh4Widths) {
       for (final textScale in eh4TextScales) {
-        testWidgets('the error with its retry at $width dp and text scale '
-            '$textScale', (tester) async {
-          sizeView(tester, width, textScale);
+        testWidgets('the offer at $width dp and text scale $textScale', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 800), textScale: textScale);
 
-          await pumpSplash(
-            tester,
-            _FakeStartup(bootstrapped: false, importSucceeds: [false]),
-          );
+          await start(tester, FakeCacheBootstrap(size: 21800000));
 
-          expect(find.text('Újrapróbálás'), findsOneWidget);
+          expect(find.text('Letöltés'), findsOneWidget);
           expect(tester.takeException(), isNull);
-        });
-
-        testWidgets(
-          'the download dialog at $width dp and text scale $textScale',
-          (tester) async {
-            sizeView(tester, width, textScale);
-
-            await pumpDialog(tester, _NoExportStartup(exists: false));
-
-            expect(find.text('Letöltés'), findsOneWidget);
-            expect(tester.takeException(), isNull);
-          },
-          variant: eh4Platforms,
-        );
+        }, variant: eh4Platforms);
 
         testWidgets('the spinner at $width dp and text scale $textScale', (
           tester,
         ) async {
-          sizeView(tester, width, textScale);
+          setScreen(tester, Size(width, 800), textScale: textScale);
+          final bootstrap = FakeCacheBootstrap(size: 21800000)
+            ..sizeHeld = Completer<void>();
 
-          await tester.pumpWidget(
-            MaterialApp(
-              home: RouteSplash(
-                startup: _SlowStartup(),
-                homeBuilder: (_) => const Scaffold(body: Text('Főképernyő')),
-              ),
-            ),
-          );
-          await tester.pump();
+          await start(tester, bootstrap);
 
           expect(find.byType(CircularProgressIndicator), findsOneWidget);
           expect(tester.takeException(), isNull);
-          // Gone before the check answers, so nothing is left running.
           await tester.pumpWidget(const SizedBox.shrink());
-        });
+          bootstrap.sizeHeld!.complete();
+        }, variant: eh4Platforms);
       }
     }
   });

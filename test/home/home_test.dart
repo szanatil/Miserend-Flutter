@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/nearby_masses_item.dart';
 import 'package:miserend/church_details/church_details_page.dart';
 import 'package:miserend/church_details/church_page_data.dart';
@@ -28,6 +30,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../church_details/fake_church_schedule_loader.dart';
 import '../database/fake_favorites_service.dart';
 import '../fake_location_provider.dart';
+import '../theme/theme_harness.dart';
 import 'advanced_search/fake_advanced_search_loader.dart';
 import 'churches/fake_church_list_loader.dart';
 import 'fake_search_suggestions.dart';
@@ -215,6 +218,100 @@ void main() {
     await typeIntoSearchBar(tester, 'Pé');
 
     expect(find.widgetWithText(ListTile, 'Részletes kereső'), findsOneWidget);
+  });
+
+  group('finding nothing (spec 0015)', () {
+    const explanation =
+        'Lehet, hogy azért, mert nem töltötted le az összes templom adatait. '
+        'A letöltést a Névjegyen indíthatod el.';
+
+    testWidgets('without the bootstrap import, says it may be why', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        suggestions: NoSearchSuggestions()..bootstrapFlag.value = false,
+      );
+
+      await typeIntoSearchBar(tester, 'Nemlétező');
+
+      expect(find.text('Nincs találat'), findsOneWidget);
+      expect(find.text(explanation), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'Részletes kereső'), findsOneWidget);
+    });
+
+    testWidgets('once it has run, says nothing', (tester) async {
+      await pumpHome(tester, suggestions: NoSearchSuggestions());
+
+      await typeIntoSearchBar(tester, 'Nemlétező');
+
+      expect(find.text('Nincs találat'), findsNothing);
+      expect(find.text(explanation), findsNothing);
+    });
+
+    testWidgets('offline, says nothing of the download', (tester) async {
+      await pumpHome(
+        tester,
+        suggestions:
+            NoSearchSuggestions()
+              ..bootstrapFlag.value = false
+              ..connection.value = ApiFailure.noConnection,
+      );
+
+      await typeIntoSearchBar(tester, 'Nemlétező');
+
+      expect(find.text(explanation), findsNothing);
+    });
+
+    testWidgets('a city found is not nothing', (tester) async {
+      await pumpHome(tester, suggestions: _SzegedSuggested());
+
+      await typeIntoSearchBar(tester, 'Szeged');
+
+      expect(find.text(explanation), findsNothing);
+    });
+
+    for (final brightness in Brightness.values) {
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('fits at $width dp, text scale $textScale, in '
+              '$brightness (EH3, EH4)', (tester) async {
+            setScreen(tester, Size(width, 700), textScale: textScale);
+            await tester.pumpWidget(
+              ChangeNotifierProvider<FavoritesService>.value(
+                value: FakeFavoritesService(const [], loaded: false),
+                child: MaterialApp(
+                  theme: miserendTheme(
+                    brightness,
+                    platform: defaultTargetPlatform,
+                  ),
+                  home: HomeScreen(
+                    tabBuilder: (index, isActive) => Text('Fül $index'),
+                    suggestions:
+                        NoSearchSuggestions()..bootstrapFlag.value = false,
+                    advancedSearchLoader: FakeAdvancedSearchLoader(const []),
+                    location: FakeLocationProvider(),
+                  ),
+                ),
+              ),
+            );
+
+            await tester.tap(find.byType(SearchBar));
+            await tester.pumpAndSettle();
+            // The view overflows for a frame as it opens at a large text
+            // size, with or without anything in it; it is the notice's fit
+            // that is checked here.
+            tester.takeException();
+            await tester.enterText(find.byType(TextField).last, 'Nemlétező');
+            await tester.pump(const Duration(milliseconds: 300));
+            await tester.pumpAndSettle();
+
+            expect(find.text(explanation), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: _bothPlatforms);
+        }
+      }
+    }
   });
 
   testWidgets('the Részletes kereső opens in the tab\'s place with the typed '

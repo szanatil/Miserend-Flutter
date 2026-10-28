@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
+import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/mass.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -380,22 +381,159 @@ void main() {
     test('leaves the same result behind when it runs twice', () async {
       await insertChurch(38, 'Belvárosi');
       await insertRule(1, 38, DateTime.wednesday, '17:00:00');
+      await cache.upsertChurch(_apiChurch(99, 'Az API-ból'), minimal: true);
+      await insertChurch(99, 'Az exportból');
+      await insertRule(2, 99, DateTime.friday, '18:00:00');
 
-      await BootstrapImporter.run(
+      Future<void> run() => BootstrapImporter.run(
         legacy: legacy,
         cache: cache,
         from: DateTime(2026, 9, 7),
         days: 7,
       );
-      await BootstrapImporter.run(
-        legacy: legacy,
-        cache: cache,
-        from: DateTime(2026, 9, 7),
-        days: 7,
-      );
+      await run();
+      final churches = await cache.db.query('churches_cache', orderBy: 'id');
+      final masses = await cache.db.query('masses_cache', orderBy: 'id');
+      await run();
 
-      expect(await cache.db.query('churches_cache'), hasLength(1));
-      expect(await cache.getMassesForChurch(38), hasLength(1));
+      expect(await cache.db.query('churches_cache', orderBy: 'id'), churches);
+      expect(await cache.db.query('masses_cache', orderBy: 'id'), masses);
+      expect(churches, hasLength(2));
+      expect(masses, hasLength(2));
+    });
+
+    group('over a cache the API has filled (ADR-0006)', () {
+      test('puts in whole a church the cache does not know', () async {
+        await insertChurch(38, 'Belvárosi');
+
+        await BootstrapImporter.run(
+          legacy: legacy,
+          cache: cache,
+          from: DateTime(2026, 9, 7),
+        );
+
+        final church = (await cache.getChurch(38))!;
+        expect(church.name, 'Belvárosi');
+        expect(church.lat, 47.5);
+        expect(church.isGreek, isFalse);
+      });
+
+      test('keeps a cached church\'s filled fields, and fills its empty '
+          'ones', () async {
+        // A minimal answer carries no street, no photos and no rite.
+        await cache.upsertChurch(_apiChurch(38, 'Az API neve'), minimal: true);
+        await legacy.insert('templomok', {
+          'tid': 38,
+          'nev': 'Az export neve',
+          'gorog': 1,
+          'lat': 46.0,
+          'lng': 18.0,
+          'cim': 'Március 15. tér',
+          'kep': 'https://miserend.hu/kepek/templomok/38/a.jpg',
+        });
+
+        await BootstrapImporter.run(
+          legacy: legacy,
+          cache: cache,
+          from: DateTime(2026, 9, 7),
+        );
+
+        final church = (await cache.getChurch(38))!;
+        expect(church.name, 'Az API neve');
+        expect(church.lat, 47.49);
+        expect(church.lon, 19.05);
+        expect(church.street, 'Március 15. tér');
+        expect(church.photos, ['https://miserend.hu/kepek/templomok/38/a.jpg']);
+        expect(church.isGreek, isTrue);
+        expect(
+          await cache.searchChurches('export neve', null),
+          isEmpty,
+          reason: 'the search finds a church by the name it shows',
+        );
+        expect(await cache.searchChurches('API neve', null), hasLength(1));
+      });
+
+      test('keeps a photo list the API answered empty', () async {
+        await cache.upsertChurch(_apiChurch(38, 'Az API neve'));
+        await legacy.insert('templomok', {
+          'tid': 38,
+          'nev': 'Az export neve',
+          'kep': 'https://miserend.hu/kepek/templomok/38/a.jpg',
+        });
+
+        await BootstrapImporter.run(
+          legacy: legacy,
+          cache: cache,
+          from: DateTime(2026, 9, 7),
+        );
+
+        expect((await cache.getChurch(38))!.photos, isEmpty);
+      });
+
+      test(
+        'leaves a day the API knows, and fills the days it does not',
+        () async {
+          await cache.upsertChurch(_apiChurch(38, 'Belvárosi'), minimal: true);
+          await cache.replaceDailyMasses(38, DateTime(2026, 9, 9), [
+            CachedMass(
+              id: null,
+              apiMassId: 7,
+              churchId: 38,
+              time: DateTime(2026, 9, 9, 8, 0),
+              info: 'Az API miséje',
+              source: MassSource.dailyList,
+            ),
+          ]);
+          await insertChurch(38, 'Belvárosi');
+          await insertRule(1, 38, 0, '17:00:00');
+
+          await BootstrapImporter.run(
+            legacy: legacy,
+            cache: cache,
+            from: DateTime(2026, 9, 7),
+            days: 4,
+          );
+
+          final masses = await cache.getMassesForChurch(38);
+          expect(masses.map((m) => (m.time, m.source)), [
+            (DateTime(2026, 9, 7, 17, 0), MassSource.bootstrap),
+            (DateTime(2026, 9, 8, 17, 0), MassSource.bootstrap),
+            (DateTime(2026, 9, 9, 8, 0), MassSource.dailyList),
+            (DateTime(2026, 9, 10, 17, 0), MassSource.bootstrap),
+          ]);
+        },
+      );
     });
   });
 }
+
+/// Church [id] as an API answer leaves it: a position, a city, no photos.
+ChurchDetails _apiChurch(int id, String name) => ChurchDetails(
+  id: id,
+  name: name,
+  commonName: null,
+  names: const [],
+  alternativeNames: const [],
+  country: null,
+  diocese: null,
+  county: null,
+  city: 'Budapest',
+  street: null,
+  gettingThere: null,
+  parish: null,
+  description: null,
+  accessibility: null,
+  email: null,
+  links: const [],
+  languages: const [],
+  massScheduleNote: null,
+  adorations: const [],
+  hasConfession: null,
+  communities: const [],
+  lat: 47.49,
+  lon: 19.05,
+  photos: const [],
+  updatedAt: null,
+  localSyncedAt: null,
+  isGreek: null,
+);

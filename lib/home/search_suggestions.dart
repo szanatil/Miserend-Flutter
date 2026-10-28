@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+import 'package:miserend/api/api_result.dart';
+import 'package:miserend/api/api_status.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 
@@ -19,6 +23,15 @@ class SearchSuggestions {
   SearchSuggestions({CacheDatabase? cache}) : _cache = cache;
 
   CacheDatabase? _cache;
+
+  /// Whether the bootstrap import has run. Without it the cache knows only
+  /// the churches some screen has loaded, so finding nothing may be why
+  /// (spec 0015, „Tájékoztatás").
+  ValueListenable<bool> get bootstrapped => CacheBootstrap.shared.done;
+
+  /// How the app's last API call ended. Offline, finding nothing is not put
+  /// down to the download (CONTEXT.md, „Nincs kapcsolat").
+  ValueListenable<ApiFailure?> get lastFailure => ApiStatus.shared;
 
   Future<Suggestions> suggest(String term) async {
     final cache = _cache ??= await CacheDatabase.create();

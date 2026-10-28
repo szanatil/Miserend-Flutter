@@ -33,6 +33,7 @@ class MiserendMap extends StatefulWidget {
     this.compactAttribution = false,
     this.apiKey,
     this.onTap,
+    this.onCameraChanged,
   });
 
   static const defaultInitialCenter = LatLng(47.2537659, 19.752314);
@@ -123,6 +124,10 @@ class MiserendMap extends StatefulWidget {
 
   /// Called for a tap on the map itself, not on a marker.
   final VoidCallback? onTap;
+
+  /// Told where the camera is once the map is ready, and after every move,
+  /// by the user or by the code.
+  final ValueChanged<MapCamera>? onCameraChanged;
 
   @override
   State<MiserendMap> createState() => _MiserendMapState();
@@ -269,6 +274,7 @@ class _MiserendMapState extends State<MiserendMap> {
   void _onPositionChanged(MapCamera camera, bool hasGesture) {
     if (hasGesture && camera.zoom != _lastZoom) _mayBeSpread = false;
     _lastZoom = camera.zoom;
+    widget.onCameraChanged?.call(camera);
   }
 
   void _onMapTap() {
@@ -325,6 +331,7 @@ class _MiserendMapState extends State<MiserendMap> {
             maxZoom: MiserendMap._maxZoom,
             onTap: (_, __) => _onMapTap(),
             onPositionChanged: _onPositionChanged,
+            onMapReady: () => widget.onCameraChanged?.call(_controller.camera),
             interactionOptions: InteractionOptions(
               flags:
                   widget.interactive

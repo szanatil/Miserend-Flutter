@@ -272,10 +272,118 @@ class CacheDatabase {
     }
   }
 
-  /// The bootstrap import's bulk write: one transaction for the whole chunk,
-  /// because doing this a row at a time costs a transaction per church and the
-  /// import covers every church the app knows. It writes no
+  /// The columns the SQLite export carries, which the bootstrap import may
+  /// fill; the rest it leaves as they are.
+  static const Set<String> _exportColumns = {
+    'nev',
+    'ismertnev',
+    'orszag',
+    'megye',
+    'varos',
+    'cim',
+    'megkozelites',
+    'lat',
+    'lon',
+    'photos',
+    'gorog',
+  };
+
+  /// The bootstrap import's write, which only fills what is missing (ADR-0006):
+  /// a church the cache does not know goes in whole; of a cached one only the
+  /// empty columns are filled, since what the API wrote is fresher than the
+  /// export. A mass goes in only on a day its church has no cached row for.
+  /// So the import may run after the API has filled the cache, and running it
+  /// twice changes nothing. One transaction for the whole chunk, because a
+  /// transaction per church would dominate the import's runtime. It writes no
   /// `local_synced_at` — these rows have never seen an API response.
+  Future<void> importMissing(
+    List<ChurchDetails> churches,
+    List<CachedMass> masses,
+  ) async {
+    if (churches.isEmpty && masses.isEmpty) return;
+    await db.transaction((txn) async {
+      final ids = churches.map((church) => church.id).toList();
+      final cached = {
+        for (final row in await txn.query(
+          churchesTable,
+          where: 'id IN (${List.filled(ids.length, '?').join(',')})',
+          whereArgs: ids,
+        ))
+          row['id'] as int: row,
+      };
+      final daysWithMasses = await _daysWithMasses(txn, masses);
+
+      final batch = txn.batch();
+      for (final church in churches) {
+        final row = _toRow(church);
+        final cachedRow = cached[church.id];
+        if (cachedRow == null) {
+          batch.insert(churchesTable, {...row, 'id': church.id});
+          continue;
+        }
+        final filled = {
+          for (final column in _exportColumns)
+            if (cachedRow[column] == null && row[column] != null)
+              column: row[column],
+        };
+        if (filled.isEmpty) continue;
+        final merged = {...cachedRow, ...filled};
+        batch.update(
+          churchesTable,
+          {
+            ...filled,
+            ..._searchRow(
+              name: merged['nev'] as String?,
+              commonName: merged['ismertnev'] as String?,
+              alternativeNames: _stringList(merged['alternative_names']),
+              city: merged['varos'] as String?,
+            ),
+          },
+          where: 'id = ?',
+          whereArgs: [church.id],
+        );
+      }
+      for (final mass in masses) {
+        if (daysWithMasses.contains(_churchDay(mass.churchId, mass.time))) {
+          continue;
+        }
+        batch.insert(massesTable, _massRow(mass));
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// The church–day pairs from the earliest of [masses] on that already have
+  /// a cached row, as [_churchDay] writes them.
+  Future<Set<String>> _daysWithMasses(
+    Transaction txn,
+    List<CachedMass> masses,
+  ) async {
+    if (masses.isEmpty) return const {};
+    final churchIds = masses.map((mass) => mass.churchId).toSet().toList();
+    final earliest = masses
+        .map((mass) => mass.time)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final rows = await txn.query(
+      massesTable,
+      distinct: true,
+      columns: ['church_id', 'substr(idopont, 1, 10) AS nap'],
+      where:
+          'church_id IN (${List.filled(churchIds.length, '?').join(',')}) '
+          'AND idopont >= ?',
+      whereArgs: [...churchIds, _dayBounds(earliest).$1],
+    );
+    return {for (final row in rows) '${row['church_id']} ${row['nap']}'};
+  }
+
+  /// A church and the calendar day of [time], as one key.
+  String _churchDay(int churchId, DateTime time) =>
+      '$churchId ${_formatDateTime(time)!.substring(0, 10)}';
+
+  /// Writes [churches] over the cached rows and puts [masses] in place of
+  /// theirs, in one transaction. The bootstrap import used to write this way;
+  /// it now fills gaps only ([importMissing]), and this is left for seeding a
+  /// cache whole. It writes no `local_synced_at`.
   Future<void> importChurches(
     List<ChurchDetails> churches,
     List<CachedMass> masses,

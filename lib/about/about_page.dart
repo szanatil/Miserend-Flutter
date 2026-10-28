@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
+import 'package:miserend/bootstrap/bootstrap_progress_page.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
+import 'package:miserend/bootstrap/export_size.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -15,15 +18,18 @@ import 'package:miserend/widgets/section_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-/// Opened from the bottom navigation's Névjegy item: a church to discover,
-/// the app's developer and version, its source code and the web version,
-/// under a floating button to send feedback (spec 0014).
+/// Opened from the bottom navigation's Névjegy item: the bootstrap import
+/// until it has succeeded (spec 0015), a church to discover, the app's
+/// developer and version, its source code and the web version, under a
+/// floating button to send feedback (spec 0014).
 class AboutPage extends StatefulWidget {
   const AboutPage({
     super.key,
     this.feedback,
     this.openLink,
     this.churchOfTheDay,
+    this.bootstrap,
+    this.isActive = true,
     this.clock = DateTime.now,
   });
 
@@ -35,6 +41,13 @@ class AboutPage extends StatefulWidget {
 
   /// Injected by tests; the page builds its own otherwise.
   final ChurchOfTheDayLoader? churchOfTheDay;
+
+  /// Injected by tests; the app's own otherwise.
+  final CacheBootstrap? bootstrap;
+
+  /// Whether the tab is the one on screen. The home screen keeps it alive
+  /// underneath the others, and each opening asks the export's size again.
+  final bool isActive;
 
   /// Which day's church is shown.
   final DateTime Function() clock;
@@ -69,10 +82,34 @@ class _AboutPageState extends State<AboutPage> {
   /// Null until the cache has answered, and when it holds no church.
   ChurchDetails? _church;
 
+  late final CacheBootstrap _bootstrap =
+      widget.bootstrap ?? CacheBootstrap.shared;
+
+  /// The export's size as of opening the page; null while it is asked for,
+  /// and when it did not come back.
+  int? _exportSize;
+
   @override
   void initState() {
     super.initState();
     _loadChurch();
+    if (!_bootstrap.done.value) _loadExportSize();
+  }
+
+  @override
+  void didUpdateWidget(AboutPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive && !_bootstrap.done.value) {
+      _loadExportSize();
+    }
+  }
+
+  /// Asked live: the export is made anew every day, and its size changes
+  /// (spec 0015, „Further Notes").
+  Future<void> _loadExportSize() async {
+    final size = await _bootstrap.exportSize();
+    if (!mounted) return;
+    setState(() => _exportSize = size);
   }
 
   /// The cached church at once, then again once the API has answered: the
@@ -112,6 +149,12 @@ class _AboutPageState extends State<AboutPage> {
             (context, padding) => ListView(
               padding: padding,
               children: [
+                ValueListenableBuilder<bool>(
+                  valueListenable: _bootstrap.done,
+                  builder:
+                      (context, done, _) =>
+                          done ? const SizedBox.shrink() : _bootstrapTile(),
+                ),
                 if (_church case final church?) _churchOfTheDay(church),
                 SectionCard(
                   title: 'Fejlesztő',
@@ -172,6 +215,34 @@ class _AboutPageState extends State<AboutPage> {
                 ),
               ],
             ),
+      ),
+    );
+  }
+
+  /// The one place the bootstrap import can be started once the user has
+  /// turned it down (ADR-0006). A size that did not come back does not stop
+  /// it: the progress screen says if the download fails.
+  Widget _bootstrapTile() {
+    return SectionCard(
+      title: 'Templomok és misék letöltése',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: Spacing.s,
+        children: [
+          const Text(
+            'Letöltés nélkül csak a közeli és a már megnézett templomok '
+            'érhetők el a keresésben, a Részletes keresőben és a Térképen. Ha '
+            'meggondoltad magad, itt egyszer letöltheted az összes templom és '
+            'mise adatait.',
+          ),
+          Center(
+            child: FilledButton.icon(
+              onPressed: () => BootstrapProgressPage.open(context, _bootstrap),
+              icon: const Icon(Icons.download_rounded),
+              label: Text('Letöltés (${ExportSize.label(_exportSize)})'),
+            ),
+          ),
+        ],
       ),
     );
   }

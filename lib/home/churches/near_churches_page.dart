@@ -107,14 +107,16 @@ class _NearChurchesPageState extends State<NearChurchesPage>
     return ChurchListView(
       list: _list,
       emptyMessage: 'Nem találhatóak közeli templomok.',
-      onRefresh: _load,
+      onRefresh: () => _load(pulled: true),
       position: _position,
     );
   }
 
   /// Asks for the position, draws the cached list, then refreshes it in the
-  /// background. Pull-to-refresh waits for the whole of it.
-  Future<void> _load() async {
+  /// background. Pull-to-refresh waits for the whole of it, under its own
+  /// spinner; otherwise an empty cache keeps the page's spinner up until the
+  /// answer is in: it is not yet an empty neighbourhood (spec 0015).
+  Future<void> _load({bool pulled = false}) async {
     final loadId = ++_loadId;
     bool current() => mounted && loadId == _loadId;
 
@@ -143,12 +145,15 @@ class _NearChurchesPageState extends State<NearChurchesPage>
       _list = cached;
       _position = LatLng(query.lat, query.lon);
       _noPosition = null;
-      _loaded = true;
+      _loaded = pulled || cached.churches.isNotEmpty;
     });
 
     final refreshed = await _loader.refresh(query, cached.churches);
     if (!current()) return;
-    setState(() => _list = refreshed);
+    setState(() {
+      _list = refreshed;
+      _loaded = true;
+    });
   }
 
   @override

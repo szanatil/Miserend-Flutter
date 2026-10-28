@@ -76,6 +76,38 @@ void main() {
     expect(find.text('Kedvenc'), findsOneWidget);
   });
 
+  group('favorites the cache does not hold (spec 0015)', () {
+    testWidgets('keep the spinner up while the call runs', (tester) async {
+      final answer = Completer<ChurchList>();
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([<ChurchListEntry>[]], refreshed: [answer]),
+        FakeFavoritesService(const [1]),
+      );
+
+      expect(find.text('Kedvencek betöltése...'), findsOneWidget);
+      expect(find.text('Még nincsenek kedvenc templomaid.'), findsNothing);
+
+      answer.complete(listOf([_entry(1, 'Az API-ból')]));
+      await tester.pump();
+      expect(find.text('Az API-ból'), findsOneWidget);
+    });
+
+    testWidgets('are marked as ever when the call fails', (tester) async {
+      await pumpPage(
+        tester,
+        FakeChurchListLoader(
+          [<ChurchListEntry>[]],
+          refreshed: [listOf(const [], failure: ApiFailure.noConnection)],
+        ),
+        FakeFavoritesService(const [1]),
+      );
+
+      expect(find.byType(OfflineBanner), findsOneWidget);
+      expect(find.text('Kedvencek betöltése...'), findsNothing);
+    });
+  });
+
   testWidgets('with no favorites, says so and asks nothing', (tester) async {
     final loader = FakeChurchListLoader([<ChurchListEntry>[]]);
 

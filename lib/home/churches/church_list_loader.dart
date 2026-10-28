@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/cache/church_location.dart';
@@ -241,6 +242,14 @@ class ChurchListLoader {
   /// Fires when any answer has changed the cached churches, so that the
   /// [churchLocations] are worth reading again.
   Listenable get churchesWritten => CacheWriteThrough.churchesWritten;
+
+  /// Whether the bootstrap import has run. Without it the map knows only the
+  /// churches some screen has loaded, so an empty area may be why (spec 0015,
+  /// „Tájékoztatás").
+  ValueListenable<bool> get bootstrapped => CacheBootstrap.shared.done;
+
+  /// How the app's last API call ended, whichever screen made it.
+  ValueListenable<ApiFailure?> get lastFailure => _api.status;
 
   Future<DateTime?> _dataAsOf(
     CacheDatabase cache,

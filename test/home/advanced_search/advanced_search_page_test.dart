@@ -240,6 +240,120 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Keresés'), findsOneWidget);
     });
 
+    group('without the bootstrap import (spec 0015)', () {
+      const mayBeWhy =
+          'Lehet, hogy azért, mert nem töltötted le az összes templom '
+          'adatait. A letöltést a Névjegyen indíthatod el.';
+
+      FakeAdvancedSearchLoader loaderOf(
+        AdvancedSearchResultPage page, {
+        bool bootstrapped = false,
+        ApiFailure? lastFailure,
+      }) =>
+          FakeAdvancedSearchLoader([page], lastFailure: lastFailure)
+            ..bootstrapFlag.value = bootstrapped;
+
+      testWidgets('no candidate in the cache says it may be why', (
+        tester,
+      ) async {
+        await pumpPage(tester, loaderOf(resultPage(const [], candidates: 0)));
+        await tester.enterText(field('Település'), 'Sehol');
+        await search(tester);
+
+        expect(find.text('Nincs találat'), findsOneWidget);
+        expect(find.text(mayBeWhy), findsOneWidget);
+        expect(find.text('Feltételek módosítása'), findsOneWidget);
+      });
+
+      testWidgets('candidates with nothing on the day are not down to it', (
+        tester,
+      ) async {
+        await pumpPage(tester, loaderOf(resultPage(const [], candidates: 12)));
+        await tester.enterText(field('Település'), 'Pécs');
+        await search(tester);
+
+        expect(find.text('Nincs találat'), findsOneWidget);
+        expect(find.text(mayBeWhy), findsNothing);
+      });
+
+      testWidgets('once it has run, no candidate says only „Nincs találat"', (
+        tester,
+      ) async {
+        await pumpPage(
+          tester,
+          loaderOf(resultPage(const [], candidates: 0), bootstrapped: true),
+        );
+        await tester.enterText(field('Település'), 'Sehol');
+        await search(tester);
+
+        expect(find.text('Nincs találat'), findsOneWidget);
+        expect(find.text(mayBeWhy), findsNothing);
+      });
+
+      testWidgets('offline, says nothing of the download', (tester) async {
+        await pumpPage(
+          tester,
+          loaderOf(
+            resultPage(const [], candidates: 0),
+            lastFailure: ApiFailure.noConnection,
+          ),
+        );
+        await tester.enterText(field('Település'), 'Sehol');
+        await search(tester);
+
+        expect(find.text('Nincs találat'), findsOneWidget);
+        expect(find.text(mayBeWhy), findsNothing);
+      });
+
+      for (final brightness in Brightness.values) {
+        testWidgets('in $brightness, it is a status view: icon, title and '
+            'explanation in their roles (KO8)', (tester) async {
+          await pumpPage(
+            tester,
+            loaderOf(resultPage(const [], candidates: 0)),
+            brightness: brightness,
+          );
+          await tester.enterText(field('Település'), 'Sehol');
+          await search(tester);
+          final theme = Theme.of(tester.element(find.text('Nincs találat')));
+
+          final icon = find.byIcon(Icons.search_off_rounded);
+          expect(tester.getSize(icon), const Size.square(48));
+          expect(
+            tester.widget<Icon>(icon).color,
+            theme.colorScheme.onSurfaceVariant,
+          );
+          expect(
+            drawnStyle(tester, find.text('Nincs találat')).fontSize,
+            theme.textTheme.titleMedium!.fontSize,
+          );
+          expect(
+            drawnStyle(tester, find.text(mayBeWhy)).fontSize,
+            theme.textTheme.bodyMedium!.fontSize,
+          );
+        });
+      }
+
+      for (final width in eh4Widths) {
+        for (final textScale in eh4TextScales) {
+          testWidgets('fits at $width dp and text scale $textScale', (
+            tester,
+          ) async {
+            setScreen(tester, Size(width, 800), textScale: textScale);
+            await pumpPage(
+              tester,
+              loaderOf(resultPage(const [], candidates: 0)),
+            );
+            await tester.enterText(field('Település'), 'Sehol');
+            await search(tester);
+
+            expect(find.text(mayBeWhy), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          }, variant: eh4Platforms);
+        }
+      }
+    });
+
     for (final brightness in Brightness.values) {
       testWidgets('in $brightness, offering the conditions again is a tonal '
           'button, the only filled one (KO8, KO9)', (tester) async {

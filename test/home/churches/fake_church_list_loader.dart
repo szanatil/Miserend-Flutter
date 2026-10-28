@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart';
 import 'package:miserend/api/api_result.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
@@ -18,6 +19,18 @@ class FakeChurchListLoader extends ChurchListLoader {
   int reads = 0;
   int refreshes = 0;
   final List<ChurchListQuery> queries = [];
+
+  /// Whether the bootstrap import has run; it has, unless a test says not.
+  final ValueNotifier<bool> bootstrapFlag = ValueNotifier(true);
+
+  /// How the app's last API call ended, as the page is told.
+  final ValueNotifier<ApiFailure?> connection = ValueNotifier(null);
+
+  @override
+  ValueListenable<bool> get bootstrapped => bootstrapFlag;
+
+  @override
+  ValueListenable<ApiFailure?> get lastFailure => connection;
 
   static Object _next(Queue<Object> answers) =>
       answers.length > 1 ? answers.removeFirst() : answers.first;

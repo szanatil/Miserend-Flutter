@@ -1,56 +1,21 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:miserend/database/cache/bootstrap_importer.dart';
-import 'package:miserend/database/cache/cache_database.dart';
-import 'package:miserend/database/database_manager.dart';
-import 'package:miserend/database/miserend_database.dart';
+import 'package:miserend/bootstrap/bootstrap_progress_page.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
+import 'package:miserend/bootstrap/export_size.dart';
 import 'package:miserend/home/home.dart';
-import 'package:miserend/preferences.dart';
 import 'package:miserend/theme/adaptive.dart';
-import 'package:miserend/theme/tokens.dart';
 
-/// What the splash screen does to get the app ready, behind one seam so that
-/// the screen can be pumped without files, preferences or a network.
-class AppStartup {
-  const AppStartup();
-
-  Future<bool> exportExists() => DatabaseManager.databaseExists;
-
-  Future<bool> exportVersionCompatible() =>
-      DatabaseManager.checkDatabaseVersion();
-
-  Future<bool> downloadExport() => DatabaseManager.downloadDatabase();
-
-  Future<bool> isCacheBootstrapped() => Preferences.isCacheBootstrapped();
-
-  /// The one-time import of the export into the cache. Throws when it fails.
-  Future<void> bootstrapCache() async {
-    final legacy = await MiserendDatabase.create();
-    final cache = await CacheDatabase.create();
-    final now = DateTime.now();
-    await BootstrapImporter.run(
-      legacy: legacy.db,
-      cache: cache,
-      from: now,
-      // An old export only gets here after a failed download or import. Its
-      // masses would land on the wrong days, so take the churches alone.
-      days: legacy.massesExpiredOn(now) ? 0 : BootstrapImporter.defaultDays,
-    );
-    await Preferences.setCacheBootstrapped();
-  }
-}
-
+/// Opens the home screen, after offering the bootstrap import with its size
+/// once (ADR-0006, spec 0015, „Splash"): until it has succeeded or the user
+/// turned it down, and only when the size comes back, since without an
+/// answer the download could not be accepted anyway.
 class RouteSplash extends StatefulWidget {
-  const RouteSplash({
-    super.key,
-    this.startup = const AppStartup(),
-    this.homeBuilder = _home,
-  });
+  const RouteSplash({super.key, this.bootstrap, this.homeBuilder = _home});
 
-  /// Injected by tests.
-  final AppStartup startup;
+  /// Injected by tests; the app's own otherwise.
+  final CacheBootstrap? bootstrap;
+
+  /// Injected by tests; the real home screen otherwise.
   final WidgetBuilder homeBuilder;
 
   static Widget _home(BuildContext context) => const HomeScreen();
@@ -60,203 +25,69 @@ class RouteSplash extends StatefulWidget {
 }
 
 class _RouteSplashState extends State<RouteSplash> {
-  bool shouldProceed = false;
+  late final CacheBootstrap _bootstrap =
+      widget.bootstrap ?? CacheBootstrap.shared;
 
-  /// Shown under the spinner while the one-time cache import runs, which takes
-  /// long enough to look like a hang without it.
-  String? _status;
-
-  /// Set when the export could not be downloaded and there is no earlier copy
-  /// to fall back on, so the app has nothing to show until a retry succeeds.
-  bool _downloadFailed = false;
-
-  /// Set when the first import into the cache failed. Every screen reads the
-  /// cache, so going on would show nothing but empty lists.
-  bool _bootstrapFailed = false;
-
-  _checkDatabase() async {
-    final bool fileExists = await widget.startup.exportExists();
-    if (!fileExists) {
-      unawaited(_showDialog('Hiányoznak a miserendek'));
-      return;
-    }
-
-    final bool databaseVersionCompatible =
-        await widget.startup.exportVersionCompatible();
-    if (!databaseVersionCompatible) {
-      unawaited(_showDialog('Elavultak a miserendek'));
-      return;
-    }
-
-    _goToMainScreen();
+  @override
+  void initState() {
+    super.initState();
+    _start();
   }
 
-  _downloadDatabase() async {
-    setState(() {
-      _downloadFailed = false;
-      _status = 'Miserendek letöltése…';
-    });
-    final bool success = await widget.startup.downloadExport();
-    if (success) {
-      if (mounted) {
-        const snackBar = SnackBar(
-          content: Text('A miserendek letöltése sikeres'),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      _goToMainScreen();
+  Future<void> _start() async {
+    await _bootstrap.restore();
+    if (_bootstrap.done.value || _bootstrap.declined) {
+      _goToHome();
       return;
     }
 
-    // An earlier export, even of the wrong version, beats keeping the user
-    // out of the app; once the cache has been filled no screen reads it.
-    if (await widget.startup.exportExists()) {
-      if (mounted) {
-        const snackBar = SnackBar(
-          content: Text(
-            'A miserendek letöltése nem sikerült, '
-            'a korábban letöltött adatokkal folytatjuk.',
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      _goToMainScreen();
+    final size = await _bootstrap.exportSize();
+    if (size == null) {
+      _goToHome();
       return;
     }
+    if (!mounted) return;
 
-    if (!mounted) {
-      return;
+    final download = await showMiserendDialog<bool>(
+      context,
+      title: 'Templomok és misék letöltése',
+      content:
+          'A jobb élményhez töltsd le egyszer a templomok és misék adatait '
+          '(${ExportSize.label(size)}). Nélküle az app csak korlátozottan '
+          'működik. A letöltést később a Névjegyen is elindíthatod.',
+      actions: const [
+        MiserendDialogAction('Most nem', false),
+        MiserendDialogAction('Letöltés', true),
+      ],
+      // A choice to make, not to tap away.
+      barrierDismissible: false,
+    );
+    if (!mounted) return;
+    switch (download) {
+      case true:
+        await BootstrapProgressPage.open(context, _bootstrap);
+      case false:
+        await _bootstrap.decline();
+      case null:
+        // Gone without an answer, as by Android's back: no choice was made,
+        // and it is offered again on the next start.
+        break;
     }
-    setState(() {
-      _status = null;
-      _downloadFailed = true;
-    });
+    _goToHome();
   }
 
-  _goToMainScreen() async {
-    if (!await _bootstrapCacheIfNeeded()) {
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
+  void _goToHome() {
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: widget.homeBuilder),
     );
   }
 
-  /// The cache starts out empty and every screen reads it, so it is filled
-  /// once from the downloaded export before the home screen opens. False
-  /// when that failed: the splash then offers a retry, and the import runs
-  /// again on the next start as well.
-  Future<bool> _bootstrapCacheIfNeeded() async {
-    if (await widget.startup.isCacheBootstrapped()) {
-      return true;
-    }
-    if (!mounted) {
-      return false;
-    }
-
-    setState(() {
-      _bootstrapFailed = false;
-      _status = 'Adatok előkészítése…';
-    });
-    try {
-      await widget.startup.bootstrapCache();
-      return true;
-    } catch (error) {
-      debugPrint('Cache bootstrap failed: $error');
-      if (mounted) {
-        setState(() {
-          _status = null;
-          _bootstrapFailed = true;
-        });
-      }
-      return false;
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _checkDatabase(); //running initialisation code; getting prefs etc.
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_downloadFailed) {
-      return _retryScreen(
-        'A miserendek letöltése nem sikerült. Ellenőrizd az '
-        'internetkapcsolatot, és próbáld újra.',
-        _downloadDatabase,
-      );
-    }
-    if (_bootstrapFailed) {
-      return _retryScreen(
-        'Az adatok előkészítése nem sikerült. Próbáld újra.',
-        _goToMainScreen,
-      );
-    }
-
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator.adaptive(),
-            if (_status != null) ...[
-              const SizedBox(height: Spacing.l),
-              Text(_status!),
-            ],
-          ],
-        ),
-      ),
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator.adaptive()),
     );
-  }
-
-  Widget _retryScreen(String message, VoidCallback onRetry) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.l),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: Spacing.l),
-              FilledButton(
-                onPressed: onRetry,
-                child: const Text('Újrapróbálás'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showDialog(String title) async {
-    final download = await showMiserendDialog<bool>(
-      context,
-      title: title,
-      content:
-          'Az app használatához egyszer le kell tölteni a templomok és misék '
-          'adatait. Letöltöd most?',
-      actions: const [
-        MiserendDialogAction('Kilépés', false),
-        MiserendDialogAction('Letöltés', true),
-      ],
-      barrierDismissible: false, // user must tap button!
-    );
-    if (!mounted) return;
-    switch (download) {
-      case true:
-        _downloadDatabase();
-      case false:
-        unawaited(SystemNavigator.pop());
-      case null:
-        break;
-    }
   }
 }

@@ -94,6 +94,52 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
+  group('the cache finding nothing (spec 0015)', () {
+    testWidgets('keeps the spinner up while the call runs, rather than '
+        'saying „Nincs találat"', (tester) async {
+      final answer = Completer<ChurchList>();
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([<ChurchListEntry>[]], refreshed: [answer]),
+      );
+
+      expect(find.text('Keresés...'), findsOneWidget);
+      expect(find.text('Nincs találat'), findsNothing);
+
+      answer.complete(listOf([_entry(1, 'Az API-ból')]));
+      await tester.pump();
+      expect(find.text('Az API-ból'), findsOneWidget);
+    });
+
+    testWidgets('says „Nincs találat" once the answer is empty', (
+      tester,
+    ) async {
+      final answer = Completer<ChurchList>();
+      await pumpPage(
+        tester,
+        FakeChurchListLoader([<ChurchListEntry>[]], refreshed: [answer]),
+      );
+
+      answer.complete(listOf(const []));
+      await tester.pump();
+
+      expect(find.text('Nincs találat'), findsOneWidget);
+    });
+
+    testWidgets('marks a failed call as ever', (tester) async {
+      await pumpPage(
+        tester,
+        FakeChurchListLoader(
+          [<ChurchListEntry>[]],
+          refreshed: [listOf(const [], failure: ApiFailure.serverError)],
+        ),
+      );
+
+      expect(find.byType(OfflineBanner), findsOneWidget);
+      expect(find.text('Keresés...'), findsNothing);
+    });
+  });
+
   testWidgets('says so when nothing is found', (tester) async {
     await pumpPage(tester, FakeChurchListLoader([<ChurchListEntry>[]]));
 

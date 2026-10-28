@@ -21,6 +21,7 @@ import 'package:miserend/home/widgets/tab_reselect.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/adaptive.dart';
 import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/list_status_view.dart';
 import 'package:miserend/widgets/photo_decode.dart';
 import 'package:miserend/widgets/photo_fade_in.dart';
 import 'package:provider/provider.dart';
@@ -155,6 +156,19 @@ class CitySuggestion extends Suggestion {
       title: Text(cityName),
     );
   }
+}
+
+/// Stands in for the suggestions when the term finds neither a church nor a
+/// city, and the bootstrap import has not run: that may be why (spec 0015,
+/// „Tájékoztatás"). There is nothing to choose in it.
+class NoSuggestionWithoutBootstrap extends Suggestion {
+  NoSuggestionWithoutBootstrap() : super(onChosen: _nothing);
+
+  static void _nothing() {}
+
+  @override
+  Widget buildWidget(BuildContext context) =>
+      const EmptyView.withoutBootstrap();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -396,7 +410,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Builder(
                         builder:
                             widget.aboutBuilder ??
-                            (context) => const AboutPage(),
+                            (context) => AboutPage(
+                              isActive: _selectedIndex == _aboutTab,
+                            ),
                       ),
                     )
                     : _tabRoot(index),
@@ -612,6 +628,13 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
         ),
       ),
     );
+    if (combined.isEmpty &&
+        !widget.suggestions.bootstrapped.value &&
+        // Offline the cache is all there is either way; the screens' own
+        // offline notices say so (spec 0015, user story 28).
+        widget.suggestions.lastFailure.value == null) {
+      combined.add(NoSuggestionWithoutBootstrap());
+    }
     if (!mounted || requestId != _searchRequestId) {
       return;
     }

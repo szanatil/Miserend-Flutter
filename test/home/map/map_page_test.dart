@@ -13,6 +13,7 @@ import 'package:miserend/database/favorites_service.dart';
 import 'package:miserend/home/churches/church_card.dart';
 import 'package:miserend/home/churches/church_list_loader.dart';
 import 'package:miserend/home/map/map_page.dart';
+import 'package:miserend/home/map/widgets/missing_churches_banner.dart';
 import 'package:miserend/home/map/widgets/position_unavailable_banner.dart';
 import 'package:miserend/location_provider.dart';
 import 'package:miserend/theme/miserend_colors.dart';
@@ -225,6 +226,144 @@ void main() {
           .heroTag,
       isNull,
     );
+  });
+
+  group('without the bootstrap import, the information strip (spec 0015)', () {
+    const empty = LatLng(46.0, 18.0);
+    final strip = find.text(MissingChurchesBanner.message);
+
+    _MapLoader notBootstrapped() =>
+        _MapLoader([<ChurchListEntry>[]])..bootstrapFlag.value = false;
+
+    Future<void> moveTo(
+      WidgetTester tester,
+      MapController controller,
+      LatLng point,
+    ) async {
+      controller.move(point, _pinsZoom);
+      await tester.pump();
+    }
+
+    testWidgets('stands while no church is in view, goes with the first, and '
+        'comes back on an empty area', (tester) async {
+      final controller = await pumpPage(tester, notBootstrapped());
+      expect(strip, findsNothing);
+
+      await moveTo(tester, controller, empty);
+      expect(strip, findsOneWidget);
+
+      await moveTo(tester, controller, MiserendMap.defaultInitialCenter);
+      expect(strip, findsNothing);
+
+      await moveTo(tester, controller, empty);
+      expect(strip, findsOneWidget);
+    });
+
+    testWidgets('never stands once it has run', (tester) async {
+      final controller = await pumpPage(
+        tester,
+        _MapLoader([<ChurchListEntry>[]]),
+      );
+
+      await moveTo(tester, controller, empty);
+
+      expect(strip, findsNothing);
+    });
+
+    testWidgets('goes when it has run meanwhile', (tester) async {
+      final loader = notBootstrapped();
+      final controller = await pumpPage(tester, loader);
+      await moveTo(tester, controller, empty);
+      expect(strip, findsOneWidget);
+
+      loader.bootstrapFlag.value = true;
+      await tester.pump();
+
+      expect(strip, findsNothing);
+    });
+
+    testWidgets('does not stand offline', (tester) async {
+      final loader =
+          notBootstrapped()..connection.value = ApiFailure.noConnection;
+      final controller = await pumpPage(tester, loader);
+
+      await moveTo(tester, controller, empty);
+
+      expect(strip, findsNothing);
+    });
+
+    testWidgets('stands over the map, which it leaves whole', (tester) async {
+      final controller = await pumpPage(tester, notBootstrapped());
+      await moveTo(tester, controller, empty);
+
+      expect(
+        tester.getBottomLeft(find.byType(MissingChurchesBanner)).dy,
+        lessThanOrEqualTo(tester.getTopLeft(find.byType(MiserendMap)).dy),
+      );
+    });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('in $brightness, informs: its colours, the info icon, no '
+          'button (KO7, SZ4)', (tester) async {
+        final controller = await pumpPage(
+          tester,
+          notBootstrapped(),
+          brightness: brightness,
+        );
+        await moveTo(tester, controller, empty);
+        final scheme = schemeOf(brightness);
+
+        final band = find.descendant(
+          of: find.byType(MissingChurchesBanner),
+          matching: find.byType(Material),
+        );
+        expect(
+          tester.widget<Material>(band.first).color,
+          scheme.surfaceContainerHigh,
+        );
+        expect(
+          tester
+              .widget<Icon>(
+                find.descendant(
+                  of: find.byType(MissingChurchesBanner),
+                  matching: find.byIcon(Icons.info_outline_rounded),
+                ),
+              )
+              .color,
+          scheme.onSurfaceVariant,
+        );
+        expect(drawnStyle(tester, strip).color, scheme.onSurfaceVariant);
+        expect(
+          find.descendant(
+            of: find.byType(MissingChurchesBanner),
+            matching: find.byWidgetPredicate(
+              (w) => w is ButtonStyleButton || w is IconButton,
+            ),
+          ),
+          findsNothing,
+        );
+      });
+    }
+
+    for (final width in eh4Widths) {
+      for (final textScale in eh4TextScales) {
+        testWidgets('fits at $width dp and text scale $textScale (EH4)', (
+          tester,
+        ) async {
+          setScreen(tester, Size(width, 640));
+          final controller = await pumpPage(
+            tester,
+            notBootstrapped(),
+            textScale: textScale,
+          );
+
+          await moveTo(tester, controller, empty);
+
+          expect(strip, findsOneWidget);
+          expect(tester.takeException(), isNull);
+        }, variant: eh4Platforms);
+      }
+    }
   });
 
   group('markers', () {

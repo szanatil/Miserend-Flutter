@@ -5,6 +5,7 @@ import 'package:miserend/api/api_result.dart';
 import 'package:miserend/api/api_status.dart';
 import 'package:miserend/api/cache_write_through.dart';
 import 'package:miserend/api/miserend_api_client.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/database/cache/cache_database.dart';
 import 'package:miserend/database/cache/cached_mass.dart';
 import 'package:miserend/database/cache/church_details.dart';
@@ -261,6 +262,11 @@ class AdvancedSearchLoader {
   /// While it is set, the day condition is not offered: the cached days may
   /// be out of date (CONTEXT.md, „Részletes kereső").
   ValueListenable<ApiFailure?> get lastFailure => _api.status;
+
+  /// Whether the bootstrap import has run. Without it the cache knows only
+  /// the churches some screen has loaded, so no candidate may be why (spec
+  /// 0015, „Tájékoztatás").
+  ValueListenable<bool> get bootstrapped => CacheBootstrap.shared.done;
 
   /// Asks the API about one church, only to see whether it answers; the
   /// answer reaches [lastFailure].

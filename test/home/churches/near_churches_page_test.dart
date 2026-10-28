@@ -138,6 +138,55 @@ void main() {
       expect(find.text('Közeli templomok betöltése...'), findsOneWidget);
     });
 
+    group('an empty cache (spec 0015)', () {
+      testWidgets('keeps the spinner up while the call runs, rather than '
+          'saying there is no church nearby', (tester) async {
+        final answer = Completer<ChurchList>();
+        await pumpPage(
+          tester,
+          FakeChurchListLoader([<ChurchListEntry>[]], refreshed: [answer]),
+          FakeLocationProvider([found]),
+        );
+
+        expect(find.text('Közeli templomok betöltése...'), findsOneWidget);
+        expect(find.text('Nem találhatóak közeli templomok.'), findsNothing);
+
+        answer.complete(listOf([_entry('Az API-ból')]));
+        await tester.pump();
+        expect(find.text('Az API-ból'), findsOneWidget);
+      });
+
+      testWidgets('says there is no church nearby once the answer is empty', (
+        tester,
+      ) async {
+        final answer = Completer<ChurchList>();
+        await pumpPage(
+          tester,
+          FakeChurchListLoader([<ChurchListEntry>[]], refreshed: [answer]),
+          FakeLocationProvider([found]),
+        );
+
+        answer.complete(listOf(const []));
+        await tester.pump();
+
+        expect(find.text('Nem találhatóak közeli templomok.'), findsOneWidget);
+      });
+
+      testWidgets('marks a failed call as ever', (tester) async {
+        await pumpPage(
+          tester,
+          FakeChurchListLoader(
+            [<ChurchListEntry>[]],
+            refreshed: [listOf(const [], failure: ApiFailure.noConnection)],
+          ),
+          FakeLocationProvider([found]),
+        );
+
+        expect(find.byType(OfflineBanner), findsOneWidget);
+        expect(find.text('Közeli templomok betöltése...'), findsNothing);
+      });
+    });
+
     testWidgets('says so when there is no church nearby', (tester) async {
       await pumpPage(
         tester,

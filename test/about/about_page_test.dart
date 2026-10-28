@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/about/about_page.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
+import 'package:miserend/bootstrap/bootstrap_progress_page.dart';
+import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/database/cache/bootstrap_importer.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
 import 'package:miserend/widgets/feedback_mail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../bootstrap/fake_cache_bootstrap.dart';
 import '../theme/theme_harness.dart';
 import '../widgets/fake_feedback_launcher.dart';
 
@@ -88,6 +92,7 @@ void main() {
     FeedbackLauncher? feedback,
     Future<bool> Function(Uri uri)? openLink,
     ChurchOfTheDayLoader? churchOfTheDay,
+    CacheBootstrap? bootstrap,
     Brightness brightness = Brightness.light,
     TargetPlatform platform = TargetPlatform.android,
     double textScale = 1,
@@ -106,6 +111,8 @@ void main() {
           feedback: feedback,
           openLink: openLink,
           churchOfTheDay: churchOfTheDay ?? _FakeChurchOfTheDay(),
+          // Done, unless a test is about the tile.
+          bootstrap: bootstrap ?? FakeCacheBootstrap(done: true),
           clock: () => DateTime(2026, 9, 17, 10, 0),
         ),
       ),
@@ -223,6 +230,142 @@ void main() {
     expect(feedback.launched.single.path, feedbackAddress);
   });
 
+  group('the download tile (spec 0015)', () {
+    const title = 'Templomok és misék letöltése';
+
+    testWidgets('stands first, above the church of the day', (tester) async {
+      await pumpPage(
+        tester,
+        churchOfTheDay: _FakeChurchOfTheDay(cached: _cached),
+        bootstrap: FakeCacheBootstrap(size: 21800000),
+      );
+
+      expect(
+        tester.getTopLeft(find.text(title)).dy,
+        lessThan(tester.getTopLeft(find.text('Mai templom ajánlatunk')).dy),
+      );
+      expect(
+        find.text(
+          'Letöltés nélkül csak a közeli és a már megnézett templomok érhetők '
+          'el a keresésben, a Részletes keresőben és a Térképen. Ha '
+          'meggondoltad magad, itt egyszer letöltheted az összes templom és '
+          'mise adatait.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('its button carries the size asked for on opening', (
+      tester,
+    ) async {
+      final bootstrap = FakeCacheBootstrap(size: 21800000);
+      await pumpPage(tester, bootstrap: bootstrap);
+
+      expect(find.widgetWithText(FilledButton, 'Letöltés (21,8 MB)'), findsOne);
+      expect(bootstrap.sizeQueries, 1);
+    });
+
+    testWidgets('asks the size again each time the tab comes back', (
+      tester,
+    ) async {
+      final bootstrap = FakeCacheBootstrap();
+      Widget page(bool isActive) => MaterialApp(
+        home: AboutPage(
+          churchOfTheDay: _FakeChurchOfTheDay(),
+          bootstrap: bootstrap,
+          isActive: isActive,
+        ),
+      );
+      await tester.pumpWidget(page(true));
+      await tester.pump();
+      expect(find.text('Letöltés (kb. 22 MB)'), findsOneWidget);
+
+      await tester.pumpWidget(page(false));
+      bootstrap.size = 21800000;
+      await tester.pumpWidget(page(true));
+      await tester.pump();
+
+      expect(bootstrap.sizeQueries, 2);
+      expect(find.text('Letöltés (21,8 MB)'), findsOneWidget);
+    });
+
+    testWidgets('its button says „kb. 22 MB" when the size did not come '
+        'back, and still starts it', (tester) async {
+      final bootstrap = FakeCacheBootstrap();
+      await pumpPage(tester, bootstrap: bootstrap);
+
+      await tester.tap(find.text('Letöltés (kb. 22 MB)'));
+      await tester.pump();
+
+      expect(bootstrap.runs, 1);
+    });
+
+    testWidgets('opens the progress screen, and is back on the Névjegy once '
+        'that closes', (tester) async {
+      final bootstrap = FakeCacheBootstrap(size: 21800000);
+      await pumpPage(tester, bootstrap: bootstrap);
+
+      await tester.tap(find.text('Letöltés (21,8 MB)'));
+      // The bar runs without a value until the size is in: it never settles.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(BootstrapProgressPage), findsOneWidget);
+
+      await bootstrap.end(const BootstrapCancelled());
+      await tester.pumpAndSettle();
+      expect(find.byType(BootstrapProgressPage), findsNothing);
+      expect(find.text('Fejlesztő'), findsOneWidget);
+      expect(find.text(title), findsOneWidget);
+    });
+
+    testWidgets('goes once it has succeeded', (tester) async {
+      final bootstrap = FakeCacheBootstrap(size: 21800000);
+      await pumpPage(tester, bootstrap: bootstrap);
+
+      bootstrap.doneFlag.value = true;
+      await tester.pump();
+
+      expect(find.text(title), findsNothing);
+      expect(find.text('Fejlesztő'), findsOneWidget);
+    });
+
+    testWidgets('is left out, its size not asked for, once it has succeeded', (
+      tester,
+    ) async {
+      final bootstrap = FakeCacheBootstrap(size: 21800000, done: true);
+      await pumpPage(tester, bootstrap: bootstrap);
+
+      expect(find.text(title), findsNothing);
+      expect(bootstrap.sizeQueries, 0);
+    });
+
+    testWidgets('its button can scroll clear of the feedback button', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        size: const Size(320, 568),
+        textScale: 2,
+        churchOfTheDay: _FakeChurchOfTheDay(cached: _cached),
+        bootstrap: FakeCacheBootstrap(size: 21800000),
+      );
+      final button = find.text('Letöltés (21,8 MB)');
+      final feedback = find.widgetWithText(
+        FloatingActionButton,
+        'Visszajelzés',
+      );
+      // Scrolled so that the button stands just below the top.
+      final position =
+          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+      position.jumpTo(position.pixels + tester.getRect(button).top - Spacing.l);
+      await tester.pumpAndSettle();
+
+      final rect = tester.getRect(button);
+      expect(rect.bottom, lessThanOrEqualTo(tester.getRect(feedback).top));
+      expect(rect.top, greaterThanOrEqualTo(0));
+    });
+  });
+
   group('the church of the day', () {
     testWidgets('shows the photo, name and address at once', (tester) async {
       final loader = _FakeChurchOfTheDay(cached: _cached);
@@ -327,6 +470,7 @@ void main() {
         tester,
         brightness: brightness,
         platform: defaultTargetPlatform,
+        bootstrap: FakeCacheBootstrap(size: 21800000),
       );
 
       await expectAccessibilityGuidelines(tester);
@@ -349,9 +493,11 @@ void main() {
                 churchOfTheDay: _FakeChurchOfTheDay(
                   cached: _withDescription('A templom története'),
                 ),
+                bootstrap: FakeCacheBootstrap(size: 21800000),
               );
 
               expect(find.text('Mai templom ajánlatunk'), findsOneWidget);
+              expect(find.text('Letöltés (21,8 MB)'), findsOneWidget);
               expect(tester.takeException(), isNull);
             });
           }

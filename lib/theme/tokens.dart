@@ -19,6 +19,9 @@ abstract final class IconSizes {
 
   /// In a chip and in a strip.
   static const double small = 18;
+
+  /// Above a status view's title (KO8).
+  static const double statusView = 48;
 }
 
 /// The corner radius scale (DESIGN.md FO1); where each step goes is FO2.

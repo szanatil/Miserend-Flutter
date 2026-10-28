@@ -84,6 +84,60 @@ class MessageView extends StatelessWidget {
   }
 }
 
+/// A page with nothing to show that says why: an icon, a title and an
+/// explanation (DESIGN.md KO8).
+class EmptyView extends StatelessWidget {
+  const EmptyView({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.explanation,
+  });
+
+  /// „Nincs találat" where the bootstrap import has not run, which may be
+  /// why. It names the one place the download can be started, and offers no
+  /// button: the user chose not to download (ADR-0006, spec 0015).
+  const EmptyView.withoutBootstrap({super.key})
+    : icon = Icons.search_off_rounded,
+      title = 'Nincs találat',
+      explanation =
+          'Lehet, hogy azért, mert nem töltötted le az összes templom '
+              'adatait. A letöltést a Névjegyen indíthatod el.';
+
+  final IconData icon;
+  final String title;
+  final String explanation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(Spacing.l),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconTheme.merge(
+            data: const IconThemeData(size: IconSizes.statusView),
+            child: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: Spacing.l),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: Spacing.l),
+          Text(
+            explanation,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Stretches [child] over the whole page while keeping it scrollable, so a
 /// [RefreshIndicator] around it still lets the user pull down to try again.
 class PullableFill extends StatelessWidget {

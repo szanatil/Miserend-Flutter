@@ -30,6 +30,12 @@ class FakeAdvancedSearchLoader extends AdvancedSearchLoader {
 
   int checks = 0;
 
+  /// Whether the bootstrap import has run; it has, unless a test says not.
+  final ValueNotifier<bool> bootstrapFlag = ValueNotifier(true);
+
+  @override
+  ValueListenable<bool> get bootstrapped => bootstrapFlag;
+
   /// Pages that stay on their way until their completer completes.
   final Map<int, Completer<void>> held = {};
 
