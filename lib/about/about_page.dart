@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miserend/about/church_of_the_day_loader.dart';
+import 'package:miserend/about/prototype_download_tile.dart';
 import 'package:miserend/database/cache/church_details.dart';
 import 'package:miserend/database/cache/church_list_entry.dart';
 import 'package:miserend/database/favorites_service.dart';
@@ -87,11 +88,45 @@ class _AboutPageState extends State<AboutPage> {
     setState(() => _church = fresh);
   }
 
+  // PROTOTÍPUS (spec 0015, Q10): törlendő a döntés után.
+  final PrototypeDownloadState _prototype =
+      PrototypeDownloadState()..churchOfTheDay = true;
+
   @override
   Widget build(BuildContext context) {
+    if (!prototypeDownloadTile) return _build(context);
+    return ListenableBuilder(
+      listenable: _prototype,
+      builder: (context, _) => _build(context),
+    );
+  }
+
+  List<Widget> _prototypeTop() {
+    if (!prototypeDownloadTile) {
+      return [if (_church case final church?) _churchOfTheDay(church)];
+    }
+    final church = _prototype.churchOfTheDay ? _church : null;
+    final tile = _prototype.done ? null : downloadTile(context, _prototype);
+    final churchTile = church == null ? null : _churchOfTheDay(church);
+    return switch (placeOf(_prototype.variant)) {
+      TilePlace.aboveChurch => [tile, churchTile],
+      TilePlace.inChurchSlot => [churchTile, tile],
+    }.nonNulls.toList();
+  }
+
+  Widget _build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Névjegy')),
+      appBar: AppBar(
+        title: const Text('Névjegy'),
+        bottom:
+            prototypeDownloadTile
+                ? PreferredSize(
+                  preferredSize: const Size.fromHeight(96),
+                  child: PrototypeSwitcher(state: _prototype),
+                )
+                : null,
+      ),
       // Floats so it is in view without scrolling on any phone; in the list
       // it would sit below the fold under the church of the day.
       floatingActionButton: FloatingActionButton.extended(
@@ -112,7 +147,7 @@ class _AboutPageState extends State<AboutPage> {
             (context, padding) => ListView(
               padding: padding,
               children: [
-                if (_church case final church?) _churchOfTheDay(church),
+                ..._prototypeTop(),
                 SectionCard(
                   title: 'Fejlesztő',
                   child: Column(
