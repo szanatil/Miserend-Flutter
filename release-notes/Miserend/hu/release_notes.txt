@@ -21,3 +21,6 @@ Javítások
 – Ha egy templomban ugyanabban az időpontban két mise is van (például az egyik angolul, egy kápolnában), a Misék menüpontban egy kártyán, külön sorban látszik mindkettő a saját jellemzőjével, a templom adatlapján pedig a mai napnál koppintásra kiderül, melyik melyik.
 – Nagy betűmérettel és keskeny képernyőn a templom- és misekártyák szövege nem vágódik le, a térképen a kártya nem takarja a „helyzetem” gombot, fekvő tájolásban pedig a listák középen, olvasható szélességben állnak.
 – Képernyőolvasóval a templom- és misekártyák egy egységként olvashatók fel, a koppintható időpontok pedig könnyebben eltalálhatók.
+– Első indításkor az app megmutatja, mekkora a templomok és misék adatainak letöltése, és a letöltés el is utasítható; később a Névjegyen indítható el.
+– A letöltés közben látszik, hány megabájt jött már le, és megszakítható.
+– A Misék listán a templomok fotója akkor is megjelenik, ha az app csak a lista első megnyitása után ismerte meg.
