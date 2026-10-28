@@ -66,14 +66,16 @@ platform :ios do
       sh(resign_cmd)
     end
 
-    metadata_path = File.join(ios_dir, "..", "release-notes", "Miserend")
+    release_notes_path = File.join(ios_dir, "..", "release-notes", "Miserend", "hu", "release_notes.txt")
+    UI.user_error!("Missing release notes: #{release_notes_path}") unless File.exist?(release_notes_path)
 
+    # Only whatsNew is uploaded; description, keywords etc. stay as set in App Store Connect.
     upload_to_app_store(
       api_key: api_key,
       ipa: ipa,
       skip_screenshots: true,
       skip_metadata: false,
-      metadata_path: metadata_path,
+      release_notes: { "hu" => changelog(ios_dir) },
       submission_information: { export_compliance_uses_encryption: false },
       submit_for_review: true,
       automatic_release: true,
