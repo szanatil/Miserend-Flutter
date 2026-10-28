@@ -100,7 +100,7 @@ A megoldás három feltevésre épül:
   - a „Letöltés” után a folyamatjelző képernyőt nyitja, és siker, hiba vagy megszakítás után is a főképernyő következik;
   - a mostani újrapróbálás-képernyők és a „korábban letöltött adatokkal folytatjuk” tartalék megszűnik.
 - **Folyamatjelző képernyő**:
-  - teljes képernyő, folyamatjelző sávval és kétlépéses listával (Letöltés: „8,4 / 21,8 MB”, Import), az aktuális lépés kiemelve;
+  - teljes képernyő, folyamatjelző sávval (DESIGN.md KO8), alatta a megabájtos állással („8,4 / 21,8 MB”), és kétlépéses listával (Letöltés, Import), az aktuális lépés kiemelve;
   - Mégse csak a letöltés alatt; hiba esetén rövid üzenet, utána bezárul;
   - az első indításkor és a Névjegyről is ezt használjuk. A Névjegyről indítva bezárás után a Névjegy tér vissza.
 - **Méretformázás**: MB, egy tizedes, tizedesvessző (pl. „21,8 MB”). Ha a méret nem ismert, „kb. 22 MB”.

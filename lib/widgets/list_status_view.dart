@@ -38,7 +38,9 @@ class LoadingProgress extends StatelessWidget {
     required this.caption,
   });
 
-  final double value;
+  /// Null while the whole is not known: the spinner stands in the bar's
+  /// place, the caption still under it.
+  final double? value;
   final String caption;
 
   @override
@@ -50,7 +52,10 @@ class LoadingProgress extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            LinearProgressIndicator(value: value),
+            if (value case final value?)
+              LinearProgressIndicator(value: value)
+            else
+              const CircularProgressIndicator.adaptive(),
             const SizedBox(height: Spacing.s),
             Text(
               caption,

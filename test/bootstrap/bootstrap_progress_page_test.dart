@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miserend/bootstrap/bootstrap_progress_page.dart';
 import 'package:miserend/bootstrap/cache_bootstrap.dart';
 import 'package:miserend/theme/miserend_theme.dart';
+import 'package:miserend/theme/tokens.dart';
+import 'package:miserend/widgets/list_status_view.dart';
 
 import '../theme/theme_harness.dart';
 import 'fake_cache_bootstrap.dart';
@@ -53,6 +55,24 @@ void main() {
     );
   });
 
+  testWidgets('says the megabytes under the bar, Spacing.l from the edge '
+      '(DESIGN.md KO8)', (tester) async {
+    setScreen(tester, const Size(320, 640));
+    final bootstrap = await pumpOpened(tester);
+
+    bootstrap.report(const BootstrapDownloading(8400000, 21800000));
+    await tester.pump();
+
+    final progress = find.byType(LoadingProgress);
+    expect(
+      find.descendant(of: progress, matching: find.text('8,4 / 21,8 MB')),
+      findsOneWidget,
+    );
+    final bar = tester.getRect(find.byType(LinearProgressIndicator));
+    expect(bar.left, Spacing.l);
+    expect(bar.right, 320 - Spacing.l);
+  });
+
   testWidgets('says „kb. 22 MB" while the size is not known', (tester) async {
     final bootstrap = await pumpOpened(tester);
 
@@ -60,6 +80,25 @@ void main() {
     await tester.pump();
 
     expect(find.text('1,0 / kb. 22 MB'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(LoadingProgress),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('marks the finished download with the outline check '
+      '(DESIGN.md IK2)', (tester) async {
+    final bootstrap = await pumpOpened(tester);
+
+    bootstrap.report(const BootstrapImporting());
+    await tester.pump();
+
+    expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
   });
 
   testWidgets('stops the download with „Mégse", and closes once stopped', (
